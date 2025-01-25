@@ -1,10 +1,7 @@
 import type { FieldHook } from 'payload'
-
+import slugify from 'slugify'
 export const formatSlug = (val: string): string =>
-  val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
+  slugify(val, { strict: true, lower: true, trim: true })
 
 export const formatSlugHook =
   (fallback: string): FieldHook =>
