@@ -22,9 +22,15 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
+import { hasRoles } from '@/access/hasRoles'
 export const Products: CollectionConfig = {
   slug: 'products',
-  access: { read: anyone },
+  access: {
+    read: anyone,
+    update: hasRoles(['admin']),
+    create: hasRoles(['admin']),
+    delete: hasRoles(['admin']),
+  },
   admin: {
     defaultColumns: ['title', 'slug', 'updatedAt'],
     livePreview: {
@@ -72,6 +78,11 @@ export const Products: CollectionConfig = {
         },
       ],
       required: true,
+    },
+    {
+      name: 'form',
+      type: 'relationship',
+      relationTo: 'forms',
     },
     {
       name: 'originalPrice',
