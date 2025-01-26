@@ -9,11 +9,11 @@ import { Error } from '../Error'
 import { Width } from '../Width'
 
 export const Text: React.FC<
-  TextField & {
+  TextField & { secret: boolean } & {
     errors: Partial<FieldErrorsImpl>
     register: UseFormRegister<FieldValues>
   }
-> = ({ name, defaultValue, errors, label, register, required, width }) => {
+> = ({ name, defaultValue, errors, label, register, required, width, secret }) => {
   return (
     <Width width={width}>
       <Label htmlFor={name}>
@@ -25,7 +25,12 @@ export const Text: React.FC<
           </span>
         )}
       </Label>
-      <Input defaultValue={defaultValue} id={name} type="text" {...register(name, { required })} />
+      <Input
+        defaultValue={defaultValue}
+        id={name}
+        type={secret ? 'password' : 'text'}
+        {...register(name, { required })}
+      />
       {errors[name] && <Error />}
     </Width>
   )

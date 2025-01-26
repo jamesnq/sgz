@@ -1,5 +1,5 @@
 // storage-adapter-import-placeholder
-import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 
 import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
@@ -65,9 +65,7 @@ export default buildConfig({
   },
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
-  db: mongooseAdapter({
-    url: process.env.DATABASE_URI || '',
-  }),
+  db: postgresAdapter({ pool: { connectionString: process.env.DATABASE_URI } }),
   collections: [Pages, Posts, Media, Categories, Users, Products],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

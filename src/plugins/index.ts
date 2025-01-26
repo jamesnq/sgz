@@ -1,19 +1,18 @@
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
+import { Page, Post } from '@/payload-types'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { searchFields } from '@/search/fieldOverrides'
+import { getServerSideURL } from '@/utilities/getURL'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
-import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { fields, formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
-import { Plugin } from 'payload'
-
-import { Page, Post } from '@/payload-types'
-import { getServerSideURL } from '@/utilities/getURL'
 import { s3Storage } from '@payloadcms/storage-s3'
+import { Plugin } from 'payload'
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
 }
@@ -27,15 +26,15 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
 export const plugins: Plugin[] = [
   s3Storage({
     collections: {
-      media: true,
+      media: { prefix: 'media' },
     },
-    bucket: process.env.S3_BUCKET as string,
+    bucket: process.env.S3_BUCKET,
     config: {
       endpoint: process.env.S3_ENDPOINT,
       forcePathStyle: true,
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
       },
       region: process.env.S3_REGION,
     },
@@ -73,6 +72,10 @@ export const plugins: Plugin[] = [
   formBuilderPlugin({
     fields: {
       payment: false,
+      text: {
+        //@ts-expect-error - ts mismatch
+        fields: [...fields['text']?.fields, { name: 'secret', type: 'checkbox', label: 'Secret' }],
+      },
     },
     formOverrides: {
       fields: ({ defaultFields }) => {

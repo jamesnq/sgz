@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@payloadcms/db-mongodb": "latest",
+    "@payloadcms/db-postgres": "^3.19.0",
     "@payloadcms/live-preview-react": "latest",
     "@payloadcms/next": "latest",
     "@payloadcms/payload-cloud": "latest",
