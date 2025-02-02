@@ -22,14 +22,14 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
-import { hasRoles } from '@/access/hasRoles'
+import { hasRole } from '@/access/hasRoles'
 export const Products: CollectionConfig = {
   slug: 'products',
   access: {
     read: anyone,
-    update: hasRoles(['admin']),
-    create: hasRoles(['admin']),
-    delete: hasRoles(['admin']),
+    update: hasRole(['admin', 'staff']),
+    create: hasRole(['admin']),
+    delete: hasRole(['admin']),
   },
   admin: {
     defaultColumns: ['title', 'slug', 'updatedAt'],
@@ -88,11 +88,35 @@ export const Products: CollectionConfig = {
       name: 'originalPrice',
       type: 'number',
       required: true,
+      access: {
+        update: hasRole(['admin']),
+      },
     },
     {
       name: 'price',
       type: 'number',
       required: true,
+      access: {
+        update: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'sold',
+      type: 'number',
+      defaultValue: 0,
+      required: true,
+      access: {
+        read: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'note',
+      type: 'textarea',
+      access: {
+        read: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
     },
     {
       type: 'tabs',
@@ -100,9 +124,10 @@ export const Products: CollectionConfig = {
         {
           fields: [
             {
-              name: 'heroImage',
+              name: 'images',
               type: 'upload',
               relationTo: 'media',
+              hasMany: true,
             },
             {
               name: 'description',

@@ -17,6 +17,7 @@ export interface Config {
     categories: Category;
     users: User;
     products: Product;
+    orders: Order;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -34,6 +35,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -686,7 +688,9 @@ export interface Product {
   form?: (number | null) | Form;
   originalPrice: number;
   price: number;
-  heroImage?: (number | null) | Media;
+  sold: number;
+  note?: string | null;
+  images?: (number | Media)[] | null;
   description: {
     root: {
       type: string;
@@ -719,6 +723,40 @@ export interface Product {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  status: 'PENDING' | 'IN_QUEUE' | 'IN_PROCESS' | 'COMPLETED' | 'CANCELLED' | 'REFUND';
+  orderedBy: number | User;
+  handlers: (number | User)[];
+  product: number | Product;
+  formSubmission?: (number | null) | FormSubmission;
+  totalPrice: number;
+  note?: string | null;
+  message?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions".
+ */
+export interface FormSubmission {
+  id: number;
+  form: number | Form;
+  submissionData?:
+    | {
+        field: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -740,23 +778,6 @@ export interface Redirect {
         } | null);
     url?: string | null;
   };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "form-submissions".
- */
-export interface FormSubmission {
-  id: number;
-  form: number | Form;
-  submissionData?:
-    | {
-        field: string;
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -912,6 +933,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1282,7 +1307,9 @@ export interface ProductsSelect<T extends boolean = true> {
   form?: T;
   originalPrice?: T;
   price?: T;
-  heroImage?: T;
+  sold?: T;
+  note?: T;
+  images?: T;
   description?: T;
   relatedProducts?: T;
   categories?: T;
@@ -1295,6 +1322,22 @@ export interface ProductsSelect<T extends boolean = true> {
       };
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  status?: T;
+  orderedBy?: T;
+  handlers?: T;
+  product?: T;
+  formSubmission?: T;
+  totalPrice?: T;
+  note?: T;
+  message?: T;
   updatedAt?: T;
   createdAt?: T;
 }

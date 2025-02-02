@@ -1,11 +1,11 @@
 import type { AccessArgs } from 'payload'
 import type { User } from '../payload-types'
 
-export const hasRoles = (roles: User['roles']) => {
-  return ({ req: { user } }: AccessArgs): boolean => {
-    if (!user) {
+export const hasRole =
+  (roles: User['roles']) =>
+  ({ req }: Pick<AccessArgs, 'req'>): boolean => {
+    if (!req.user) {
       return false
     }
-    return user.roles.some((role) => roles.includes(role))
+    return req.user.roles.some((role) => roles.includes(role))
   }
-}

@@ -77,6 +77,7 @@ export const plugins: Plugin[] = [
         fields: [...fields['text']?.fields, { name: 'secret', type: 'checkbox', label: 'Secret' }],
       },
     },
+    formSubmissionOverrides: {},
     formOverrides: {
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {

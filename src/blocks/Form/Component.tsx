@@ -146,7 +146,7 @@ export const FormBlock: React.FC<
                     const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
                     if (Field) {
                       return (
-                        <div className="mb-6 last:mb-0" key={index}>
+                        <div className="mb-4 last:mb-0" key={index}>
                           <Field
                             form={formFromProps}
                             {...field}

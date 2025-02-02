@@ -1,18 +1,19 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
-import { hasRoles } from '@/access/hasRoles'
+import { hasRole } from '@/access/hasRoles'
+import hasRoleOrSelf from './access/hasRoleOrSelf'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: authenticated,
+    admin: hasRoleOrSelf(['admin', 'staff']),
     create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    delete: hasRole(['admin']),
+    read: hasRoleOrSelf(['admin', 'staff']),
+    update: hasRoleOrSelf(['admin', 'staff']),
   },
   admin: {
-    defaultColumns: ['name', 'email'],
+    defaultColumns: ['name', 'email', 'roles'],
     useAsTitle: 'name',
   },
   auth: { tokenExpiration: 60 * 60 * 24 * 30, maxLoginAttempts: 5, lockTime: 5000 },
@@ -23,7 +24,8 @@ export const Users: CollectionConfig = {
     },
     {
       access: {
-        update: hasRoles(['admin']),
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
       },
       name: 'roles',
       type: 'select',
