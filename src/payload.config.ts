@@ -18,6 +18,7 @@ import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
 import { Orders } from './collections/Orders'
+import { ProductVariants } from './collections/ProductVariants'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -59,15 +60,15 @@ export default buildConfig({
       ],
     },
   },
-  localization: {
-    locales: ['en', 'vi'], // required
-    defaultLocale: 'en', // required
-    fallback: true,
-  },
+  // localization: {
+  //   locales: ['en', 'vi'], // required
+  //   defaultLocale: 'en', // required
+  //   fallback: true,
+  // },
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: postgresAdapter({ pool: { connectionString: process.env.DATABASE_URI } }),
-  collections: [Pages, Posts, Media, Categories, Users, Products, Orders],
+  collections: [Pages, Posts, Media, Categories, Users, Products, ProductVariants, Orders],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

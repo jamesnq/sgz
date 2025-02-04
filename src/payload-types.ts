@@ -17,6 +17,7 @@ export interface Config {
     categories: Category;
     users: User;
     products: Product;
+    ProductVariants: ProductVariant;
     orders: Order;
     redirects: Redirect;
     forms: Form;
@@ -35,6 +36,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    ProductVariants: ProductVariantsSelect<false> | ProductVariantsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -56,7 +58,7 @@ export interface Config {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
   };
-  locale: 'en' | 'vi';
+  locale: null;
   user: User & {
     collection: 'users';
   };
@@ -684,13 +686,11 @@ export interface Form {
 export interface Product {
   id: number;
   title: string;
-  status: 'ORDER' | 'AVAILABLE' | 'STOPPED';
-  form?: (number | null) | Form;
-  originalPrice: number;
-  price: number;
+  image: number | Media;
+  status: 'PRIVATE' | 'PUBLIC' | 'STOPPED';
   sold: number;
   note?: string | null;
-  images?: (number | Media)[] | null;
+  variants?: (number | ProductVariant)[] | null;
   description: {
     root: {
       type: string;
@@ -718,6 +718,39 @@ export interface Product {
   };
   slug?: string | null;
   slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductVariants".
+ */
+export interface ProductVariant {
+  id: number;
+  title: string;
+  image?: (number | null) | Media;
+  status: 'ORDER' | 'AVAILABLE' | 'STOPPED';
+  sold: number;
+  originalPrice: number;
+  price: number;
+  min: number;
+  max: number;
+  note?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -933,6 +966,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'ProductVariants';
+        value: number | ProductVariant;
       } | null)
     | ({
         relationTo: 'orders';
@@ -1303,13 +1340,11 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   title?: T;
+  image?: T;
   status?: T;
-  form?: T;
-  originalPrice?: T;
-  price?: T;
   sold?: T;
   note?: T;
-  images?: T;
+  variants?: T;
   description?: T;
   relatedProducts?: T;
   categories?: T;
@@ -1322,6 +1357,24 @@ export interface ProductsSelect<T extends boolean = true> {
       };
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductVariants_select".
+ */
+export interface ProductVariantsSelect<T extends boolean = true> {
+  title?: T;
+  image?: T;
+  status?: T;
+  sold?: T;
+  originalPrice?: T;
+  price?: T;
+  min?: T;
+  max?: T;
+  note?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }

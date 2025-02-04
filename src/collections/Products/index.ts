@@ -57,20 +57,25 @@ export const Products: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
-      localized: true,
+    },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      required: true,
     },
     {
       name: 'status',
       type: 'select',
-      defaultValue: 'ORDER',
+      // defaultValue: 'STOPPED',
       options: [
         {
-          label: 'Order',
-          value: 'ORDER',
+          label: 'Private',
+          value: 'PRIVATE',
         },
         {
-          label: 'Available',
-          value: 'AVAILABLE',
+          label: 'Public',
+          value: 'PUBLIC',
         },
         {
           label: 'Stopped',
@@ -78,27 +83,6 @@ export const Products: CollectionConfig = {
         },
       ],
       required: true,
-    },
-    {
-      name: 'form',
-      type: 'relationship',
-      relationTo: 'forms',
-    },
-    {
-      name: 'originalPrice',
-      type: 'number',
-      required: true,
-      access: {
-        update: hasRole(['admin']),
-      },
-    },
-    {
-      name: 'price',
-      type: 'number',
-      required: true,
-      access: {
-        update: hasRole(['admin']),
-      },
     },
     {
       name: 'sold',
@@ -119,20 +103,19 @@ export const Products: CollectionConfig = {
       },
     },
     {
+      name: 'variants',
+      type: 'relationship',
+      relationTo: 'ProductVariants',
+      hasMany: true,
+    },
+    {
       type: 'tabs',
       tabs: [
         {
           fields: [
             {
-              name: 'images',
-              type: 'upload',
-              relationTo: 'media',
-              hasMany: true,
-            },
-            {
               name: 'description',
               type: 'richText',
-              localized: true,
               editor: lexicalEditor({
                 features: ({ rootFeatures }) => {
                   return [
@@ -209,8 +192,12 @@ export const Products: CollectionConfig = {
         },
       ],
     },
-
     ...slugField(),
   ],
-  timestamps: true,
+  // TODO: add hooks
+  // hooks: {
+  //   afterChange: [revalidatePost],
+  //   afterRead: [populateAuthors],
+  //   afterDelete: [revalidateDelete],
+  // },
 }
