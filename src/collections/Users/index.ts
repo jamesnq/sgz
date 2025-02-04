@@ -23,6 +23,15 @@ export const Users: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'balance',
+      type: 'number',
+      defaultValue: 0,
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+    },
+    {
       access: {
         create: hasRole(['admin']),
         update: hasRole(['admin']),
@@ -38,6 +47,9 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: ['user'],
     },
+    { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
+    { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
+    { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
   ],
   timestamps: true,
 }

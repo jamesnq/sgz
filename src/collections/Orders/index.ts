@@ -47,13 +47,13 @@ export const Orders: CollectionConfig = {
       hasMany: true,
     },
     {
-      name: 'product',
+      name: 'productVariant',
       type: 'relationship',
-      relationTo: 'products',
+      relationTo: 'product-variants',
       required: true,
       access: {
         create: hasRole(['admin', 'staff']),
-        update: hasRole(['admin', 'staff']),
+        update: hasRole(['admin']),
       },
     },
     {
@@ -67,6 +67,15 @@ export const Orders: CollectionConfig = {
     },
     {
       name: 'totalPrice',
+      type: 'number',
+      required: true,
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'quantity',
       type: 'number',
       required: true,
       access: {

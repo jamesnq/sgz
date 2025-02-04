@@ -102,12 +102,7 @@ export const Products: CollectionConfig = {
         update: hasRole(['admin', 'staff']),
       },
     },
-    {
-      name: 'variants',
-      type: 'relationship',
-      relationTo: 'ProductVariants',
-      hasMany: true,
-    },
+    { name: 'variants', type: 'join', collection: 'product-variants', on: 'product' },
     {
       type: 'tabs',
       tabs: [

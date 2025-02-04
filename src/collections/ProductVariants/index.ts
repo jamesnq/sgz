@@ -15,7 +15,7 @@ import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 export const ProductVariants: CollectionConfig = {
-  slug: 'ProductVariants',
+  slug: 'product-variants',
   access: {
     read: anyone,
     update: hasRole(['admin', 'staff']),
@@ -27,6 +27,12 @@ export const ProductVariants: CollectionConfig = {
     useAsTitle: 'title',
   },
   fields: [
+    {
+      name: 'product',
+      type: 'relationship',
+      relationTo: 'products',
+      required: true,
+    },
     {
       name: 'title',
       type: 'text',
