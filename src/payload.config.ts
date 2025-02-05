@@ -20,6 +20,7 @@ import { getServerSideURL } from './utilities/getURL'
 import { Orders } from './collections/Orders'
 import { ProductVariants } from './collections/ProductVariants'
 import { Transactions } from './collections/Transactions'
+import { Recharges } from './collections/Recharges'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -79,6 +80,7 @@ export default buildConfig({
     Products,
     ProductVariants,
     Orders,
+    Recharges,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
