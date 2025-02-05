@@ -756,6 +756,7 @@ export interface ProductVariant {
   title: string;
   image?: (number | null) | Media;
   status: 'ORDER' | 'AVAILABLE' | 'STOPPED';
+  form?: (number | null) | Form;
   sold: number;
   originalPrice: number;
   price: number;
@@ -1441,6 +1442,7 @@ export interface ProductVariantsSelect<T extends boolean = true> {
   title?: T;
   image?: T;
   status?: T;
+  form?: T;
   sold?: T;
   originalPrice?: T;
   price?: T;

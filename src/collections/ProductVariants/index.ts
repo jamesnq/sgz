@@ -64,6 +64,11 @@ export const ProductVariants: CollectionConfig = {
       required: true,
     },
     {
+      name: 'form',
+      type: 'relationship',
+      relationTo: 'forms',
+    },
+    {
       name: 'sold',
       type: 'number',
       defaultValue: 0,

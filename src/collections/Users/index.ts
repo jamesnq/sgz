@@ -47,9 +47,9 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: ['user'],
     },
-    { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
-    { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
-    { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
+    // { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
+    // { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
+    // { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
   ],
   timestamps: true,
 }

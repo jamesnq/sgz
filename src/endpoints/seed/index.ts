@@ -1,23 +1,24 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
+import type { CollectionSlug, File, GlobalSlug, Payload, PayloadRequest } from 'payload'
 
-import { contactForm as contactFormData } from './contact-form'
-import { contact as contactPageData } from './contact-page'
-import { home } from './home'
-import { image1 } from './image-1'
-import { image2 } from './image-2'
-import { imageHero1 } from './image-hero-1'
-import { post1 } from './post-1'
-import { post2 } from './post-2'
-import { post3 } from './post-3'
+import * as fs from 'fs/promises'
+import * as path from 'path'
+
+import { brawlhallaForm as brawlhallaFormData } from './brawlhalla-form'
+import { createAppleIdForm as appleIdFormData } from './create-apple-id-form'
+
+import { productAppleId as productAppleIdData } from './product-appleid'
+import { productBrawlhallaCoins as productBrawlhallaCoinsData } from './product-brawlhalla-coins'
 
 const collections: CollectionSlug[] = [
+  'posts',
+  'product-variants',
+  'products',
+  'form-submissions',
+  'forms',
+  'pages',
+  'search',
   'categories',
   'media',
-  'pages',
-  'posts',
-  'forms',
-  'form-submissions',
-  'search',
 ]
 const globals: GlobalSlug[] = ['header', 'footer']
 
@@ -56,9 +57,9 @@ export const seed = async ({
     ),
   )
 
-  await Promise.all(
-    collections.map((collection) => payload.db.deleteMany({ collection, req, where: {} })),
-  )
+  for (const collection of collections) {
+    await payload.db.deleteMany({ collection, req, where: {} })
+  }
 
   await Promise.all(
     collections
@@ -73,101 +74,79 @@ export const seed = async ({
     depth: 0,
     where: {
       email: {
-        equals: 'demo-author@example.com',
+        equals: 'test@example.com',
       },
     },
   })
+  payload.logger.info(`— Seeding form...`)
+
+  const brawlhallaForm = await payload.create({
+    collection: 'forms',
+    depth: 0,
+    data: JSON.parse(JSON.stringify(brawlhallaFormData)),
+  })
+
+  const appleIdForm = await payload.create({
+    collection: 'forms',
+    depth: 0,
+    data: JSON.parse(JSON.stringify(appleIdFormData)),
+  })
+
+  let brawlhallaFormID: number | string = brawlhallaForm.id
+  let appleIdFormID: number | string = appleIdForm.id
+
+  if (payload.db.defaultIDType === 'text') {
+    brawlhallaFormID = `"${brawlhallaFormID}"`
+    appleIdFormID = `"${appleIdFormID}"`
+  }
 
   payload.logger.info(`— Seeding media...`)
 
-  const [image1Buffer, image2Buffer, image3Buffer, hero1Buffer] = await Promise.all([
-    fetchFileByURL(
-      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-post1.webp',
-    ),
-    fetchFileByURL(
-      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-post2.webp',
-    ),
-    fetchFileByURL(
-      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-post3.webp',
-    ),
-    fetchFileByURL(
-      'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-hero1.webp',
-    ),
+  const [mmcBuffer, appleIdBuffer] = await Promise.all([
+    fetchFileFromDirectory('./src/endpoints/seed/MammothCoinStack.webp'),
+    fetchFileFromDirectory('./src/endpoints/seed/appleid.jpg'),
   ])
 
-  const [
-    demoAuthor,
-    image1Doc,
-    image2Doc,
-    image3Doc,
-    imageHomeDoc,
-    technologyCategory,
-    newsCategory,
-    financeCategory,
-  ] = await Promise.all([
+  const [demoAuthor, mmcMedia, appleIdMedia] = await Promise.all([
     payload.create({
       collection: 'users',
       data: {
         name: 'Demo Author',
-        email: 'demo-author@example.com',
-        password: 'password',
+        email: 'test@example.com',
+        password: '123123',
+        roles: ['user', 'admin'],
       },
     }),
     payload.create({
       collection: 'media',
-      data: image1,
-      file: image1Buffer,
+      data: { alt: 'Brawlhalla Mammoth Coin Stack', caption: null },
+      file: mmcBuffer,
     }),
     payload.create({
       collection: 'media',
-      data: image2,
-      file: image2Buffer,
+      data: { alt: 'Apple ID', caption: null },
+      file: appleIdBuffer,
     }),
-    payload.create({
-      collection: 'media',
-      data: image2,
-      file: image3Buffer,
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageHero1,
-      file: hero1Buffer,
-    }),
-
     payload.create({
       collection: 'categories',
       data: {
-        title: 'Technology',
+        title: 'Game',
         breadcrumbs: [
           {
-            label: 'Technology',
-            url: '/technology',
+            label: 'Game',
+            url: '/game',
           },
         ],
       },
     }),
-
     payload.create({
       collection: 'categories',
       data: {
-        title: 'News',
+        title: 'Account',
         breadcrumbs: [
           {
-            label: 'News',
-            url: '/news',
-          },
-        ],
-      },
-    }),
-
-    payload.create({
-      collection: 'categories',
-      data: {
-        title: 'Finance',
-        breadcrumbs: [
-          {
-            label: 'Finance',
-            url: '/finance',
+            label: 'Account',
+            url: '/account',
           },
         ],
       },
@@ -184,7 +163,6 @@ export const seed = async ({
         ],
       },
     }),
-
     payload.create({
       collection: 'categories',
       data: {
@@ -197,201 +175,137 @@ export const seed = async ({
         ],
       },
     }),
-
-    payload.create({
-      collection: 'categories',
-      data: {
-        title: 'Engineering',
-        breadcrumbs: [
-          {
-            label: 'Engineering',
-            url: '/engineering',
-          },
-        ],
-      },
-    }),
   ])
 
   let demoAuthorID: number | string = demoAuthor.id
 
-  let image1ID: number | string = image1Doc.id
-  let image2ID: number | string = image2Doc.id
-  let image3ID: number | string = image3Doc.id
-  let imageHomeID: number | string = imageHomeDoc.id
+  let mmcMediaId: number | string = mmcMedia.id
+  let appleIdIDMediaId: number | string = appleIdMedia.id
 
   if (payload.db.defaultIDType === 'text') {
-    image1ID = `"${image1Doc.id}"`
-    image2ID = `"${image2Doc.id}"`
-    image3ID = `"${image3Doc.id}"`
-    imageHomeID = `"${imageHomeDoc.id}"`
+    mmcMediaId = `"${mmcMedia.id}"`
+    appleIdIDMediaId = `"${appleIdMedia.id}"`
     demoAuthorID = `"${demoAuthorID}"`
   }
 
-  payload.logger.info(`— Seeding posts...`)
+  payload.logger.info(`— Seeding products...`)
 
   // Do not create posts with `Promise.all` because we want the posts to be created in order
   // This way we can sort them by `createdAt` or `publishedAt` and they will be in the expected order
-  const post1Doc = await payload.create({
-    collection: 'posts',
+  const productAppleId = await payload.create({
+    collection: 'products',
     depth: 0,
     context: {
       disableRevalidate: true,
     },
     data: JSON.parse(
-      JSON.stringify({ ...post1, categories: [technologyCategory.id] })
-        .replace(/"\{\{IMAGE_1\}\}"/g, String(image1ID))
-        .replace(/"\{\{IMAGE_2\}\}"/g, String(image2ID))
-        .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+      JSON.stringify({ ...productAppleIdData }).replace(
+        /"\{\{IMAGE\}\}"/g,
+        String(appleIdIDMediaId),
+      ),
     ),
   })
 
-  const post2Doc = await payload.create({
-    collection: 'posts',
+  const productAppleIdVariant1 = await payload.create({
+    collection: 'product-variants',
+    depth: 0,
+    data: {
+      product: productAppleId.id,
+      title: 'Tạo Tài Khoản Apple ID',
+      image: null,
+      status: 'ORDER',
+      form: appleIdForm.id,
+      sold: 0,
+      originalPrice: 10000,
+      price: 10000,
+      min: 1,
+      max: 1,
+      note: null,
+      description: null,
+      updatedAt: '2025-02-05T05:35:24.119Z',
+      createdAt: '2025-02-05T05:35:24.119Z',
+    },
+  })
+
+  const productBrawlhallaCoins = await payload.create({
+    collection: 'products',
     depth: 0,
     context: {
       disableRevalidate: true,
     },
     data: JSON.parse(
-      JSON.stringify({ ...post2, categories: [newsCategory.id] })
-        .replace(/"\{\{IMAGE_1\}\}"/g, String(image2ID))
-        .replace(/"\{\{IMAGE_2\}\}"/g, String(image3ID))
-        .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+      JSON.stringify({ ...productBrawlhallaCoinsData }).replace(
+        /"\{\{IMAGE\}\}"/g,
+        String(mmcMediaId),
+      ),
     ),
   })
 
-  const post3Doc = await payload.create({
-    collection: 'posts',
-    depth: 0,
-    context: {
-      disableRevalidate: true,
-    },
-    data: JSON.parse(
-      JSON.stringify({ ...post3, categories: [financeCategory.id] })
-        .replace(/"\{\{IMAGE_1\}\}"/g, String(image3ID))
-        .replace(/"\{\{IMAGE_2\}\}"/g, String(image1ID))
-        .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
-    ),
-  })
+  const brawlhallaVariants = [
+    { coins: 140, originalPrice: 149000, price: 40000 },
+    { coins: 340, originalPrice: 349000, price: 90000 },
+    { coins: 540, originalPrice: 499000, price: 140000 },
+    { coins: 1000, originalPrice: 999000, price: 170000 },
+    { coins: 1600, originalPrice: 1299000, price: 200000 },
+    { coins: 3200, originalPrice: 2598000, price: 300000 },
+    { coins: 4800, originalPrice: 3897000, price: 400000 },
+    { title: 'Battlepass Gold', originalPrice: 249000, price: 180000 },
+    { title: 'Battlepass Gold + 3200 coins', originalPrice: 2847000, price: 350000 },
+    { title: 'Battlepass Deluxe', originalPrice: 699000, price: 350000 },
+  ]
 
-  // update each post with related posts
-  await payload.update({
-    id: post1Doc.id,
-    collection: 'posts',
-    data: {
-      relatedPosts: [post2Doc.id, post3Doc.id],
-    },
-  })
-  await payload.update({
-    id: post2Doc.id,
-    collection: 'posts',
-    data: {
-      relatedPosts: [post1Doc.id, post3Doc.id],
-    },
-  })
-  await payload.update({
-    id: post3Doc.id,
-    collection: 'posts',
-    data: {
-      relatedPosts: [post1Doc.id, post2Doc.id],
-    },
-  })
-
-  payload.logger.info(`— Seeding contact form...`)
-
-  const contactForm = await payload.create({
-    collection: 'forms',
-    depth: 0,
-    data: JSON.parse(JSON.stringify(contactFormData)),
-  })
-
-  let contactFormID: number | string = contactForm.id
-
-  if (payload.db.defaultIDType === 'text') {
-    contactFormID = `"${contactFormID}"`
+  for (const variant of brawlhallaVariants) {
+    await payload.create({
+      collection: 'product-variants',
+      depth: 0,
+      data: {
+        product: productBrawlhallaCoins.id,
+        title: variant.title || `${variant.coins} coins`,
+        image: null,
+        status: 'ORDER',
+        form: brawlhallaForm.id,
+        sold: 0,
+        originalPrice: variant.originalPrice,
+        price: variant.price,
+        min: 1,
+        max: 10,
+        note: null,
+        description: null,
+      },
+    })
   }
 
-  payload.logger.info(`— Seeding pages...`)
-
-  const [_, contactPage] = await Promise.all([
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: JSON.parse(
-        JSON.stringify(home)
-          .replace(/"\{\{IMAGE_1\}\}"/g, String(imageHomeID))
-          .replace(/"\{\{IMAGE_2\}\}"/g, String(image2ID)),
-      ),
-    }),
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: JSON.parse(
-        JSON.stringify(contactPageData).replace(
-          /"\{\{CONTACT_FORM_ID\}\}"/g,
-          String(contactFormID),
-        ),
-      ),
-    }),
-  ])
-
-  payload.logger.info(`— Seeding globals...`)
-
-  await Promise.all([
-    payload.updateGlobal({
-      slug: 'header',
-      data: {
-        navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Posts',
-              url: '/posts',
-            },
-          },
-          {
-            link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: {
-                relationTo: 'pages',
-                value: contactPage.id,
-              },
-            },
-          },
-        ],
-      },
-    }),
-    payload.updateGlobal({
-      slug: 'footer',
-      data: {
-        navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Admin',
-              url: '/admin',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Source Code',
-              newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Payload',
-              newTab: true,
-              url: 'https://payloadcms.com/',
-            },
-          },
-        ],
-      },
-    }),
-  ])
+  //   payload.updateGlobal({
+  //     slug: 'footer',
+  //     data: {
+  //       navItems: [
+  //         {
+  //           link: {
+  //             type: 'custom',
+  //             label: 'Admin',
+  //             url: '/admin',
+  //           },
+  //         },
+  //         {
+  //           link: {
+  //             type: 'custom',
+  //             label: 'Source Code',
+  //             newTab: true,
+  //             url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
+  //           },
+  //         },
+  //         {
+  //           link: {
+  //             type: 'custom',
+  //             label: 'Payload',
+  //             newTab: true,
+  //             url: 'https://payloadcms.com/',
+  //           },
+  //         },
+  //       ],
+  //     },
+  //   }),
+  // ])
 
   payload.logger.info('Seeded database successfully!')
 }
@@ -413,5 +327,20 @@ async function fetchFileByURL(url: string): Promise<File> {
     data: Buffer.from(data),
     mimetype: `image/${url.split('.').pop()}`,
     size: data.byteLength,
+  }
+}
+async function fetchFileFromDirectory(filePath: string): Promise<File> {
+  try {
+    const data = await fs.readFile(filePath)
+    const stats = await fs.stat(filePath)
+
+    return {
+      name: path.basename(filePath),
+      data: Buffer.from(data),
+      mimetype: `image/${path.extname(filePath).slice(1)}`,
+      size: stats.size,
+    }
+  } catch (error: any) {
+    throw new Error(`Failed to read file from ${filePath}: ${error.message}`)
   }
 }
