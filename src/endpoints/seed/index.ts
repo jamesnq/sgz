@@ -16,7 +16,7 @@ const collections: CollectionSlug[] = [
   'form-submissions',
   'forms',
   'pages',
-  'search',
+  // 'search',
   'categories',
   'media',
 ]
@@ -104,7 +104,7 @@ export const seed = async ({
 
   const [mmcBuffer, appleIdBuffer] = await Promise.all([
     fetchFileFromDirectory('./src/endpoints/seed/MammothCoinStack.webp'),
-    fetchFileFromDirectory('./src/endpoints/seed/appleid.jpg'),
+    fetchFileFromDirectory('./src/endpoints/seed/appleid.webp'),
   ])
 
   const [demoAuthor, mmcMedia, appleIdMedia] = await Promise.all([
@@ -228,7 +228,7 @@ export const seed = async ({
   })
 
   await Promise.all(
-    ['IOS', 'Android', 'PC', 'Playstation'].map((platform) =>
+    ['Android', 'PC'].map((platform) =>
       payload.create({
         collection: 'products',
         depth: 0,
@@ -239,6 +239,7 @@ export const seed = async ({
           JSON.stringify({
             ...productBrawlhallaCoinsData,
             title: `Brawlhalla Mammoth Coin ${platform}`,
+            slug: `brawlhalla-coins-${platform}`,
           }).replace(/"\{\{IMAGE\}\}"/g, String(mmcMediaId)),
         ),
       }),
