@@ -227,6 +227,24 @@ export const seed = async ({
     },
   })
 
+  await Promise.all(
+    ['IOS', 'Android', 'PC', 'Playstation'].map((platform) =>
+      payload.create({
+        collection: 'products',
+        depth: 0,
+        context: {
+          disableRevalidate: true,
+        },
+        data: JSON.parse(
+          JSON.stringify({
+            ...productBrawlhallaCoinsData,
+            title: `Brawlhalla Mammoth Coin ${platform}`,
+          }).replace(/"\{\{IMAGE\}\}"/g, String(mmcMediaId)),
+        ),
+      }),
+    ),
+  )
+
   const productBrawlhallaCoins = await payload.create({
     collection: 'products',
     depth: 0,

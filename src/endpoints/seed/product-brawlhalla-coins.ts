@@ -1,7 +1,7 @@
 import type { Product } from '@/payload-types'
 
 export const productBrawlhallaCoins: Partial<Product> = {
-  title: 'Brawlhalla Mammoth Coin ',
+  title: 'Brawlhalla Mammoth Coin',
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   image: '{{IMAGE}}',

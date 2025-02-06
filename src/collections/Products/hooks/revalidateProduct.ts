@@ -9,6 +9,7 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   previousDoc,
   req: { payload, context },
 }) => {
+  if (!previousDoc.slug) return doc
   const oldPath = `/products/${previousDoc.slug}`
 
   payload.logger.info(`Revalidating old product at path: ${oldPath}`)
