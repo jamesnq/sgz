@@ -23,6 +23,7 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { hasRole } from '@/access/hasRoles'
+import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
 export const Products: CollectionConfig = {
   slug: 'products',
   access: {
@@ -190,9 +191,8 @@ export const Products: CollectionConfig = {
     ...slugField(),
   ],
   // TODO: add hooks
-  // hooks: {
-  //   afterChange: [revalidatePost],
-  //   afterRead: [populateAuthors],
-  //   afterDelete: [revalidateDelete],
-  // },
+  hooks: {
+    afterChange: [revalidateProduct],
+    beforeDelete: [revalidateDelete],
+  },
 }
