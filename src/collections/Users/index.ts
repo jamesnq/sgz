@@ -16,7 +16,33 @@ export const Users: CollectionConfig = {
     defaultColumns: ['name', 'email', 'roles'],
     useAsTitle: 'name',
   },
-  auth: { tokenExpiration: 60 * 60 * 24 * 30, maxLoginAttempts: 5, lockTime: 5000 },
+  auth: {
+    tokenExpiration: 60 * 60 * 24 * 30,
+    maxLoginAttempts: 5,
+    lockTime: 5000,
+    verify: true,
+    forgotPassword: {},
+    // forgotPassword: {
+    //   generateEmailHTML: ({ req, token, user }) => {
+    //     // Use the token provided to allow your user to reset their password
+    //     const resetPasswordURL = `https://yourfrontend.com/reset-password?token=${token}`
+
+    //     return `
+    //     <!doctype html>
+    //     <html>
+    //       <body>
+    //         <h1>Here is my custom email template!</h1>
+    //         <p>Hello, ${user.email}!</p>
+    //         <p>Click below to reset your password.</p>
+    //         <p>
+    //           <a href="${resetPasswordURL}">${resetPasswordURL}</a>
+    //         </p>
+    //       </body>
+    //     </html>
+    //   `
+    //   },
+    // },
+  },
   fields: [
     {
       name: 'name',
@@ -47,9 +73,9 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: ['user'],
     },
-    // { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
-    // { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
-    // { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
+    { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
+    { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
+    { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
   ],
   timestamps: true,
 }
