@@ -10,7 +10,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       className="relative block h-full w-full cursor-pointer overflow-hidden transition-all duration-300 hover:border-secondary"
-      href={`/product/${product.slug}`}
+      href={`/products/${product.slug}`}
     >
       <Card className="w-full overflow-hidden !p-0">
         <div className="w-full">

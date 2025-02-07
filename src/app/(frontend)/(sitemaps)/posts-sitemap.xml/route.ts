@@ -2,7 +2,7 @@ import { getServerSideSitemap } from 'next-sitemap'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { unstable_cache } from 'next/cache'
-
+// TODO make this for products
 const getPostsSitemap = unstable_cache(
   async () => {
     const payload = await getPayload({ config })
