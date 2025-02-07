@@ -33,7 +33,7 @@ export const Products: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['title', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'image', 'slug', 'updatedAt'],
     livePreview: {
       url: ({ data, req }) => {
         const path = generatePreviewPath({
@@ -51,11 +51,11 @@ export const Products: CollectionConfig = {
         collection: 'products',
         req,
       }),
-    useAsTitle: 'title',
+    useAsTitle: 'name',
   },
   fields: [
     {
-      name: 'title',
+      name: 'name',
       type: 'text',
       required: true,
     },
@@ -103,7 +103,13 @@ export const Products: CollectionConfig = {
         update: hasRole(['admin', 'staff']),
       },
     },
-    { name: 'variants', type: 'join', collection: 'product-variants', on: 'product' },
+    {
+      name: 'variants',
+      type: 'join',
+      collection: 'product-variants',
+      on: 'product',
+      admin: { defaultColumns: ['name', 'updatedAt'] },
+    },
     {
       type: 'tabs',
       tabs: [

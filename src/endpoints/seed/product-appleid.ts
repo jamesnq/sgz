@@ -1,7 +1,7 @@
 import type { Product } from '@/payload-types'
 
 export const productAppleId: Partial<Product> = {
-  title: 'Apple Id',
+  name: 'Apple Id',
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   image: '{{IMAGE}}',

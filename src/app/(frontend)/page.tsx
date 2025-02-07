@@ -25,7 +25,7 @@ function ProductCard({ product }: { product: Product }) {
             <div className="flex h-full min-h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
               <div>
                 <div className="line-clamp-2 h-auto w-full overflow-hidden text-[14px] font-[400] leading-[17px]">
-                  {product.title}
+                  {product.name}
                 </div>
                 {/* <div className="peer mt-2 flex items-end">
                   <span className="leading-[13px] text-[#FFD25F]">24,500đ ~ 2,376,000đ</span>

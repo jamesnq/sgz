@@ -68,7 +68,7 @@ function Head() {
         />
         <div className="flex-1 md:my-[24px]">
           <h1 className="text-[18px] font-bold leading-none max-sm:text-center md:text-[24px] md:leading-[1.4]">
-            {currentVariant?.title || product.title}
+            {currentVariant?.name || product.name}
           </h1>
         </div>
       </div>
@@ -114,7 +114,7 @@ function ProductVariantCard({
       </div>
       <div className="flex flex-[3] items-start gap-2 p-4">
         <div className="flex h-full flex-1 flex-col justify-between">
-          <div className="">{productVariant.title}</div>
+          <div className="">{productVariant.name}</div>
           {/* <DisplayProductStatus status={productVariant.status} /> */}
         </div>
         <div className="flex flex-col items-end gap-2">

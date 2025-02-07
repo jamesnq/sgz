@@ -211,7 +211,7 @@ export const seed = async ({
     depth: 0,
     data: {
       product: productAppleId.id,
-      title: 'Tạo Tài Khoản Apple ID',
+      name: 'Tạo Tài Khoản Apple ID',
       image: null,
       status: 'ORDER',
       form: appleIdForm.id,
@@ -268,9 +268,9 @@ export const seed = async ({
     { coins: 1600, originalPrice: 1299000, price: 200000 },
     { coins: 3200, originalPrice: 2598000, price: 300000 },
     { coins: 4800, originalPrice: 3897000, price: 400000 },
-    { title: 'Battlepass Gold', originalPrice: 249000, price: 180000 },
-    { title: 'Battlepass Gold + 3200 coins', originalPrice: 2847000, price: 350000 },
-    { title: 'Battlepass Deluxe', originalPrice: 699000, price: 350000 },
+    { name: 'Battlepass Gold', originalPrice: 249000, price: 180000 },
+    { name: 'Battlepass Gold + 3200 coins', originalPrice: 2847000, price: 350000 },
+    { name: 'Battlepass Deluxe', originalPrice: 699000, price: 350000 },
   ]
 
   for (const variant of brawlhallaVariants) {
@@ -279,7 +279,7 @@ export const seed = async ({
       depth: 0,
       data: {
         product: productBrawlhallaCoins.id,
-        title: variant.title || `${variant.coins} coins`,
+        name: variant.name || `${variant.coins} coins`,
         image: null,
         status: 'ORDER',
         form: brawlhallaForm.id,

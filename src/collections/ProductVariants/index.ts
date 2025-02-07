@@ -23,8 +23,8 @@ export const ProductVariants: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['title', 'updatedAt'],
-    useAsTitle: 'title',
+    defaultColumns: ['product', 'name', 'updatedAt'],
+    useAsTitle: 'name',
   },
   fields: [
     {
@@ -34,7 +34,7 @@ export const ProductVariants: CollectionConfig = {
       required: true,
     },
     {
-      name: 'title',
+      name: 'name',
       type: 'text',
       required: true,
     },

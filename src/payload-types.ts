@@ -705,7 +705,7 @@ export interface Transaction {
  */
 export interface Product {
   id: number;
-  title: string;
+  name: string;
   image: number | Media;
   status: 'PRIVATE' | 'PUBLIC' | 'STOPPED';
   sold: number;
@@ -751,7 +751,7 @@ export interface Product {
 export interface ProductVariant {
   id: number;
   product: number | Product;
-  title: string;
+  name: string;
   image?: (number | null) | Media;
   status: 'ORDER' | 'AVAILABLE' | 'STOPPED';
   form?: (number | null) | Form;
@@ -1380,7 +1380,7 @@ export interface TransactionsSelect<T extends boolean = true> {
  * via the `definition` "products_select".
  */
 export interface ProductsSelect<T extends boolean = true> {
-  title?: T;
+  name?: T;
   image?: T;
   status?: T;
   sold?: T;
@@ -1407,7 +1407,7 @@ export interface ProductsSelect<T extends boolean = true> {
  */
 export interface ProductVariantsSelect<T extends boolean = true> {
   product?: T;
-  title?: T;
+  name?: T;
   image?: T;
   status?: T;
   form?: T;
