@@ -12,6 +12,13 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  if (password.length < 6) {
+    return new Response(JSON.stringify({ error: 'Mật khẩu phải có ít nhất 6 ký tự' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     const payload = await getPayload({ config: payloadConfig })
 

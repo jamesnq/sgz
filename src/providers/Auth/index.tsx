@@ -2,11 +2,7 @@
 import { User } from '@/payload-types'
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
-type ResetPassword = (args: {
-  password: string
-  passwordConfirm: string
-  token: string
-}) => Promise<void>
+type ResetPassword = (args: { password: string; token: string }) => Promise<void>
 
 type ForgotPassword = (args: { email: string }) => Promise<void>
 
@@ -29,6 +25,7 @@ type AuthContext = {
 const Context = createContext({} as AuthContext)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {} = useAuth()
   const [user, setUser] = useState<User | null>()
 
   // used to track the single event of logging in or logging out
@@ -36,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [status, setStatus] = useState<undefined | 'loggedOut' | 'loggedIn'>()
   const create = useCallback<Create>(async (args) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/register`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/register`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -49,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
 
       const data = await res.json()
-      
+
       if (!res.ok) {
         throw new Error(data.error || 'Đăng ký thất bại')
       }
@@ -171,7 +168,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         body: JSON.stringify({
           password: args.password,
-          passwordConfirm: args.passwordConfirm,
           token: args.token,
         }),
       })

@@ -32,10 +32,12 @@ import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { HeaderNav } from './Nav'
 
 export default function AuthDialog({ className }: { className?: string }) {
-  const { user, login, create } = useAuth()
+  const { user, login, create, forgotPassword } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [success, setSuccess] = useState<string>('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
   const [loginData, setLoginData] = useState({
     email: '',
     password: '',
@@ -65,10 +67,34 @@ export default function AuthDialog({ className }: { className?: string }) {
     }
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsLoading(true)
+
+    try {
+      await forgotPassword({
+        email: forgotPasswordEmail,
+      })
+      setSuccess('Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn')
+      setForgotPasswordEmail('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể gửi email đặt lại mật khẩu')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSuccess('')
+
+    if (registerData.password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
 
     if (registerData.password !== registerData.passwordConfirm) {
       setError('Mật khẩu xác nhận không khớp')
@@ -119,39 +145,86 @@ export default function AuthDialog({ className }: { className?: string }) {
                 <CardTitle>Đăng nhập</CardTitle>
                 <CardDescription>Đăng nhập vào tài khoản của bạn</CardDescription>
               </CardHeader>
-              <form onSubmit={handleLogin}>
-                <CardContent className="space-y-3">
-                  {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="email@example.com"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData((prev) => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Mật khẩu</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={(e) =>
-                        setLoginData((prev) => ({ ...prev, password: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" type="submit" disabled={isLoading}>
-                    {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                  </Button>
-                </CardFooter>
-              </form>
+              {!showForgotPassword ? (
+                <form onSubmit={handleLogin}>
+                  <CardContent className="space-y-3">
+                    {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={loginData.email}
+                        onChange={(e) =>
+                          setLoginData((prev) => ({ ...prev, email: e.target.value }))
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password">Mật khẩu</Label>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        value={loginData.password}
+                        onChange={(e) =>
+                          setLoginData((prev) => ({ ...prev, password: e.target.value }))
+                        }
+                        required
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex flex-col gap-2">
+                    <Button className="w-full" type="submit" disabled={isLoading}>
+                      {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                    </Button>
+                    <Button
+                      variant="link"
+                      className="text-sm"
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                    >
+                      Quên mật khẩu?
+                    </Button>
+                  </CardFooter>
+                </form>
+              ) : (
+                <form onSubmit={handleForgotPassword}>
+                  <CardContent className="space-y-3">
+                    {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
+                    {success && <div className="text-sm text-green-500 font-medium">{success}</div>}
+                    <div className="space-y-2">
+                      <Label htmlFor="forgot-password-email">Email</Label>
+                      <Input
+                        id="forgot-password-email"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex flex-col gap-2">
+                    <Button className="w-full" type="submit" disabled={isLoading}>
+                      {isLoading ? 'Đang gửi...' : 'Gửi yêu cầu đặt lại mật khẩu'}
+                    </Button>
+                    <Button
+                      variant="link"
+                      className="text-sm"
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(false)
+                        setError('')
+                        setSuccess('')
+                      }}
+                    >
+                      Quay lại đăng nhập
+                    </Button>
+                  </CardFooter>
+                </form>
+              )}
             </Card>
           </TabsContent>
           <TabsContent value="register">
@@ -178,10 +251,13 @@ export default function AuthDialog({ className }: { className?: string }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Mật khẩu</Label>
+                    <Label htmlFor="register-password">
+                      Mật khẩu <span className="text-sm text-gray-500">(ít nhất 6 ký tự)</span>
+                    </Label>
                     <Input
                       id="register-password"
                       type="password"
+                      minLength={6}
                       value={registerData.password}
                       onChange={(e) =>
                         setRegisterData((prev) => ({ ...prev, password: e.target.value }))
@@ -194,6 +270,7 @@ export default function AuthDialog({ className }: { className?: string }) {
                     <Input
                       id="register-confirm-password"
                       type="password"
+                      minLength={6}
                       value={registerData.passwordConfirm}
                       onChange={(e) =>
                         setRegisterData((prev) => ({ ...prev, passwordConfirm: e.target.value }))

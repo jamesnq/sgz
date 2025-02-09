@@ -1,13 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
-import { anyone } from '@/access/anyone'
 import { hasRole } from '@/access/hasRoles'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
     admin: hasRoleOrSelf(['admin', 'staff']),
-    create: anyone,
+    create: () => false,
     delete: hasRole(['admin']),
     read: hasRoleOrSelf(['admin', 'staff']),
     update: hasRoleOrSelf(['admin', 'staff']),
@@ -20,28 +19,70 @@ export const Users: CollectionConfig = {
     tokenExpiration: 60 * 60 * 24 * 30,
     maxLoginAttempts: 5,
     lockTime: 5000,
-    verify: true,
-    forgotPassword: {},
-    // forgotPassword: {
-    //   generateEmailHTML: ({ req, token, user }) => {
-    //     // Use the token provided to allow your user to reset their password
-    //     const resetPasswordURL = `https://yourfrontend.com/reset-password?token=${token}`
+    verify: {
+      generateEmailHTML: ({ req, token, user }) => {
+        // Use the token provided to allow your user to verify their account
+        const url = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/verify?token=${token}`
 
-    //     return `
-    //     <!doctype html>
-    //     <html>
-    //       <body>
-    //         <h1>Here is my custom email template!</h1>
-    //         <p>Hello, ${user.email}!</p>
-    //         <p>Click below to reset your password.</p>
-    //         <p>
-    //           <a href="${resetPasswordURL}">${resetPasswordURL}</a>
-    //         </p>
-    //       </body>
-    //     </html>
-    //   `
-    //   },
-    // },
+        return `
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Xác thực tài khoản</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .btn { display: inline-block; background-color: #000000; color: #ffffff !important; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Xác thực tài khoản của bạn</h1>
+                <p>Chào bạn,</p>
+                <p>Cảm ơn bạn đã đăng ký tài khoản. Vui lòng nhấp vào nút dưới đây để xác thực tài khoản của bạn:</p>
+                <a href="${url}" class="btn" style="color: #ffffff !important;">Xác thực tài khoản</a>
+                <p>Nếu bạn không đăng ký tài khoản, vui lòng bỏ qua email này.</p>
+            </div>
+        </body>
+        </html>
+        `
+      },
+    },
+    forgotPassword: {
+      // @ts-expect-error ts missmatch
+      generateEmailHTML: ({ req, token, user }) => {
+        const resetPasswordURL = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/reset-password?token=${token}`
+
+        return `
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Đặt lại mật khẩu</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .btn { display: inline-block; background-color: #000000; color: #ffffff !important; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Yêu cầu đặt lại mật khẩu</h1>
+                <p>Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+                <p>Vui lòng nhấp vào nút dưới đây để hoàn tất quá trình:</p>
+                <p>
+                    <a href="${resetPasswordURL}" class="btn" style="color: #ffffff !important;">Đặt lại mật khẩu</a>
+                </p>
+                <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này và mật khẩu của bạn sẽ không thay đổi.</p>
+            </div>
+        </body>
+        </html>
+        `
+      },
+    },
   },
   fields: [
     // {
