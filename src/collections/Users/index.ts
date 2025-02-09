@@ -1,20 +1,20 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../../access/authenticated'
+import { anyone } from '@/access/anyone'
 import { hasRole } from '@/access/hasRoles'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
     admin: hasRoleOrSelf(['admin', 'staff']),
-    create: authenticated,
+    create: anyone,
     delete: hasRole(['admin']),
     read: hasRoleOrSelf(['admin', 'staff']),
     update: hasRoleOrSelf(['admin', 'staff']),
   },
   admin: {
-    defaultColumns: ['name', 'email', 'roles'],
-    useAsTitle: 'name',
+    defaultColumns: ['email', 'roles'],
+    useAsTitle: 'email',
   },
   auth: {
     tokenExpiration: 60 * 60 * 24 * 30,
@@ -44,10 +44,10 @@ export const Users: CollectionConfig = {
     // },
   },
   fields: [
-    {
-      name: 'name',
-      type: 'text',
-    },
+    // {
+    //   name: 'name',
+    //   type: 'text',
+    // },
     {
       name: 'balance',
       type: 'number',
@@ -73,9 +73,9 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: ['user'],
     },
-    { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
-    { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
-    { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
+    // { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
+    // { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
+    // { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
   ],
   timestamps: true,
 }
