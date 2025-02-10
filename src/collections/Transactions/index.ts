@@ -11,7 +11,7 @@ export const Transactions: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['amount', 'updatedAt'],
+    defaultColumns: ['user', 'amount', 'description', 'updatedAt'],
     useAsTitle: 'amount',
   },
   fields: [

@@ -834,7 +834,6 @@ export interface Recharge {
     | boolean
     | null;
   amount: number;
-  description: string;
   user: number | User;
   updatedAt: string;
   createdAt: string;
@@ -1450,7 +1449,6 @@ export interface RechargesSelect<T extends boolean = true> {
   gateway?: T;
   data?: T;
   amount?: T;
-  description?: T;
   user?: T;
   updatedAt?: T;
   createdAt?: T;

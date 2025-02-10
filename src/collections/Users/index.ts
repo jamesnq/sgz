@@ -12,7 +12,7 @@ export const Users: CollectionConfig = {
     update: hasRoleOrSelf(['admin', 'staff']),
   },
   admin: {
-    defaultColumns: ['email', 'roles'],
+    defaultColumns: ['email', 'balance', 'roles'],
     useAsTitle: 'email',
   },
   auth: {

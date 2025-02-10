@@ -7,12 +7,13 @@ import React, { useEffect, useState } from 'react'
 import type { Header } from '@/payload-types'
 
 import { Logo } from '@/components/Logo/Logo'
-import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 
 import { LucideLogOut, Package } from 'lucide-react'
 import AuthDialog from './AuthDialog'
 import { HeaderNav } from './Nav'
 
+import { testAction } from '@/app/_actions/test'
+import { DisplayBalance } from '@/components/display-balance'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import {
@@ -128,8 +129,10 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div>
           <HeaderNav data={data} />
           <div className="flex items-center gap-4">
-            <ThemeSelector />
+            {/* <ThemeSelector /> */}
+            <DisplayBalance />
             <AuthDropdown />
+            <Button onClick={() => testAction()}> Test</Button>
           </div>
         </div>
       </div>

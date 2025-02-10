@@ -13,6 +13,12 @@ declare global {
       NEXT_PUBLIC_VERCEL_URL: string
       NEXT_PUBLIC_VERCEL_URL: string
       RESEND_API_KEY: string
+      PAYOS_CLIENT_KEY: string
+      PAYOS_API_KEY: string
+      PAYOS_CHECKSUM_KEY: string
+      PAYOS_WEBHOOK_URL: string
+      PAYOS_CANCEL_URL: string
+      PAYOS_RETURN_URL: string
     }
   }
 }

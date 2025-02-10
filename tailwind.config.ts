@@ -1,9 +1,9 @@
 import tailwindcssAnimate from 'tailwindcss-animate'
 import typography from '@tailwindcss/typography'
 import plugin from 'tailwindcss/plugin'
+import type { Config } from 'tailwindcss'
 
-/** @type {import('tailwindcss').Config} */
-const config = {
+const config: Config = {
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',

@@ -11,7 +11,7 @@ export const Recharges: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['status', 'updatedAt'],
+    defaultColumns: ['orderCode', 'status', 'amount', 'updatedAt'],
     useAsTitle: 'status',
   },
   fields: [
@@ -40,8 +40,6 @@ export const Recharges: CollectionConfig = {
       defaultValue: 'PAYOS',
       options: [{ value: 'PAYOS', label: 'PAYOS' }],
       required: true,
-      unique: true,
-      index: true,
     },
     {
       name: 'data',
@@ -50,11 +48,6 @@ export const Recharges: CollectionConfig = {
     {
       name: 'amount',
       type: 'number',
-      required: true,
-    },
-    {
-      name: 'description',
-      type: 'text',
       required: true,
     },
     {
