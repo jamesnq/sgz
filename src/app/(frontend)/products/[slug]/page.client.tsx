@@ -3,11 +3,13 @@ import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useMemo } from 'react'
 
 import { Media } from '@/components/Media'
-import { Product, ProductVariant } from '@/payload-types'
+import { Form, Product, ProductVariant } from '@/payload-types'
 
+import { fields } from '@/blocks/Form/fields'
 import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   Drawer,
@@ -20,13 +22,14 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer'
 import { cn } from '@/utilities/ui'
-import { Button } from '@/components/ui/button'
 
 type ProductPageContextType = {
   product: Product
   quantity: number
   currentVariant: ProductVariant
-  setCurrentVariant: React.Dispatch<React.SetStateAction<ProductVariant>>
+  shippingInfo: { [key: string]: any }
+  setCurrentVariant: (variant: ProductVariant) => void
+  setShippingInfo: (key: string, value: string | number) => void
 }
 const ProductPageContext = React.createContext<ProductPageContextType | null>(null)
 
@@ -48,9 +51,34 @@ function ProductPageProvider({
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(
     (product?.variants?.docs && product.variants.docs[0]) as ProductVariant,
   )
+  const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>({})
   return (
     <ProductPageContext.Provider
-      value={{ product, currentVariant, setCurrentVariant, quantity: 1 }}
+      value={{
+        product,
+        currentVariant,
+        setCurrentVariant: (variant: ProductVariant) => {
+          setCurrentVariant(variant)
+          const form = variant.form as Form
+          if (form) {
+            const initshippingInfo =
+              form.fields?.reduce(
+                (acc, field: any) => {
+                  acc[field.name] = shippingInfo[field.name] || field.defaultValue
+                  return acc
+                },
+                {} as { [key: string]: string },
+              ) || {}
+
+            setShippingInfo(initshippingInfo)
+          }
+        },
+        quantity: 1,
+        shippingInfo,
+        setShippingInfo: (key, value) => {
+          setShippingInfo((prev) => ({ ...prev, [key]: value }))
+        },
+      }}
     >
       {children}
     </ProductPageContext.Provider>
@@ -168,8 +196,32 @@ function ProductVariantsDrawer({
     </Card>
   )
 }
+function ShippingForm({ form }: { form: Form }) {
+  const { setShippingInfo } = useProductPageContext()
+  return (
+    <Card className="w-full overflow-hidden">
+      <CardHeader>Thông tin đơn hàng</CardHeader>
+      <CardContent className="grid gap-2">
+        {form?.fields &&
+          form.fields.map((field, index) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+            if (Field) {
+              return (
+                <div className="mb-4 last:mb-0" key={index}>
+                  <Field field={field} onChange={setShippingInfo} />
+                </div>
+              )
+            }
+            return null
+          })}
+      </CardContent>
+    </Card>
+  )
+}
 function Screen() {
-  const { product } = useProductPageContext()
+  const { product, currentVariant } = useProductPageContext()
+  console.log('🚀 ~ Screen ~ currentVariant:', currentVariant)
   return (
     <Shell>
       <Head />
@@ -196,13 +248,12 @@ function Screen() {
             className="md:hidden mb-2"
             productVariants={(product.variants?.docs as ProductVariant[]) || []}
           ></ProductVariantsDrawer>
-          {/* <div className={'space-y-2'}>
-            {(product.form?.fields.length ||
-              collectionInit.products[0].formTemplate?.fields.length) && (
-              <ShippingForm form={product.formTemplate}></ShippingForm>
+          <div className={'space-y-2'}>
+            {currentVariant.form && (
+              <ShippingForm form={currentVariant.form as Form}></ShippingForm>
             )}
-            <Checkout product={product}></Checkout>
-          </div> */}
+            {/* <Checkout product={product}></Checkout> */}
+          </div>
         </div>
       </div>
     </Shell>

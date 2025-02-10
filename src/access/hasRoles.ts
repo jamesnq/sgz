@@ -9,3 +9,10 @@ export const hasRole =
     }
     return req.user.roles.some((role) => roles.includes(role))
   }
+
+export const userHasRole = (user: User | null, roles: User['roles']) => {
+  if (!user) {
+    return false
+  }
+  return user.roles.some((role) => roles.includes(role))
+}

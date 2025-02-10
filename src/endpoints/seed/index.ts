@@ -111,10 +111,10 @@ export const seed = async ({
     payload.create({
       collection: 'users',
       data: {
-        name: 'Demo Author',
         email: 'test@example.com',
         password: '123123',
         roles: ['user', 'admin'],
+        _verified: true,
       },
     }),
     payload.create({
@@ -238,7 +238,7 @@ export const seed = async ({
         data: JSON.parse(
           JSON.stringify({
             ...productBrawlhallaCoinsData,
-            title: `Brawlhalla Mammoth Coin ${platform}`,
+            name: `Brawlhalla Mammoth Coin ${platform}`,
             slug: `brawlhalla-coins-${platform}`,
           }).replace(/"\{\{IMAGE\}\}"/g, String(mmcMediaId)),
         ),
@@ -279,7 +279,7 @@ export const seed = async ({
       depth: 0,
       data: {
         product: productBrawlhallaCoins.id,
-        name: variant.name || `${variant.coins} coins`,
+        name: `${variant.name || `${variant.coins} coins`} - Brawlhalla`,
         image: null,
         status: 'ORDER',
         form: brawlhallaForm.id,

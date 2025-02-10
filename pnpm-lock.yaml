@@ -11,6 +11,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.45.4(react@19.0.0))
+      '@payload-enchants/fields-select':
+        specifier: ^1.2.2
+        version: 1.2.2(payload@3.22.0(graphql@16.10.0)(monaco-editor@0.52.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.7.3))
       '@payload-enchants/sdk':
         specifier: ^1.2.2
         version: 1.2.2(typescript@5.7.3)
@@ -1308,6 +1311,11 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@payload-enchants/fields-select@1.2.2':
+    resolution: {integrity: sha512-D4wejwqNIYrUedu9HXnhVKhDNYtFMhfGNZcSUe25r8rkbHwsKkbL0ahx+/911IdFf8BgKvHXfiqn0DPMMf8QUg==}
+    peerDependencies:
+      payload: ^3.0.0-beta.61
 
   '@payload-enchants/sdk@1.2.2':
     resolution: {integrity: sha512-ULKOvDbWYkifjEIYUUmIIH9BUTOIzlFUs6mBaljY4ZmR4rKuZR3RhccdeNiTw8+kLHegnJ1QIxIuGlvVLB9aLg==}
@@ -6394,6 +6402,10 @@ snapshots:
       fastq: 1.19.0
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@payload-enchants/fields-select@1.2.2(payload@3.22.0(graphql@16.10.0)(monaco-editor@0.52.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.7.3))':
+    dependencies:
+      payload: 3.22.0(graphql@16.10.0)(monaco-editor@0.52.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.7.3)
 
   '@payload-enchants/sdk@1.2.2(typescript@5.7.3)':
     dependencies:

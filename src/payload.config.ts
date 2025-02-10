@@ -8,19 +8,21 @@ import { fileURLToPath } from 'url'
 
 import { defaultLexical } from '@/fields/defaultLexical'
 import { Categories } from './collections/Categories'
+import { Forms } from './collections/Forms'
+import { FormSubmissions } from './collections/FormSubmission'
 import { Media } from './collections/Media'
+import { Orders } from './collections/Orders'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Products } from './collections/Products'
+import { ProductVariants } from './collections/ProductVariants'
+import { Recharges } from './collections/Recharges'
+import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
-import { Orders } from './collections/Orders'
-import { ProductVariants } from './collections/ProductVariants'
-import { Transactions } from './collections/Transactions'
-import { Recharges } from './collections/Recharges'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -81,6 +83,8 @@ export default buildConfig({
     ProductVariants,
     Orders,
     Recharges,
+    Forms,
+    FormSubmissions,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

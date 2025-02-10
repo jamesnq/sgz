@@ -8,6 +8,7 @@ import { cache } from 'react'
 
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
+import { ProductVariant } from '@/payload-types'
 
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })
@@ -75,5 +76,29 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
       (a: any, b: any) => a.originalPrice - b.originalPrice,
     )
   }
+  if (!product || !product.variants?.docs) {
+    return null
+  }
+
+  const formIds = Array.from(
+    new Set(
+      product.variants?.docs?.map((variant) => (variant as ProductVariant).form).filter(Boolean) ||
+        [],
+    ),
+  )
+
+  const { docs: forms } = await payload.find({
+    collection: 'forms',
+    where: {
+      id: {
+        in: formIds,
+      },
+    },
+  })
+  product.variants.docs.forEach((variant) => {
+    ;(variant as ProductVariant).form = forms.find(
+      (form) => form.id === (variant as ProductVariant).form,
+    )
+  })
   return product
 })
