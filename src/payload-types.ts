@@ -780,12 +780,14 @@ export interface FormSubmission {
   id: number;
   user: number | User;
   form: number | Form;
-  submissionData?:
+  submissionData:
     | {
-        field: string;
-        value: string;
-        id?: string | null;
-      }[]
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
     | null;
   updatedAt: string;
   createdAt: string;
@@ -1525,13 +1527,7 @@ export interface FormsSelect<T extends boolean = true> {
 export interface FormSubmissionsSelect<T extends boolean = true> {
   user?: T;
   form?: T;
-  submissionData?:
-    | T
-    | {
-        field?: T;
-        value?: T;
-        id?: T;
-      };
+  submissionData?: T;
   updatedAt?: T;
   createdAt?: T;
 }

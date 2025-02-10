@@ -1,10 +1,12 @@
 'use client'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
+import AuthDialog from '@/Header/AuthDialog'
+import { checkoutAction } from '@/app/_actions/checkout'
 import { fields } from '@/blocks/Form/fields'
 import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
@@ -21,11 +23,24 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
+import { Input } from '@/components/ui/input'
+import { useAuth } from '@/providers/Auth'
+import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
-
+import { Loader2, MinusIcon, PlusIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+// TODO Optimize context rerender
 type ProductPageContextType = {
   product: Product
   quantity: number
+  setQuantity: (quantity: number) => void
+  incQuantity: (by?: number) => void
+  decQuantity: (by?: number) => void
+  calc: {
+    totalOriginalPrice: number
+    totalDiscountPrice: number
+    totalPrice: number
+  }
   currentVariant: ProductVariant
   shippingInfo: { [key: string]: any }
   setCurrentVariant: (variant: ProductVariant) => void
@@ -51,11 +66,31 @@ function ProductPageProvider({
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(
     (product?.variants?.docs && product.variants.docs[0]) as ProductVariant,
   )
+
+  const [quantity, setQuantity] = React.useState(1)
+
   const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>({})
+  console.log('🚀 ~ shippingInfo:', shippingInfo)
+  const [calc, setCalc] = React.useState<{
+    totalOriginalPrice: number
+    totalDiscountPrice: number
+    totalPrice: number
+  }>({
+    totalOriginalPrice: 0,
+    totalDiscountPrice: 0,
+    totalPrice: 0,
+  })
+  React.useEffect(() => {
+    const totalOriginalPrice = currentVariant.originalPrice * quantity
+    const totalPrice = currentVariant.price * quantity
+    const totalDiscountPrice = totalOriginalPrice - totalPrice
+    setCalc({ totalOriginalPrice, totalDiscountPrice, totalPrice })
+  }, [currentVariant, quantity])
   return (
     <ProductPageContext.Provider
       value={{
         product,
+        calc,
         currentVariant,
         setCurrentVariant: (variant: ProductVariant) => {
           setCurrentVariant(variant)
@@ -73,7 +108,14 @@ function ProductPageProvider({
             setShippingInfo(initshippingInfo)
           }
         },
-        quantity: 1,
+        quantity,
+        setQuantity,
+        incQuantity(by = 1) {
+          setQuantity((prev) => prev + by)
+        },
+        decQuantity(by = 1) {
+          setQuantity((prev) => prev - by)
+        },
         shippingInfo,
         setShippingInfo: (key, value) => {
           setShippingInfo((prev) => ({ ...prev, [key]: value }))
@@ -146,12 +188,11 @@ function ProductVariantCard({
           {/* <DisplayProductStatus status={productVariant.status} /> */}
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="font-bold">{productVariant.price}</div>
+          <div className="font-bold">{formatPrice(productVariant.price, 'VND')}</div>
           {discountPercentage > 0 && (
             <>
               <div className="text-gray-500 line-through">
-                {productVariant.originalPrice}
-                {/* {formatPrice(productVariant.originalPrice, productVariant.currency)} */}
+                {formatPrice(productVariant.originalPrice, 'VND')}
               </div>
               <Badge>-{discountPercentage.toFixed(0)}%</Badge>
             </>
@@ -209,7 +250,11 @@ function ShippingForm({ form }: { form: Form }) {
             if (Field) {
               return (
                 <div className="mb-4 last:mb-0" key={index}>
-                  <Field field={field} onChange={setShippingInfo} />
+                  <Field
+                    field={field}
+                    //@ts-expect-error ignore
+                    onChange={(value: string) => setShippingInfo(field.name, value)}
+                  />
                 </div>
               )
             }
@@ -219,9 +264,108 @@ function ShippingForm({ form }: { form: Form }) {
     </Card>
   )
 }
+function CheckoutButton() {
+  const router = useRouter()
+
+  const { currentVariant, quantity, shippingInfo } = useProductPageContext()
+
+  const [isPending, setIsPending] = useState(false)
+  const checkout = () => {
+    setIsPending(true)
+    checkoutAction({
+      quantity,
+      productVariantId: currentVariant.id,
+      shippingFields: shippingInfo,
+    })
+      .then((x) => {
+        setIsPending(false)
+        if (!x?.data?.order) return
+        router.push('/user/order/' + x.data.order.id)
+      })
+      .finally(() => {
+        setIsPending(false)
+      })
+  }
+
+  return (
+    <Button className="w-full" disabled={isPending} onClick={() => checkout()}>
+      {isPending && <Loader2 className="animate-spin" />}
+      Thanh toán
+    </Button>
+  )
+}
+function Checkout({ className }: { className?: string }) {
+  const { user } = useAuth()
+  const { currentVariant, quantity, incQuantity, decQuantity, setQuantity, calc } =
+    useProductPageContext()
+
+  return (
+    <Card className="p-6">
+      {currentVariant.min !== 1 && currentVariant.max !== 1 && (
+        <div className="flex justify-between">
+          <span>Số lượng</span>
+          <div className="flex">
+            <Button
+              id={`decrement-quantity`}
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8 shrink-0 rounded-r-none"
+              onClick={() => {
+                decQuantity()
+              }}
+            >
+              <MinusIcon className="size-3" aria-hidden="true" />
+            </Button>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              className="h-8 w-16 rounded-none border-x-0"
+              value={quantity}
+              onChange={(e) => {
+                const value = e.target.value
+                const parsedValue = parseInt(value, 10)
+                if (isNaN(parsedValue)) return
+                setQuantity(parsedValue)
+              }}
+            />
+            <Button
+              id={`increment-quantity`}
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8 shrink-0 rounded-l-none"
+              onClick={() => {
+                incQuantity()
+              }}
+            >
+              <PlusIcon className="size-3" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex w-full items-center justify-between space-y-2">
+        <span>Giá gốc</span>
+        <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
+      </div>
+      <div className="flex w-full items-center justify-between">
+        <span>Giá giảm</span>
+        <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
+      </div>
+      <div className="mt-4 space-y-4">
+        <div className="flex w-full items-center justify-between">
+          <span className="font-bold">Tổng tiền</span>
+          <span className="font-bold">{formatPrice(calc.totalPrice, 'VND')}</span>
+        </div>
+        {user ? <CheckoutButton></CheckoutButton> : <AuthDialog className="w-full"></AuthDialog>}
+      </div>
+    </Card>
+  )
+}
 function Screen() {
   const { product, currentVariant } = useProductPageContext()
-  console.log('🚀 ~ Screen ~ currentVariant:', currentVariant)
   return (
     <Shell>
       <Head />
@@ -252,7 +396,7 @@ function Screen() {
             {currentVariant.form && (
               <ShippingForm form={currentVariant.form as Form}></ShippingForm>
             )}
-            {/* <Checkout product={product}></Checkout> */}
+            <Checkout></Checkout>
           </div>
         </div>
       </div>

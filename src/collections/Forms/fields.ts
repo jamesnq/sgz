@@ -429,7 +429,7 @@ const Message: Block = {
     singular: 'Message',
   },
 }
-
+// TODO change name to key
 export const fields = {
   checkbox: Checkbox,
   country: Country,

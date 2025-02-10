@@ -4,6 +4,7 @@ import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { fields } from './fields'
 // TODO check access permissions
+// TODO check duplicate key
 export const Forms: CollectionConfig = {
   slug: 'forms',
   access: {

@@ -1,4 +1,5 @@
 'use server'
+import { Form } from '@/payload-types'
 import { authActionClient } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
@@ -11,7 +12,7 @@ export const checkoutAction = authActionClient
   .action(async ({ parsedInput: { productVariantId, quantity, shippingFields }, ctx }) => {
     const { user } = ctx
     const payload = await getPayload({ config: payloadConfig })
-    const pr = await payload.findByID({
+    const pv = await payload.findByID({
       collection: 'product-variants',
       id: productVariantId,
       depth: 1,
@@ -26,26 +27,23 @@ export const checkoutAction = authActionClient
       },
     })
 
-    if (!pr) {
+    if (!pv) {
       throw new Error('Không tìm thấy sản phẩm')
     }
-    if (pr.status == 'STOPPED') {
+    if (pv.status == 'STOPPED') {
       throw new Error('Sản phẩm đã ngừng bán')
     }
-    if (pr.min && quantity < pr.min) {
-      throw new Error(`Số lượng mua tối thiểu là ${pr.min}`)
+    if (pv.min && quantity < pv.min) {
+      throw new Error(`Số lượng mua tối thiểu là ${pv.min}`)
     }
-    if (pr.max && quantity > pr.max) {
-      throw new Error(`Số lượng mua tối đa là ${pr.max}`)
+    if (pv.max && quantity > pv.max) {
+      throw new Error(`Số lượng mua tối đa là ${pv.max}`)
     }
-    if (pr.form && !shippingFields) {
+    if (pv.form && !shippingFields) {
       throw new Error('Vui lòng cung cấp thông tin giao hàng')
     }
-    // const formSubmission = await payload.create({
-    //   collection: 'form-submissions',
-    //   data: { form: (pr.form as Form).id, submissionData: [{}] },
-    // })
-    const totalPrice = quantity * pr.price
+
+    const totalPrice = quantity * pv.price
     const { users, transactions, orders } = payload.db.tables
 
     const order = await payload.db.drizzle.transaction(async (tx) => {
@@ -55,12 +53,25 @@ export const checkoutAction = authActionClient
         .where(eq(users.id, user.id))
         .returning({ balance: users.balance })
       if (!newUser) throw new Error('User not found')
+      let formSubmissionId: any = undefined
+      if (pv.form) {
+        const res = await payload.create({
+          collection: 'form-submissions',
+          data: {
+            form: (pv.form as Form).id,
+            user: user.id,
+            submissionData: shippingFields,
+          },
+        })
+        formSubmissionId = res.id
+      }
       const [order] = await tx
         .insert(orders)
         .values({
           status: 'IN_QUEUE',
           orderedBy: user.id,
-          productVariant: pr.id,
+          productVariant: pv.id,
+          formSubmission: formSubmissionId,
           quantity,
           totalPrice,
         })
