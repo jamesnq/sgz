@@ -7,6 +7,7 @@ export const Orders: CollectionConfig = {
   slug: 'orders',
   access: {
     read: ({ req }) => {
+      // allow read to admin and staff or orderedBy
       if (!hasRole(['admin', 'staff'])({ req })) return false
       return { orderedBy: { equals: req.user?.id } }
     },
@@ -15,7 +16,7 @@ export const Orders: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['id', 'createdAt'],
+    defaultColumns: ['id', 'status', 'orderedBy', 'productVariant', 'createdAt'],
     useAsTitle: 'id',
   },
   fields: [
@@ -38,6 +39,9 @@ export const Orders: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'handlers',
@@ -45,6 +49,9 @@ export const Orders: CollectionConfig = {
       relationTo: 'users',
       required: true,
       hasMany: true,
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'productVariant',
@@ -52,17 +59,18 @@ export const Orders: CollectionConfig = {
       relationTo: 'product-variants',
       required: true,
       access: {
-        create: hasRole(['admin', 'staff']),
         update: hasRole(['admin']),
+      },
+      admin: {
+        readOnly: true,
       },
     },
     {
       name: 'formSubmission',
       type: 'relationship',
       relationTo: 'form-submissions',
-      access: {
-        create: hasRole(['admin', 'staff']),
-        update: hasRole(['admin', 'staff']),
+      admin: {
+        readOnly: true,
       },
     },
     {
@@ -73,6 +81,9 @@ export const Orders: CollectionConfig = {
         create: hasRole(['admin']),
         update: hasRole(['admin']),
       },
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'quantity',
@@ -81,6 +92,9 @@ export const Orders: CollectionConfig = {
       access: {
         create: hasRole(['admin']),
         update: hasRole(['admin']),
+      },
+      admin: {
+        readOnly: true,
       },
     },
     {

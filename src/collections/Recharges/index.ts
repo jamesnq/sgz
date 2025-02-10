@@ -1,14 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
+import { noOne } from '@/access/noOne'
 // TODO indexes orderCode, gateway
 export const Recharges: CollectionConfig = {
   slug: 'recharges',
   access: {
     read: hasRole(['admin']),
-    update: hasRole(['admin']),
-    create: hasRole(['admin']),
-    delete: hasRole(['admin']),
+    update: noOne,
+    create: noOne,
+    delete: noOne,
   },
   admin: {
     defaultColumns: ['orderCode', 'status', 'amount', 'updatedAt'],

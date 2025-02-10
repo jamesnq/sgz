@@ -1,14 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
+import { noOne } from '@/access/noOne'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
   access: {
     read: hasRole(['admin']),
-    update: hasRole(['admin']),
-    create: hasRole(['admin']),
-    delete: hasRole(['admin']),
+    update: noOne,
+    create: noOne,
+    delete: noOne,
   },
   admin: {
     defaultColumns: ['user', 'amount', 'description', 'updatedAt'],

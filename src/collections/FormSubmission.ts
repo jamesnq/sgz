@@ -1,17 +1,19 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '@/access/authenticated'
-// TODO check access permissions
+import { noOne } from '@/access/noOne'
+import { hasRole } from '@/access/hasRoles'
+
 export const FormSubmissions: CollectionConfig = {
   slug: 'form-submissions',
   access: {
-    create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    create: noOne,
+    delete: noOne,
+    read: hasRole(['admin', 'staff']),
+    update: hasRole(['admin', 'staff']),
   },
   admin: {
     useAsTitle: 'form',
+    defaultColumns: ['id', 'form', 'user', 'createdAt'],
   },
   fields: [
     {
@@ -19,12 +21,20 @@ export const FormSubmissions: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
     },
     {
       name: 'form',
       type: 'relationship',
       relationTo: 'forms',
       required: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
       // @ts-expect-error ts missmatch
       validate: async (value, { req: { payload }, req }) => {
         /* Don't run in the client side */

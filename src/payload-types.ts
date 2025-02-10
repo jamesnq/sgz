@@ -827,19 +827,10 @@ export interface Redirect {
   from: string;
   to?: {
     type?: ('reference' | 'custom') | null;
-    reference?:
-      | ({
-          relationTo: 'pages';
-          value: number | Page;
-        } | null)
-      | ({
-          relationTo: 'posts';
-          value: number | Post;
-        } | null)
-      | ({
-          relationTo: 'products';
-          value: number | Product;
-        } | null);
+    reference?: {
+      relationTo: 'products';
+      value: number | Product;
+    } | null;
     url?: string | null;
   };
   updatedAt: string;

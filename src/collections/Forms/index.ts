@@ -1,17 +1,16 @@
 import type { CollectionConfig } from 'payload'
 
+import { hasRole } from '@/access/hasRoles'
 import { anyone } from '../../access/anyone'
-import { authenticated } from '../../access/authenticated'
 import { fields } from './fields'
-// TODO check access permissions
 // TODO check duplicate key
 export const Forms: CollectionConfig = {
   slug: 'forms',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: hasRole(['admin', 'staff']),
+    delete: hasRole(['admin', 'staff']),
     read: anyone,
-    update: authenticated,
+    update: hasRole(['admin', 'staff']),
   },
   admin: {
     useAsTitle: 'title',

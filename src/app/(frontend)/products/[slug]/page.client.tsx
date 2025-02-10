@@ -294,19 +294,21 @@ function CheckoutButton() {
     </Button>
   )
 }
+
 function Checkout({ className }: { className?: string }) {
   const { user } = useAuth()
   const { currentVariant, quantity, incQuantity, decQuantity, setQuantity, calc } =
     useProductPageContext()
-
+  const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
   return (
     <Card className="p-6">
-      {currentVariant.min !== 1 && currentVariant.max !== 1 && (
+      {currentVariant.max > 1 && (
         <div className="flex justify-between">
           <span>Số lượng</span>
           <div className="flex">
             <Button
               id={`decrement-quantity`}
+              disabled={quantity <= currentVariant.min}
               type="button"
               variant="outline"
               size="icon"
@@ -322,16 +324,21 @@ function Checkout({ className }: { className?: string }) {
               inputMode="numeric"
               min={1}
               className="h-8 w-16 rounded-none border-x-0"
-              value={quantity}
-              onChange={(e) => {
-                const value = e.target.value
-                const parsedValue = parseInt(value, 10)
-                if (isNaN(parsedValue)) return
+              value={editingQuantity != undefined ? editingQuantity : quantity}
+              onFocus={() => setEditingQuantity(quantity)}
+              onChange={(e) => setEditingQuantity(parseInt(e.target.value, 10))}
+              onBlur={(e) => {
+                const parsedValue = Math.min(
+                  Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
+                  currentVariant.max,
+                )
                 setQuantity(parsedValue)
+                setEditingQuantity(undefined)
               }}
             />
             <Button
               id={`increment-quantity`}
+              disabled={quantity >= currentVariant.max}
               type="button"
               variant="outline"
               size="icon"
@@ -364,6 +371,7 @@ function Checkout({ className }: { className?: string }) {
     </Card>
   )
 }
+
 function Screen() {
   const { product, currentVariant } = useProductPageContext()
   return (
@@ -403,6 +411,7 @@ function Screen() {
     </Shell>
   )
 }
+
 const PageClient = ({ product }: { product: Product }) => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
