@@ -54,7 +54,6 @@ export const checkoutAction = authActionClient
         .returning({ balance: users.balance })
       if (!newUser) throw new Error('User not found')
       let formSubmissionId: any = undefined
-      // TODO validate form submission
       if (pv.form) {
         const res = await payload.create({
           collection: 'form-submissions',

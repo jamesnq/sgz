@@ -16,6 +16,12 @@ export const updateFormSubmissionAction = authActionClient
       where: { id: { equals: id } },
       data: { submissionData: shippingFields },
       user,
+      limit: 1,
+      overrideAccess: false,
     })
+    if (res.errors.length > 0) {
+      return { message: 'Cập nhật thông tin thất bại' }
+    }
+
     return { message: 'Cập nhật thông tin thành công' }
   })

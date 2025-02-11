@@ -1,7 +1,7 @@
 'use client'
 
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Shell } from '@/components/shell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -102,4 +102,10 @@ const ResetPasswordPage: React.FC = () => {
   )
 }
 
-export default ResetPasswordPage
+export default function PageClient() {
+  return (
+    <Suspense>
+      <ResetPasswordPage />
+    </Suspense>
+  )
+}

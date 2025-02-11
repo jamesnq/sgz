@@ -63,6 +63,38 @@ export const FormSubmissions: CollectionConfig = {
       name: 'submissionData',
       type: 'json',
       required: true,
+      validate: async (_value, { data, req: { payload } }) => {
+        /* Don't run in the client side */
+        if (!payload) {
+          return true
+        }
+
+        const submissionData = (data as any).submissionData
+        const form = await payload.findByID({
+          id: (data as any).form,
+          collection: 'forms',
+        })
+
+        if (!form) {
+          return 'Form not found'
+        }
+        if (form.fields?.length === 0) {
+          return 'Form has no fields'
+        }
+        for (const [key, value] of Object.entries(submissionData)) {
+          if (!form.fields?.some((f: any) => f.name === key)) {
+            return `Field ${key} not found in form`
+          }
+          const requiredFields = form.fields.filter((f: any) => f.required).map((f: any) => f.name)
+          for (const field of requiredFields) {
+            if (!submissionData[field]) {
+              return `Field ${field} is required`
+            }
+          }
+        }
+
+        return true
+      },
     },
   ],
 }

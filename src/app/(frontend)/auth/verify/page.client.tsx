@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoaderCircle, ShieldCheck, ShieldX } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 const VerifyPage = () => {
   const router = useRouter()
@@ -98,4 +98,10 @@ const VerifyPage = () => {
   )
 }
 
-export default VerifyPage
+export default function PageClient() {
+  return (
+    <Suspense>
+      <VerifyPage />
+    </Suspense>
+  )
+}
