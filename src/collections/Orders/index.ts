@@ -3,6 +3,18 @@ import type { CollectionConfig } from 'payload'
 import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
+import { MediaBlock } from '@/blocks/MediaBlock/config'
+import {
+  lexicalEditor,
+  HeadingFeature,
+  BlocksFeature,
+  FixedToolbarFeature,
+  InlineToolbarFeature,
+  HorizontalRuleFeature,
+} from '@payloadcms/richtext-lexical'
+import { Banner } from '@/blocks/Banner/config'
+import { Code } from '@/blocks/Code/config'
+
 export const Orders: CollectionConfig = {
   slug: 'orders',
   access: {
@@ -14,6 +26,19 @@ export const Orders: CollectionConfig = {
     update: hasRoleOrOrderBy(['admin', 'staff']),
     create: authenticated,
     delete: hasRole(['admin']),
+  },
+  hooks: {
+    beforeChange: [
+      ({ originalDoc, data, req }) => {
+        const user = req.user
+        if (!user) throw new Error('Not authenticated')
+
+        if (!data.handlers.includes(user.id)) {
+          data.handlers.push(user.id)
+        }
+        return data
+      },
+    ],
   },
   admin: {
     defaultColumns: ['id', 'status', 'orderedBy', 'productVariant', 'createdAt'],
@@ -99,7 +124,7 @@ export const Orders: CollectionConfig = {
     },
     {
       name: 'note',
-      type: 'text',
+      type: 'richText',
       access: {
         create: hasRole(['admin', 'staff']),
         read: hasRole(['admin', 'staff']),
@@ -108,7 +133,19 @@ export const Orders: CollectionConfig = {
     },
     {
       name: 'message',
-      type: 'textarea',
+      type: 'richText',
+      editor: lexicalEditor({
+        features: ({ rootFeatures }) => {
+          return [
+            ...rootFeatures,
+            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+            FixedToolbarFeature(),
+            InlineToolbarFeature(),
+            HorizontalRuleFeature(),
+          ]
+        },
+      }),
       access: {
         create: hasRole(['admin', 'staff']),
         read: hasRole(['admin', 'staff']),

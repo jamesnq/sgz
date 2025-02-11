@@ -243,9 +243,8 @@ function ShippingForm({ form }: { form: Form }) {
     <Card className="w-full overflow-hidden">
       <CardHeader>Thông tin đơn hàng</CardHeader>
       <CardContent className="grid gap-2">
-        {form?.fields &&
+        {form.fields &&
           form.fields.map((field, index) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
             if (Field) {
               return (
@@ -280,7 +279,7 @@ function CheckoutButton() {
       .then((x) => {
         setIsPending(false)
         if (!x?.data?.order) return
-        router.push('/user/order/' + x.data.order.id)
+        router.push('/user/orders/' + x.data.order.id)
       })
       .finally(() => {
         setIsPending(false)

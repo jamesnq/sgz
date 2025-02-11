@@ -86,5 +86,6 @@ export const checkoutAction = authActionClient
       })
       return order
     })
+
     return { order }
   })

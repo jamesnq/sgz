@@ -59,13 +59,13 @@ function OrderCard({ o }: { o: Order }) {
             <span>x{o.quantity}</span>
           </div>
           <div className="flex flex-wrap gap-[8px] max-md:w-full md:flex-col">
-            <Link href={`/user/order/${o.id}`}>
+            <Link href={`/user/orders/${o.id}`}>
               <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
                 <Eye size={18}></Eye>
                 <span>Chi tiết</span>
               </Button>
             </Link>
-            <Link href={`/user/order/${o.id}#update`}>
+            <Link href={`/user/orders/${o.id}#update`}>
               <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
                 <Pencil size={18}></Pencil>
                 <span>Sửa thông tin</span>

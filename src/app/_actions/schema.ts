@@ -8,3 +8,7 @@ export const CheckoutSchema = z.object({
   quantity: z.coerce.number(),
   shippingFields: z.any(),
 })
+export const UpdateFormSubmissionSchema = z.object({
+  id: z.coerce.number(),
+  shippingFields: z.any(),
+})
