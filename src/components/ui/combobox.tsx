@@ -26,7 +26,7 @@ export function Combobox({
   defaultValue?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(defaultValue)
+  const [value, setValue] = useState(defaultValue || '')
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

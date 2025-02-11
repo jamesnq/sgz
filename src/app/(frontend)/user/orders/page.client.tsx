@@ -1,10 +1,8 @@
 'use client'
-
 import { Media } from '@/components/Media'
 import { Shell } from '@/components/shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
@@ -84,12 +82,14 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
   const router = useRouter()
   const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
   const debouncedSearch = useDebounce(search, 500)
-  const [status, setStatus] = useQueryState('status', parseAsString.withDefault(''))
+  const [status, setStatus] = useQueryState(
+    'status',
+    parseAsString.withDefault('').withOptions({ shallow: false }),
+  )
   useEffect(() => {
     const params = new URLSearchParams({ q: debouncedSearch, status }).toString()
     const url = `/user/orders${params ? `?${params}` : ''}`
     router.push(url)
-    console.log('🚀 ~ useEffect ~ url:', url)
   }, [debouncedSearch, status, router])
   // const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   // const { data, isLoading } = tsr.user.orders.useQuery({
@@ -115,17 +115,18 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
         <div> thông tin các sản phẩm bạn đã mua</div>
         <div className="md:flex md:justify-end">
           <div className="flex gap-2 max-md:flex-col">
-            <Combobox
-              data={Object.keys(orderStatus).map((k) => ({
-                value: k,
-                label: orderStatus[k],
-              }))}
-              onValueChange={(v) => {
-                setStatus(v)
-              }}
-              defaultValue={status}
-              placeholder="Chọn trạng thái"
-            ></Combobox>
+            <div className="flex gap-2">
+              {Object.entries(orderStatus).map(([k, v]) => (
+                <Button
+                  key={k}
+                  className="w-full rounded-full"
+                  variant={status === k ? 'default' : 'outline'}
+                  onClick={() => setStatus(k)}
+                >
+                  {v}
+                </Button>
+              ))}
+            </div>
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
