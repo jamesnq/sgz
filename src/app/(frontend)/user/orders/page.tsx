@@ -4,15 +4,17 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import PageClient from './page.client'
 import { ProductVariant } from '@/payload-types'
-
+import { z } from 'zod'
+const SearchParamsSchema = z.object({
+  q: z.string().optional(),
+  status: z.string().optional(),
+  page: z.coerce.number().default(1),
+})
 type Args = {
-  searchParams: Promise<{
-    q: string
-    status: string
-  }>
+  searchParams: Promise<any>
 }
 export default async function Page({ searchParams: searchParamsPromise }: Args) {
-  const { q: query, status } = await searchParamsPromise
+  const { q: query, status, page } = SearchParamsSchema.parse(await searchParamsPromise)
   const payload = await getPayload({ config: configPromise })
   const headersData = await headers()
   const { user } = await payload.auth({
@@ -45,8 +47,6 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
       })
     }
   }
-  console.log('🚀 ~ Page ~ queryWhere:', queryWhere)
-
   const res = await payload.find({
     collection: 'orders',
     depth: 1,
@@ -54,6 +54,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     user,
     overrideAccess: false,
     where: queryWhere,
+    page,
     select: {
       id: true,
       status: true,
@@ -65,7 +66,6 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     },
   })
   const productIds = Array.from(new Set(res.docs.map((order: any) => order.productVariant.product)))
-  console.log('🚀 ~ Page ~ productIds:', productIds)
   if (productIds.length) {
     const { docs: products } = await payload.find({
       collection: 'products',
@@ -98,7 +98,5 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
       }
     })
   }
-  console.log('🚀 ~ res.docs=res.docs.map ~ res:', res)
-
   return <PageClient data={res} />
 }

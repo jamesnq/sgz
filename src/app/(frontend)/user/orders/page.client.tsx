@@ -2,7 +2,7 @@
 import { Media } from '@/components/Media'
 import { Shell } from '@/components/shell'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
@@ -10,10 +10,10 @@ import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus, orderStatus } from '@/utilities/getOrderStatus'
 import { useDebounce } from '@/utilities/useDebounce'
-import { Eye, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { parseAsString, useQueryState } from 'nuqs'
+import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
 import { useEffect } from 'react'
 
@@ -86,27 +86,19 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
     'status',
     parseAsString.withDefault('').withOptions({ shallow: false }),
   )
+  const [page, setPage] = useQueryState(
+    'page',
+    parseAsInteger.withDefault(data.page || 1).withOptions({ shallow: false }),
+  )
   useEffect(() => {
-    const params = new URLSearchParams({ q: debouncedSearch, status }).toString()
+    const params = new URLSearchParams({
+      q: debouncedSearch,
+      status,
+      page: page.toString(),
+    }).toString()
     const url = `/user/orders${params ? `?${params}` : ''}`
     router.push(url)
-  }, [debouncedSearch, status, router])
-  // const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
-  // const { data, isLoading } = tsr.user.orders.useQuery({
-  //   queryKey: ["user.orders", page, debouncedSearch, status],
-  //   queryData: {
-  //     query: {
-  //       page,
-  //       search: debouncedSearch,
-  //       status: (status as any) || undefined,
-  //     },
-  //   },
-  // });
-  // useEffect(() => {
-  //   if (data && data.body.maxPage < page) {
-  //     setPage(1);
-  //   }
-  // }, [data, page, setPage]);
+  }, [debouncedSearch, status, page, router])
 
   return (
     <Card className="max-md:border-0">
@@ -116,6 +108,13 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
         <div className="md:flex md:justify-end">
           <div className="flex gap-2 max-md:flex-col">
             <div className="flex gap-2">
+              <Button
+                className="w-full rounded-full"
+                variant={!status ? 'default' : 'outline'}
+                onClick={() => setStatus('')}
+              >
+                Tất cả
+              </Button>
               {Object.entries(orderStatus).map(([k, v]) => (
                 <Button
                   key={k}
@@ -147,46 +146,44 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
           <div className="text-center py-8">Không có đơn hàng nào</div>
         )}
       </CardContent>
-      {/* <CardFooter>
+      <CardFooter>
         <div className="flex justify-end w-full">
-          {data?.body.maxPage > 0 && (
+          {data.totalPages > 0 && (
             <div className="flex items-center gap-2">
               <Button
-                variant={"ghost"}
-                size={"icon"}
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
+                variant={'ghost'}
+                size={'icon'}
+                onClick={() => data.prevPage && setPage(data.prevPage)}
+                disabled={!data.hasPrevPage}
               >
                 <ChevronLeft />
               </Button>
-              {data?.body.maxPage &&
-                Array(data.body.maxPage)
+              {data.totalPages &&
+                Array(data.totalPages)
                   .fill(0)
                   .map((_, i) => i + 1)
                   .map((p) => (
                     <Button
                       key={p}
-                      variant={p === page ? "outline" : "ghost"}
-                      size={"icon"}
+                      variant={p === page ? 'default' : 'outline'}
+                      size={'icon'}
                       onClick={() => setPage(p)}
                     >
                       {p}
                     </Button>
                   ))}
               <Button
-                variant={"ghost"}
-                size={"icon"}
-                onClick={() =>
-                  setPage(Math.min(data?.body.maxPage || 1, page + 1))
-                }
-                disabled={page === data?.body.maxPage}
+                variant={'ghost'}
+                size={'icon'}
+                onClick={() => data.nextPage && setPage(data.nextPage)}
+                disabled={!data.hasNextPage}
               >
                 <ChevronRight />
               </Button>
             </div>
           )}
         </div>
-      </CardFooter> */}
+      </CardFooter>
     </Card>
   )
 }
