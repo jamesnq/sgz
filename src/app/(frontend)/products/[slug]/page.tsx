@@ -8,6 +8,7 @@ import { cache } from 'react'
 import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
+import notFound from '../../not-found'
 
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })
@@ -40,7 +41,7 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   const product = await queryProductBySlug({ slug })
 
-  if (!product) return
+  if (!product) return notFound()
 
   return <PageClient product={product} />
 }
@@ -53,15 +54,11 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 }
 
 const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
-
   const payload = await getPayload({ config: configPromise })
 
   const result = await payload.find({
     collection: 'products',
-    draft,
     limit: 1,
-    overrideAccess: draft,
     pagination: false,
     where: {
       slug: {
@@ -70,13 +67,13 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
     },
   })
   const product = result.docs?.[0] || null
+  if (!product || !product.variants?.docs?.length) {
+    return null
+  }
   if (product && product.variants?.docs) {
     product.variants.docs = product.variants.docs.sort(
       (a: any, b: any) => a.originalPrice - b.originalPrice,
     )
-  }
-  if (!product || !product.variants?.docs) {
-    return null
   }
 
   const formIds = Array.from(

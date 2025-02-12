@@ -29,6 +29,7 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
 import { Loader2, MinusIcon, PlusIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { DisplayProductStatus } from '@/components/display-product-status'
 
 type ProductPageContextType = {
   product: Product
@@ -64,6 +65,7 @@ function ProductPageProvider({
   children: React.ReactNode
   product: Product
 }) {
+  console.log('🚀 ~ product:', product)
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(
     (product?.variants?.docs && product.variants.docs[0]) as ProductVariant,
   )
@@ -195,21 +197,21 @@ function ProductVariantCard({
         setCurrentVariant(productVariant)
       }}
       className={cn(
-        'flex transition-all h-28 duration-200 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent',
+        'flex transition-all h-[96px] duration-200 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent',
         className,
         currentVariant && currentVariant.id == productVariant.id && 'bg-secondary border-primary',
       )}
     >
-      <div className="relative h-full w-[98px] overflow-hidden">
+      <div className="relative h-[96px] w-[72px] overflow-hidden">
         <Media
           resource={productVariant.image || product.image}
-          imgClassName="absolute duration-300 ease-in-out scale-100 group-hover:scale-110"
+          imgClassName="absolute duration-300 h-[96px] w-[72px] ease-in-out scale-100 group-hover:scale-110"
         />
       </div>
       <div className="flex flex-[3] items-start gap-2 p-4">
         <div className="flex h-full flex-1 flex-col justify-between">
           <div className="">{productVariant.name}</div>
-          {/* <DisplayProductStatus status={productVariant.status} /> */}
+          <DisplayProductStatus status={productVariant.status} />
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="font-bold">{formatPrice(productVariant.price, 'VND')}</div>

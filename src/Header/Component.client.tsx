@@ -12,7 +12,6 @@ import { LucideLogOut, Package } from 'lucide-react'
 import AuthDialog from './AuthDialog'
 import { HeaderNav } from './Nav'
 
-import { testAction } from '@/app/_actions/test'
 import { DisplayBalance } from '@/components/display-balance'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, type ButtonProps } from '@/components/ui/button'
@@ -132,7 +131,6 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
             {/* <ThemeSelector /> */}
             <DisplayBalance />
             <AuthDropdown />
-            <Button onClick={() => testAction()}> Test</Button>
           </div>
         </div>
       </div>
