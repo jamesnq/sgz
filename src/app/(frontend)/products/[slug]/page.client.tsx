@@ -1,6 +1,6 @@
 'use client'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
@@ -80,6 +80,27 @@ function ProductPageProvider({
     totalDiscountPrice: 0,
     totalPrice: 0,
   })
+
+  const initShippingInfoFromForm = React.useCallback(
+    (form: Form) => {
+      if (!form) return
+      const initShippingInfo = form.fields?.reduce(
+        (acc, field: any) => {
+          acc[field.name] = shippingInfo[field.name] || field.defaultValue
+          return acc
+        },
+        {} as { [key: string]: any },
+      )
+      setShippingInfo(initShippingInfo || {})
+    },
+    [shippingInfo],
+  )
+
+  // Initialize shippingInfo when component first renders
+  React.useEffect(() => {
+    initShippingInfoFromForm(currentVariant.form as Form)
+  }, []) // Empty dependency array means this runs once on mount
+
   React.useEffect(() => {
     const totalOriginalPrice = currentVariant.originalPrice * quantity
     const totalPrice = currentVariant.price * quantity
@@ -94,19 +115,7 @@ function ProductPageProvider({
         currentVariant,
         setCurrentVariant: (variant: ProductVariant) => {
           setCurrentVariant(variant)
-          const form = variant.form as Form
-          if (form) {
-            const initshippingInfo =
-              form.fields?.reduce(
-                (acc, field: any) => {
-                  acc[field.name] = shippingInfo[field.name] || field.defaultValue
-                  return acc
-                },
-                {} as { [key: string]: string },
-              ) || {}
-
-            setShippingInfo(initshippingInfo)
-          }
+          initShippingInfoFromForm(variant.form as Form)
         },
         quantity,
         setQuantity,
