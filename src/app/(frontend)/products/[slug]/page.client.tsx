@@ -1,6 +1,6 @@
 'use client'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import React, { useEffect, useMemo, useState, useCallback } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
@@ -29,7 +29,7 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
 import { Loader2, MinusIcon, PlusIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-// TODO Optimize context rerender
+
 type ProductPageContextType = {
   product: Product
   quantity: number
@@ -46,7 +46,8 @@ type ProductPageContextType = {
   setCurrentVariant: (variant: ProductVariant) => void
   setShippingInfo: (key: string, value: string | number) => void
 }
-const ProductPageContext = React.createContext<ProductPageContextType | null>(null)
+
+const ProductPageContext = React.createContext<ProductPageContextType>({} as ProductPageContextType)
 
 function useProductPageContext() {
   const context = React.useContext(ProductPageContext)
@@ -69,17 +70,36 @@ function ProductPageProvider({
 
   const [quantity, setQuantity] = React.useState(1)
 
-  const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>({})
-  console.log('🚀 ~ shippingInfo:', shippingInfo)
-  const [calc, setCalc] = React.useState<{
-    totalOriginalPrice: number
-    totalDiscountPrice: number
-    totalPrice: number
-  }>({
-    totalOriginalPrice: 0,
-    totalDiscountPrice: 0,
-    totalPrice: 0,
-  })
+  const getInitShippingInfo = React.useCallback(
+    (shippingInfo: { [key: string]: any }) => {
+      const form = currentVariant.form as Form
+      if (!form || !form.fields) return {}
+      const initShippingInfo = form.fields.reduce(
+        (acc, field: any) => {
+          acc[field.name] = shippingInfo[field.name] || field.defaultValue || ''
+          return acc
+        },
+        {} as { [key: string]: any },
+      )
+      return initShippingInfo
+    },
+    [currentVariant.form],
+  )
+
+  const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>(
+    getInitShippingInfo({}),
+  )
+
+  const calc = useMemo(() => {
+    const totalOriginalPrice = currentVariant.originalPrice * quantity
+    const totalPrice = currentVariant.price * quantity
+    const totalDiscountPrice = totalOriginalPrice - totalPrice
+    return {
+      totalOriginalPrice,
+      totalDiscountPrice,
+      totalPrice,
+    }
+  }, [currentVariant.originalPrice, currentVariant.price, quantity])
 
   const initShippingInfoFromForm = React.useCallback(
     (form: Form) => {
@@ -96,17 +116,10 @@ function ProductPageProvider({
     [shippingInfo],
   )
 
-  // Initialize shippingInfo when component first renders
   React.useEffect(() => {
-    initShippingInfoFromForm(currentVariant.form as Form)
-  }, []) // Empty dependency array means this runs once on mount
+    setShippingInfo(getInitShippingInfo(shippingInfo))
+  }, [])
 
-  React.useEffect(() => {
-    const totalOriginalPrice = currentVariant.originalPrice * quantity
-    const totalPrice = currentVariant.price * quantity
-    const totalDiscountPrice = totalOriginalPrice - totalPrice
-    setCalc({ totalOriginalPrice, totalDiscountPrice, totalPrice })
-  }, [currentVariant, quantity])
   return (
     <ProductPageContext.Provider
       value={{
@@ -123,7 +136,7 @@ function ProductPageProvider({
           setQuantity((prev) => prev + by)
         },
         decQuantity(by = 1) {
-          setQuantity((prev) => prev - by)
+          setQuantity((prev) => Math.max(1, prev - by))
         },
         shippingInfo,
         setShippingInfo: (key, value) => {
@@ -154,6 +167,7 @@ function Head() {
     </div>
   )
 }
+
 function calculateDiscountPercentage(originalPrice: number, price: number): number {
   if (originalPrice <= 0 || price < 0) {
     return 0
@@ -162,6 +176,7 @@ function calculateDiscountPercentage(originalPrice: number, price: number): numb
   const discountPercentage = (discount / originalPrice) * 100
   return discountPercentage
 }
+
 function ProductVariantCard({
   productVariant,
   className,
@@ -211,6 +226,7 @@ function ProductVariantCard({
     </Card>
   )
 }
+
 function ProductVariantsDrawer({
   productVariants,
   className,
@@ -246,6 +262,7 @@ function ProductVariantsDrawer({
     </Card>
   )
 }
+
 function ShippingForm({ form }: { form: Form }) {
   const { setShippingInfo } = useProductPageContext()
   return (
@@ -272,6 +289,7 @@ function ShippingForm({ form }: { form: Form }) {
     </Card>
   )
 }
+
 function CheckoutButton() {
   const router = useRouter()
 
