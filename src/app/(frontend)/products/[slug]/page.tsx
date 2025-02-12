@@ -1,14 +1,13 @@
 import type { Metadata } from 'next'
 
-import { PayloadRedirects } from '@/components/PayloadRedirects'
 import configPromise from '@payload-config'
 import { draftMode } from 'next/headers'
 import { getPayload } from 'payload'
 import { cache } from 'react'
 
+import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
-import { ProductVariant } from '@/payload-types'
 
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })
@@ -38,10 +37,10 @@ type Args = {
 
 export default async function Page({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
-  const url = '/products/' + slug
+
   const product = await queryProductBySlug({ slug })
 
-  if (!product) return <PayloadRedirects url={url} />
+  if (!product) return
 
   return <PageClient product={product} />
 }

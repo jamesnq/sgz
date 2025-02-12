@@ -10,11 +10,8 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { hasRole } from '@/access/hasRoles'
 import { slugField } from '@/fields/slug'
-import { generatePreviewPath } from '@/utilities/generatePreviewPath'
-import { Banner } from '../../blocks/Banner/config'
-import { Code } from '../../blocks/Code/config'
-import { MediaBlock } from '../../blocks/MediaBlock/config'
 import {
   MetaDescriptionField,
   MetaImageField,
@@ -22,7 +19,9 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
-import { hasRole } from '@/access/hasRoles'
+import { Banner } from '../../blocks/Banner/config'
+import { Code } from '../../blocks/Code/config'
+import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -34,23 +33,6 @@ export const Products: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['name', 'image', 'slug', 'updatedAt'],
-    livePreview: {
-      url: ({ data, req }) => {
-        const path = generatePreviewPath({
-          slug: typeof data?.slug === 'string' ? data.slug : '',
-          collection: 'products',
-          req,
-        })
-
-        return path
-      },
-    },
-    preview: (data, { req }) =>
-      generatePreviewPath({
-        slug: typeof data?.slug === 'string' ? data.slug : '',
-        collection: 'products',
-        req,
-      }),
     useAsTitle: 'name',
   },
   fields: [

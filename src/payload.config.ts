@@ -12,8 +12,6 @@ import { Forms } from './collections/Forms'
 import { FormSubmissions } from './collections/FormSubmission'
 import { Media } from './collections/Media'
 import { Orders } from './collections/Orders'
-import { Pages } from './collections/Pages'
-import { Posts } from './collections/Posts'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
 import { Recharges } from './collections/Recharges'
@@ -72,10 +70,7 @@ export default buildConfig({
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: postgresAdapter({ pool: { connectionString: process.env.DATABASE_URI } }),
-  // TODO remove posts collection
   collections: [
-    Pages,
-    Posts,
     Media,
     Categories,
     Users,
