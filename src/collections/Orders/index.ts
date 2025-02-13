@@ -1,28 +1,38 @@
-import type { CollectionConfig } from 'payload'
+import { APIError, type Access, type CollectionConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
-import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
-import { MediaBlock } from '@/blocks/MediaBlock/config'
-import {
-  lexicalEditor,
-  HeadingFeature,
-  BlocksFeature,
-  FixedToolbarFeature,
-  InlineToolbarFeature,
-  HorizontalRuleFeature,
-} from '@payloadcms/richtext-lexical'
+import { noOne } from '@/access/noOne'
 import { Banner } from '@/blocks/Banner/config'
 import { Code } from '@/blocks/Code/config'
+import { MediaBlock } from '@/blocks/MediaBlock/config'
+import { sql } from '@payloadcms/db-postgres'
+import { eq } from '@payloadcms/db-postgres/drizzle'
+import {
+  BlocksFeature,
+  FixedToolbarFeature,
+  HeadingFeature,
+  HorizontalRuleFeature,
+  InlineToolbarFeature,
+  lexicalEditor,
+} from '@payloadcms/richtext-lexical'
+import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
+
+class ConflictsError extends APIError {
+  constructor(message: string) {
+    super(message, 400, undefined, true)
+  }
+}
+const orderByOrAdmin: Access = ({ req }) => {
+  // allow read to admin and staff or orderedBy
+  if (!hasRole(['admin', 'staff'])({ req })) return false
+  return { orderedBy: { equals: req.user?.id } }
+}
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
   access: {
-    read: ({ req }) => {
-      // allow read to admin and staff or orderedBy
-      if (!hasRole(['admin', 'staff'])({ req })) return false
-      return { orderedBy: { equals: req.user?.id } }
-    },
+    read: orderByOrAdmin,
     update: hasRoleOrOrderBy(['admin', 'staff']),
     create: authenticated,
     delete: hasRole(['admin']),
@@ -31,8 +41,9 @@ export const Orders: CollectionConfig = {
     beforeChange: [
       ({ originalDoc, data, req }) => {
         const user = req.user
-        if (!user) throw new Error('Not authenticated')
-
+        if (!user) throw new ConflictsError('Not authenticated')
+        if (originalDoc.status == 'REFUND') {
+        }
         if (!data.handlers.includes(user.id)) {
           data.handlers.push(user.id)
         }
@@ -54,9 +65,79 @@ export const Orders: CollectionConfig = {
   },
   fields: [
     {
+      name: 'note',
+      type: 'richText',
+      admin: {
+        description: 'Internal note only admin and staff can see',
+      },
+      access: {
+        create: hasRole(['admin', 'staff']),
+        read: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
+    },
+    {
+      name: 'message',
+      type: 'richText',
+      admin: {
+        description: 'Message want to send to customer',
+      },
+      editor: lexicalEditor({
+        features: ({ rootFeatures }) => {
+          return [
+            ...rootFeatures,
+            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+            FixedToolbarFeature(),
+            InlineToolbarFeature(),
+            HorizontalRuleFeature(),
+          ]
+        },
+      }),
+      access: {
+        create: hasRole(['admin', 'staff']),
+        read: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       defaultValue: 'PENDING',
+      access: {
+        create: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
+      hooks: {
+        beforeChange: [
+          async ({ data, value, previousValue, operation, req: { payload, user } }) => {
+            if (!user) throw new ConflictsError('Not authenticated')
+            if (operation !== 'update' || !previousValue || !data) return data
+            if (previousValue === 'REFUND' && value !== 'REFUND')
+              throw new ConflictsError('Không thể cập nhật trạng thái đơn hàng đã hoàn trả')
+            if (previousValue !== 'REFUND' && value === 'REFUND') {
+              const { users, transactions } = payload.db.tables
+              await payload.db.drizzle.transaction(async (tx) => {
+                const [newUser] = await tx
+                  .update(users)
+                  .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
+                  .where(eq(users.id, user.id))
+                  .returning({ balance: users.balance })
+                if (!newUser) throw new ConflictsError('Không tìm thấy người dùng')
+
+                await tx.insert(transactions).values({
+                  amount: data.totalPrice,
+                  user: user.id,
+                  description: `Hoàn trả đơn hàng #${data.id}`,
+                  balance: newUser.balance,
+                })
+              })
+            }
+
+            return value
+          },
+        ],
+      },
       options: [
         { value: 'PENDING', label: 'Pending' },
         { value: 'IN_QUEUE', label: 'In Queue' },
@@ -75,6 +156,10 @@ export const Orders: CollectionConfig = {
       admin: {
         readOnly: true,
       },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
     },
     {
       name: 'handlers',
@@ -85,6 +170,10 @@ export const Orders: CollectionConfig = {
       admin: {
         readOnly: true,
       },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
     },
     {
       name: 'productVariant',
@@ -92,7 +181,8 @@ export const Orders: CollectionConfig = {
       relationTo: 'product-variants',
       required: true,
       access: {
-        update: hasRole(['admin']),
+        update: noOne,
+        create: noOne,
       },
       admin: {
         readOnly: true,
@@ -105,14 +195,18 @@ export const Orders: CollectionConfig = {
       admin: {
         readOnly: true,
       },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
     },
     {
       name: 'totalPrice',
       type: 'number',
       required: true,
       access: {
-        create: hasRole(['admin']),
-        update: hasRole(['admin']),
+        create: noOne,
+        update: noOne,
       },
       admin: {
         readOnly: true,
@@ -123,41 +217,11 @@ export const Orders: CollectionConfig = {
       type: 'number',
       required: true,
       access: {
-        create: hasRole(['admin']),
-        update: hasRole(['admin']),
+        create: noOne,
+        update: noOne,
       },
       admin: {
         readOnly: true,
-      },
-    },
-    {
-      name: 'note',
-      type: 'richText',
-      access: {
-        create: hasRole(['admin', 'staff']),
-        read: hasRole(['admin', 'staff']),
-        update: hasRole(['admin', 'staff']),
-      },
-    },
-    {
-      name: 'message',
-      type: 'richText',
-      editor: lexicalEditor({
-        features: ({ rootFeatures }) => {
-          return [
-            ...rootFeatures,
-            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
-            FixedToolbarFeature(),
-            InlineToolbarFeature(),
-            HorizontalRuleFeature(),
-          ]
-        },
-      }),
-      access: {
-        create: hasRole(['admin', 'staff']),
-        read: hasRole(['admin', 'staff']),
-        update: hasRole(['admin', 'staff']),
       },
     },
   ],
