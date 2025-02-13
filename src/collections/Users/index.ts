@@ -20,10 +20,10 @@ export const Users: CollectionConfig = {
     maxLoginAttempts: 5,
     lockTime: 5000,
     verify: {
-      generateEmailSubject(args) {
+      generateEmailSubject() {
         return `Xác thực tài khoản`
       },
-      generateEmailHTML: ({ req, token, user }) => {
+      generateEmailHTML: ({ token }) => {
         // Use the token provided to allow your user to verify their account
         const url = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/verify?token=${token}`
 
@@ -54,11 +54,11 @@ export const Users: CollectionConfig = {
       },
     },
     forgotPassword: {
-      generateEmailSubject(args) {
+      generateEmailSubject() {
         return `Yêu cầu đặt lại mật khẩu`
       },
       // @ts-expect-error ts missmatch
-      generateEmailHTML: ({ req, token, user }) => {
+      generateEmailHTML: ({ token }) => {
         const resetPasswordURL = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/reset-password?token=${token}`
 
         return `
