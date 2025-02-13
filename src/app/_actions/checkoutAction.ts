@@ -45,16 +45,8 @@ export const checkoutAction = authActionClient
 
     const totalPrice = quantity * pv.price
     const { users, transactions, orders } = payload.db.tables
-
-    const order = await payload.db.drizzle.transaction(async (tx) => {
-      const [newUser] = await tx
-        .update(users)
-        .set({ balance: sql`${users.balance} - ${totalPrice}` })
-        .where(eq(users.id, user.id))
-        .returning({ balance: users.balance })
-      if (!newUser) throw new ServerNotification('Không tìm thấy người dùng')
-      if (newUser.balance < 0) throw new ServerNotification('Số dư không đủ')
-      let formSubmissionId: any = undefined
+    let formSubmissionId: any = undefined
+    try {
       if (pv.form) {
         const res = await payload.create({
           collection: 'form-submissions',
@@ -66,6 +58,19 @@ export const checkoutAction = authActionClient
         })
         formSubmissionId = res.id
       }
+    } catch {
+      throw new ServerNotification('Vui lòng điển đầy đủ thông tin giao hàng')
+    }
+
+    const order = await payload.db.drizzle.transaction(async (tx) => {
+      const [newUser] = await tx
+        .update(users)
+        .set({ balance: sql`${users.balance} - ${totalPrice}` })
+        .where(eq(users.id, user.id))
+        .returning({ balance: users.balance })
+      if (!newUser) throw new ServerNotification('Không tìm thấy người dùng')
+      if (newUser.balance < 0) throw new ServerNotification('Số dư không đủ')
+
       const [order] = await tx
         .insert(orders)
         .values({
