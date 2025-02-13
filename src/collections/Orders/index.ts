@@ -41,7 +41,15 @@ export const Orders: CollectionConfig = {
     ],
   },
   admin: {
-    defaultColumns: ['id', 'status', 'orderedBy', 'productVariant', 'createdAt'],
+    defaultColumns: [
+      'id',
+      'status',
+      'orderedBy',
+      'productVariant',
+      'quantity',
+      'totalPrice',
+      'createdAt',
+    ],
     useAsTitle: 'id',
   },
   fields: [

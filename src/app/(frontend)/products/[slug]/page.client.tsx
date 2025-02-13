@@ -439,12 +439,22 @@ function Screen() {
                 />
               ))}
           </div>
-          <Card>
-            <CardHeader className="font-bold px-4 pb-0">Mô tả</CardHeader>
-            <CardContent>
-              <RichText data={product.description} enableGutter={false}></RichText>
-            </CardContent>
-          </Card>
+          {product.description && (
+            <Card>
+              <CardHeader className="font-bold px-4 pb-1">
+                <div className="flex gap-2">
+                  <span>Mô tả</span>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4">
+                <RichText
+                  className="text-sm"
+                  data={product.description}
+                  enableGutter={false}
+                ></RichText>
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="flex-1 max-md:order-1">
           <ProductVariantsDrawer

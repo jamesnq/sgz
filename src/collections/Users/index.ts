@@ -120,6 +120,15 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: ['user'],
     },
+    {
+      name: 'note',
+      type: 'textarea',
+      access: {
+        read: hasRole(['admin', 'staff']),
+        create: hasRole(['admin']),
+        update: hasRole(['admin', 'staff']),
+      },
+    },
     // { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
     // { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
     // { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
