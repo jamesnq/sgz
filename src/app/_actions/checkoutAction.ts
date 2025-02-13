@@ -83,7 +83,7 @@ export const checkoutAction = authActionClient
         })
         .returning({ id: orders.id })
       if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
-      const transaction = await tx.insert(transactions).values({
+      await tx.insert(transactions).values({
         amount: -totalPrice,
         user: user.id,
         description: `Thanh toán đơn hàng #${order.id}`,

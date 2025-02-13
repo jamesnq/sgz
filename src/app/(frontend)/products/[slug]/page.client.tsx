@@ -1,11 +1,5 @@
 'use client'
-import {
-  HookBaseUtils,
-  HookCallbacks,
-  HookSafeActionFn,
-  useAction,
-  UseActionHookReturn,
-} from 'next-safe-action/hooks'
+import { HookSafeActionFn, useAction, UseActionHookReturn } from 'next-safe-action/hooks'
 
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -17,6 +11,7 @@ import AuthDialog from '@/Header/AuthDialog'
 import { checkoutAction } from '@/app/_actions/checkoutAction'
 import { fields } from '@/blocks/Form/fields'
 import RichText from '@/components/RichText'
+import { DisplayProductStatus } from '@/components/display-product-status'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -37,9 +32,8 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
 import { Loader2, MinusIcon, PlusIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { DisplayProductStatus } from '@/components/display-product-status'
-import { Schema } from 'zod'
 import { toast } from 'react-toastify'
+import { Schema } from 'zod'
 
 type ProductPageContextType = {
   product: Product
@@ -129,6 +123,7 @@ function ProductPageProvider({
 
   React.useEffect(() => {
     setShippingInfo(getInitShippingInfo(shippingInfo))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -357,7 +352,7 @@ function Checkout({ className }: { className?: string }) {
     useProductPageContext()
   const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
   return (
-    <Card className="p-6">
+    <Card className={cn('p-6', className)}>
       {currentVariant.max > 1 && (
         <div className="flex justify-between">
           <span>Số lượng</span>
