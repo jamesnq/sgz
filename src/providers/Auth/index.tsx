@@ -1,6 +1,7 @@
 'use client'
 import { User } from '@/payload-types'
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 type ResetPassword = (args: { password: string; token: string }) => Promise<void>
 
@@ -25,7 +26,6 @@ type AuthContext = {
 const Context = createContext({} as AuthContext)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const {} = useAuth()
   const [user, setUser] = useState<User | null>()
 
   // used to track the single event of logging in or logging out
@@ -105,7 +105,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('An error occurred while attempting to logout.')
     }
   }, [])
-
+  const pathname = usePathname()
+  const prevPathname = useRef<string | undefined>(undefined)
   useEffect(() => {
     const fetchMe = async () => {
       try {
@@ -129,9 +130,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('An error occurred while fetching your account.')
       }
     }
-
-    fetchMe()
-  }, [])
+    if (pathname != prevPathname.current) {
+      prevPathname.current = pathname
+      fetchMe()
+    }
+  }, [pathname, prevPathname])
 
   const forgotPassword = useCallback<ForgotPassword>(async (args) => {
     try {
