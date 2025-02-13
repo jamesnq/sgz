@@ -114,3 +114,25 @@ html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
 }
+
+/* Chatwoot */
+#cw-bubble-holder > button:nth-child(1) {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--primary)) !important;
+  outline: 1px solid hsl(var(--primary)) !important;
+  outline-offset: 1px;
+}
+#cw-bubble-holder > button.woot-elements--right.woot-widget-bubble.woot--close {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--primary)) !important;
+  outline: 1px solid hsl(var(--primary)) !important;
+  outline-offset: 1px;
+}
+#woot-widget-bubble-icon > path {
+  fill: hsl(var(--primary)) !important;
+}
+
+.woot--close::before,
+.woot--close::after {
+  background-color: hsl(var(--primary)) !important;
+}

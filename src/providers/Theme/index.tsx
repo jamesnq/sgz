@@ -5,9 +5,59 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type { Theme, ThemeContextType } from './types'
 
 import canUseDOM from '@/utilities/canUseDOM'
+import { ToastContainer } from 'react-toastify'
 import { defaultTheme, getImplicitPreference, themeLocalStorageKey } from './shared'
 import { themeIsValid } from './types'
-import { ToastContainer } from 'react-toastify'
+
+const ChatwootLoader = () => {
+  const { theme } = useTheme()
+  const BASE_URL = 'https://chat.subgamezone.com'
+  const SCRIPT_URL = `${BASE_URL}/packs/js/sdk.js`
+  useEffect(() => {
+    const loadChatwoot = () => {
+      // @ts-expect-error ignore
+      window.chatwootSettings = {
+        locale: 'vi_VN',
+        darkMode: theme,
+        position: 'right',
+        type: 'standard',
+        launcherTitle: '',
+      }
+
+      const script = document.createElement('script')
+      script.src = SCRIPT_URL
+      script.defer = true
+      script.async = true
+
+      script.onload = () => {
+        // @ts-expect-error ignore
+        if (window.chatwootSDK) {
+          // @ts-expect-error ignore
+          window.chatwootSDK.run({
+            websiteToken: 'Q2Zvzt7CfyYnPndC1zwNfdwr',
+            baseUrl: BASE_URL,
+          })
+        }
+      }
+
+      document.body.appendChild(script)
+    }
+
+    loadChatwoot()
+
+    // Clean up script when the component unmounts
+    return () => {
+      const existingScript = document.querySelector(`script[src="${SCRIPT_URL}"]`)
+
+      if (existingScript) {
+        document.body.removeChild(existingScript)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme])
+
+  return null
+}
 
 const initialContext: ThemeContextType = {
   setTheme: () => null,
@@ -67,6 +117,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         pauseOnHover
         theme={theme}
       />
+      <ChatwootLoader />
     </ThemeContext.Provider>
   )
 }
