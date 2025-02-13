@@ -1,14 +1,13 @@
 import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
-import { draftMode } from 'next/headers'
 import { getPayload } from 'payload'
 import { cache } from 'react'
 
 import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
-import PageClient from './page.client'
 import notFound from '../../not-found'
+import PageClient from './page.client'
 
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })
@@ -54,6 +53,7 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 }
 
 const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
+  // TODO optimize query using drizzle
   const payload = await getPayload({ config: configPromise })
 
   const result = await payload.find({

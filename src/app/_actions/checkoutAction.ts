@@ -1,6 +1,6 @@
 'use server'
 import { Form } from '@/payload-types'
-import { authActionClient } from '@/utilities/safe-action'
+import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
@@ -28,19 +28,19 @@ export const checkoutAction = authActionClient
     })
 
     if (!pv) {
-      throw new Error('Không tìm thấy sản phẩm')
+      throw new ServerNotification('Không tìm thấy sản phẩm')
     }
     if (pv.status == 'STOPPED') {
-      throw new Error('Sản phẩm đã ngừng bán')
+      throw new ServerNotification('Sản phẩm đã ngừng bán')
     }
     if (pv.min && quantity < pv.min) {
-      throw new Error(`Số lượng mua tối thiểu là ${pv.min}`)
+      throw new ServerNotification(`Số lượng mua tối thiểu là ${pv.min}`)
     }
     if (pv.max && quantity > pv.max) {
-      throw new Error(`Số lượng mua tối đa là ${pv.max}`)
+      throw new ServerNotification(`Số lượng mua tối đa là ${pv.max}`)
     }
     if (pv.form && !shippingFields) {
-      throw new Error('Vui lòng cung cấp thông tin giao hàng')
+      throw new ServerNotification('Vui lòng cung cấp thông tin giao hàng')
     }
 
     const totalPrice = quantity * pv.price
@@ -52,7 +52,8 @@ export const checkoutAction = authActionClient
         .set({ balance: sql`${users.balance} - ${totalPrice}` })
         .where(eq(users.id, user.id))
         .returning({ balance: users.balance })
-      if (!newUser) throw new Error('User not found')
+      if (!newUser) throw new ServerNotification('Không tìm thấy người dùng')
+      if (newUser.balance < 0) throw new ServerNotification('Số dư không đủ')
       let formSubmissionId: any = undefined
       if (pv.form) {
         const res = await payload.create({
@@ -76,7 +77,7 @@ export const checkoutAction = authActionClient
           totalPrice,
         })
         .returning({ id: orders.id })
-      if (!order) throw new Error('Order not found')
+      if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
       const transaction = await tx.insert(transactions).values({
         amount: -totalPrice,
         user: user.id,

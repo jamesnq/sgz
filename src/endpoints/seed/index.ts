@@ -124,54 +124,30 @@ export const seed = async ({
       data: { alt: 'Apple ID', caption: null },
       file: appleIdBuffer,
     }),
-    // payload.create({
-    //   collection: 'categories',
-    //   data: {
-    //     title: 'Game',
-    //     breadcrumbs: [
-    //       {
-    //         label: 'Game',
-    //         url: '/game',
-    //       },
-    //     ],
-    //   },
-    // }),
-    // payload.create({
-    //   collection: 'categories',
-    //   data: {
-    //     title: 'Account',
-    //     breadcrumbs: [
-    //       {
-    //         label: 'Account',
-    //         url: '/account',
-    //       },
-    //     ],
-    //   },
-    // }),
-    // payload.create({
-    //   collection: 'categories',
-    //   data: {
-    //     title: 'Design',
-    //     breadcrumbs: [
-    //       {
-    //         label: 'Design',
-    //         url: '/design',
-    //       },
-    //     ],
-    //   },
-    // }),
-    // payload.create({
-    //   collection: 'categories',
-    //   data: {
-    //     title: 'Software',
-    //     breadcrumbs: [
-    //       {
-    //         label: 'Software',
-    //         url: '/software',
-    //       },
-    //     ],
-    //   },
-    // }),
+    payload.create({
+      collection: 'categories',
+      data: {
+        title: 'Game',
+      },
+    }),
+    payload.create({
+      collection: 'categories',
+      data: {
+        title: 'Account',
+      },
+    }),
+    payload.create({
+      collection: 'categories',
+      data: {
+        title: 'Design',
+      },
+    }),
+    payload.create({
+      collection: 'categories',
+      data: {
+        title: 'Software',
+      },
+    }),
   ])
 
   let demoAuthorID: number | string = demoAuthor.id

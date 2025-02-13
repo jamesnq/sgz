@@ -1,4 +1,12 @@
 'use client'
+import {
+  HookBaseUtils,
+  HookCallbacks,
+  HookSafeActionFn,
+  useAction,
+  UseActionHookReturn,
+} from 'next-safe-action/hooks'
+
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useMemo, useState } from 'react'
 
@@ -6,7 +14,7 @@ import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
 import AuthDialog from '@/Header/AuthDialog'
-import { checkoutAction } from '@/app/_actions/checkout'
+import { checkoutAction } from '@/app/_actions/checkoutAction'
 import { fields } from '@/blocks/Form/fields'
 import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
@@ -30,6 +38,8 @@ import { cn } from '@/utilities/ui'
 import { Loader2, MinusIcon, PlusIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { DisplayProductStatus } from '@/components/display-product-status'
+import { Schema } from 'zod'
+import { toast } from 'react-toastify'
 
 type ProductPageContextType = {
   product: Product
@@ -65,7 +75,6 @@ function ProductPageProvider({
   children: React.ReactNode
   product: Product
 }) {
-  console.log('🚀 ~ product:', product)
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(
     (product?.variants?.docs && product.variants.docs[0]) as ProductVariant,
   )
@@ -213,7 +222,7 @@ function ProductVariantCard({
           <div className="">{productVariant.name}</div>
           <DisplayProductStatus status={productVariant.status} />
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-1">
           <div className="font-bold">{formatPrice(productVariant.price, 'VND')}</div>
           {discountPercentage > 0 && (
             <>
@@ -292,32 +301,51 @@ function ShippingForm({ form }: { form: Form }) {
   )
 }
 
+function useActionWarper<
+  ServerError,
+  S extends Schema | undefined,
+  const BAS extends readonly Schema[],
+  CVE,
+  CBAVE,
+  Data,
+>(
+  action: HookSafeActionFn<ServerError, S, BAS, CVE, CBAVE, Data>,
+): UseActionHookReturn<ServerError, S, BAS, CVE, CBAVE, Data> {
+  return useAction(action, {
+    onSettled({ result }) {
+      if (result.serverError) {
+        const error: any = result.serverError
+        if (error.notify) {
+          if (error.notify.type === 'toast') {
+            toast.error(error.message)
+            return
+          }
+        }
+        toast.error(error.message)
+      }
+    },
+  })
+}
+
 function CheckoutButton() {
   const router = useRouter()
-
+  const { executeAsync, isExecuting } = useActionWarper(checkoutAction)
   const { currentVariant, quantity, shippingInfo } = useProductPageContext()
 
-  const [isPending, setIsPending] = useState(false)
   const checkout = () => {
-    setIsPending(true)
-    checkoutAction({
+    executeAsync({
       quantity,
       productVariantId: currentVariant.id,
       shippingFields: shippingInfo,
+    }).then((x) => {
+      if (!x?.data?.order) return
+      router.push('/user/orders/' + x.data.order.id)
     })
-      .then((x) => {
-        setIsPending(false)
-        if (!x?.data?.order) return
-        router.push('/user/orders/' + x.data.order.id)
-      })
-      .finally(() => {
-        setIsPending(false)
-      })
   }
 
   return (
-    <Button className="w-full" disabled={isPending} onClick={() => checkout()}>
-      {isPending && <Loader2 className="animate-spin" />}
+    <Button className="w-full" disabled={isExecuting} onClick={() => checkout()}>
+      {isExecuting && <Loader2 className="animate-spin" />}
       Thanh toán
     </Button>
   )

@@ -5,7 +5,7 @@ import { Form, FormSubmission, Order, Product, ProductVariant } from '@/payload-
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { useEffect, useState } from 'react'
 
-import { updateFormSubmissionAction } from '@/app/_actions/updateFormSubmission'
+import { updateFormSubmissionAction } from '@/app/_actions/updateFormSubmissionAction'
 import { fields } from '@/blocks/Form/fields'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'

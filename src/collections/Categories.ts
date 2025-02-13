@@ -1,7 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
-import { slugField } from '@/fields/slug'
 import { anyone } from '../access/anyone'
 
 export const Categories: CollectionConfig = {
@@ -22,6 +21,5 @@ export const Categories: CollectionConfig = {
       required: true,
       localized: true,
     },
-    ...slugField(),
   ],
 }

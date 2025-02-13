@@ -1,8 +1,28 @@
 import payloadConfig from '@payload-config'
-import { createSafeActionClient } from 'next-safe-action'
+import { createSafeActionClient, DEFAULT_SERVER_ERROR_MESSAGE } from 'next-safe-action'
 import { getPayload } from 'payload'
 
-export const actionClient = createSafeActionClient()
+type ServerNotificationOptions = { type: 'toast' | 'dialog'; options?: Record<string, unknown> }
+
+export class ServerNotification extends Error {
+  notify: ServerNotificationOptions
+  readonly __isServerNotification = true
+  constructor(message: string, notify: ServerNotificationOptions = { type: 'toast' }) {
+    super(message)
+    this.notify = notify
+    Object.setPrototypeOf(this, ServerNotification.prototype)
+  }
+}
+
+export const actionClient = createSafeActionClient({
+  handleServerError(error: any) {
+    if (error.__isServerNotification) {
+      return { notify: error.notify, message: error.message }
+    }
+
+    return DEFAULT_SERVER_ERROR_MESSAGE
+  },
+})
 
 export const authActionClient = actionClient.use(async ({ next }) => {
   const { headers: nextHeaders } = await import('next/headers')

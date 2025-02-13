@@ -12,7 +12,7 @@ export const Transactions: CollectionConfig = {
     delete: noOne,
   },
   admin: {
-    defaultColumns: ['user', 'amount', 'description', 'updatedAt'],
+    defaultColumns: ['user', 'amount', 'balance', 'description', 'createdAt'],
     useAsTitle: 'amount',
   },
   fields: [

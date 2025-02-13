@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
-import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
@@ -33,7 +32,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           <Header />
           {children}
-          {/* <Footer /> */}
         </Providers>
       </body>
     </html>
@@ -43,8 +41,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),
   openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    creator: '@payloadcms',
-  },
+  // twitter: {
+  //   card: 'summary_large_image',
+  //   creator: '@payloadcms',
+  // },
 }

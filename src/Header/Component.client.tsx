@@ -26,6 +26,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/Auth'
 import { cn } from '@/utilities/ui'
+import { toast } from 'react-toastify'
+import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
+import { ThemeToggle } from '@/providers/Theme/theme-toggle'
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,
@@ -120,16 +123,16 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   }, [headerTheme])
 
   return (
-    <header className="container relative z-20   " {...(theme ? { 'data-theme': theme } : {})}>
+    <header className="container relative z-20 " {...(theme ? { 'data-theme': theme } : {})}>
       <div className="py-8 flex justify-between">
         <Link href="/">
           <Logo loading="eager" priority="high" className="invert dark:invert-0" />
         </Link>
         <div>
           <HeaderNav data={data} />
-          <div className="flex items-center gap-4">
-            {/* <ThemeSelector /> */}
+          <div className="flex items-center gap-2">
             <DisplayBalance />
+            <ThemeToggle />
             <AuthDropdown />
           </div>
         </div>

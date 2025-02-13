@@ -1,6 +1,6 @@
 'use client'
 
-import { rechargeAction } from '@/app/_actions/recharge'
+import { rechargeAction } from '@/app/_actions/rechargeAction'
 import { RechargeSchema } from '@/app/_actions/schema'
 import {
   Accordion,
