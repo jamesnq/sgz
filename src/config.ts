@@ -1,47 +1,51 @@
 import { z } from 'zod'
+import { createEnv } from '@t3-oss/env-nextjs'
 
-// Define the environment variables schema
-const EnvSchema = z.object({
-  PAYLOAD_SECRET: z.string(),
-  DATABASE_URI: z.string(),
-  NEXT_PUBLIC_SERVER_URL: z.string(),
-  S3_ACCESS_KEY_ID: z.string(),
-  S3_SECRET_ACCESS_KEY: z.string(),
-  S3_BUCKET: z.string(),
-  S3_REGION: z.string(),
-  RESEND_API_KEY: z.string(),
-  // NEXT_PUBLIC_VERCEL_URL: z.string(),
-  PAYOS_CLIENT_KEY: z.string(),
-  PAYOS_API_KEY: z.string(),
-  PAYOS_CHECKSUM_KEY: z.string(),
-  PAYOS_WEBHOOK_URL: z.string().url(),
-  PAYOS_CANCEL_URL: z.string().url(),
-  PAYOS_RETURN_URL: z.string().url(),
+export const env = createEnv({
+  /*
+   * Serverside Environment variables, not available on the client.
+   * Will throw if you access these variables on the client.
+   */
+  server: {
+    PAYLOAD_SECRET: z.string(),
+    DATABASE_URI: z.string(),
+    S3_ACCESS_KEY_ID: z.string(),
+    S3_SECRET_ACCESS_KEY: z.string(),
+    S3_BUCKET: z.string(),
+    S3_REGION: z.string(),
+    RESEND_API_KEY: z.string(),
+    // NEXT_PUBLIC_VERCEL_URL: z.string(),
+    PAYOS_CLIENT_KEY: z.string(),
+    PAYOS_API_KEY: z.string(),
+    PAYOS_CHECKSUM_KEY: z.string(),
+    PAYOS_WEBHOOK_URL: z.string().url(),
+    PAYOS_CANCEL_URL: z.string().url(),
+    PAYOS_RETURN_URL: z.string().url(),
+  },
+  /*
+   * Environment variables available on the client (and server).
+   *
+   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
+   */
+  client: {
+    NEXT_PUBLIC_SERVER_URL: z.string(),
+    NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: z.string(),
+    NEXT_PUBLIC_CHATWOOT_BASE_URL: z.string(),
+  },
+  /*
+   * Due to how Next.js bundles environment variables on Edge and Client,
+   * we need to manually destructure them to make sure all are included in bundle.
+   *
+   * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
+   */
+  runtimeEnv: {
+    ...process.env,
+    NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: process.env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN,
+    NEXT_PUBLIC_CHATWOOT_BASE_URL: process.env.NEXT_PUBLIC_CHATWOOT_BASE_URL,
+    NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
+  } /**
+   * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
+   * useful for Docker builds.
+   */,
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 })
-
-// Validate environment variables against the schema
-const parsedEnv = EnvSchema.safeParse(process.env)
-
-if (!parsedEnv.success) {
-  console.error('Invalid environment variables:', parsedEnv.error.format())
-  process.exit(1) // Exit if validation fails
-}
-
-// Export validated environment variables with correct types
-export const {
-  PAYLOAD_SECRET,
-  DATABASE_URI,
-  NEXT_PUBLIC_SERVER_URL,
-  S3_ACCESS_KEY_ID,
-  S3_SECRET_ACCESS_KEY,
-  S3_BUCKET,
-  S3_REGION,
-  RESEND_API_KEY,
-  // NEXT_PUBLIC_VERCEL_URL,
-  PAYOS_CLIENT_KEY,
-  PAYOS_API_KEY,
-  PAYOS_CHECKSUM_KEY,
-  PAYOS_WEBHOOK_URL,
-  PAYOS_CANCEL_URL,
-  PAYOS_RETURN_URL,
-} = parsedEnv.data

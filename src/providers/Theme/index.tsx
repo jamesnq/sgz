@@ -8,11 +8,12 @@ import canUseDOM from '@/utilities/canUseDOM'
 import { ToastContainer } from 'react-toastify'
 import { defaultTheme, getImplicitPreference, themeLocalStorageKey } from './shared'
 import { themeIsValid } from './types'
+import { env } from '@/config'
 
 const ChatwootLoader = () => {
   const { theme } = useTheme()
-  const BASE_URL = 'https://chat.subgamezone.com'
-  const SCRIPT_URL = `${BASE_URL}/packs/js/sdk.js`
+
+  const SCRIPT_URL = `${env.NEXT_PUBLIC_CHATWOOT_BASE_URL}/packs/js/sdk.js`
   useEffect(() => {
     const loadChatwoot = () => {
       // @ts-expect-error ignore
@@ -34,8 +35,8 @@ const ChatwootLoader = () => {
         if (window.chatwootSDK) {
           // @ts-expect-error ignore
           window.chatwootSDK.run({
-            websiteToken: 'Q2Zvzt7CfyYnPndC1zwNfdwr',
-            baseUrl: BASE_URL,
+            websiteToken: env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN,
+            baseUrl: env.NEXT_PUBLIC_CHATWOOT_BASE_URL,
           })
         }
       }
@@ -117,7 +118,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         pauseOnHover
         theme={theme}
       />
-      <ChatwootLoader />
+      {/* <ChatwootLoader /> */}
     </ThemeContext.Provider>
   )
 }

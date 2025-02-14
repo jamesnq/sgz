@@ -21,6 +21,7 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
+import { env } from './config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -111,6 +112,6 @@ export default buildConfig({
   email: resendAdapter({
     defaultFromAddress: 'noreply@subgamezone.com',
     defaultFromName: 'Sub Game Zone',
-    apiKey: process.env.RESEND_API_KEY,
+    apiKey: env.RESEND_API_KEY,
   }),
 })

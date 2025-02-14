@@ -6,6 +6,7 @@ import { seoPlugin } from '@payloadcms/plugin-seo'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
+import { env } from 'process'
 const generateTitle: GenerateTitle<Product> = ({ doc }) => {
   return doc?.name ? `${doc.name} | Sub Game Zone` : 'Sub Game Zone'
 }
@@ -22,15 +23,15 @@ export const plugins: Plugin[] = [
     collections: {
       media: { prefix: 'media' },
     },
-    bucket: process.env.S3_BUCKET,
+    bucket: env.S3_BUCKET,
     config: {
-      endpoint: process.env.S3_ENDPOINT,
+      endpoint: env.S3_ENDPOINT,
       forcePathStyle: true,
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+        accessKeyId: env.S3_ACCESS_KEY_ID,
+        secretAccessKey: env.S3_SECRET_ACCESS_KEY,
       },
-      region: process.env.S3_REGION,
+      region: env.S3_REGION,
     },
   }),
   // redirectsPlugin({

@@ -1,11 +1,4 @@
-import {
-  PAYOS_API_KEY,
-  PAYOS_CANCEL_URL,
-  PAYOS_CHECKSUM_KEY,
-  PAYOS_CLIENT_KEY,
-  PAYOS_RETURN_URL,
-  PAYOS_WEBHOOK_URL,
-} from '@/config'
+import { env } from '@/config'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import PayOS from '@payos/node'
@@ -26,11 +19,11 @@ function getRandomInt(min: number, max: number) {
 }
 
 export class PaymentService {
-  payos = new PayOS(PAYOS_CLIENT_KEY, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY)
+  payos = new PayOS(env.PAYOS_CLIENT_KEY, env.PAYOS_API_KEY, env.PAYOS_CHECKSUM_KEY)
   // private sgzStoreChannel: Channel | null = null
 
   async init() {
-    await this.payos.confirmWebhook(PAYOS_WEBHOOK_URL)
+    await this.payos.confirmWebhook(env.PAYOS_WEBHOOK_URL)
   }
   // async getNotifyChannel() {
   //   if (!this.sgzStoreChannel) {
@@ -55,8 +48,8 @@ export class PaymentService {
           const r = await this.payos.createPaymentLink({
             orderCode: getRandomInt(1000, Number.MAX_SAFE_INTEGER),
             amount,
-            cancelUrl: PAYOS_CANCEL_URL,
-            returnUrl: PAYOS_RETURN_URL,
+            cancelUrl: env.PAYOS_CANCEL_URL,
+            returnUrl: env.PAYOS_RETURN_URL,
             description: 'SGZ',
           })
           result = r
