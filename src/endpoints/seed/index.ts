@@ -39,20 +39,20 @@ export const seed = async ({
   payload.logger.info(`— Clearing collections and globals...`)
 
   // clear the database
-  await Promise.all(
-    globals.map((global) =>
-      payload.updateGlobal({
-        slug: global,
-        data: {
-          navItems: [],
-        },
-        depth: 0,
-        context: {
-          disableRevalidate: true,
-        },
-      }),
-    ),
-  )
+  // await Promise.all(
+  //   globals.map((global) =>
+  //     payload.updateGlobal({
+  //       slug: global,
+  //       data: {
+  //         navItems: [],
+  //       },
+  //       depth: 0,
+  //       context: {
+  //         disableRevalidate: true,
+  //       },
+  //     }),
+  //   ),
+  // )
 
   for (const collection of collections) {
     await payload.db.deleteMany({ collection, req, where: {} })

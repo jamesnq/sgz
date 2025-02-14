@@ -430,7 +430,7 @@ function Screen() {
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
         <div className="flex-[2] flex-col space-y-2 max-md:order-2">
-          {/* {currentVariant?.important?.root.direction && (
+          {currentVariant?.important?.root.direction && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">
@@ -446,7 +446,7 @@ function Screen() {
                 ></RichText>
               </CardContent>
             </Card>
-          )} */}
+          )}
           <div className="max-md:hidden grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-2">
             {product.variants?.docs &&
               product.variants?.docs.map((variant) => (

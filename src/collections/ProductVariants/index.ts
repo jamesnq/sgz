@@ -33,22 +33,22 @@ export const ProductVariants: CollectionConfig = {
       relationTo: 'products',
       required: true,
     },
-    // {
-    //   name: 'important',
-    //   type: 'richText',
-    //   editor: lexicalEditor({
-    //     features: ({ rootFeatures }) => {
-    //       return [
-    //         ...rootFeatures,
-    //         HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-    //         BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
-    //         FixedToolbarFeature(),
-    //         InlineToolbarFeature(),
-    //         HorizontalRuleFeature(),
-    //       ]
-    //     },
-    //   }),
-    // },
+    {
+      name: 'important',
+      type: 'richText',
+      editor: lexicalEditor({
+        features: ({ rootFeatures }) => {
+          return [
+            ...rootFeatures,
+            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+            FixedToolbarFeature(),
+            InlineToolbarFeature(),
+            HorizontalRuleFeature(),
+          ]
+        },
+      }),
+    },
     {
       name: 'name',
       type: 'text',

@@ -9,22 +9,22 @@ export const Header: GlobalConfig = {
     read: () => true,
   },
   fields: [
-    {
-      name: 'navItems',
-      type: 'array',
-      fields: [
-        link({
-          appearances: false,
-        }),
-      ],
-      maxRows: 6,
-      admin: {
-        initCollapsed: true,
-        components: {
-          RowLabel: '@/Header/RowLabel#RowLabel',
-        },
-      },
-    },
+    // {
+    //   name: 'navItems',
+    //   type: 'array',
+    //   fields: [
+    //     link({
+    //       appearances: false,
+    //     }),
+    //   ],
+    //   maxRows: 6,
+    //   admin: {
+    //     initCollapsed: true,
+    //     components: {
+    //       RowLabel: '@/Header/RowLabel#RowLabel',
+    //     },
+    //   },
+    // },
   ],
   hooks: {
     afterChange: [revalidateHeader],
