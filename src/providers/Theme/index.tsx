@@ -118,7 +118,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         pauseOnHover
         theme={theme}
       />
-      {/* <ChatwootLoader /> */}
+      <ChatwootLoader />
     </ThemeContext.Provider>
   )
 }

@@ -4,12 +4,22 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { MoonIcon, SunIcon } from 'lucide-react'
 import { useTheme } from '.'
+import { useEffect, useState } from 'react'
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
 
   return (
-    <TooltipProvider disableHoverableContent>
+    <TooltipProvider>
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
           <Button
@@ -18,7 +28,7 @@ export function ThemeToggle() {
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
-            {theme == 'dark' ? <MoonIcon /> : <SunIcon />}
+            {theme === 'dark' ? <MoonIcon /> : <SunIcon />}
             <span className="sr-only">Switch Theme</span>
           </Button>
         </TooltipTrigger>
