@@ -1,11 +1,12 @@
 'use server'
-import { Form } from '@/payload-types'
+import { Form, Product } from '@/payload-types'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import { getPayload } from 'payload'
 import { CheckoutSchema } from './schema'
+import { after } from 'next/server'
 
 export const checkoutAction = authActionClient
   .schema(CheckoutSchema)
@@ -24,9 +25,9 @@ export const checkoutAction = authActionClient
         min: true,
         max: true,
         form: true,
+        product: true,
       },
     })
-
     if (!pv) {
       throw new ServerNotification('Không tìm thấy sản phẩm')
     }
@@ -45,6 +46,7 @@ export const checkoutAction = authActionClient
 
     const totalPrice = quantity * pv.price
     const { users, transactions, orders } = payload.db.tables
+
     let formSubmissionId: any = undefined
     try {
       if (pv.form) {
@@ -61,8 +63,8 @@ export const checkoutAction = authActionClient
     } catch {
       throw new ServerNotification('Vui lòng điển đầy đủ thông tin giao hàng')
     }
-
-    const order = await payload.db.drizzle.transaction(async (tx) => {
+    const db = payload.db.drizzle
+    const order = await db.transaction(async (tx) => {
       const [newUser] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} - ${totalPrice}` })
@@ -91,6 +93,19 @@ export const checkoutAction = authActionClient
       })
       return order
     })
-
+    after(async () => {
+      // update product and product_variant sold
+      const { products, product_variants } = payload.db.tables
+      await Promise.all([
+        db
+          .update(products)
+          .set({ sold: sql`${products.sold} + ${quantity}` })
+          .where(eq(products.id, (pv.product as Product).id)),
+        db
+          .update(product_variants)
+          .set({ sold: sql`${product_variants.sold} + ${quantity}` })
+          .where(eq(product_variants.id, pv.id)),
+      ])
+    })
     return { order }
   })

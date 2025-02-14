@@ -23,6 +23,7 @@ import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
+
 export const Products: CollectionConfig = {
   slug: 'products',
   access: {
@@ -32,7 +33,7 @@ export const Products: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['name', 'image', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'image', 'slug', 'sold', 'updatedAt'],
     useAsTitle: 'name',
   },
   fields: [

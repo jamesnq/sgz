@@ -10,6 +10,7 @@ import { productAppleId as productAppleIdData } from './product-appleid'
 import { productBrawlhallaCoins as productBrawlhallaCoinsData } from './product-brawlhalla-coins'
 
 const collections: CollectionSlug[] = [
+  'orders',
   'product-variants',
   'products',
   'form-submissions',
@@ -69,6 +70,7 @@ export const seed = async ({
   await payload.delete({
     collection: 'users',
     depth: 0,
+    overrideAccess: true,
     where: {
       email: {
         equals: 'test@example.com',
@@ -79,12 +81,14 @@ export const seed = async ({
 
   const brawlhallaForm = await payload.create({
     collection: 'forms',
+    overrideAccess: true,
     depth: 0,
     data: JSON.parse(JSON.stringify(brawlhallaFormData)),
   })
 
   const appleIdForm = await payload.create({
     collection: 'forms',
+    overrideAccess: true,
     depth: 0,
     data: JSON.parse(JSON.stringify(appleIdFormData)),
   })
@@ -107,6 +111,7 @@ export const seed = async ({
   const [demoAuthor, mmcMedia, appleIdMedia] = await Promise.all([
     payload.create({
       collection: 'users',
+      overrideAccess: true,
       data: {
         email: 'test@example.com',
         password: '123123',
@@ -116,34 +121,40 @@ export const seed = async ({
     }),
     payload.create({
       collection: 'media',
+      overrideAccess: true,
       data: { alt: 'Brawlhalla Mammoth Coin Stack', caption: null },
       file: mmcBuffer,
     }),
     payload.create({
       collection: 'media',
+      overrideAccess: true,
       data: { alt: 'Apple ID', caption: null },
       file: appleIdBuffer,
     }),
     payload.create({
       collection: 'categories',
+      overrideAccess: true,
       data: {
         title: 'Game',
       },
     }),
     payload.create({
       collection: 'categories',
+      overrideAccess: true,
       data: {
         title: 'Account',
       },
     }),
     payload.create({
       collection: 'categories',
+      overrideAccess: true,
       data: {
         title: 'Design',
       },
     }),
     payload.create({
       collection: 'categories',
+      overrideAccess: true,
       data: {
         title: 'Software',
       },
@@ -168,6 +179,7 @@ export const seed = async ({
   const productAppleId = await payload.create({
     collection: 'products',
     depth: 0,
+    overrideAccess: true,
     context: {
       disableRevalidate: true,
     },
@@ -204,6 +216,7 @@ export const seed = async ({
     ['Android', 'PC'].map((platform) =>
       payload.create({
         collection: 'products',
+        overrideAccess: true,
         depth: 0,
         context: {
           disableRevalidate: true,
@@ -222,6 +235,7 @@ export const seed = async ({
   const productBrawlhallaCoins = await payload.create({
     collection: 'products',
     depth: 0,
+    overrideAccess: true,
     context: {
       disableRevalidate: true,
     },
@@ -250,6 +264,7 @@ export const seed = async ({
     await payload.create({
       collection: 'product-variants',
       depth: 0,
+      overrideAccess: true,
       data: {
         product: productBrawlhallaCoins.id,
         name: `${variant.name || `${variant.coins} coins`} - Brawlhalla`,
