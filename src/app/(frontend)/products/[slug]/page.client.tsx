@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input'
 import { useAuth } from '@/providers/Auth'
 import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
-import { Loader2, MinusIcon, PlusIcon } from 'lucide-react'
+import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { Schema } from 'zod'
@@ -430,6 +430,23 @@ function Screen() {
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
         <div className="flex-[2] flex-col space-y-2 max-md:order-2">
+          {/* {currentVariant?.important?.root.direction && (
+            <Card>
+              <CardHeader className="font-bold px-4 pb-1">
+                <div className="flex gap-2">
+                  <TriangleAlert></TriangleAlert>
+                  <span>Thông báo quan trọng</span>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4">
+                <RichText
+                  className="text-sm"
+                  data={currentVariant.important}
+                  enableGutter={false}
+                ></RichText>
+              </CardContent>
+            </Card>
+          )} */}
           <div className="max-md:hidden grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-2">
             {product.variants?.docs &&
               product.variants?.docs.map((variant) => (
@@ -439,7 +456,7 @@ function Screen() {
                 />
               ))}
           </div>
-          {product.description && (
+          {product.description?.root.direction && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">

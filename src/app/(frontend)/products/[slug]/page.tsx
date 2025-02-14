@@ -6,10 +6,9 @@ import { cache } from 'react'
 
 import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
-import notFound from '../../not-found'
-import PageClient from './page.client'
 import Notification from '../../notification'
-
+import PageClient from './page.client'
+// TODO here
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })
 //   const products = await payload.find({

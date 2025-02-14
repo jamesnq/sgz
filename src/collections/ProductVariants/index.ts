@@ -33,6 +33,22 @@ export const ProductVariants: CollectionConfig = {
       relationTo: 'products',
       required: true,
     },
+    // {
+    //   name: 'important',
+    //   type: 'richText',
+    //   editor: lexicalEditor({
+    //     features: ({ rootFeatures }) => {
+    //       return [
+    //         ...rootFeatures,
+    //         HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+    //         BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+    //         FixedToolbarFeature(),
+    //         InlineToolbarFeature(),
+    //         HorizontalRuleFeature(),
+    //       ]
+    //     },
+    //   }),
+    // },
     {
       name: 'name',
       type: 'text',
@@ -79,39 +95,50 @@ export const ProductVariants: CollectionConfig = {
       },
     },
     {
-      name: 'originalPrice',
-      type: 'number',
-      required: true,
-      access: {
-        update: hasRole(['admin']),
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'originalPrice',
+          type: 'number',
+          required: true,
+          access: {
+            update: hasRole(['admin']),
+          },
+        },
+        {
+          name: 'price',
+          type: 'number',
+          required: true,
+          access: {
+            update: hasRole(['admin']),
+          },
+        },
+      ],
     },
     {
-      name: 'price',
-      type: 'number',
-      required: true,
-      access: {
-        update: hasRole(['admin']),
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'min',
+          type: 'number',
+          defaultValue: 1,
+          required: true,
+          access: {
+            update: hasRole(['admin']),
+          },
+        },
+        {
+          name: 'max',
+          type: 'number',
+          defaultValue: 1,
+          required: true,
+          access: {
+            update: hasRole(['admin']),
+          },
+        },
+      ],
     },
-    {
-      name: 'min',
-      type: 'number',
-      defaultValue: 1,
-      required: true,
-      access: {
-        update: hasRole(['admin']),
-      },
-    },
-    {
-      name: 'max',
-      type: 'number',
-      defaultValue: 1,
-      required: true,
-      access: {
-        update: hasRole(['admin']),
-      },
-    },
+
     {
       name: 'note',
       type: 'textarea',
