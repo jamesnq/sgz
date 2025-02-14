@@ -39,11 +39,9 @@ export const Orders: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ originalDoc, data, req }) => {
+      ({ data, req }) => {
         const user = req.user
         if (!user) throw new ConflictsError('Not authenticated')
-        if (originalDoc.status == 'REFUND') {
-        }
         if (!data.handlers.includes(user.id)) {
           data.handlers.push(user.id)
         }

@@ -8,6 +8,7 @@ import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import notFound from '../../not-found'
 import PageClient from './page.client'
+import Notification from '../../notification'
 
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })
@@ -40,7 +41,7 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   const product = await queryProductBySlug({ slug })
 
-  if (!product) return notFound()
+  if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
 
   return <PageClient product={product} />
 }
