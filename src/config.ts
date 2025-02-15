@@ -21,6 +21,7 @@ export const env = createEnv({
     PAYOS_WEBHOOK_URL: z.string().url(),
     PAYOS_CANCEL_URL: z.string().url(),
     PAYOS_RETURN_URL: z.string().url(),
+    NOVU_SECRET_KEY: z.string(),
   },
   /*
    * Environment variables available on the client (and server).
@@ -29,8 +30,10 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_SERVER_URL: z.string(),
+    NEXT_PUBLIC_SITE_NAME: z.string(),
     NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: z.string(),
     NEXT_PUBLIC_CHATWOOT_BASE_URL: z.string(),
+    NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: z.string(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -43,6 +46,8 @@ export const env = createEnv({
     NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: process.env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN,
     NEXT_PUBLIC_CHATWOOT_BASE_URL: process.env.NEXT_PUBLIC_CHATWOOT_BASE_URL,
     NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
+    NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
+    NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER,
   } /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
    * useful for Docker builds.

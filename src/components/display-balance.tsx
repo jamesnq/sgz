@@ -9,7 +9,7 @@ export function DisplayBalance() {
   const { user } = useAuth()
   if (!user) return <></>
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <div className="text-xs">Số dư: {formatPrice(user.balance, 'VND')}</div>
       <RechargeDialog />
     </div>

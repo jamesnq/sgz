@@ -13,6 +13,7 @@ import AuthDialog from './AuthDialog'
 import { HeaderNav } from './Nav'
 
 import { DisplayBalance } from '@/components/display-balance'
+import NovuInbox from '@/components/novu-inbox'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import {
@@ -25,10 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/Auth'
-import { cn } from '@/utilities/ui'
-import { toast } from 'react-toastify'
-import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { ThemeToggle } from '@/providers/Theme/theme-toggle'
+import { cn } from '@/utilities/ui'
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,
@@ -125,14 +124,17 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
     <header className="container relative z-20 " {...(theme ? { 'data-theme': theme } : {})}>
       <div className="py-8 flex justify-between">
-        <Link href="/">
-          <Logo loading="eager" priority="high" className="invert dark:invert-0" />
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link href="/">
+            <Logo loading="eager" priority="high" className="invert dark:invert-0" />
+          </Link>
+          <ThemeToggle />
+        </div>
         <div>
           <HeaderNav data={data} />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <DisplayBalance />
-            <ThemeToggle />
+            <NovuInbox />
             <AuthDropdown />
           </div>
         </div>

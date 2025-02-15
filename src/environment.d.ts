@@ -22,6 +22,9 @@ declare global {
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
       SKIP_ENV_VALIDATION: string | undefined
+      NOVU_SECRET_KEY: string
+      NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: string
+      NEXT_PUBLIC_SITE_NAME: string
     }
   }
 }

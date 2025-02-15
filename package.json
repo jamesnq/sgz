@@ -20,6 +20,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@novu/api": "^0.2.1",
+    "@novu/react": "^2.6.5",
     "@payload-enchants/fields-select": "^1.2.2",
     "@payload-enchants/sdk": "^1.2.2",
     "@payloadcms/db-mongodb": "latest",

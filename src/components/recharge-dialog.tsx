@@ -87,7 +87,7 @@ export function RechargeDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="rounded-full" variant="ghost" size={'icon'}>
+        <Button className="rounded-full" variant="ghost" size={'xs'}>
           <CirclePlus />
         </Button>
       </DialogTrigger>

@@ -2,6 +2,9 @@ import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
+import { novu } from '@/services/novu.service'
+import { env } from '@/config'
+import { getClientSideURL, getServerSideURL } from '@/utilities/getURL'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
@@ -10,6 +13,31 @@ export const Users: CollectionConfig = {
     delete: hasRole(['admin']),
     read: hasRoleOrSelf(['admin', 'staff']),
     update: hasRoleOrSelf(['admin', 'staff']),
+  },
+  hooks: {
+    afterChange: [
+      async ({ doc, operation }) => {
+        if (operation !== 'create') return
+        const userId = doc.id.toString()
+        try {
+          const res = await novu.subscribers.create({
+            subscriberId: userId,
+            email: doc.email,
+          })
+        } catch {}
+
+        await novu.trigger({
+          workflowId: 'welcome',
+          to: {
+            subscriberId: userId,
+          },
+          payload: {
+            site: '/',
+            host: getServerSideURL(),
+          },
+        })
+      },
+    ],
   },
   admin: {
     defaultColumns: ['email', 'balance', 'roles'],
@@ -91,10 +119,6 @@ export const Users: CollectionConfig = {
     },
   },
   fields: [
-    // {
-    //   name: 'name',
-    //   type: 'text',
-    // },
     {
       name: 'balance',
       type: 'number',
