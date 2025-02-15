@@ -25,7 +25,7 @@ class ConflictsError extends APIError {
 }
 const orderByOrAdmin: Access = ({ req }) => {
   // allow read to admin and staff or orderedBy
-  if (!hasRole(['admin', 'staff'])({ req })) return false
+  if (hasRole(['admin', 'staff'])({ req })) return true
   return { orderedBy: { equals: req.user?.id } }
 }
 
