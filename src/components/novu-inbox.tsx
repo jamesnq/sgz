@@ -5,7 +5,6 @@ import { useAuth } from '@/providers/Auth'
 import { Inbox } from '@novu/react'
 import { BellIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { dark } from '@novu/react/themes'
 import { Button } from './ui/button'
 export default function NovuInbox() {
   const router = useRouter()
