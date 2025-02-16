@@ -36,5 +36,6 @@
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit"
     }
-  }
+  },
+  "svg.preview.background": "dark-transparent"
 }

@@ -125,12 +125,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     <header className="container relative z-20 " {...(theme ? { 'data-theme': theme } : {})}>
       <div className="py-8 flex justify-between">
         <div className="flex items-center gap-1">
-          <Link href="/">
+          <Link href="/" className="flex items-center">
             <Logo loading="eager" priority="high" className="invert dark:invert-0" />
           </Link>
           <ThemeToggle />
         </div>
-        <div>
+        <div className="flex items-center">
           <HeaderNav data={data} />
           <div className="flex items-center gap-1">
             <DisplayBalance />

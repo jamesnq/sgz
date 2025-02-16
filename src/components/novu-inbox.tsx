@@ -39,6 +39,7 @@ export default function NovuInbox() {
         'preferences.workflow.disabled.tooltip': 'Liên hệ quản trị viên để chỉnh sửa',
         dynamic: {
           welcome: 'Xin chào',
+          'new-order': 'Đơn hàng mới',
         },
         locale: 'vi-VN',
       }}
@@ -71,6 +72,7 @@ export default function NovuInbox() {
       // TODO security issue
       // subscriberHash=""
       routerPush={(path: string) => router.push(path)}
+      placement="bottom-end"
     />
   )
 }
