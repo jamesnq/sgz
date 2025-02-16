@@ -1,4 +1,10 @@
-import { APIError, type Access, type CollectionConfig } from 'payload'
+import {
+  APIError,
+  CollectionBeforeChangeHook,
+  FieldHook,
+  type Access,
+  type CollectionConfig,
+} from 'payload'
 
 import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
@@ -6,6 +12,7 @@ import { noOne } from '@/access/noOne'
 import { Banner } from '@/blocks/Banner/config'
 import { Code } from '@/blocks/Code/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
+import { Order } from '@/payload-types'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import {
@@ -29,6 +36,52 @@ const orderByOrAdmin: Access = ({ req }) => {
   return { orderedBy: { equals: req.user?.id } }
 }
 
+// hooks
+const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, operation }) => {
+  if (operation !== 'update' || !data) return
+
+  const user = req.user
+  if (!user) throw new ConflictsError('Not authenticated')
+  if (!(data.handlers as number[]).includes(user.id)) {
+    ;(data.handlers as number[]).push(user.id)
+  }
+  return data
+}
+
+const refundHook: FieldHook<Order> = async ({
+  data,
+  value,
+  previousValue,
+  operation,
+  req: { payload, user },
+}) => {
+  if (operation !== 'update' || !previousValue || !data) return data
+  if (previousValue === 'REFUND' && value !== 'REFUND')
+    throw new ConflictsError('Không thể cập nhật trạng thái đơn hàng đã hoàn trả')
+  if (previousValue !== 'REFUND' && value === 'REFUND') {
+    const { users, transactions } = payload.db.tables
+    const orderBy = data.orderedBy
+    if (!orderBy) throw new ConflictsError('Không tìm thấy người dùng')
+    await payload.db.drizzle.transaction(async (tx) => {
+      const [newUser] = await tx
+        .update(users)
+        .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
+        .where(eq(users.id, orderBy))
+        .returning({ balance: users.balance })
+      if (!newUser) throw new ConflictsError('Không tìm thấy người dùng')
+
+      await tx.insert(transactions).values({
+        amount: data.totalPrice,
+        user: orderBy,
+        description: `Hoàn trả đơn hàng #${data.id}`,
+        balance: newUser.balance,
+      })
+    })
+  }
+
+  return value
+}
+
 export const Orders: CollectionConfig = {
   slug: 'orders',
   access: {
@@ -38,16 +91,7 @@ export const Orders: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   hooks: {
-    beforeChange: [
-      ({ data, req }) => {
-        const user = req.user
-        if (!user) throw new ConflictsError('Not authenticated')
-        if (!data.handlers.includes(user.id)) {
-          data.handlers.push(user.id)
-        }
-        return data
-      },
-    ],
+    beforeChange: [trackHandlersHook],
   },
   admin: {
     defaultColumns: [
@@ -107,34 +151,7 @@ export const Orders: CollectionConfig = {
         update: hasRole(['admin', 'staff']),
       },
       hooks: {
-        beforeChange: [
-          async ({ data, value, previousValue, operation, req: { payload, user } }) => {
-            if (!user) throw new ConflictsError('Not authenticated')
-            if (operation !== 'update' || !previousValue || !data) return data
-            if (previousValue === 'REFUND' && value !== 'REFUND')
-              throw new ConflictsError('Không thể cập nhật trạng thái đơn hàng đã hoàn trả')
-            if (previousValue !== 'REFUND' && value === 'REFUND') {
-              const { users, transactions } = payload.db.tables
-              await payload.db.drizzle.transaction(async (tx) => {
-                const [newUser] = await tx
-                  .update(users)
-                  .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
-                  .where(eq(users.id, user.id))
-                  .returning({ balance: users.balance })
-                if (!newUser) throw new ConflictsError('Không tìm thấy người dùng')
-
-                await tx.insert(transactions).values({
-                  amount: data.totalPrice,
-                  user: user.id,
-                  description: `Hoàn trả đơn hàng #${data.id}`,
-                  balance: newUser.balance,
-                })
-              })
-            }
-
-            return value
-          },
-        ],
+        beforeChange: [refundHook],
       },
       options: [
         { value: 'PENDING', label: 'Pending' },
@@ -165,6 +182,7 @@ export const Orders: CollectionConfig = {
       relationTo: 'users',
       required: true,
       hasMany: true,
+      defaultValue: [],
       admin: {
         readOnly: true,
       },

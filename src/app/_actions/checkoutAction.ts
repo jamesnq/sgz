@@ -7,6 +7,8 @@ import { eq } from '@payloadcms/db-postgres/drizzle'
 import { getPayload } from 'payload'
 import { CheckoutSchema } from './schema'
 import { after } from 'next/server'
+import { novu } from '@/services/novu.service'
+import { formatOrderDate } from '@/utilities/formatOrderDate'
 
 export const checkoutAction = authActionClient
   .schema(CheckoutSchema)
@@ -83,7 +85,7 @@ export const checkoutAction = authActionClient
           quantity,
           totalPrice,
         })
-        .returning({ id: orders.id })
+        .returning({ id: orders.id, orderedBy: orders.orderedBy, createdAt: orders.createdAt })
       if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
       await tx.insert(transactions).values({
         amount: -totalPrice,
@@ -105,6 +107,16 @@ export const checkoutAction = authActionClient
           .update(product_variants)
           .set({ sold: sql`${product_variants.sold} + ${quantity}` })
           .where(eq(product_variants.id, pv.id)),
+        novu.trigger({
+          workflowId: 'new-order',
+          to: {
+            subscriberId: order.orderedBy.toString(),
+          },
+          payload: {
+            orderId: order.id,
+            createAt: formatOrderDate(new Date(order.createdAt)),
+          },
+        }),
       ])
     })
     return { order }
