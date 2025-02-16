@@ -8,7 +8,7 @@ import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
 import { env } from 'process'
 const generateTitle: GenerateTitle<Product> = ({ doc }) => {
-  return doc?.name ? `${doc.name} | Sub Game Zone` : 'Sub Game Zone'
+  return doc?.name ? `${doc.name} | ${env.NEXT_PUBLIC_SITE_NAME}` : env.NEXT_PUBLIC_SITE_NAME
 }
 
 const generateURL: GenerateURL<Product> = ({ doc }) => {

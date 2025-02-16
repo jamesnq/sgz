@@ -111,7 +111,7 @@ export default buildConfig({
   },
   email: resendAdapter({
     defaultFromAddress: 'noreply@subgamezone.com',
-    defaultFromName: 'Sub Game Zone',
+    defaultFromName: env.NEXT_PUBLIC_SITE_NAME,
     apiKey: env.RESEND_API_KEY,
   }),
 })

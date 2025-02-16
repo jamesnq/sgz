@@ -7,6 +7,7 @@ import { Media } from '@/components/Media'
 import Link from 'next/link'
 import RichText from '@/components/RichText'
 import { formatSold } from '@/utilities/formatSold'
+import { env } from '@/config'
 
 function ProductCard({ product }: { product: Product }) {
   return (
@@ -80,7 +81,7 @@ export default async function Home() {
       <div className="grid container items-center pb-8 pt-6 lg:py-6 max-w-6xl gap-0">
         <div className="flex max-w-[61.25rem] flex-col py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-20 mx-auto items-center gap-2 text-center">
           <div className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
-            Sub Game Zone
+            {env.NEXT_PUBLIC_SITE_NAME}
           </div>
           <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
             Cung cấp dịch vụ nạp game và ứng dụng giá rẻ

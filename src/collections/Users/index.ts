@@ -48,7 +48,7 @@ export const Users: CollectionConfig = {
             subscriberId: userId,
           },
           payload: {
-            site: '/',
+            site: env.NEXT_PUBLIC_SITE_NAME,
             host: getServerSideURL(),
           },
         })

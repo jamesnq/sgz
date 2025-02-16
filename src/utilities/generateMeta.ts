@@ -4,6 +4,7 @@ import type { Media, Product, Config } from '../payload-types'
 
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getServerSideURL } from './getURL'
+import { env } from '@/config'
 
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   const serverUrl = getServerSideURL()
@@ -24,7 +25,9 @@ export const generateMeta = async (args: { doc: Partial<Product> | null }): Prom
 
   const ogImage = getImageURL(doc?.meta?.image)
 
-  const title = doc?.meta?.title ? doc?.meta?.title + ' | Sub Game Zone' : 'Sub Game Zone'
+  const title = doc?.meta?.title
+    ? doc?.meta?.title + ' | ' + env.NEXT_PUBLIC_SITE_NAME
+    : env.NEXT_PUBLIC_SITE_NAME
 
   return {
     description: doc?.meta?.description,
