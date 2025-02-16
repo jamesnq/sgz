@@ -1,19 +1,10 @@
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '@/access/anyone'
-import {
-  BlocksFeature,
-  FixedToolbarFeature,
-  HeadingFeature,
-  HorizontalRuleFeature,
-  InlineToolbarFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
 
 import { hasRole } from '@/access/hasRoles'
-import { Banner } from '../../blocks/Banner/config'
-import { Code } from '../../blocks/Code/config'
-import { MediaBlock } from '../../blocks/MediaBlock/config'
+import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
+
 export const ProductVariants: CollectionConfig = {
   slug: 'product-variants',
   access: {
@@ -36,18 +27,7 @@ export const ProductVariants: CollectionConfig = {
     {
       name: 'important',
       type: 'richText',
-      editor: lexicalEditor({
-        features: ({ rootFeatures }) => {
-          return [
-            ...rootFeatures,
-            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
-            FixedToolbarFeature(),
-            InlineToolbarFeature(),
-            HorizontalRuleFeature(),
-          ]
-        },
-      }),
+      editor: defaultLexicalEditor,
     },
     {
       name: 'name',
@@ -150,18 +130,7 @@ export const ProductVariants: CollectionConfig = {
     {
       name: 'description',
       type: 'richText',
-      editor: lexicalEditor({
-        features: ({ rootFeatures }) => {
-          return [
-            ...rootFeatures,
-            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
-            FixedToolbarFeature(),
-            InlineToolbarFeature(),
-            HorizontalRuleFeature(),
-          ]
-        },
-      }),
+      editor: defaultLexicalEditor,
       label: 'Description',
     },
   ],

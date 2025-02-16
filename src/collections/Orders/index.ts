@@ -24,6 +24,7 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
+import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -124,18 +125,7 @@ export const Orders: CollectionConfig = {
       admin: {
         description: 'Message want to send to customer',
       },
-      editor: lexicalEditor({
-        features: ({ rootFeatures }) => {
-          return [
-            ...rootFeatures,
-            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-            BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
-            FixedToolbarFeature(),
-            InlineToolbarFeature(),
-            HorizontalRuleFeature(),
-          ]
-        },
-      }),
+      editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
         read: hasRole(['admin', 'staff']),
