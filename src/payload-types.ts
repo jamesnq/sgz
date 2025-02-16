@@ -249,6 +249,7 @@ export interface User {
   balance?: number | null;
   roles: ('admin' | 'staff' | 'user')[];
   note?: string | null;
+  ip?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -847,6 +848,7 @@ export interface UsersSelect<T extends boolean = true> {
   balance?: T;
   roles?: T;
   note?: T;
+  ip?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

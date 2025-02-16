@@ -71,17 +71,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       })
 
-      if (res.ok) {
-        const { user, errors } = await res.json()
-        if (errors) throw new Error(errors[0].message)
-        setUser(user)
-        setStatus('loggedIn')
-        return user
-      }
+      const { user, errors } = await res.json()
 
-      throw new Error('Invalid login')
-    } catch {
-      throw new Error('An error occurred while attempting to login.')
+      if (errors) throw new Error(errors[0].message)
+      setUser(user)
+      setStatus('loggedIn')
+      return user
+    } catch (e: any) {
+      if (e.message.includes('email or password'))
+        throw new Error('Tài khoản mật khẩu không hợp lệ hoặc chưa được đăng ký')
+      throw new Error('Có lỗi xảy ra trong quá trình đăng nhập')
     }
   }, [])
 

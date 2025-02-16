@@ -1,10 +1,11 @@
 import type { CollectionConfig } from 'payload'
-
-import { hasRole } from '@/access/hasRoles'
+import requestIp from 'request-ip'
+import { hasRole, userHasRole } from '@/access/hasRoles'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 import { novu } from '@/services/novu.service'
 import { env } from '@/config'
 import { getClientSideURL, getServerSideURL } from '@/utilities/getURL'
+import { after } from 'next/server'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
@@ -15,6 +16,21 @@ export const Users: CollectionConfig = {
     update: hasRoleOrSelf(['admin', 'staff']),
   },
   hooks: {
+    afterLogin: [
+      async ({ user, req }) => {
+        if (userHasRole(user, ['admin', 'staff'])) return
+        after(async () => {
+          //@ts-expect-error ignore
+          const ip = requestIp.getClientIp(req) || ''
+          await req.payload.update({
+            collection: 'users',
+            overrideAccess: true,
+            data: { ip },
+            where: { id: user.id },
+          })
+        })
+      },
+    ],
     afterChange: [
       async ({ doc, operation }) => {
         if (operation !== 'create') return
@@ -151,6 +167,18 @@ export const Users: CollectionConfig = {
         read: hasRole(['admin', 'staff']),
         create: hasRole(['admin']),
         update: hasRole(['admin', 'staff']),
+      },
+    },
+    {
+      name: 'ip',
+      type: 'text',
+      admin: {
+        readOnly: true,
+      },
+      access: {
+        read: hasRole(['admin']),
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
       },
     },
     // { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
