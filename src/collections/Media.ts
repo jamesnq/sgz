@@ -48,6 +48,13 @@ export const Media: CollectionConfig = {
         name: 'thumbnail',
         width: 300,
       },
+      {
+        // for SEO metadata
+        name: 'og',
+        width: 1200,
+        height: 630,
+        crop: 'center',
+      },
     ],
   },
 }
