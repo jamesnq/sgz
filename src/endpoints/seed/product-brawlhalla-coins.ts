@@ -42,7 +42,7 @@ export const productBrawlhallaCoins: Partial<Product> = {
   relatedProducts: [],
   categories: [],
   meta: {
-    title: 'Brawlhalla Mammoth Coin | Payload Website Template',
+    title: `Brawlhalla Mammoth Coin`,
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     image: '{{IMAGE}}',

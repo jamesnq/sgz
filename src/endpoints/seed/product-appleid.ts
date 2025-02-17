@@ -45,7 +45,7 @@ export const productAppleId: Partial<Product> = {
   categories: [],
 
   meta: {
-    title: 'Apple Id | Payload Website Template',
+    title: `Apple Id`,
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     image: '{{IMAGE}}',
