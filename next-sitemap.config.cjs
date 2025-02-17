@@ -15,6 +15,10 @@ module.exports = {
         userAgent: '*',
         disallow: '/admin/*',
       },
+      {
+        userAgent: '*',
+        disallow: ['/auth/*'],
+      },
     ],
     // additionalSitemaps: [`${SITE_URL}/pages-sitemap.xml`, `${SITE_URL}/posts-sitemap.xml`],
     additionalSitemaps: [],

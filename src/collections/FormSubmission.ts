@@ -53,7 +53,7 @@ export const FormSubmissions: CollectionConfig = {
             })
 
             return true
-          } catch (error) {
+          } catch {
             return 'Cannot create this submission because this form does not exist.'
           }
         }
@@ -81,7 +81,7 @@ export const FormSubmissions: CollectionConfig = {
         if (form.fields?.length === 0) {
           return 'Form has no fields'
         }
-        for (const [key, value] of Object.entries(submissionData)) {
+        for (const [key] of Object.entries(submissionData)) {
           if (!form.fields?.some((f: any) => f.name === key)) {
             return `Field ${key} not found in form`
           }

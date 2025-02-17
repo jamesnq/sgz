@@ -1,11 +1,11 @@
+import { hasRole, userHasRole } from '@/access/hasRoles'
+import { env } from '@/config'
+import { novu } from '@/services/novu.service'
+import { getServerSideURL } from '@/utilities/getURL'
+import { after } from 'next/server'
 import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
-import { hasRole, userHasRole } from '@/access/hasRoles'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
-import { novu } from '@/services/novu.service'
-import { env } from '@/config'
-import { getClientSideURL, getServerSideURL } from '@/utilities/getURL'
-import { after } from 'next/server'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
@@ -36,7 +36,7 @@ export const Users: CollectionConfig = {
         if (operation !== 'create') return
         const userId = doc.id.toString()
         try {
-          const res = await novu.subscribers.create({
+          await novu.subscribers.create({
             subscriberId: userId,
             email: doc.email,
           })

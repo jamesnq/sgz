@@ -31,7 +31,7 @@ function ProductCard({ product }: { product: Product }) {
                   {product.name}
                 </div>
                 <div className="peer mt-2 flex items-end">
-                  <span className="leading-[13px] text-[#FFD25F]">24,500đ ~ 2,376,000đ</span>
+                  {/* <span className="leading-[13px] text-[#FFD25F]">24,500đ ~ 2,376,000đ</span> */}
                 </div>
                 {product.description.root.direction && (
                   <RichText

@@ -8,6 +8,7 @@ import { createAppleIdForm as appleIdFormData } from './create-apple-id-form'
 
 import { productAppleId as productAppleIdData } from './product-appleid'
 import { productBrawlhallaCoins as productBrawlhallaCoinsData } from './product-brawlhalla-coins'
+import { novu } from '@/services/novu.service'
 
 const collections: CollectionSlug[] = [
   'orders',
@@ -18,7 +19,7 @@ const collections: CollectionSlug[] = [
   'categories',
   'media',
 ]
-const globals: GlobalSlug[] = ['header', 'footer']
+const _globals: GlobalSlug[] = ['header', 'footer']
 
 // Next.js revalidation errors are normal when seeding the database without a server running
 // i.e. running `yarn seed` locally instead of using the admin UI within an active app
@@ -38,6 +39,7 @@ export const seed = async ({
   // this is because while `yarn seed` drops the database
   // the custom `/api/seed` endpoint does not
   payload.logger.info(`— Clearing collections and globals...`)
+  // payload.logger.info(`— Clearing collections and globals...`)
 
   // clear the database
   // await Promise.all(
@@ -77,6 +79,7 @@ export const seed = async ({
       },
     },
   })
+
   payload.logger.info(`— Seeding form...`)
 
   const brawlhallaForm = await payload.create({
@@ -93,12 +96,12 @@ export const seed = async ({
     data: JSON.parse(JSON.stringify(appleIdFormData)),
   })
 
-  let brawlhallaFormID: number | string = brawlhallaForm.id
-  let appleIdFormID: number | string = appleIdForm.id
+  let _brawlhallaFormID: number | string = brawlhallaForm.id
+  let _appleIdFormID: number | string = appleIdForm.id
 
   if (payload.db.defaultIDType === 'text') {
-    brawlhallaFormID = `"${brawlhallaFormID}"`
-    appleIdFormID = `"${appleIdFormID}"`
+    _brawlhallaFormID = `"${_brawlhallaFormID}"`
+    _appleIdFormID = `"${_appleIdFormID}"`
   }
 
   payload.logger.info(`— Seeding media...`)
@@ -161,7 +164,7 @@ export const seed = async ({
     }),
   ])
 
-  let demoAuthorID: number | string = demoAuthor.id
+  let _demoAuthorID: number | string = demoAuthor.id
 
   let mmcMediaId: number | string = mmcMedia.id
   let appleIdIDMediaId: number | string = appleIdMedia.id
@@ -169,7 +172,7 @@ export const seed = async ({
   if (payload.db.defaultIDType === 'text') {
     mmcMediaId = `"${mmcMedia.id}"`
     appleIdIDMediaId = `"${appleIdMedia.id}"`
-    demoAuthorID = `"${demoAuthorID}"`
+    _demoAuthorID = `"${_demoAuthorID}"`
   }
 
   payload.logger.info(`— Seeding products...`)
@@ -191,7 +194,7 @@ export const seed = async ({
     ),
   })
 
-  const productAppleIdVariant1 = await payload.create({
+  const _productAppleIdVariant1 = await payload.create({
     collection: 'product-variants',
     depth: 0,
     data: {
@@ -313,11 +316,23 @@ export const seed = async ({
   //     },
   //   }),
   // ])
-
+  payload.logger.info(`— Seeding novu users...`)
+  const res = await novu.subscribers.list()
+  res.result.data.forEach(async (subscriber) => {
+    if (!subscriber.id) return
+    await novu.subscribers.delete(subscriber.subscriberId)
+  })
+  const { docs: users } = await payload.find({
+    collection: 'users',
+    overrideAccess: true,
+  })
+  await novu.subscribers.createBulk({
+    subscribers: users.map((user) => ({ subscriberId: user.id.toString() })),
+  })
   payload.logger.info('Seeded database successfully!')
 }
 
-async function fetchFileByURL(url: string): Promise<File> {
+async function _fetchFileByURL(url: string): Promise<File> {
   const res = await fetch(url, {
     credentials: 'include',
     method: 'GET',
