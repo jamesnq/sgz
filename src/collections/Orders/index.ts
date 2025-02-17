@@ -9,22 +9,11 @@ import {
 import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
-import { Banner } from '@/blocks/Banner/config'
-import { Code } from '@/blocks/Code/config'
-import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { Order } from '@/payload-types'
+import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
-import {
-  BlocksFeature,
-  FixedToolbarFeature,
-  HeadingFeature,
-  HorizontalRuleFeature,
-  InlineToolbarFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
-import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -54,7 +43,7 @@ const refundHook: FieldHook<Order> = async ({
   value,
   previousValue,
   operation,
-  req: { payload, user },
+  req: { payload },
 }) => {
   if (operation !== 'update' || !previousValue || !data) return data
   if (previousValue === 'REFUND' && value !== 'REFUND')

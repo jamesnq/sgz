@@ -9,7 +9,7 @@ import { Button } from './ui/button'
 export default function NovuInbox() {
   const router = useRouter()
   const { user } = useAuth()
-  if (!user?.id) return <></>
+  if (!user?.id || !user.novuHash) return <></>
   return (
     <Inbox
       localization={{
@@ -68,8 +68,7 @@ export default function NovuInbox() {
       )}
       applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
       subscriberId={user.id.toString()}
-      // TODO security issue
-      // subscriberHash=""
+      subscriberHash={user.novuHash}
       routerPush={(path: string) => router.push(path)}
       placement="bottom-end"
     />

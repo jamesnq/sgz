@@ -1,11 +1,46 @@
 import { hasRole, userHasRole } from '@/access/hasRoles'
+import { noOne } from '@/access/noOne'
 import { env } from '@/config'
 import { novu } from '@/services/novu.service'
 import { getServerSideURL } from '@/utilities/getURL'
+import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
+
+function createSubscriberHash(subscriberId: string) {
+  return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
+}
+
+async function createNovuSubscriber({
+  subscriberId,
+  data,
+}: {
+  subscriberId: string
+  data: { email: string }
+}) {
+  try {
+    await novu.subscribers.create({
+      subscriberId: subscriberId,
+      email: data.email,
+    })
+  } catch {}
+  after(async () => {
+    await novu.trigger({
+      workflowId: 'welcome',
+      to: {
+        subscriberId: subscriberId,
+      },
+      payload: {
+        site: env.NEXT_PUBLIC_SITE_NAME,
+        host: getServerSideURL(),
+      },
+    })
+  })
+  return { novuHash: createSubscriberHash(subscriberId), subscriberId }
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
@@ -31,27 +66,24 @@ export const Users: CollectionConfig = {
         })
       },
     ],
-    afterChange: [
-      async ({ doc, operation }) => {
-        if (operation !== 'create') return
-        const userId = doc.id.toString()
-        try {
-          await novu.subscribers.create({
-            subscriberId: userId,
-            email: doc.email,
-          })
-        } catch {}
+    beforeLogin: [
+      async ({ req, user }) => {
+        if (user.novuHash) return user
 
-        await novu.trigger({
-          workflowId: 'welcome',
-          to: {
-            subscriberId: userId,
-          },
-          payload: {
-            site: env.NEXT_PUBLIC_SITE_NAME,
-            host: getServerSideURL(),
-          },
+        const { novuHash } = await createNovuSubscriber({
+          subscriberId: user.id.toString(),
+          data: { email: user.email },
         })
+
+        await req.payload.update({
+          collection: 'users',
+          overrideAccess: true,
+          data: { novuHash },
+          where: { id: { equals: user.id } },
+        })
+
+        user.novuHash = novuHash
+        return user
       },
     ],
   },
@@ -145,10 +177,17 @@ export const Users: CollectionConfig = {
       },
     },
     {
-      access: {
-        create: hasRole(['admin']),
-        update: hasRole(['admin']),
+      name: 'novuHash',
+      type: 'text',
+      admin: {
+        readOnly: true,
       },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+    },
+    {
       name: 'roles',
       type: 'select',
       options: [
@@ -156,6 +195,10 @@ export const Users: CollectionConfig = {
         { label: 'Staff', value: 'staff' },
         { label: 'User', value: 'user' },
       ],
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
       hasMany: true,
       required: true,
       defaultValue: ['user'],
