@@ -19,7 +19,7 @@ export const rechargeAction = authActionClient
       throw new Error('Payment link undefined')
     }
     const payload = await getPayload({ config: payloadConfig })
-    const recharge = await payload.create({
+    const _recharge = await payload.create({
       collection: 'recharges',
       data: {
         gateway: 'PAYOS',

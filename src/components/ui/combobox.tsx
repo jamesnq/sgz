@@ -16,7 +16,6 @@ export function Combobox({
   data,
   onValueChange,
   placeholder,
-  searchPlaceholder,
   defaultValue,
 }: {
   data: { value: string; label: string }[]

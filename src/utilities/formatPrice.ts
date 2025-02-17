@@ -1,4 +1,4 @@
-export function formatPrice(price: any, currency: string = 'USD') {
+export function formatPrice(price: any, _currency: string = 'USD') {
   return `${price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} SGZ`
 }
 // export function formatPrice(price: any, currency: string = 'USD') {

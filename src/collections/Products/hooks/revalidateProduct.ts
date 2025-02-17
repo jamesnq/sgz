@@ -7,7 +7,7 @@ import type { Product } from '../../../payload-types'
 export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   doc,
   previousDoc,
-  req: { payload, context },
+  req: { payload },
 }) => {
   if (!previousDoc.slug) return doc
   const oldPath = `/products/${previousDoc.slug}`

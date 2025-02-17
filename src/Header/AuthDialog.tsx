@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/providers/Auth'
 
 export default function AuthDialog({ className }: { className?: string }) {
-  const { user, login, create, forgotPassword } = useAuth()
+  const { login, create, forgotPassword } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [success, setSuccess] = useState<string>('')

@@ -38,7 +38,7 @@ export class PaymentService {
   //   return this.sgzStoreChannel
   // }
   async createPaymentLink(data: z.infer<typeof CreatePaymentLinkSchema>) {
-    const { amount, currency, userId } = CreatePaymentLinkSchema.parse(data)
+    const { amount, currency } = CreatePaymentLinkSchema.parse(data)
     let attempt = 0
     const maxAttempts = 3
     let result: CheckoutResponseDataType | undefined = undefined
@@ -106,7 +106,7 @@ export class PaymentService {
         .where(eq(users.id, recharge.user))
         .returning({ balance: users.balance })
       if (!user) throw new Error('User not found')
-      const transaction = await tx.insert(transactions).values({
+      const _transaction = await tx.insert(transactions).values({
         amount: paymentData.amount,
         user: recharge.user,
         description: `Nạp tiền qua ngân hàng mã nạp #${recharge.orderCode}`,

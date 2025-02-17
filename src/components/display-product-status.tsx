@@ -1,6 +1,6 @@
 'use client'
 
-import { CircleHelp, CircleX, Rocket, Truck } from 'lucide-react'
+import { CircleHelp, Rocket, Truck } from 'lucide-react'
 
 function ProductStatusIcon({ status }: { status: string }) {
   const productStatusIcons: any = {

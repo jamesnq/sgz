@@ -64,7 +64,7 @@ function UpdateOrderShippingForm({
         <Button
           disabled={disabled}
           className="w-full"
-          onClick={(x) => {
+          onClick={() => {
             updateFormSubmissionAction({
               id: formSubmission.id,
               shippingFields: formSubmissionData,
