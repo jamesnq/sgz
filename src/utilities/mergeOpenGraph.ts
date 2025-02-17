@@ -4,7 +4,7 @@ import { env } from '@/config'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
-  description: `${env.NEXT_PUBLIC_SITE_NAME} - cung cấp dịch vụ nạp game và ứng dụng giá rẻ`,
+  description: `${env.NEXT_PUBLIC_SITE_NAME} - Cung cấp dịch vụ nạp game và ứng dụng giá rẻ`,
   images: [
     {
       url: `${getServerSideURL()}/logo.svg`,
