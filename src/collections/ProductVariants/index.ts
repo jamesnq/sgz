@@ -2,59 +2,50 @@ import type {
   CollectionAfterChangeHook,
   CollectionAfterDeleteHook,
   CollectionConfig,
+  Payload,
 } from 'payload'
-
 import { anyone } from '@/access/anyone'
-
 import { hasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { revalidatePath } from 'next/cache'
 
+const revalidateProductPath = async (payload: Payload, productId: number) => {
+  const product = await payload.findByID({
+    collection: 'products',
+    id: productId,
+    overrideAccess: true,
+  })
+
+  if (!product || !product.slug) {
+    payload.logger.error(`Product not found or missing slug for id: ${productId}`)
+    return null
+  }
+
+  const path = `/products/${product.slug}`
+  payload.logger.info(`Revalidating product at path: ${path}`)
+  revalidatePath(path)
+  return path
+}
+
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   doc,
   req: { payload },
 }) => {
-  if (!doc.product || typeof doc.product !== 'number') return
-
-  const product = await payload.findByID({
-    collection: 'products',
-    id: doc.product,
-    overrideAccess: true,
-  })
-
-  if (!product || !product.slug) {
-    payload.logger.error(`Product not found or missing slug for id: ${doc.product}`)
-    return doc
+  if (typeof doc.product === 'number') {
+    await revalidateProductPath(payload, doc.product)
   }
-
-  const path = `/products/${product.slug}`
-
-  payload.logger.info(`Revalidating product at path: ${path}`)
-  revalidatePath(path)
+  return doc
 }
+
 const revalidateDelete: CollectionAfterDeleteHook<ProductVariant> = async ({
   doc,
   req: { payload, context },
 }) => {
-  if (!doc.product || typeof doc.product !== 'number') return
-
-  const product = await payload.findByID({
-    collection: 'products',
-    id: doc.product,
-    overrideAccess: true,
-  })
-
-  if (!product || !product.slug) {
-    payload.logger.error(`Product not found or missing slug for id: ${doc.product}`)
-    return doc
+  if (typeof doc.product === 'number' && !context.disableRevalidate) {
+    await revalidateProductPath(payload, doc.product)
   }
-
-  if (!context.disableRevalidate) {
-    const path = `/products/${product.slug}`
-    payload.logger.info(`Revalidating product at path: ${path}`)
-    revalidatePath(path)
-  }
+  return doc
 }
 
 export const ProductVariants: CollectionConfig = {
