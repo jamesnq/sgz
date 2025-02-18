@@ -9,6 +9,8 @@ import RichText from '@/components/RichText'
 import { formatSold } from '@/utilities/formatSold'
 import { env } from '@/config'
 
+export const revalidate = 3600
+
 function ProductCard({ product }: { product: Product }) {
   return (
     <Link
@@ -74,6 +76,7 @@ async function ProductGroup() {
     </section>
   )
 }
+
 export default async function Home() {
   return (
     <div className="container">
