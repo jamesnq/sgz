@@ -158,7 +158,6 @@ export const Products: CollectionConfig = {
     },
     ...slugField(),
   ],
-  // TODO: add hooks
   hooks: {
     afterChange: [revalidateProduct],
     beforeDelete: [revalidateDelete],

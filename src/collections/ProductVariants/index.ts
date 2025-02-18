@@ -1,9 +1,61 @@
-import type { CollectionConfig } from 'payload'
+import type {
+  CollectionAfterChangeHook,
+  CollectionAfterDeleteHook,
+  CollectionConfig,
+} from 'payload'
 
 import { anyone } from '@/access/anyone'
 
 import { hasRole } from '@/access/hasRoles'
+import { ProductVariant } from '@/payload-types'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
+import { revalidatePath } from 'next/cache'
+
+const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
+  doc,
+  req: { payload },
+}) => {
+  if (!doc.product || typeof doc.product !== 'number') return
+
+  const product = await payload.findByID({
+    collection: 'products',
+    id: doc.product,
+    overrideAccess: true,
+  })
+
+  if (!product || !product.slug) {
+    payload.logger.error(`Product not found or missing slug for id: ${doc.product}`)
+    return doc
+  }
+
+  const path = `/products/${product.slug}`
+
+  payload.logger.info(`Revalidating product at path: ${path}`)
+  revalidatePath(path)
+}
+const revalidateDelete: CollectionAfterDeleteHook<ProductVariant> = async ({
+  doc,
+  req: { payload, context },
+}) => {
+  if (!doc.product || typeof doc.product !== 'number') return
+
+  const product = await payload.findByID({
+    collection: 'products',
+    id: doc.product,
+    overrideAccess: true,
+  })
+
+  if (!product || !product.slug) {
+    payload.logger.error(`Product not found or missing slug for id: ${doc.product}`)
+    return doc
+  }
+
+  if (!context.disableRevalidate) {
+    const path = `/products/${product.slug}`
+    payload.logger.info(`Revalidating product at path: ${path}`)
+    revalidatePath(path)
+  }
+}
 
 export const ProductVariants: CollectionConfig = {
   slug: 'product-variants',
@@ -134,10 +186,8 @@ export const ProductVariants: CollectionConfig = {
       label: 'Description',
     },
   ],
-  // TODO: add hooks
-  // hooks: {
-  //   afterChange: [revalidatePost],
-  //   afterRead: [populateAuthors],
-  //   afterDelete: [revalidateDelete],
-  // },
+  hooks: {
+    afterChange: [revalidateProduct],
+    afterDelete: [revalidateDelete],
+  },
 }
