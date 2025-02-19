@@ -1,4 +1,5 @@
 'use client'
+import { env } from '@/config'
 import { User } from '@/payload-types'
 import { usePathname } from 'next/navigation'
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
@@ -27,13 +28,12 @@ const Context = createContext({} as AuthContext)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>()
-
   // used to track the single event of logging in or logging out
   // useful for `useEffect` hooks that should only run once
   const [status, setStatus] = useState<undefined | 'loggedOut' | 'loggedIn'>()
   const create = useCallback<Create>(async (args) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/register`, {
+      const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/auth/register`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback<Login>(async (args) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/login`, {
+      const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/users/login`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -70,12 +70,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           password: args.password,
         }),
       })
-
       const { user, errors } = await res.json()
-
       if (errors) throw new Error(errors[0].message)
       setUser(user)
       setStatus('loggedIn')
+      if (user) {
+        // @ts-expect-error ignore
+        window.$chatwoot.reset()
+        // @ts-expect-error ignore
+        window.$chatwoot.setUser(user?.email, {
+          email: user?.email,
+          name: user?.email.split('@')[0],
+        })
+      }
       return user
     } catch (e: any) {
       if (e.message.includes('email or password'))
@@ -86,17 +93,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback<Logout>(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/logout`, {
+      const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/users/logout`, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       })
 
       if (res.ok) {
         setUser(null)
         setStatus('loggedOut')
+        //@ts-expect-error ignore
+        window.$chatwoot.reset()
       } else {
         throw new Error('An error occurred while attempting to logout.')
       }
@@ -109,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchMe = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/me`, {
+        const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/users/me`, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -162,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = useCallback<ResetPassword>(async (args) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/reset-password`, {
+      const res = await fetch(`${env.NEXT_PUBLIC_SERVER_URL}/api/users/reset-password`, {
         method: 'POST',
         credentials: 'include',
         headers: {

@@ -8,12 +8,12 @@ export const Providers: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   return (
-    <ThemeProvider>
-      <NuqsAdapter>
-        <AuthProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <NuqsAdapter>
           <HeaderThemeProvider>{children}</HeaderThemeProvider>
-        </AuthProvider>
-      </NuqsAdapter>
-    </ThemeProvider>
+        </NuqsAdapter>
+      </ThemeProvider>
+    </AuthProvider>
   )
 }

@@ -203,6 +203,7 @@ export interface Category {
 export interface User {
   id: number;
   balance?: number | null;
+  chatwootHash?: string | null;
   novuHash?: string | null;
   roles: ('admin' | 'staff' | 'user')[];
   note?: string | null;
@@ -750,6 +751,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   balance?: T;
+  chatwootHash?: T;
   novuHash?: T;
   roles?: T;
   note?: T;
