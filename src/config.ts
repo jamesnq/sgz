@@ -22,6 +22,7 @@ export const env = createEnv({
     PAYOS_CANCEL_URL: z.string().url(),
     PAYOS_RETURN_URL: z.string().url(),
     NOVU_SECRET_KEY: z.string(),
+    CHATWOOT_HMAC_TOKEN: z.string(),
   },
   /*
    * Environment variables available on the client (and server).

@@ -12,6 +12,9 @@ import hasRoleOrSelf from './access/hasRoleOrSelf'
 function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
 }
+function createChatwootHash(email: string) {
+  return CryptoJS.HmacSHA256(email, env.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
+}
 
 async function createNovuSubscriber({
   subscriberId,
@@ -68,21 +71,33 @@ export const Users: CollectionConfig = {
     ],
     beforeLogin: [
       async ({ req, user }) => {
-        if (user.novuHash) return user
+        if (!user.novuHash) {
+          const { novuHash } = await createNovuSubscriber({
+            subscriberId: user.id.toString(),
+            data: { email: user.email },
+          })
 
-        const { novuHash } = await createNovuSubscriber({
-          subscriberId: user.id.toString(),
-          data: { email: user.email },
-        })
+          await req.payload.update({
+            collection: 'users',
+            overrideAccess: true,
+            data: { novuHash },
+            where: { id: { equals: user.id } },
+          })
 
-        await req.payload.update({
-          collection: 'users',
-          overrideAccess: true,
-          data: { novuHash },
-          where: { id: { equals: user.id } },
-        })
+          user.novuHash = novuHash
+        }
 
-        user.novuHash = novuHash
+        if (!user.chatwootHash) {
+          const chatwootHash = await createChatwootHash(user.email)
+          await req.payload.update({
+            collection: 'users',
+            overrideAccess: true,
+            data: { chatwootHash },
+            where: { id: { equals: user.id } },
+          })
+
+          user.chatwootHash = chatwootHash
+        }
         return user
       },
     ],
@@ -174,6 +189,17 @@ export const Users: CollectionConfig = {
       access: {
         create: hasRole(['admin']),
         update: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'chatwootHash',
+      type: 'text',
+      admin: {
+        readOnly: true,
+      },
+      access: {
+        create: noOne,
+        update: noOne,
       },
     },
     {

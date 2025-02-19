@@ -21,6 +21,7 @@ declare global {
       PAYOS_RETURN_URL: string
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
+      CHATWOOT_HMAC_TOKEN: string
       SKIP_ENV_VALIDATION: string | undefined
       NOVU_SECRET_KEY: string
       NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: string
