@@ -10,7 +10,15 @@ import { defaultTheme, getImplicitPreference, themeLocalStorageKey } from './sha
 import { themeIsValid } from './types'
 import { env } from '@/config'
 import { useAuth } from '../Auth'
-
+import { User } from '@/payload-types'
+function chatwootSetUser(user: User | null) {
+  if (!user) return
+  // @ts-expect-error ignore
+  window.$chatwoot.setUser(user?.email, {
+    email: user?.email,
+    name: user?.email.split('@')[0],
+  })
+}
 function ChatwootLoader() {
   const { theme } = useTheme()
   const { user } = useAuth()
@@ -20,23 +28,10 @@ function ChatwootLoader() {
 
     const SCRIPT_URL = `${env.NEXT_PUBLIC_CHATWOOT_BASE_URL}/packs/js/sdk.js`
     const onReady = (): void => {
-      if (!user) return
-      // @ts-expect-error ignore
-      window.$chatwoot.setUser(user?.email, {
-        email: user?.email,
-        name: user?.email.split('@')[0],
-      })
-
-      // window.$chatwoot.setCustomAttributes({
-      //   company: 'nameFriendly',
-      // })
+      chatwootSetUser(user)
     }
     const onError = (error: unknown): void => {
-      // @ts-expect-error ignore
-      window.$chatwoot.setUser(user?.email, {
-        email: user?.email,
-      })
-
+      chatwootSetUser(null)
       console.log(error)
     }
 
