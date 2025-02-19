@@ -59,6 +59,7 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
   const result = await payload.find({
     collection: 'products',
     limit: 1,
+    depth: 1,
     pagination: false,
     where: {
       slug: {
@@ -67,21 +68,19 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
     },
   })
   const product = result.docs?.[0] || null
-  if (!product || !product.variants?.docs?.length) {
+  if (!product || !product.variants?.length) {
     return null
   }
-  if (product && product.variants?.docs) {
-    product.variants.docs = product.variants.docs.sort(
-      (a: any, b: any) => a.originalPrice - b.originalPrice,
-    )
+  if (product && product.variants) {
+    product.variants = product.variants.sort((a: any, b: any) => a.originalPrice - b.originalPrice)
   }
 
   const formIds = Array.from(
     new Set(
-      product.variants?.docs?.map((variant) => (variant as ProductVariant).form).filter(Boolean) ||
-        [],
+      product.variants?.map((variant) => (variant as ProductVariant).form).filter(Boolean) || [],
     ),
   )
+  if (!formIds.length) return product
 
   const { docs: forms } = await payload.find({
     collection: 'forms',
@@ -90,8 +89,9 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
         in: formIds,
       },
     },
+    depth: 1,
   })
-  product.variants.docs.forEach((variant) => {
+  product.variants.forEach((variant) => {
     ;(variant as ProductVariant).form = forms.find(
       (form) => form.id === (variant as ProductVariant).form,
     )

@@ -78,10 +78,11 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'variants',
-      type: 'join',
-      collection: 'product-variants',
-      on: 'product',
-      admin: { defaultColumns: ['name', 'updatedAt'] },
+      type: 'relationship',
+      relationTo: 'product-variants',
+      hasMany: true,
+      unique: true,
+      // admin: { defaultColumns: ['name', 'updatedAt'] },
     },
     {
       type: 'tabs',

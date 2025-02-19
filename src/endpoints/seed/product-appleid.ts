@@ -43,7 +43,7 @@ export const productAppleId: Partial<Product> = {
   },
   relatedProducts: [],
   categories: [],
-
+  variants: [],
   meta: {
     title: `Apple Id`,
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -53,6 +53,4 @@ export const productAppleId: Partial<Product> = {
   },
   slug: 'apple-id',
   slugLock: true,
-  updatedAt: '2025-02-05T05:34:39.688Z',
-  createdAt: '2025-02-05T05:34:39.688Z',
 }
