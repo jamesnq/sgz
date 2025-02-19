@@ -194,7 +194,7 @@ export const seed = async ({
     ),
   })
 
-  const _productAppleIdVariant1 = await payload.create({
+  const productAppleIdVariant1 = await payload.create({
     collection: 'product-variants',
     depth: 0,
     data: {
@@ -210,8 +210,16 @@ export const seed = async ({
       max: 1,
       note: null,
       description: null,
-      updatedAt: '2025-02-05T05:35:24.119Z',
-      createdAt: '2025-02-05T05:35:24.119Z',
+    },
+  })
+  await payload.update({
+    collection: 'products',
+    overrideAccess: true,
+    data: {
+      variants: [productAppleIdVariant1.id],
+    },
+    where: {
+      id: { equals: productAppleId.id },
     },
   })
 
@@ -263,8 +271,9 @@ export const seed = async ({
     { name: 'Battlepass Deluxe', originalPrice: 699000, price: 350000 },
   ]
 
+  const variants = []
   for (const variant of brawlhallaVariants) {
-    await payload.create({
+    const createdVariant = await payload.create({
       collection: 'product-variants',
       depth: 0,
       overrideAccess: true,
@@ -283,8 +292,18 @@ export const seed = async ({
         description: null,
       },
     })
+    variants.push(createdVariant)
   }
-
+  await payload.update({
+    collection: 'products',
+    overrideAccess: true,
+    data: {
+      variants: variants.map((variant) => variant.id),
+    },
+    where: {
+      id: { equals: productBrawlhallaCoins.id },
+    },
+  })
   //   payload.updateGlobal({
   //     slug: 'footer',
   //     data: {

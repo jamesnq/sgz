@@ -79,11 +79,7 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {
-    products: {
-      variants: 'product-variants';
-    };
-  };
+  collectionsJoins: {};
   collectionsSelect: {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
@@ -248,10 +244,7 @@ export interface Product {
   status: 'PRIVATE' | 'PUBLIC' | 'STOPPED';
   sold: number;
   note?: string | null;
-  variants?: {
-    docs?: (number | ProductVariant)[] | null;
-    hasNextPage?: boolean | null;
-  } | null;
+  variants?: (number | ProductVariant)[] | null;
   description: {
     root: {
       type: string;

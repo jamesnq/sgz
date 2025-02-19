@@ -25,7 +25,7 @@ export function ProductPageProvider({
   product: Product
 }) {
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant | null>(
-    product?.variants?.docs ? (product.variants.docs[0] as ProductVariant) : null,
+    product?.variants?.length ? (product.variants[0] as ProductVariant) : null,
   )
   return (
     <ProductPageContext.Provider value={{ product, currentVariant, setCurrentVariant }}>

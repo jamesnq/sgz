@@ -70,7 +70,7 @@ function ProductPageProvider({
   product: Product
 }) {
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(
-    (product?.variants?.docs && product.variants.docs[0]) as ProductVariant,
+    (product?.variants && product.variants[0]) as ProductVariant,
   )
 
   const [quantity, setQuantity] = React.useState(1)
@@ -448,8 +448,8 @@ function Screen() {
             </Card>
           )}
           <div className="max-md:hidden grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-2">
-            {product.variants?.docs &&
-              product.variants?.docs.map((variant) => (
+            {product.variants &&
+              product.variants.map((variant) => (
                 <ProductVariantCard
                   key={(variant as ProductVariant).id}
                   productVariant={variant as ProductVariant}
@@ -476,7 +476,7 @@ function Screen() {
         <div className="flex-1 max-md:order-1">
           <ProductVariantsDrawer
             className="md:hidden mb-2"
-            productVariants={(product.variants?.docs as ProductVariant[]) || []}
+            productVariants={(product.variants as ProductVariant[]) || []}
           ></ProductVariantsDrawer>
           <div className={'space-y-2'}>
             {currentVariant.form && (
