@@ -49,7 +49,7 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   if (previousDoc.status != doc.status) {
     // after(async () => {})
     if (doc.status === 'USER_UPDATE') {
-      const res = await novu.trigger({
+      const _res = await novu.trigger({
         workflowId: 'order-update',
         to: {
           subscriberId: doc.orderedBy.toString(),
