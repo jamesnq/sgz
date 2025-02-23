@@ -15,11 +15,14 @@ import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
 import Link from 'next/link'
+import { useActionWarper } from '@/utilities/useActionWarper'
+import { Loader2 } from 'lucide-react'
 
 function UpdateOrderShippingForm({ disabled, order }: { order: Order; disabled?: boolean }) {
   const formSubmission = useMemo(() => order.formSubmission as FormSubmission, [order])
   const form = useMemo(() => formSubmission.form as Form, [formSubmission])
   const [formSubmissionData, setFormSubmissionData] = useState(formSubmission?.submissionData || {})
+  const { executeAsync, isExecuting } = useActionWarper(updateOrderAction)
   return (
     <Card>
       <CardHeader>Cung cấp thông tin tài khoản</CardHeader>
@@ -56,16 +59,23 @@ function UpdateOrderShippingForm({ disabled, order }: { order: Order; disabled?:
       </CardContent>
       <CardFooter>
         <Button
-          disabled={disabled}
+          disabled={disabled || isExecuting}
           className="w-full"
           onClick={() => {
-            updateOrderAction({
+            executeAsync({
               id: order.id,
               shippingFields: formSubmissionData,
             })
           }}
         >
-          Cập nhật thông tin
+          {isExecuting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Đang cập nhật...
+            </>
+          ) : (
+            'Cập nhật thông tin'
+          )}
         </Button>
       </CardFooter>
     </Card>

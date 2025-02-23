@@ -1,5 +1,4 @@
 'use client'
-import { HookSafeActionFn, useAction, UseActionHookReturn } from 'next-safe-action/hooks'
 
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -30,10 +29,9 @@ import { Input } from '@/components/ui/input'
 import { useAuth } from '@/providers/Auth'
 import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
+import { useActionWarper } from '@/utilities/useActionWarper'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { toast } from 'react-toastify'
-import { Schema } from 'zod'
 
 type ProductPageContextType = {
   product: Product
@@ -296,32 +294,6 @@ function ShippingForm({ form }: { form: Form }) {
   )
 }
 
-function useActionWarper<
-  ServerError,
-  S extends Schema | undefined,
-  const BAS extends readonly Schema[],
-  CVE,
-  CBAVE,
-  Data,
->(
-  action: HookSafeActionFn<ServerError, S, BAS, CVE, CBAVE, Data>,
-): UseActionHookReturn<ServerError, S, BAS, CVE, CBAVE, Data> {
-  return useAction(action, {
-    onSettled({ result }) {
-      if (result.serverError) {
-        const error: any = result.serverError
-        if (error.notify) {
-          if (error.notify.type === 'toast') {
-            toast.error(error.message)
-            return
-          }
-        }
-        toast.error(error.message)
-      }
-    },
-  })
-}
-
 function CheckoutButton() {
   const router = useRouter()
   const { executeAsync, isExecuting } = useActionWarper(checkoutAction)
@@ -404,18 +376,19 @@ function Checkout({ className }: { className?: string }) {
         </div>
       )}
 
-      <div className="flex w-full items-center justify-between space-y-2">
+      <div className="flex w-full text-sm items-center justify-between">
         <span>Giá gốc</span>
         <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
       </div>
-      <div className="flex w-full items-center justify-between">
+      <div className="flex w-full text-sm items-center justify-between">
         <span>Giá giảm</span>
         <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
       </div>
-      <div className="mt-4 space-y-4">
+      <hr className="my-4 border-t border-border" />
+      <div className="space-y-4">
         <div className="flex w-full items-center justify-between">
           <span className="font-bold">Tổng tiền</span>
-          <span className="font-bold">{formatPrice(calc.totalPrice, 'VND')}</span>
+          <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
         </div>
         {user ? <CheckoutButton></CheckoutButton> : <AuthDialog className="w-full"></AuthDialog>}
       </div>

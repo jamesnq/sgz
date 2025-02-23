@@ -127,6 +127,7 @@ export const Orders: CollectionConfig = {
       admin: {
         description: 'Internal note only admin and staff can see',
       },
+      editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
         read: hasRole(['admin', 'staff']),

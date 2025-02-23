@@ -35,6 +35,7 @@ export const updateOrderAction = authActionClient
         collection: 'orders',
         where: { id: { equals: order.id } },
         data: { status: 'IN_PROCESS' },
+        user,
         overrideAccess: true,
         limit: 1,
       })
@@ -48,7 +49,7 @@ export const updateOrderAction = authActionClient
         overrideAccess: true,
       })
       if (res.errors.length > 0) {
-        return { message: 'Cập nhật thông tin thất bại' }
+        throw new ServerNotification('Cập nhật thông tin thất bại')
       }
     }
 
