@@ -3,9 +3,9 @@
 import { Shell } from '@/components/shell'
 import { Form, FormSubmission, Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import { updateFormSubmissionAction } from '@/app/_actions/updateFormSubmissionAction'
+import { updateOrderAction } from '@/app/_actions/updateFormSubmissionAction'
 import { fields } from '@/blocks/Form/fields'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
@@ -16,15 +16,9 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
 import Link from 'next/link'
 
-function UpdateOrderShippingForm({
-  form,
-  formSubmission,
-  disabled,
-}: {
-  form: Form
-  formSubmission: FormSubmission
-  disabled?: boolean
-}) {
+function UpdateOrderShippingForm({ disabled, order }: { order: Order; disabled?: boolean }) {
+  const formSubmission = useMemo(() => order.formSubmission as FormSubmission, [order])
+  const form = useMemo(() => formSubmission.form as Form, [formSubmission])
   const [formSubmissionData, setFormSubmissionData] = useState(formSubmission?.submissionData || {})
   return (
     <Card>
@@ -65,8 +59,8 @@ function UpdateOrderShippingForm({
           disabled={disabled}
           className="w-full"
           onClick={() => {
-            updateFormSubmissionAction({
-              id: formSubmission.id,
+            updateOrderAction({
+              id: order.id,
               shippingFields: formSubmissionData,
             })
           }}
@@ -154,12 +148,7 @@ const PageClient = ({ order }: { order: Order }) => {
             </Card>
           )}
           <div>
-            {(order.formSubmission as any)?.form && (
-              <UpdateOrderShippingForm
-                form={(order.formSubmission as any).form}
-                formSubmission={order.formSubmission as any}
-              />
-            )}
+            {(order.formSubmission as any)?.form && <UpdateOrderShippingForm order={order} />}
           </div>
         </div>
       </div>

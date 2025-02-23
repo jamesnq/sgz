@@ -1,5 +1,6 @@
 import {
   APIError,
+  CollectionAfterChangeHook,
   CollectionBeforeChangeHook,
   FieldHook,
   type Access,
@@ -10,9 +11,11 @@ import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { Order } from '@/payload-types'
+import { novu } from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
+import { after } from 'node:test'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 class ConflictsError extends APIError {
@@ -36,6 +39,29 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
     ;(data.handlers as number[]).push(user.id)
   }
   return data
+}
+const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
+  previousDoc,
+  doc,
+  operation,
+}) => {
+  if (operation !== 'update' || !previousDoc) return
+  if (previousDoc.status != doc.status) {
+    // after(async () => {})
+    if (doc.status === 'USER_UPDATE') {
+      const res = await novu.trigger({
+        workflowId: 'order-update',
+        to: {
+          subscriberId: doc.orderedBy.toString(),
+        },
+        payload: {
+          message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
+          subject: `Yêu cầu hành động với đơn hàng #${doc.id}`,
+          orderId: doc.id,
+        },
+      })
+    }
+  }
 }
 
 const refundHook: FieldHook<Order> = async ({
@@ -82,6 +108,7 @@ export const Orders: CollectionConfig = {
   },
   hooks: {
     beforeChange: [trackHandlersHook],
+    afterChange: [notificationUpdateHook],
   },
   admin: {
     defaultColumns: [
@@ -136,6 +163,7 @@ export const Orders: CollectionConfig = {
         { value: 'PENDING', label: 'Pending' },
         { value: 'IN_QUEUE', label: 'In Queue' },
         { value: 'IN_PROCESS', label: 'In Process' },
+        { value: 'USER_UPDATE', label: 'User Update' },
         { value: 'COMPLETED', label: 'Completed' },
         { value: 'CANCELLED', label: 'Cancelled' },
         { value: 'REFUND', label: 'Refund' },

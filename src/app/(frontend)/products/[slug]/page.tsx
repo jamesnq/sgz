@@ -8,6 +8,9 @@ import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import Notification from '../../notification'
 import PageClient from './page.client'
+
+export const revalidate = 3600
+
 // TODO here
 // export async function generateStaticParams() {
 //   const payload = await getPayload({ config: configPromise })

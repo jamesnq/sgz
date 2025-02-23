@@ -33,18 +33,18 @@ function ProductCard({ product }: { product: Product }) {
                   {product.name}
                 </div>
                 <div className="peer mt-2 flex items-end">
-                  {/* <span className="leading-[13px] text-[#FFD25F]">24,500đ ~ 2,376,000đ</span> */}
+                  {/* <span className="leading-[13px] text-muted-foreground">24,500đ ~ 2,376,000đ</span> */}
                 </div>
                 {product.description.root.direction && (
                   <RichText
-                    className=" text-[12px] text-[#fff9] mt-2 line-clamp-2 overflow-hidden"
+                    className=" text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"
                     data={product.description}
                     enableGutter={false}
                   />
                 )}
               </div>
               <div className="flex w-full items-center justify-end">
-                <span className="text-[12px] leading-none text-[#fff9]">
+                <span className="text-[12px] leading-none text-muted-foreground">
                   Đã bán {formatSold(product.sold)}
                 </span>
               </div>
