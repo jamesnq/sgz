@@ -22,6 +22,7 @@ export const checkoutAction = authActionClient
       select: {
         id: true,
         price: true,
+        originalPrice: true,
         status: true,
         sku: true,
         min: true,
@@ -45,8 +46,9 @@ export const checkoutAction = authActionClient
     if (pv.form && !shippingFields) {
       throw new ServerNotification('Vui lòng cung cấp thông tin giao hàng')
     }
-
+    const subTotal = quantity * pv.originalPrice
     const totalPrice = quantity * pv.price
+    const totalDiscount = subTotal - totalPrice
     const { users, transactions, orders } = payload.db.tables
 
     let formSubmissionId: any = undefined
@@ -83,6 +85,8 @@ export const checkoutAction = authActionClient
           productVariant: pv.id,
           formSubmission: formSubmissionId,
           quantity,
+          totalDiscount,
+          subTotal,
           totalPrice,
         })
         .returning({ id: orders.id, orderedBy: orders.orderedBy, createdAt: orders.createdAt })

@@ -36,6 +36,8 @@ export default async function Page({ params: paramsPromise }: Args) {
       status: true,
       createdAt: true,
       quantity: true,
+      subTotal: true,
+      totalDiscount: true,
       totalPrice: true,
       message: true,
       updatedAt: true,

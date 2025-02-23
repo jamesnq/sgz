@@ -15,7 +15,6 @@ import { novu } from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
-import { after } from 'node:test'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 class ConflictsError extends APIError {
@@ -47,7 +46,6 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
 }) => {
   if (operation !== 'update' || !previousDoc) return
   if (previousDoc.status != doc.status) {
-    // after(async () => {})
     if (doc.status === 'USER_UPDATE') {
       const _res = await novu.trigger({
         workflowId: 'order-update',
@@ -221,6 +219,30 @@ export const Orders: CollectionConfig = {
       access: {
         create: noOne,
         update: noOne,
+      },
+    },
+    {
+      name: 'subTotal',
+      type: 'number',
+      required: true,
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'totalDiscount',
+      type: 'number',
+      required: true,
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+      admin: {
+        readOnly: true,
       },
     },
     {

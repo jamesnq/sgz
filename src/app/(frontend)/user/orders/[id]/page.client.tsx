@@ -78,7 +78,7 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
   const image = variant.image || product.image
   return (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="pb-2">
         <div className="flex items-start gap-[16px]">
           <div className="relative w-[64px] h-[85px] bg-secondary rounded-lg items-center overflow-hidden">
             <Media resource={image}></Media>
@@ -88,30 +88,40 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
               {variant.name || product.name}
             </Link>
             <div className="flex items-center gap-1">
-              <span className="max-md:hidden">Mã đơn hàng:</span>
-              <span className="md:hidden">Mã DH:</span>
+              <span className="max-md:hidden text-muted-foreground">Mã đơn hàng:</span>
+              <span className="md:hidden text-muted-foreground">Mã DH:</span>
               <span>#{order.id}</span>
             </div>
             <div>{getOrderStatus(order.status)}</div>
           </div>
         </div>
       </CardHeader>
+      <hr className="mx-4 mb-2 border-t border-border" />
       <CardContent>
         <div className="gap-4">
           <div className="flex items-center justify-between">
-            <span>Thời gian</span>
+            <span className="text-muted-foreground">Thời gian</span>
             <span>{formatOrderDate(new Date(order.createdAt))}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span>Số lượng</span>
+            <span className="text-muted-foreground">Số lượng</span>
             <span>x{order.quantity}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Tạm tính</span>
+            <span>{formatPrice(order.subTotal, 'VND')}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Giảm giá</span>
+            <span>{formatPrice(order.totalDiscount, 'VND')}</span>
           </div>
         </div>
       </CardContent>
+      <hr className="mx-4 mb-2 border-t border-border" />
       <CardFooter>
         <div className="w-full flex items-center justify-between">
-          <span>Tổng tiền</span>
-          <span>{formatPrice(order.totalPrice, 'VND')}</span>
+          <span className="text-muted-foreground">Tổng tiền</span>
+          <span className="text-highlight">{formatPrice(order.totalPrice, 'VND')}</span>
         </div>
       </CardFooter>
     </Card>

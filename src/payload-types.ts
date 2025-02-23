@@ -555,6 +555,8 @@ export interface Order {
   handlers: (number | User)[];
   productVariant: number | ProductVariant;
   formSubmission?: (number | null) | FormSubmission;
+  subTotal: number;
+  totalDiscount: number;
   totalPrice: number;
   quantity: number;
   updatedAt: string;
@@ -839,6 +841,8 @@ export interface OrdersSelect<T extends boolean = true> {
   handlers?: T;
   productVariant?: T;
   formSubmission?: T;
+  subTotal?: T;
+  totalDiscount?: T;
   totalPrice?: T;
   quantity?: T;
   updatedAt?: T;
