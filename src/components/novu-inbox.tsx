@@ -39,6 +39,7 @@ export default function NovuInbox() {
         dynamic: {
           welcome: 'Xin chào',
           'new-order': 'Đơn hàng mới',
+          'order-update': 'Đơn hàng cập nhật',
         },
         locale: 'vi-VN',
       }}
