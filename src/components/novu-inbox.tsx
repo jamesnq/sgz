@@ -44,7 +44,11 @@ export default function NovuInbox() {
         locale: 'vi-VN',
       }}
       appearance={{
-        elements: { root: {} },
+        elements: {
+          popoverContent: {
+            zIndex: 9999,
+          },
+        },
         variables: {
           colorBackground: 'hsl(var(--background))',
           colorPrimary: 'red',

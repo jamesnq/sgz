@@ -17,11 +17,11 @@ import { ProductVariants } from './collections/ProductVariants'
 import { Recharges } from './collections/Recharges'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
+import { env } from './config'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
-import { env } from './config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -29,12 +29,18 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
+      actions: ['@/components/novu-inbox'],
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeLogin` statement on line 15.
       beforeLogin: ['@/components/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
       beforeDashboard: ['@/components/BeforeDashboard'],
+      providers: [
+        '@/providers/Theme#ThemeProvider',
+        '@/providers/Auth#AuthProvider',
+        '@/providers/HeaderTheme#HeaderThemeProvider',
+      ],
     },
     importMap: {
       baseDir: path.resolve(dirname),

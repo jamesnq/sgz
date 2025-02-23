@@ -43,15 +43,17 @@ async function createNovuSubscriber({
   })
   return { novuHash: createSubscriberHash(subscriberId), subscriberId }
 }
-
+// Careful when add more roles that role can get system notification
+export const managerRoles = ['admin', 'staff'] as const
+export const userRoles = ['admin', 'staff', 'user'] as const
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: hasRoleOrSelf(['admin', 'staff']),
+    admin: hasRoleOrSelf(managerRoles),
     create: () => false,
     delete: hasRole(['admin']),
-    read: hasRoleOrSelf(['admin', 'staff']),
-    update: hasRoleOrSelf(['admin', 'staff']),
+    read: hasRoleOrSelf(managerRoles),
+    update: hasRoleOrSelf(managerRoles),
   },
   hooks: {
     afterLogin: [
@@ -216,11 +218,7 @@ export const Users: CollectionConfig = {
     {
       name: 'roles',
       type: 'select',
-      options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'Staff', value: 'staff' },
-        { label: 'User', value: 'user' },
-      ],
+      options: userRoles.map((role) => ({ label: role.toUpperCase(), value: role })),
       access: {
         create: hasRole(['admin']),
         update: hasRole(['admin']),
