@@ -31,9 +31,7 @@ import { SlugComponent as SlugComponent_92cc057d0a2abb4f6cf0307edf59f986 } from 
 import { default as default_5fbc740cf344d278e867e7858de8f185 } from '@/components/novu-inbox'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
-import { ThemeProvider as ThemeProvider_bc3a7b54bb7360826eb99207721a749a } from '@/providers/Theme'
-import { AuthProvider as AuthProvider_26f17aca5329444f76e647f782885130 } from '@/providers/Auth'
-import { HeaderThemeProvider as HeaderThemeProvider_9c4b191115bb30bceab85c5d68bd5820 } from '@/providers/HeaderTheme'
+import { PayloadProviders as PayloadProviders_bea5c8b30b9d72862e44db967e88470d } from '@/providers/payload-providers'
 
 export const importMap = {
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -69,7 +67,5 @@ export const importMap = {
   "@/components/novu-inbox#default": default_5fbc740cf344d278e867e7858de8f185,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
-  "@/providers/Theme#ThemeProvider": ThemeProvider_bc3a7b54bb7360826eb99207721a749a,
-  "@/providers/Auth#AuthProvider": AuthProvider_26f17aca5329444f76e647f782885130,
-  "@/providers/HeaderTheme#HeaderThemeProvider": HeaderThemeProvider_9c4b191115bb30bceab85c5d68bd5820
+  "@/providers/payload-providers#PayloadProviders": PayloadProviders_bea5c8b30b9d72862e44db967e88470d
 }
