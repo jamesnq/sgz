@@ -36,6 +36,7 @@ export const updateOrderAction = authActionClient
         where: { id: { equals: order.id } },
         data: { status: 'IN_PROCESS' },
         user,
+        depth: 0,
         overrideAccess: true,
         limit: 1,
       })
@@ -45,6 +46,7 @@ export const updateOrderAction = authActionClient
         collection: 'form-submissions',
         where: { id: { equals: order.formSubmission } },
         data: { submissionData: shippingFields },
+        depth: 0,
         limit: 1,
         overrideAccess: true,
       })

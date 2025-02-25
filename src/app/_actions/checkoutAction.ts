@@ -117,8 +117,20 @@ export const checkoutAction = authActionClient
             subscriberId: order.orderedBy.toString(),
           },
           payload: {
-            orderId: order.id,
-            createAt: formatOrderDate(new Date(order.createdAt)),
+            subject: `Tạo đơn hàng mới thành công`,
+            message: `Đơn hàng #${order.id} được tạo thành công lúc ${formatOrderDate(new Date(order.createdAt))} ấn để xem chi tiết`,
+            redirect: `/user/orders/${order.id}`,
+          },
+        }),
+        novu.trigger({
+          workflowId: 'new-order',
+          to: {
+            subscriberId: 'staff',
+          },
+          payload: {
+            subject: `Có đơn hàng mới #${order.id}`,
+            message: ``,
+            redirect: `/admin/collections/orders/${order.id}`,
           },
         }),
       ])

@@ -16,6 +16,7 @@ import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
+import { after } from 'next/server'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -43,20 +44,43 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   previousDoc,
   doc,
   operation,
+  req,
 }) => {
   if (operation !== 'update' || !previousDoc) return
+  const user = req.user
   if (previousDoc.status != doc.status) {
     if (doc.status === 'USER_UPDATE') {
-      const _res = await novu.trigger({
-        workflowId: 'order-update',
-        to: {
-          subscriberId: doc.orderedBy.toString(),
-        },
-        payload: {
-          message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
-          subject: `Yêu cầu hành động với đơn hàng #${doc.id}`,
-          orderId: doc.id,
-        },
+      after(async () => {
+        await novu.trigger({
+          workflowId: 'order-update',
+          to: {
+            subscriberId: doc.orderedBy.toString(),
+          },
+          payload: {
+            message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
+            subject: `Yêu cầu hành động với đơn hàng #${doc.id}`,
+            redirect: `/user/orders/${doc.id}`,
+          },
+        })
+      })
+    }
+    if (
+      previousDoc.status === 'USER_UPDATE' &&
+      doc.status != 'USER_UPDATE' &&
+      user?.id == doc.orderedBy
+    ) {
+      after(async () => {
+        await novu.trigger({
+          workflowId: 'order-update',
+          to: {
+            subscriberId: 'staff',
+          },
+          payload: {
+            message: `Người dùng cập nhật đơn hàng #${doc.id}`,
+            subject: `Đơn hàng #${doc.id} đang đợi xử lý`,
+            redirect: `/admin/collections/orders/${doc.id}`,
+          },
+        })
       })
     }
   }

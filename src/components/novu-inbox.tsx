@@ -7,11 +7,12 @@ import payloadClient from '@/utilities/payloadClient'
 import { Inbox } from '@novu/react'
 import { useQuery } from '@tanstack/react-query'
 import { BellIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Button } from './ui/button'
 export function NovuInboxAdmin() {
   const router = useRouter()
+  const pathname = usePathname()
   const { data: channels } = useQuery({
     queryKey: ['novuChannels'],
     queryFn: async () => {
@@ -48,6 +49,7 @@ export function NovuInboxAdmin() {
         ))}
       </select>
       <Inbox
+        key={curChannel.subscriberId}
         appearance={{
           elements: {
             popoverContent: {
@@ -103,7 +105,12 @@ export function NovuInboxAdmin() {
         applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
         subscriberId={curChannel.subscriberId}
         subscriberHash={curChannel.hash}
-        routerPush={(path: string) => router.push(path)}
+        routerPush={(path: string) => {
+          console.log('🚀 ~ NovuInboxAdmin ~ path:', path)
+          console.log('🚀 ~ NovuInboxAdmin ~ pathname:', pathname)
+
+          if (pathname !== path) router.push(path)
+        }}
         placement="bottom-end"
       />
     </div>
@@ -112,6 +119,7 @@ export function NovuInboxAdmin() {
 
 export default function NovuInbox() {
   const router = useRouter()
+
   const { user } = useAuth()
   if (!user?.id || !user.novuHash) return <></>
   return (
