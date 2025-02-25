@@ -9,6 +9,7 @@ import { CheckoutSchema } from './schema'
 import { after } from 'next/server'
 import { novu } from '@/services/novu.service'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
+import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 
 export const checkoutAction = authActionClient
   .schema(CheckoutSchema)
@@ -49,7 +50,6 @@ export const checkoutAction = authActionClient
     const subTotal = quantity * pv.originalPrice
     const totalPrice = quantity * pv.price
     const totalDiscount = subTotal - totalPrice
-    const { users, transactions, orders } = payload.db.tables
 
     let formSubmissionId: any = undefined
     try {
@@ -75,7 +75,8 @@ export const checkoutAction = authActionClient
         .where(eq(users.id, user.id))
         .returning({ balance: users.balance })
       if (!newUser) throw new ServerNotification('Không tìm thấy người dùng')
-      if (newUser.balance < 0) throw new ServerNotification('Số dư không đủ')
+      const newUserBalance = parseFloat(newUser.balance as string)
+      if (newUserBalance < 0) throw new ServerNotification('Số dư không đủ')
 
       const [order] = await tx
         .insert(orders)
@@ -84,24 +85,24 @@ export const checkoutAction = authActionClient
           orderedBy: user.id,
           productVariant: pv.id,
           formSubmission: formSubmissionId,
-          quantity,
-          totalDiscount,
-          subTotal,
-          totalPrice,
+          quantity: quantity.toString(),
+          totalDiscount: totalDiscount.toString(),
+          subTotal: subTotal.toString(),
+          totalPrice: totalPrice.toString(),
         })
         .returning({ id: orders.id, orderedBy: orders.orderedBy, createdAt: orders.createdAt })
       if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
       await tx.insert(transactions).values({
-        amount: -totalPrice,
+        amount: (-totalPrice).toString(),
         user: user.id,
         description: `Thanh toán đơn hàng #${order.id}`,
-        balance: newUser.balance,
+        balance: newUserBalance.toString(),
       })
       return order
     })
     after(async () => {
       // update product and product_variant sold
-      const { products, product_variants } = payload.db.tables
+
       await Promise.all([
         db
           .update(products)

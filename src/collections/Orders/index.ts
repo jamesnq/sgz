@@ -17,6 +17,7 @@ import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 import { after } from 'next/server'
+import { transactions, users } from '@/payload-generated-schema'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -97,20 +98,21 @@ const refundHook: FieldHook<Order> = async ({
   if (previousValue === 'REFUND' && value !== 'REFUND')
     throw new ConflictsError('Không thể cập nhật trạng thái đơn hàng đã hoàn trả')
   if (previousValue !== 'REFUND' && value === 'REFUND') {
-    const { users, transactions } = payload.db.tables
     const orderBy = data.orderedBy
     if (!orderBy) throw new ConflictsError('Không tìm thấy người dùng')
+    if (!data.totalPrice) throw new ConflictsError('Không tìm thấy giá trị đơn hàng')
+
     await payload.db.drizzle.transaction(async (tx) => {
       const [newUser] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
-        .where(eq(users.id, orderBy))
+        .where(eq(users.id, orderBy as number))
         .returning({ balance: users.balance })
-      if (!newUser) throw new ConflictsError('Không tìm thấy người dùng')
+      if (!newUser || !newUser.balance) throw new ConflictsError('Không tìm thấy người dùng')
 
       await tx.insert(transactions).values({
-        amount: data.totalPrice,
-        user: orderBy,
+        amount: (data.totalPrice as number).toString(),
+        user: orderBy as number,
         description: `Hoàn trả đơn hàng #${data.id}`,
         balance: newUser.balance,
       })

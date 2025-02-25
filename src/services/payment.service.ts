@@ -1,4 +1,5 @@
 import { env } from '@/config'
+import { transactions, users } from '@/payload-generated-schema'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import PayOS from '@payos/node'
@@ -98,17 +99,18 @@ export class PaymentService {
       data: { status: 'SUCCESS' },
       depth: 0,
     })
-    const { users, transactions } = payload.db.tables
+
     await payload.db.drizzle.transaction(async (tx) => {
       const [user] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${paymentData.amount}` })
-        .where(eq(users.id, recharge.user))
+        .where(eq(users.id, recharge.user as number))
         .returning({ balance: users.balance })
-      if (!user) throw new Error('User not found')
+      if (!user || user.balance === null) throw new Error('User not found')
+
       const _transaction = await tx.insert(transactions).values({
-        amount: paymentData.amount,
-        user: recharge.user,
+        amount: paymentData.amount.toString(),
+        user: recharge.user as number,
         description: `Nạp tiền qua ngân hàng mã nạp #${recharge.orderCode}`,
         balance: user.balance,
       })
