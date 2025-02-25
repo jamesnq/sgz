@@ -30,14 +30,14 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
-      actions: ['@/components/novu-inbox#NovuInboxAdmin'],
+      // actions: ['@/components/novu-inbox#NovuInboxAdmin'],
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeLogin` statement on line 15.
       beforeLogin: ['@/components/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
       beforeDashboard: ['@/components/BeforeDashboard'],
-      providers: ['@/providers/payload-providers#PayloadProviders'],
+      // providers: ['@/providers/payload-providers#PayloadProviders'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
