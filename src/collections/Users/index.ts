@@ -9,10 +9,10 @@ import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 
-function createSubscriberHash(subscriberId: string) {
+export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
 }
-function createChatwootHash(email: string) {
+export function createChatwootHash(email: string) {
   return CryptoJS.HmacSHA256(email, env.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
 }
 

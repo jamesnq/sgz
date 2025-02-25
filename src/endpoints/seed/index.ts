@@ -9,6 +9,8 @@ import { createAppleIdForm as appleIdFormData } from './create-apple-id-form'
 import { productAppleId as productAppleIdData } from './product-appleid'
 import { productBrawlhallaCoins as productBrawlhallaCoinsData } from './product-brawlhalla-coins'
 import { novu } from '@/services/novu.service'
+import { novuChannels } from '@/utilities/constants'
+import { createSubscriberHash } from '@/collections/Users'
 
 const collections: CollectionSlug[] = [
   'orders',
@@ -18,8 +20,22 @@ const collections: CollectionSlug[] = [
   'forms',
   'categories',
   'media',
+  'novu-channels',
 ]
 const _globals: GlobalSlug[] = ['header', 'footer']
+
+const brawlhallaVariants = [
+  { coins: 140, originalPrice: 149000, price: 40000 },
+  { coins: 340, originalPrice: 349000, price: 90000 },
+  { coins: 540, originalPrice: 499000, price: 140000 },
+  { coins: 1000, originalPrice: 999000, price: 170000 },
+  { coins: 1600, originalPrice: 1299000, price: 200000 },
+  { coins: 3200, originalPrice: 2598000, price: 300000 },
+  { coins: 4800, originalPrice: 3897000, price: 400000 },
+  { name: 'Battlepass Gold', originalPrice: 249000, price: 180000 },
+  { name: 'Battlepass Gold + 3200 coins', originalPrice: 2847000, price: 350000 },
+  { name: 'Battlepass Deluxe', originalPrice: 699000, price: 350000 },
+]
 
 // Next.js revalidation errors are normal when seeding the database without a server running
 // i.e. running `yarn seed` locally instead of using the admin UI within an active app
@@ -258,19 +274,6 @@ export const seed = async ({
     ),
   })
 
-  const brawlhallaVariants = [
-    { coins: 140, originalPrice: 149000, price: 40000 },
-    { coins: 340, originalPrice: 349000, price: 90000 },
-    { coins: 540, originalPrice: 499000, price: 140000 },
-    { coins: 1000, originalPrice: 999000, price: 170000 },
-    { coins: 1600, originalPrice: 1299000, price: 200000 },
-    { coins: 3200, originalPrice: 2598000, price: 300000 },
-    { coins: 4800, originalPrice: 3897000, price: 400000 },
-    { name: 'Battlepass Gold', originalPrice: 249000, price: 180000 },
-    { name: 'Battlepass Gold + 3200 coins', originalPrice: 2847000, price: 350000 },
-    { name: 'Battlepass Deluxe', originalPrice: 699000, price: 350000 },
-  ]
-
   const variants = []
   for (const variant of brawlhallaVariants) {
     const createdVariant = await payload.create({
@@ -304,37 +307,7 @@ export const seed = async ({
       id: { equals: productBrawlhallaCoins.id },
     },
   })
-  //   payload.updateGlobal({
-  //     slug: 'footer',
-  //     data: {
-  //       navItems: [
-  //         {
-  //           link: {
-  //             type: 'custom',
-  //             label: 'Admin',
-  //             url: '/admin',
-  //           },
-  //         },
-  //         {
-  //           link: {
-  //             type: 'custom',
-  //             label: 'Source Code',
-  //             newTab: true,
-  //             url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
-  //           },
-  //         },
-  //         {
-  //           link: {
-  //             type: 'custom',
-  //             label: 'Payload',
-  //             newTab: true,
-  //             url: 'https://payloadcms.com/',
-  //           },
-  //         },
-  //       ],
-  //     },
-  //   }),
-  // ])
+
   payload.logger.info(`— Seeding novu users...`)
   const res = await novu.subscribers.list()
   res.result.data.forEach(async (subscriber) => {
@@ -345,9 +318,25 @@ export const seed = async ({
     collection: 'users',
     overrideAccess: true,
   })
+  const subscribers = [
+    ...users.map((user) => ({ subscriberId: user.id.toString() })),
+    ...novuChannels.map((channel) => ({ subscriberId: channel })),
+  ]
   await novu.subscribers.createBulk({
-    subscribers: users.map((user) => ({ subscriberId: user.id.toString() })),
+    subscribers,
   })
+  await Promise.all(
+    novuChannels.map(
+      async (channel) =>
+        await payload.create({
+          collection: 'novu-channels',
+          data: {
+            hash: createSubscriberHash(channel),
+            subscriberId: channel,
+          },
+        }),
+    ),
+  )
   payload.logger.info('Seeded database successfully!')
 }
 

@@ -37,5 +37,6 @@
       "source.fixAll.eslint": "explicit"
     }
   },
-  "svg.preview.background": "dark-transparent"
+  "svg.preview.background": "dark-transparent",
+  "cSpell.words": ["Novu"]
 }

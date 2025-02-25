@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
-import AuthDialog from '@/Header/AuthDialog'
+import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import { checkoutAction } from '@/app/_actions/checkoutAction'
 import { fields } from '@/blocks/Form/fields'
 import RichText from '@/components/RichText'

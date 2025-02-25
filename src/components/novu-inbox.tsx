@@ -1,11 +1,115 @@
 'use client'
 
 import { env } from '@/config'
+import { NovuChannel } from '@/payload-types'
 import { useAuth } from '@/providers/Auth'
+import payloadClient from '@/utilities/payloadClient'
 import { Inbox } from '@novu/react'
+import { useQuery } from '@tanstack/react-query'
 import { BellIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Button } from './ui/button'
+export function NovuInboxAdmin() {
+  const router = useRouter()
+  const { data: channels } = useQuery({
+    queryKey: ['novuChannels'],
+    queryFn: async () => {
+      return await payloadClient.find({
+        collection: 'novu-channels',
+      })
+    },
+    select: (x) => x.docs,
+  })
+
+  const [curChannel, setCurChannel] = useState<NovuChannel | undefined>()
+  useEffect(() => {
+    if (!channels || channels.length === 0) return
+
+    setCurChannel(channels[0])
+  }, [channels])
+  if (!curChannel) return <></>
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <select
+        value={curChannel.subscriberId}
+        onChange={(e) => setCurChannel(channels?.find((x) => x.subscriberId === e.target.value))}
+        style={{
+          marginRight: '0.5rem',
+          padding: '0.5rem',
+          border: '1px solid #ccc',
+          borderRadius: '0.25rem',
+        }}
+      >
+        {channels?.map((channel) => (
+          <option key={channel.subscriberId} value={channel.subscriberId}>
+            {channel.subscriberId}
+          </option>
+        ))}
+      </select>
+      <Inbox
+        appearance={{
+          elements: {
+            popoverContent: {
+              zIndex: 9999,
+            },
+          },
+          variables: {
+            colorBackground: 'var(--theme-bg)',
+            colorPrimary: 'red',
+            colorSecondary: 'doc-controls__label',
+            colorForeground: 'var(--theme-text)',
+            colorPrimaryForeground: 'doc-controls__value',
+            colorSecondaryForeground: 'doc-controls__label',
+          },
+        }}
+        renderBell={(unreadCount) => (
+          <Button
+            className="relative"
+            variant="ghost"
+            size={'icon'}
+            style={{
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '9999px',
+            }}
+          >
+            <BellIcon />
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-0.125rem',
+                  right: '-0.125rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '0.625rem',
+                  height: '20px',
+                  width: '20px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  backgroundColor: '#ef4444',
+                  borderRadius: '9999px',
+                  padding: '0 0.125rem',
+                  fontSize: unreadCount > 10 ? '10px' : '12px',
+                }}
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Button>
+        )}
+        applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
+        subscriberId={curChannel.subscriberId}
+        subscriberHash={curChannel.hash}
+        routerPush={(path: string) => router.push(path)}
+        placement="bottom-end"
+      />
+    </div>
+  )
+}
+
 export default function NovuInbox() {
   const router = useRouter()
   const { user } = useAuth()

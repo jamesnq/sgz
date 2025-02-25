@@ -28,7 +28,7 @@ import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugComponent as SlugComponent_92cc057d0a2abb4f6cf0307edf59f986 } from '@/fields/slug/SlugComponent'
-import { default as default_5fbc740cf344d278e867e7858de8f185 } from '@/components/novu-inbox'
+import { NovuInboxAdmin as NovuInboxAdmin_5fbc740cf344d278e867e7858de8f185 } from '@/components/novu-inbox'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
 import { PayloadProviders as PayloadProviders_bea5c8b30b9d72862e44db967e88470d } from '@/providers/payload-providers'
@@ -64,7 +64,7 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@/fields/slug/SlugComponent#SlugComponent": SlugComponent_92cc057d0a2abb4f6cf0307edf59f986,
-  "@/components/novu-inbox#default": default_5fbc740cf344d278e867e7858de8f185,
+  "@/components/novu-inbox#NovuInboxAdmin": NovuInboxAdmin_5fbc740cf344d278e867e7858de8f185,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
   "@/providers/payload-providers#PayloadProviders": PayloadProviders_bea5c8b30b9d72862e44db967e88470d

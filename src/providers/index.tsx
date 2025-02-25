@@ -5,21 +5,24 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { AuthProvider } from './Auth'
 import { ClientProviders } from './client-providers'
 import { HeaderThemeProvider } from './HeaderTheme'
+import { ReactQueryProvider } from './react-query-provider'
 import { ThemeProvider } from './Theme'
 
 export const Providers: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <NuqsAdapter>
-          <HeaderThemeProvider>
-            <ClientProviders>{children}</ClientProviders>
-            <ChatwootLoader />
-          </HeaderThemeProvider>
-        </NuqsAdapter>
-      </ThemeProvider>
-    </AuthProvider>
+    <ReactQueryProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <NuqsAdapter>
+            <HeaderThemeProvider>
+              <ClientProviders>{children}</ClientProviders>
+              <ChatwootLoader />
+            </HeaderThemeProvider>
+          </NuqsAdapter>
+        </ThemeProvider>
+      </AuthProvider>
+    </ReactQueryProvider>
   )
 }

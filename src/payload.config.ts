@@ -10,7 +10,10 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { Categories } from './collections/Categories'
 import { Forms } from './collections/Forms'
 import { FormSubmissions } from './collections/FormSubmission'
+import { Footer } from './collections/Globals/Footer/config'
+import { Header } from './collections/Globals/Header/config'
 import { Media } from './collections/Media'
+import { NovuChannels } from './collections/NovuChannels/config'
 import { Orders } from './collections/Orders'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
@@ -18,8 +21,6 @@ import { Recharges } from './collections/Recharges'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
 import { env } from './config'
-import { Footer } from './Footer/config'
-import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
 
@@ -29,7 +30,7 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
-      actions: ['@/components/novu-inbox'],
+      actions: ['@/components/novu-inbox#NovuInboxAdmin'],
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeLogin` statement on line 15.
       beforeLogin: ['@/components/BeforeLogin'],
@@ -84,6 +85,7 @@ export default buildConfig({
     Recharges,
     Forms,
     FormSubmissions,
+    NovuChannels,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

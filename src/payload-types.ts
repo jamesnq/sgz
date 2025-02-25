@@ -76,6 +76,7 @@ export interface Config {
     recharges: Recharge;
     forms: Form;
     'form-submissions': FormSubmission;
+    'novu-channels': NovuChannel;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -92,6 +93,7 @@ export interface Config {
     recharges: RechargesSelect<false> | RechargesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
+    'novu-channels': NovuChannelsSelect<false> | NovuChannelsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -608,6 +610,17 @@ export interface Recharge {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "novu-channels".
+ */
+export interface NovuChannel {
+  id: number;
+  subscriberId: string;
+  hash: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -652,6 +665,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'form-submissions';
         value: number | FormSubmission;
+      } | null)
+    | ({
+        relationTo: 'novu-channels';
+        value: number | NovuChannel;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -976,6 +993,16 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   user?: T;
   form?: T;
   submissionData?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "novu-channels_select".
+ */
+export interface NovuChannelsSelect<T extends boolean = true> {
+  subscriberId?: T;
+  hash?: T;
   updatedAt?: T;
   createdAt?: T;
 }
