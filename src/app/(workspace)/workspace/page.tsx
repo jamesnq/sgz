@@ -1,20 +1,97 @@
 'use client'
 import { motion } from 'framer-motion'
 import { Flame, Plus, Trash } from 'lucide-react'
-import { useState } from 'react'
+import { useState, createContext, ReactNode, useContext } from 'react'
 
-type DraggableItem = {
+export type DraggableItem = {
   id: string
   title: string
   status: string
+}
+
+interface DraggableContextType {
+  items: DraggableItem[]
+  createItem: (title: string, status: string) => void
+  moveItem: (itemId: string, targetStatus: string) => void
+  deleteItem: (itemId: string) => void
+  getItemsByStatus: (status: string) => DraggableItem[]
+}
+
+const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
+
+const DEFAULT_ITEMS: DraggableItem[] = [
+  { title: 'Item 1', id: '1', status: 'backlog' },
+  { title: 'Item 2', id: '2', status: 'backlog' },
+  { title: 'Item 3', id: '3', status: 'todo' },
+  { title: 'Item 4', id: '4', status: 'todo' },
+  { title: 'Item 5', id: '5', status: 'in_progress' },
+  { title: 'Item 6', id: '6', status: 'in_progress' },
+  { title: 'Item 7', id: '7', status: 'completed' },
+  { title: 'Item 8', id: '8', status: 'completed' },
+]
+
+export function DraggableProvider({ children }: { children: ReactNode }) {
+  const [items, setItems] = useState<DraggableItem[]>(DEFAULT_ITEMS)
+
+  const createItem = (title: string, status: string) => {
+    const newItem: DraggableItem = {
+      id: Math.random().toString(),
+      title: title.trim(),
+      status,
+    }
+    // Add new items to the beginning of the list
+    setItems((prev) => [newItem, ...prev])
+  }
+
+  const moveItem = (itemId: string, targetStatus: string) => {
+    setItems((items) => {
+      let copy = [...items]
+      let itemToMove = copy.find((item) => item.id === itemId)
+      if (!itemToMove) return items
+
+      itemToMove = { ...itemToMove, status: targetStatus }
+      copy = copy.filter((item) => item.id !== itemId)
+
+      // Always add moved items to the beginning of the list
+      return [itemToMove, ...copy]
+    })
+  }
+
+  const deleteItem = (itemId: string) => {
+    setItems((items) => items.filter((item) => item.id !== itemId))
+  }
+
+  const getItemsByStatus = (status: string) => {
+    return items.filter((item) => item.status === status)
+  }
+
+  return (
+    <DraggableContext.Provider
+      value={{
+        items,
+        createItem,
+        moveItem,
+        deleteItem,
+        getItemsByStatus,
+      }}
+    >
+      {children}
+    </DraggableContext.Provider>
+  )
+}
+
+export function useDraggable() {
+  const context = useContext(DraggableContext)
+  if (context === undefined) {
+    throw new Error('useDraggable must be used within a DraggableProvider')
+  }
+  return context
 }
 
 type BoardColumnProps = {
   title: string
   status: string
   headingColor: string
-  items: DraggableItem[]
-  setItems: React.Dispatch<React.SetStateAction<DraggableItem[]>>
 }
 
 type ItemProps = {
@@ -25,63 +102,16 @@ type ItemProps = {
 }
 
 type DropIndicatorProps = {
-  beforeId?: string
   status: string
-}
-
-type DeleteZoneProps = {
-  setItems: React.Dispatch<React.SetStateAction<DraggableItem[]>>
-}
-
-type AddItemProps = {
-  status: string
-  setItems: React.Dispatch<React.SetStateAction<DraggableItem[]>>
-}
-
-const createItem = (title: string, status: string): DraggableItem => {
-  return {
-    id: Math.random().toString(),
-    title: title.trim(),
-    status,
-  }
-}
-
-const moveItem = (
-  itemId: string,
-  targetStatus: string,
-  beforeItemId: string | undefined,
-  items: DraggableItem[],
-): DraggableItem[] => {
-  let copy = [...items]
-  let itemToMove = copy.find((item) => item.id === itemId)
-  if (!itemToMove) return items
-
-  itemToMove = { ...itemToMove, status: targetStatus }
-  copy = copy.filter((item) => item.id !== itemId)
-
-  if (!beforeItemId || beforeItemId === '-1') {
-    return [...copy, itemToMove]
-  }
-
-  const insertAtIndex = copy.findIndex((item) => item.id === beforeItemId)
-  if (insertAtIndex === -1) return [...copy, itemToMove]
-
-  copy.splice(insertAtIndex, 0, itemToMove)
-  return copy
-}
-
-const deleteItem = (itemId: string, items: DraggableItem[]): DraggableItem[] => {
-  return items.filter((item) => item.id !== itemId)
-}
-
-const getItemsByStatus = (status: string, items: DraggableItem[]): DraggableItem[] => {
-  return items.filter((item) => item.status === status)
+  isActive?: boolean
 }
 
 const DraggableBoard = () => {
   return (
     <div className="h-screen w-full bg-neutral-900 text-neutral-50">
-      <Board />
+      <DraggableProvider>
+        <Board />
+      </DraggableProvider>
     </div>
   )
 }
@@ -89,44 +119,19 @@ const DraggableBoard = () => {
 export default DraggableBoard
 
 const Board = () => {
-  const [items, setItems] = useState<DraggableItem[]>(DEFAULT_ITEMS)
-
   return (
     <div className="flex h-full w-full gap-3 overflow-scroll p-12">
-      <BoardColumn
-        title="Backlog"
-        status="backlog"
-        headingColor="text-neutral-500"
-        items={items}
-        setItems={setItems}
-      />
-      <BoardColumn
-        title="TODO"
-        status="todo"
-        headingColor="text-yellow-200"
-        items={items}
-        setItems={setItems}
-      />
-      <BoardColumn
-        title="In progress"
-        status="in_progress"
-        headingColor="text-blue-200"
-        items={items}
-        setItems={setItems}
-      />
-      <BoardColumn
-        title="Complete"
-        status="completed"
-        headingColor="text-emerald-200"
-        items={items}
-        setItems={setItems}
-      />
-      <DeleteZone setItems={setItems} />
+      <BoardColumn title="Backlog" status="backlog" headingColor="text-neutral-500" />
+      <BoardColumn title="TODO" status="todo" headingColor="text-yellow-200" />
+      <BoardColumn title="In progress" status="in_progress" headingColor="text-blue-200" />
+      <BoardColumn title="Complete" status="completed" headingColor="text-emerald-200" />
+      <DeleteZone />
     </div>
   )
 }
 
-const BoardColumn = ({ title, headingColor, items, status, setItems }: BoardColumnProps) => {
+const BoardColumn = ({ title, headingColor, status }: BoardColumnProps) => {
+  const { getItemsByStatus, moveItem } = useDraggable()
   const [active, setActive] = useState(false)
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: DraggableItem) => {
@@ -136,80 +141,19 @@ const BoardColumn = ({ title, headingColor, items, status, setItems }: BoardColu
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const itemId = e.dataTransfer.getData('itemId')
     setActive(false)
-    clearHighlights()
-
-    const indicators = getIndicators()
-    const { element } = getNearestIndicator(e, indicators)
-    const beforeId = element?.dataset.before || '-1'
-
-    if (beforeId !== itemId) {
-      setItems((items) => moveItem(itemId, status, beforeId, items))
-    }
+    moveItem(itemId, status)
   }
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
-    highlightIndicator(e)
     setActive(true)
   }
 
-  const clearHighlights = (els?: HTMLDivElement[]) => {
-    const indicators = els || getIndicators()
-
-    indicators.forEach((i) => {
-      i.style.opacity = '0'
-    })
-  }
-
-  const highlightIndicator = (e: React.DragEvent<HTMLDivElement>) => {
-    const indicators = getIndicators()
-
-    clearHighlights(indicators)
-
-    const el = getNearestIndicator(e, indicators)
-
-    if (el?.element) {
-      el.element.style.opacity = '1'
-    }
-  }
-
-  const getNearestIndicator = (
-    e: React.DragEvent<HTMLDivElement>,
-    indicators: HTMLDivElement[],
-  ) => {
-    const DISTANCE_OFFSET = 50
-
-    const el = indicators.reduce(
-      (closest, child) => {
-        const box = child.getBoundingClientRect()
-
-        const offset = e.clientY - (box.top + DISTANCE_OFFSET)
-
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child }
-        } else {
-          return closest
-        }
-      },
-      {
-        offset: Number.NEGATIVE_INFINITY,
-        element: indicators[indicators.length - 1],
-      },
-    )
-
-    return el
-  }
-
-  const getIndicators = (): HTMLDivElement[] => {
-    return Array.from(document.querySelectorAll(`[data-status="${status}"]`))
-  }
-
   const handleDragLeave = () => {
-    clearHighlights()
     setActive(false)
   }
 
-  const filteredItems = getItemsByStatus(status, items)
+  const filteredItems = getItemsByStatus(status)
 
   return (
     <div className="w-56 shrink-0">
@@ -225,11 +169,11 @@ const BoardColumn = ({ title, headingColor, items, status, setItems }: BoardColu
           active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'
         }`}
       >
+        <DropIndicator status={status} isActive={active} />
         {filteredItems.map((item) => (
           <DraggableItem key={item.id} {...item} handleDragStart={handleDragStart} />
         ))}
-        <DropIndicator status={status} />
-        <AddItem status={status} setItems={setItems} />
+        <AddItem status={status} />
       </div>
     </div>
   )
@@ -237,33 +181,21 @@ const BoardColumn = ({ title, headingColor, items, status, setItems }: BoardColu
 
 const DraggableItem = ({ title, id, status, handleDragStart }: ItemProps) => {
   return (
-    <>
-      <DropIndicator beforeId={id} status={status} />
-      <motion.div
-        layout
-        layoutId={id}
-        draggable
-        // @ts-expect-error ignore
-        onDragStart={(e) => handleDragStart(e, { title, id, status })}
-        className="cursor-grab rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing"
-      >
-        <p className="text-sm text-neutral-100">{title}</p>
-      </motion.div>
-    </>
+    <motion.div
+      layout
+      layoutId={id}
+      draggable
+      // @ts-expect-error ignore
+      onDragStart={(e) => handleDragStart(e, { title, id, status })}
+      className="mb-2 cursor-grab rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing"
+    >
+      <p className="text-sm text-neutral-100">{title}</p>
+    </motion.div>
   )
 }
 
-const DropIndicator = ({ beforeId, status }: DropIndicatorProps) => {
-  return (
-    <div
-      data-before={beforeId || '-1'}
-      data-status={status}
-      className="my-0.5 h-0.5 w-full bg-violet-400 opacity-0"
-    />
-  )
-}
-
-const DeleteZone = ({ setItems }: DeleteZoneProps) => {
+const DeleteZone = () => {
+  const { deleteItem } = useDraggable()
   const [active, setActive] = useState(false)
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -277,7 +209,7 @@ const DeleteZone = ({ setItems }: DeleteZoneProps) => {
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const itemId = e.dataTransfer.getData('itemId')
-    setItems((items) => deleteItem(itemId, items))
+    deleteItem(itemId)
     setActive(false)
   }
 
@@ -297,7 +229,8 @@ const DeleteZone = ({ setItems }: DeleteZoneProps) => {
   )
 }
 
-const AddItem = ({ status, setItems }: AddItemProps) => {
+const AddItem = ({ status }: { status: string }) => {
+  const { createItem } = useDraggable()
   const [text, setText] = useState('')
   const [adding, setAdding] = useState(false)
 
@@ -305,8 +238,7 @@ const AddItem = ({ status, setItems }: AddItemProps) => {
     e.preventDefault()
     if (!text.trim().length) return
 
-    const newItem = createItem(text, status)
-    setItems((prev) => [...prev, newItem])
+    createItem(text, status)
     setText('')
     setAdding(false)
   }
@@ -350,13 +282,13 @@ const AddItem = ({ status, setItems }: AddItemProps) => {
   )
 }
 
-const DEFAULT_ITEMS: DraggableItem[] = [
-  { title: 'Item 1', id: '1', status: 'backlog' },
-  { title: 'Item 2', id: '2', status: 'backlog' },
-  { title: 'Item 3', id: '3', status: 'todo' },
-  { title: 'Item 4', id: '4', status: 'todo' },
-  { title: 'Item 5', id: '5', status: 'in_progress' },
-  { title: 'Item 6', id: '6', status: 'in_progress' },
-  { title: 'Item 7', id: '7', status: 'completed' },
-  { title: 'Item 8', id: '8', status: 'completed' },
-]
+const DropIndicator = ({ status, isActive }: DropIndicatorProps) => {
+  return (
+    <div
+      data-status={status}
+      className={`mb-3 h-0.5 w-full bg-violet-400 transition-opacity ${
+        isActive ? 'opacity-100' : 'opacity-0'
+      }`}
+    />
+  )
+}
