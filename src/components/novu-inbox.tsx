@@ -172,7 +172,7 @@ export default function NovuInbox() {
       }}
       renderBell={(unreadCount) => (
         <Button className="rounded-full relative w-8 h-8" variant="ghost" size={'icon'}>
-          <BellIcon />
+          <BellIcon className="text-highlight" />
           {unreadCount > 0 && (
             <span
               className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[0.625rem] h-[20px] w-[20px] font-bold text-white bg-red-500 rounded-full px-0.5"
