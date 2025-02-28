@@ -3,6 +3,41 @@ import { motion } from 'framer-motion'
 import { Flame, Plus, Trash } from 'lucide-react'
 import { useState } from 'react'
 
+type CardType = {
+  id: string
+  title: string
+  column: string
+}
+
+type ColumnType = {
+  title: string
+  column: string
+  headingColor: string
+  cards: CardType[]
+  setCards: React.Dispatch<React.SetStateAction<CardType[]>>
+}
+
+type CardProps = {
+  title: string
+  id: string
+  column: string
+  handleDragStart: (e: React.DragEvent<HTMLDivElement>, card: CardType) => void
+}
+
+type DropIndicatorProps = {
+  beforeId?: string
+  column: string
+}
+
+type BurnBarrelProps = {
+  setCards: React.Dispatch<React.SetStateAction<CardType[]>>
+}
+
+type AddCardProps = {
+  column: string
+  setCards: React.Dispatch<React.SetStateAction<CardType[]>>
+}
+
 const CustomKanban = () => {
   return (
     <div className="h-screen w-full bg-neutral-900 text-neutral-50">
@@ -12,8 +47,9 @@ const CustomKanban = () => {
 }
 
 export default CustomKanban
+
 const Board = () => {
-  const [cards, setCards] = useState(DEFAULT_CARDS)
+  const [cards, setCards] = useState<CardType[]>(DEFAULT_CARDS)
 
   return (
     <div className="flex h-full w-full gap-3 overflow-scroll p-12">
@@ -50,14 +86,14 @@ const Board = () => {
   )
 }
 
-const Column = ({ title, headingColor, cards, column, setCards }) => {
+const Column = ({ title, headingColor, cards, column, setCards }: ColumnType) => {
   const [active, setActive] = useState(false)
 
-  const handleDragStart = (e, card) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, card: CardType) => {
     e.dataTransfer.setData('cardId', card.id)
   }
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const cardId = e.dataTransfer.getData('cardId')
 
     setActive(false)
@@ -66,7 +102,7 @@ const Column = ({ title, headingColor, cards, column, setCards }) => {
     const indicators = getIndicators()
     const { element } = getNearestIndicator(e, indicators)
 
-    const before = element.dataset.before || '-1'
+    const before = element?.dataset.before || '-1'
 
     if (before !== cardId) {
       let copy = [...cards]
@@ -92,14 +128,14 @@ const Column = ({ title, headingColor, cards, column, setCards }) => {
     }
   }
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     highlightIndicator(e)
 
     setActive(true)
   }
 
-  const clearHighlights = (els) => {
+  const clearHighlights = (els?: HTMLDivElement[]) => {
     const indicators = els || getIndicators()
 
     indicators.forEach((i) => {
@@ -107,17 +143,22 @@ const Column = ({ title, headingColor, cards, column, setCards }) => {
     })
   }
 
-  const highlightIndicator = (e) => {
+  const highlightIndicator = (e: React.DragEvent<HTMLDivElement>) => {
     const indicators = getIndicators()
 
     clearHighlights(indicators)
 
     const el = getNearestIndicator(e, indicators)
 
-    el.element.style.opacity = '1'
+    if (el && el.element) {
+      el.element.style.opacity = '1'
+    }
   }
 
-  const getNearestIndicator = (e, indicators) => {
+  const getNearestIndicator = (
+    e: React.DragEvent<HTMLDivElement>,
+    indicators: HTMLDivElement[],
+  ) => {
     const DISTANCE_OFFSET = 50
 
     const el = indicators.reduce(
@@ -141,7 +182,7 @@ const Column = ({ title, headingColor, cards, column, setCards }) => {
     return el
   }
 
-  const getIndicators = () => {
+  const getIndicators = (): HTMLDivElement[] => {
     return Array.from(document.querySelectorAll(`[data-column="${column}"]`))
   }
 
@@ -169,14 +210,14 @@ const Column = ({ title, headingColor, cards, column, setCards }) => {
         {filteredCards.map((c) => {
           return <Card key={c.id} {...c} handleDragStart={handleDragStart} />
         })}
-        <DropIndicator beforeId={null} column={column} />
+        <DropIndicator column={column} />
         <AddCard column={column} setCards={setCards} />
       </div>
     </div>
   )
 }
 
-const Card = ({ title, id, column, handleDragStart }) => {
+const Card = ({ title, id, column, handleDragStart }: CardProps) => {
   return (
     <>
       <DropIndicator beforeId={id} column={column} />
@@ -184,6 +225,7 @@ const Card = ({ title, id, column, handleDragStart }) => {
         layout
         layoutId={id}
         draggable="true"
+        //@ts-expect-error ignore
         onDragStart={(e) => handleDragStart(e, { title, id, column })}
         className="cursor-grab rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing"
       >
@@ -193,7 +235,7 @@ const Card = ({ title, id, column, handleDragStart }) => {
   )
 }
 
-const DropIndicator = ({ beforeId, column }) => {
+const DropIndicator = ({ beforeId, column }: DropIndicatorProps) => {
   return (
     <div
       data-before={beforeId || '-1'}
@@ -203,10 +245,10 @@ const DropIndicator = ({ beforeId, column }) => {
   )
 }
 
-const BurnBarrel = ({ setCards }) => {
+const BurnBarrel = ({ setCards }: BurnBarrelProps) => {
   const [active, setActive] = useState(false)
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setActive(true)
   }
@@ -215,7 +257,7 @@ const BurnBarrel = ({ setCards }) => {
     setActive(false)
   }
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const cardId = e.dataTransfer.getData('cardId')
 
     setCards((pv) => pv.filter((c) => c.id !== cardId))
@@ -239,11 +281,11 @@ const BurnBarrel = ({ setCards }) => {
   )
 }
 
-const AddCard = ({ column, setCards }) => {
+const AddCard = ({ column, setCards }: AddCardProps) => {
   const [text, setText] = useState('')
   const [adding, setAdding] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!text.trim().length) return
@@ -299,7 +341,7 @@ const AddCard = ({ column, setCards }) => {
   )
 }
 
-const DEFAULT_CARDS = [
+const DEFAULT_CARDS: CardType[] = [
   // BACKLOG
   { title: 'Look into render bug in dashboard', id: '1', column: 'backlog' },
   { title: 'SOX compliance checklist', id: '2', column: 'backlog' },
