@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { hasRole } from '@/access/hasRoles'
 import { anyone } from '../../access/anyone'
 import { fields } from './fields'
-// TODO check duplicate key
+
 export const Forms: CollectionConfig = {
   slug: 'forms',
   access: {
@@ -26,6 +26,18 @@ export const Forms: CollectionConfig = {
       name: 'fields',
       type: 'blocks',
       blocks: Object.values(fields),
+      validate: (v: any) => {
+        if (!v || !v.length) return 'Please add at least one field'
+        const fieldNames = new Set<string>()
+        for (const [index, field] of (v ?? []).entries()) {
+          if (!('name' in field) || !field.name) continue
+          if (fieldNames.has(field.name)) {
+            return `Duplicate field name '${field.name}' at index ${index}`
+          }
+          fieldNames.add(field.name)
+        }
+        return true
+      },
     },
   ],
 }
