@@ -86,6 +86,47 @@ const Board = () => {
   )
 }
 
+// Card CRUD Operations
+const createCard = (title: string, column: string): CardType => {
+  return {
+    id: Math.random().toString(),
+    title: title.trim(),
+    column
+  }
+}
+
+const moveCardToColumn = (
+  cardId: string,
+  targetColumn: string,
+  beforeCardId: string | undefined,
+  cards: CardType[]
+): CardType[] => {
+  let copy = [...cards]
+  let cardToTransfer = copy.find((c) => c.id === cardId)
+  if (!cardToTransfer) return cards
+  
+  cardToTransfer = { ...cardToTransfer, column: targetColumn }
+  copy = copy.filter((c) => c.id !== cardId)
+
+  if (!beforeCardId || beforeCardId === '-1') {
+    return [...copy, cardToTransfer]
+  }
+
+  const insertAtIndex = copy.findIndex((el) => el.id === beforeCardId)
+  if (insertAtIndex === -1) return [...copy, cardToTransfer]
+
+  copy.splice(insertAtIndex, 0, cardToTransfer)
+  return copy
+}
+
+const deleteCard = (cardId: string, cards: CardType[]): CardType[] => {
+  return cards.filter((c) => c.id !== cardId)
+}
+
+const getCardsByColumn = (column: string, cards: CardType[]): CardType[] => {
+  return cards.filter((c) => c.column === column)
+}
+
 const Column = ({ title, headingColor, cards, column, setCards }: ColumnType) => {
   const [active, setActive] = useState(false)
 
@@ -95,36 +136,15 @@ const Column = ({ title, headingColor, cards, column, setCards }: ColumnType) =>
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const cardId = e.dataTransfer.getData('cardId')
-
     setActive(false)
     clearHighlights()
 
     const indicators = getIndicators()
     const { element } = getNearestIndicator(e, indicators)
+    const beforeId = element?.dataset.before || '-1'
 
-    const before = element?.dataset.before || '-1'
-
-    if (before !== cardId) {
-      let copy = [...cards]
-
-      let cardToTransfer = copy.find((c) => c.id === cardId)
-      if (!cardToTransfer) return
-      cardToTransfer = { ...cardToTransfer, column }
-
-      copy = copy.filter((c) => c.id !== cardId)
-
-      const moveToBack = before === '-1'
-
-      if (moveToBack) {
-        copy.push(cardToTransfer)
-      } else {
-        const insertAtIndex = copy.findIndex((el) => el.id === before)
-        if (insertAtIndex === undefined) return
-
-        copy.splice(insertAtIndex, 0, cardToTransfer)
-      }
-
-      setCards(copy)
+    if (beforeId !== cardId) {
+      setCards(cards => moveCardToColumn(cardId, column, beforeId, cards))
     }
   }
 
@@ -191,7 +211,7 @@ const Column = ({ title, headingColor, cards, column, setCards }: ColumnType) =>
     setActive(false)
   }
 
-  const filteredCards = cards.filter((c) => c.column === column)
+  const filteredCards = getCardsByColumn(column, cards)
 
   return (
     <div className="w-56 shrink-0">
@@ -259,9 +279,7 @@ const BurnBarrel = ({ setCards }: BurnBarrelProps) => {
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const cardId = e.dataTransfer.getData('cardId')
-
-    setCards((pv) => pv.filter((c) => c.id !== cardId))
-
+    setCards(cards => deleteCard(cardId, cards))
     setActive(false)
   }
 
@@ -287,17 +305,11 @@ const AddCard = ({ column, setCards }: AddCardProps) => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
     if (!text.trim().length) return
 
-    const newCard = {
-      column,
-      title: text.trim(),
-      id: Math.random().toString(),
-    }
-
-    setCards((pv) => [...pv, newCard])
-
+    const newCard = createCard(text, column)
+    setCards(prev => [...prev, newCard])
+    setText('')
     setAdding(false)
   }
 
