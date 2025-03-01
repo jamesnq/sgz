@@ -3,7 +3,7 @@ import { Order } from '@/payload-types'
 import payloadClient from '@/utilities/payloadClient'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 
 export type DraggableItem = {
   id: string
@@ -20,69 +20,62 @@ interface DraggableContextType {
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
 
-const useOrdersByStatus = (status: Order['status']) =>
-  useQuery({
-    queryKey: ['orders', status],
-    queryFn: async () =>
-      await payloadClient.find({
-        collection: 'orders',
-        where: { status: { equals: status } },
-      }),
-    select: (data) => data?.docs as Order[],
-  })
-export function DraggableProvider({ children }: { children: ReactNode }) {
-  const { data: inQueueOrders, refetch: refetchInQueue } = useOrdersByStatus('IN_QUEUE')
-  const { data: inProgressOrders, refetch: refetchInProgress } = useOrdersByStatus('IN_PROCESS')
-  const { data: completedOrders, refetch: refetchCompleted } = useOrdersByStatus('COMPLETED')
-  const { data: refundOrders, refetch: refetchRefund } = useOrdersByStatus('REFUND')
-  const { data: cancelledOrders, refetch: refetchCancelled } = useOrdersByStatus('CANCELLED')
-  const refetchMap = useMemo(
-    () => ({
-      IN_QUEUE: refetchInQueue,
-      IN_PROCESS: refetchInProgress,
-      COMPLETED: refetchCompleted,
-      REFUND: refetchRefund,
-      CANCELLED: refetchCancelled,
-    }),
-    [refetchCancelled, refetchCompleted, refetchInProgress, refetchInQueue, refetchRefund],
-  )
-  const refetchAll = () => {
-    for (const key of Object.keys(refetchMap) as (keyof typeof refetchMap)[]) {
-      refetchMap[key]()
-    }
-  }
+const useOrdersByStatus = (orders: { status: Order['status']; limit?: number }[]) => {
+  const { data, refetch } = useQuery({
+    queryKey: ['orders', orders],
+    queryFn: async () => {
+      const res = await Promise.all(
+        orders.map(({ status, limit }) =>
+          payloadClient.find({
+            collection: 'orders',
+            where: { status: { equals: status } },
+            sort: 'updatedAt',
+            limit,
+          }),
+        ),
+      )
+      return res
+    },
 
-  const data = useMemo(() => {
-    return [
-      ...(inQueueOrders || ([] as Order[])),
-      ...((inProgressOrders || []) as Order[]),
-      ...((completedOrders || []) as Order[]),
-      ...((refundOrders || []) as Order[]),
-      ...((cancelledOrders || []) as Order[]),
-    ]
-  }, [inQueueOrders, inProgressOrders, completedOrders, refundOrders, cancelledOrders])
+    select: (data) => data.map((doc) => doc.docs).flat() as Order[],
+  })
+  return { data, refetch }
+}
+
+export function DraggableProvider({ children }: { children: ReactNode }) {
+  const { data, refetch } = useOrdersByStatus([
+    { status: 'IN_QUEUE' },
+    { status: 'IN_PROCESS' },
+    { status: 'USER_UPDATE' },
+    { status: 'COMPLETED', limit: 10 },
+    { status: 'REFUND', limit: 10 },
+    { status: 'CANCELLED', limit: 10 },
+  ])
 
   const [items, setItems] = useState<DraggableItem[]>([])
 
   useEffect(() => {
+    if (!data || data.length === 0) return
     const mappedItems = data.map((order) => ({
       id: order.id.toString(),
       title: `Order #${order.id}`,
       status: order.status,
       data: order,
     }))
-    console.log('🚀 ~ useEffect ~ mappedItems:', mappedItems)
     setItems(mappedItems)
   }, [data])
 
   const moveItem = async (itemId: string, targetStatus: Order['status']) => {
     let itemToMove = items.find((item) => item.id === itemId)
     if (!itemToMove) return
-
-    console.log('🚀 ~ moveItem ~ targetStatus:', targetStatus)
     itemToMove = { ...itemToMove, status: targetStatus }
 
-    refetchAll()
+    await payloadClient.updateById({
+      collection: 'orders',
+      id: Number(itemId),
+      data: { status: targetStatus },
+    })
+    refetch()
     // copy = copy.filter((item) => item.id !== itemId)
     // setItems((items) => {
     //   let copy = [...items]
@@ -154,7 +147,6 @@ export default DraggableBoard
 const Board = () => {
   return (
     <div className="flex h-full w-full gap-3 overflow-scroll p-12">
-      <BoardColumn title="Pending" column="PENDING" headingColor="text-neutral-500" />
       <BoardColumn title="In queue" column="IN_QUEUE" headingColor="text-yellow-200" />
       <BoardColumn title="In progress" column="IN_PROCESS" headingColor="text-blue-200" />
       <BoardColumn title="User update" column="USER_UPDATE" headingColor="text-blue-200" />

@@ -195,35 +195,29 @@ export class PayloadApiClient<C extends Config> {
   async updateById<T extends keyof C['collections']>({
     collection,
     data,
-    file,
-    ...toQs
+    id,
+    depth = 0,
+    fallbackLocale = null,
   }: {
     collection: T
     data: DeepPartial<C['collections'][T]>
     depth?: number
-    draft?: boolean
-    fallbackLocale?: C['locale']
-    file?: File
-    locale?: C['locale']
+    fallbackLocale?: C['locale'] | null
+    id: C['collections'][T]['id']
   }): Promise<C['collections'][T]> {
-    const qs = buildQueryString(toQs)
-
+    const qs = buildQueryString({
+      depth,
+      'fallback-locale': fallbackLocale,
+    })
     const requestInit: RequestInit = { method: 'PATCH' }
+    const formData = new FormData()
+    formData.set('_payload', JSON.stringify(data))
+    requestInit.body = formData
 
-    if (file) {
-      const formData = new FormData()
-
-      formData.set('file', file)
-      formData.set('_payload', JSON.stringify(data))
-
-      requestInit.body = formData
-    } else {
-      requestInit.headers = {
-        'Content-Type': 'application/json',
-      }
-    }
-
-    const response = await this.fetcher(`${this.apiURL}/${collection.toString()}${qs}`, requestInit)
+    const response = await this.fetcher(
+      `${this.apiURL}/${collection.toString()}/${id.toString()}${qs}`,
+      requestInit,
+    )
 
     return response.json()
   }

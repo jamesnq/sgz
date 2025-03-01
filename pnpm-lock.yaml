@@ -23,9 +23,6 @@ importers:
       '@payload-enchants/fields-select':
         specifier: ^1.2.2
         version: 1.2.2(payload@3.24.0(graphql@16.10.0)(typescript@5.7.3))
-      '@payload-enchants/sdk':
-        specifier: ^1.2.2
-        version: 1.2.2(typescript@5.7.3)
       '@payloadcms/db-postgres':
         specifier: ^3.24.0
         version: 3.24.0(@types/react@19.0.7)(payload@3.24.0(graphql@16.10.0)(typescript@5.7.3))(react@19.0.0)
@@ -1406,9 +1403,6 @@ packages:
     resolution: {integrity: sha512-D4wejwqNIYrUedu9HXnhVKhDNYtFMhfGNZcSUe25r8rkbHwsKkbL0ahx+/911IdFf8BgKvHXfiqn0DPMMf8QUg==}
     peerDependencies:
       payload: ^3.0.0-beta.61
-
-  '@payload-enchants/sdk@1.2.2':
-    resolution: {integrity: sha512-ULKOvDbWYkifjEIYUUmIIH9BUTOIzlFUs6mBaljY4ZmR4rKuZR3RhccdeNiTw8+kLHegnJ1QIxIuGlvVLB9aLg==}
 
   '@payloadcms/db-postgres@3.24.0':
     resolution: {integrity: sha512-7/H41bvjZXKILF7tUcIkH2OCzxNbxyJBm4qqjm+vd9wBAKocXGG2pzDhfEFDzM5hpcJ9gBkEgal0BtB/rQBH3A==}
@@ -6872,14 +6866,6 @@ snapshots:
   '@payload-enchants/fields-select@1.2.2(payload@3.24.0(graphql@16.10.0)(typescript@5.7.3))':
     dependencies:
       payload: 3.24.0(graphql@16.10.0)(typescript@5.7.3)
-
-  '@payload-enchants/sdk@1.2.2(typescript@5.7.3)':
-    dependencies:
-      '@types/qs': 6.9.18
-      qs: 6.14.0
-      ts-essentials: 10.0.4(typescript@5.7.3)
-    transitivePeerDependencies:
-      - typescript
 
   '@payloadcms/db-postgres@3.24.0(@types/react@19.0.7)(payload@3.24.0(graphql@16.10.0)(typescript@5.7.3))(react@19.0.0)':
     dependencies:
