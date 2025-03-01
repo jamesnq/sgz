@@ -1,64 +1,99 @@
 'use client'
+import { Order } from '@/payload-types'
+import payloadClient from '@/utilities/payloadClient'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Flame, Plus, Trash } from 'lucide-react'
-import { useState, createContext, ReactNode, useContext } from 'react'
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 
 export type DraggableItem = {
   id: string
   title: string
-  status: string
+  status: Order['status']
+  data: Order
 }
 
 interface DraggableContextType {
   items: DraggableItem[]
-  createItem: (title: string, status: string) => void
-  moveItem: (itemId: string, targetStatus: string) => void
-  deleteItem: (itemId: string) => void
-  getItemsByStatus: (status: string) => DraggableItem[]
+  moveItem: (itemId: string, targetStatus: Order['status']) => void
+  getItemsByStatus: (status: Order['status']) => DraggableItem[]
 }
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
 
-const DEFAULT_ITEMS: DraggableItem[] = [
-  { title: 'Item 1', id: '1', status: 'backlog' },
-  { title: 'Item 2', id: '2', status: 'backlog' },
-  { title: 'Item 3', id: '3', status: 'todo' },
-  { title: 'Item 4', id: '4', status: 'todo' },
-  { title: 'Item 5', id: '5', status: 'in_progress' },
-  { title: 'Item 6', id: '6', status: 'in_progress' },
-  { title: 'Item 7', id: '7', status: 'completed' },
-  { title: 'Item 8', id: '8', status: 'completed' },
-]
-
+const useOrdersByStatus = (status: Order['status']) =>
+  useQuery({
+    queryKey: ['orders', status],
+    queryFn: async () =>
+      await payloadClient.find({
+        collection: 'orders',
+        where: { status: { equals: status } },
+      }),
+    select: (data) => data?.docs as Order[],
+  })
 export function DraggableProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<DraggableItem[]>(DEFAULT_ITEMS)
-
-  const createItem = (title: string, status: string) => {
-    const newItem: DraggableItem = {
-      id: Math.random().toString(),
-      title: title.trim(),
-      status,
+  const { data: inQueueOrders, refetch: refetchInQueue } = useOrdersByStatus('IN_QUEUE')
+  const { data: inProgressOrders, refetch: refetchInProgress } = useOrdersByStatus('IN_PROCESS')
+  const { data: completedOrders, refetch: refetchCompleted } = useOrdersByStatus('COMPLETED')
+  const { data: refundOrders, refetch: refetchRefund } = useOrdersByStatus('REFUND')
+  const { data: cancelledOrders, refetch: refetchCancelled } = useOrdersByStatus('CANCELLED')
+  const refetchMap = useMemo(
+    () => ({
+      IN_QUEUE: refetchInQueue,
+      IN_PROCESS: refetchInProgress,
+      COMPLETED: refetchCompleted,
+      REFUND: refetchRefund,
+      CANCELLED: refetchCancelled,
+    }),
+    [refetchCancelled, refetchCompleted, refetchInProgress, refetchInQueue, refetchRefund],
+  )
+  const refetchAll = () => {
+    for (const key of Object.keys(refetchMap) as (keyof typeof refetchMap)[]) {
+      refetchMap[key]()
     }
-    // Add new items to the beginning of the list
-    setItems((prev) => [newItem, ...prev])
   }
 
-  const moveItem = (itemId: string, targetStatus: string) => {
-    setItems((items) => {
-      let copy = [...items]
-      let itemToMove = copy.find((item) => item.id === itemId)
-      if (!itemToMove) return items
+  const data = useMemo(() => {
+    return [
+      ...(inQueueOrders || ([] as Order[])),
+      ...((inProgressOrders || []) as Order[]),
+      ...((completedOrders || []) as Order[]),
+      ...((refundOrders || []) as Order[]),
+      ...((cancelledOrders || []) as Order[]),
+    ]
+  }, [inQueueOrders, inProgressOrders, completedOrders, refundOrders, cancelledOrders])
 
-      itemToMove = { ...itemToMove, status: targetStatus }
-      copy = copy.filter((item) => item.id !== itemId)
+  const [items, setItems] = useState<DraggableItem[]>([])
 
-      // Always add moved items to the beginning of the list
-      return [itemToMove, ...copy]
-    })
-  }
+  useEffect(() => {
+    const mappedItems = data.map((order) => ({
+      id: order.id.toString(),
+      title: `Order #${order.id}`,
+      status: order.status,
+      data: order,
+    }))
+    console.log('🚀 ~ useEffect ~ mappedItems:', mappedItems)
+    setItems(mappedItems)
+  }, [data])
 
-  const deleteItem = (itemId: string) => {
-    setItems((items) => items.filter((item) => item.id !== itemId))
+  const moveItem = async (itemId: string, targetStatus: Order['status']) => {
+    let itemToMove = items.find((item) => item.id === itemId)
+    if (!itemToMove) return
+
+    console.log('🚀 ~ moveItem ~ targetStatus:', targetStatus)
+    itemToMove = { ...itemToMove, status: targetStatus }
+
+    refetchAll()
+    // copy = copy.filter((item) => item.id !== itemId)
+    // setItems((items) => {
+    //   let copy = [...items]
+    //   let itemToMove = copy.find((item) => item.id === itemId)
+    //   if (!itemToMove) return items
+
+    //   itemToMove = { ...itemToMove, status: targetStatus }
+    //   copy = copy.filter((item) => item.id !== itemId)
+    //   // Always add moved items to the beginning of the list
+    //   return [itemToMove, ...copy]
+    // })
   }
 
   const getItemsByStatus = (status: string) => {
@@ -69,9 +104,7 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
     <DraggableContext.Provider
       value={{
         items,
-        createItem,
         moveItem,
-        deleteItem,
         getItemsByStatus,
       }}
     >
@@ -90,19 +123,19 @@ export function useDraggable() {
 
 type BoardColumnProps = {
   title: string
-  status: string
+  column: Order['status']
   headingColor: string
 }
 
 type ItemProps = {
   title: string
   id: string
-  status: string
+  status: Order['status']
   handleDragStart: (e: React.DragEvent<HTMLDivElement>, item: DraggableItem) => void
 }
 
 type DropIndicatorProps = {
-  status: string
+  status: Order['status']
   isActive?: boolean
 }
 
@@ -121,16 +154,19 @@ export default DraggableBoard
 const Board = () => {
   return (
     <div className="flex h-full w-full gap-3 overflow-scroll p-12">
-      <BoardColumn title="Backlog" status="backlog" headingColor="text-neutral-500" />
-      <BoardColumn title="TODO" status="todo" headingColor="text-yellow-200" />
-      <BoardColumn title="In progress" status="in_progress" headingColor="text-blue-200" />
-      <BoardColumn title="Complete" status="completed" headingColor="text-emerald-200" />
-      <DeleteZone />
+      <BoardColumn title="Pending" column="PENDING" headingColor="text-neutral-500" />
+      <BoardColumn title="In queue" column="IN_QUEUE" headingColor="text-yellow-200" />
+      <BoardColumn title="In progress" column="IN_PROCESS" headingColor="text-blue-200" />
+      <BoardColumn title="User update" column="USER_UPDATE" headingColor="text-blue-200" />
+      <BoardColumn title="Complete" column="COMPLETED" headingColor="text-emerald-200" />
+      <BoardColumn title="Cancelled" column="CANCELLED" headingColor="text-red-200" />
+      <BoardColumn title="Refund" column="REFUND" headingColor="text-red-200" />
+      {/* <DeleteZone /> */}
     </div>
   )
 }
 
-const BoardColumn = ({ title, headingColor, status }: BoardColumnProps) => {
+const BoardColumn = ({ title, headingColor, column: status }: BoardColumnProps) => {
   const { getItemsByStatus, moveItem } = useDraggable()
   const [active, setActive] = useState(false)
 
@@ -173,7 +209,6 @@ const BoardColumn = ({ title, headingColor, status }: BoardColumnProps) => {
         {filteredItems.map((item) => (
           <DraggableItem key={item.id} {...item} handleDragStart={handleDragStart} />
         ))}
-        <AddItem status={status} />
       </div>
     </div>
   )
@@ -191,94 +226,6 @@ const DraggableItem = ({ title, id, status, handleDragStart }: ItemProps) => {
     >
       <p className="text-sm text-neutral-100">{title}</p>
     </motion.div>
-  )
-}
-
-const DeleteZone = () => {
-  const { deleteItem } = useDraggable()
-  const [active, setActive] = useState(false)
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setActive(true)
-  }
-
-  const handleDragLeave = () => {
-    setActive(false)
-  }
-
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    const itemId = e.dataTransfer.getData('itemId')
-    deleteItem(itemId)
-    setActive(false)
-  }
-
-  return (
-    <div
-      onDrop={handleDragEnd}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      className={`mt-10 grid h-56 w-56 shrink-0 place-content-center rounded border text-3xl ${
-        active
-          ? 'border-red-800 bg-red-800/20 text-red-500'
-          : 'border-neutral-700 bg-neutral-800/50 text-neutral-500'
-      }`}
-    >
-      {active ? <Trash className="animate-bounce" /> : <Flame />}
-    </div>
-  )
-}
-
-const AddItem = ({ status }: { status: string }) => {
-  const { createItem } = useDraggable()
-  const [text, setText] = useState('')
-  const [adding, setAdding] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!text.trim().length) return
-
-    createItem(text, status)
-    setText('')
-    setAdding(false)
-  }
-
-  return (
-    <>
-      {adding ? (
-        <motion.form layout onSubmit={handleSubmit}>
-          <textarea
-            autoFocus
-            placeholder="Add new item..."
-            className="w-full rounded border border-violet-400 bg-violet-400/20 p-3 text-sm text-neutral-50 placeholder-violet-300 focus:outline-0"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <div className="mt-1.5 flex items-center justify-end gap-1.5">
-            <button
-              onClick={() => setAdding(false)}
-              className="px-3 py-1.5 text-sm text-neutral-400 transition-colors hover:text-neutral-50"
-            >
-              Close
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 rounded bg-neutral-50 px-3 py-1.5 text-sm text-neutral-950 transition-colors hover:bg-neutral-300"
-            >
-              Add
-            </button>
-          </div>
-        </motion.form>
-      ) : (
-        <motion.button
-          layout
-          onClick={() => setAdding(true)}
-          className="flex w-full items-center gap-1.5 px-3 py-1.5 text-sm text-neutral-400 transition-colors hover:text-neutral-50"
-        >
-          <Plus className="h-4 w-4" /> Add item
-        </motion.button>
-      )}
-    </>
   )
 }
 
