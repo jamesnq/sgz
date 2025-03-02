@@ -4,6 +4,7 @@ import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 
 import '../(frontend)/globals.css'
+import { Header } from '@/collections/Globals/Header/Component'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
       <body className="antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
       </body>
     </html>
   )

@@ -1,5 +1,8 @@
 'use client'
-import { Order, ProductVariant } from '@/payload-types'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Order, ProductVariant, User } from '@/payload-types'
+import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import payloadClient from '@/utilities/payloadClient'
 import { useQuery } from '@tanstack/react-query'
@@ -24,6 +27,7 @@ const useOrdersByStatus = (orders: { status: Order['status']; limit?: number }[]
             collection: 'orders',
             where: { status: { equals: status } },
             sort: 'updatedAt',
+            depth: 2,
             limit,
           }),
         ),
@@ -108,7 +112,7 @@ type DropIndicatorProps = {
 
 const DraggableBoard = () => {
   return (
-    <div className="h-screen w-full bg-neutral-900 text-neutral-50">
+    <div className="h-screen w-full">
       <DraggableProvider>
         <Board />
       </DraggableProvider>
@@ -196,32 +200,52 @@ const OrderItem = ({ order, handleDragStart, dropOnly }: OrderItemProps) => {
       draggable={!dropOnly}
       // @ts-expect-error ignore
       onDragStart={(e) => !dropOnly && handleDragStart(e, order)}
-      className={`mb-2 rounded border border-neutral-700 bg-neutral-800 p-3 ${
-        !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'
-      }`}
     >
-      <motion.div layout="position" className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">#{order.id}</span>
-          <span className="text-xs text-neutral-400">
-            {formatOrderDate(new Date(order.createdAt))}
-          </span>
-        </div>
-        {order.productVariant && (
-          <span className="text-xs text-neutral-300 line-clamp-2">
-            {(order.productVariant as ProductVariant).name}
-          </span>
-        )}
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-emerald-400">{order.quantity}x</span>
-          <span className="text-neutral-400">
-            {Intl.NumberFormat('vi-VN', {
-              style: 'currency',
-              currency: 'VND',
-            }).format(order.totalPrice || 0)}
-          </span>
-        </div>
-      </motion.div>
+      <Card
+        className={`mb-2 text-xs ${!dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'}`}
+      >
+        <CardHeader className="p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">#{order.id}</span>
+            <span className="text-xs text-neutral-400">
+              {formatOrderDate(new Date(order.createdAt))}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
+          <motion.div layout="position" className="flex flex-col gap-1">
+            {order.productVariant && (
+              <span className="text-xs line-clamp-2">
+                {(order.productVariant as ProductVariant).name}
+              </span>
+            )}
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{order.quantity}x</span>
+              <span className="text-muted-foreground">
+                {Intl.NumberFormat('vi-VN', {
+                  style: 'currency',
+                  currency: 'VND',
+                }).format(order.totalPrice || 0)}
+              </span>
+            </div>
+            {order.orderedBy && (
+              <span className="text-xs">
+                By: {formatEmailToUsername((order.orderedBy as User).email)}
+              </span>
+            )}
+            <span className="text-muted-foreground">Handlers:</span>
+            {order.handlers && (
+              <div className="flex flex-wrap gap-1">
+                {order.handlers.map((handler, index) => (
+                  <span key={index} className="">
+                    {formatEmailToUsername((handler as User).email)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </CardContent>
+      </Card>
     </motion.div>
   )
 }
