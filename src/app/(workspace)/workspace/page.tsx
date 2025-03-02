@@ -30,6 +30,7 @@ interface DraggableContextType {
   orders: Order[]
   moveOrder: (orderId: string, targetStatus: Order['status']) => void
   getOrdersByStatus: (status: Order['status']) => Order[]
+  updatingOrderId: string | null
 }
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
@@ -66,6 +67,7 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
   ])
 
   const [orders, setOrders] = useState<Order[]>([])
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!data || data.length === 0) return
@@ -77,12 +79,17 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
       const orderToMove = orders.find((order) => order.id.toString() === orderId)
       if (!orderToMove) return
 
-      await payloadClient.updateById({
-        collection: 'orders',
-        id: Number(orderId),
-        data: { status: targetStatus },
-      })
-      refetch()
+      setUpdatingOrderId(orderId)
+      try {
+        await payloadClient.updateById({
+          collection: 'orders',
+          id: Number(orderId),
+          data: { status: targetStatus },
+        })
+        await refetch()
+      } finally {
+        setUpdatingOrderId(null)
+      }
     },
     [orders, refetch],
   )
@@ -99,8 +106,9 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
       orders,
       moveOrder,
       getOrdersByStatus,
+      updatingOrderId,
     }),
-    [orders, moveOrder, getOrdersByStatus],
+    [orders, moveOrder, getOrdersByStatus, updatingOrderId],
   )
 
   return <DraggableContext.Provider value={contextValue}>{children}</DraggableContext.Provider>
@@ -267,17 +275,17 @@ const BoardColumn = memo(
     const orders = useMemo(() => getOrdersByStatus(status), [getOrdersByStatus, status])
 
     return (
-      <div className={`w-56 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
+      <Card className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className={`font-medium ${headingColor}`}>{title}</h3>
-          <span className="rounded text-sm text-neutral-400">{orders.length}</span>
+          <h3 className={`font-medium ${headingColor} font-bold`}>{title}</h3>
+          <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
         </div>
         <div
           onDrop={handleDragEnd}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`h-full w-full transition-colors ${
-            active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'
+            active ? 'bg-secondary/50' : 'bg-secondary/0'
           }`}
         >
           <DropIndicator status={status} isActive={active} />
@@ -290,7 +298,7 @@ const BoardColumn = memo(
             />
           ))}
         </div>
-      </div>
+      </Card>
     )
   },
 )
@@ -303,21 +311,31 @@ type OrderItemProps = {
 }
 
 const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
+  const { updatingOrderId } = useDraggable()
+  const isUpdating = updatingOrderId === order.id.toString()
+
   return (
     <motion.div
       layout
       layoutId={order.id.toString()}
-      draggable={!dropOnly}
+      draggable={!dropOnly && !isUpdating}
       // @ts-expect-error ignore
-      onDragStart={(e) => !dropOnly && handleDragStart(e, order)}
+      onDragStart={(e) => !dropOnly && !isUpdating && handleDragStart(e, order)}
     >
       <Card
-        className={`mb-2 text-xs ${!dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'}`}
+        className={`mb-2 text-xs ${
+          !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'
+        } ${isUpdating ? 'opacity-50 cursor-progress' : ''} relative`}
       >
+        {isUpdating && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        )}
         <CardHeader className="p-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">#{order.id}</span>
-            <span className="text-xs text-neutral-400">
+            <span className="text-xs text-muted-foreground">
               {formatOrderDate(new Date(order.createdAt))}
             </span>
           </div>
@@ -365,7 +383,7 @@ const DropIndicator = ({ status, isActive }: { status: Order['status']; isActive
   return (
     <div
       data-status={status}
-      className={`mb-3 h-0.5 w-full bg-violet-400 transition-opacity ${
+      className={`mb-3 h-0.5 w-full bg-highlight transition-opacity ${
         isActive ? 'opacity-100' : 'opacity-0'
       }`}
     />
