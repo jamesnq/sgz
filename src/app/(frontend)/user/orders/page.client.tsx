@@ -120,7 +120,10 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                   key={k}
                   className="w-full rounded-full"
                   variant={status === k ? 'default' : 'outline'}
-                  onClick={() => setStatus(k)}
+                  onClick={() => {
+                    setStatus(k)
+                    setPage(1)
+                  }}
                 >
                   {v}
                 </Button>
@@ -128,7 +131,10 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
             </div>
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
               className="min-w-72 max-md:w-full"
               placeholder="Mã đơn / Tên sản phẩm"
             ></Input>
