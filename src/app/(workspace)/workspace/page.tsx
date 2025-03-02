@@ -44,12 +44,11 @@ const useOrdersByStatus = (orders: { status: Order['status']; limit?: number }[]
 
 export function DraggableProvider({ children }: { children: ReactNode }) {
   const { data, refetch } = useOrdersByStatus([
-    { status: 'IN_QUEUE' },
-    { status: 'IN_PROCESS' },
-    { status: 'USER_UPDATE' },
+    { status: 'IN_QUEUE', limit: -1 },
+    { status: 'IN_PROCESS', limit: -1 },
+    { status: 'USER_UPDATE', limit: -1 },
     { status: 'COMPLETED', limit: 10 },
     { status: 'REFUND', limit: 10 },
-    { status: 'CANCELLED', limit: 10 },
   ])
 
   const [items, setItems] = useState<DraggableItem[]>([])
@@ -76,17 +75,6 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
       data: { status: targetStatus },
     })
     refetch()
-    // copy = copy.filter((item) => item.id !== itemId)
-    // setItems((items) => {
-    //   let copy = [...items]
-    //   let itemToMove = copy.find((item) => item.id === itemId)
-    //   if (!itemToMove) return items
-
-    //   itemToMove = { ...itemToMove, status: targetStatus }
-    //   copy = copy.filter((item) => item.id !== itemId)
-    //   // Always add moved items to the beginning of the list
-    //   return [itemToMove, ...copy]
-    // })
   }
 
   const getItemsByStatus = (status: string) => {
@@ -118,6 +106,7 @@ type BoardColumnProps = {
   title: string
   column: Order['status']
   headingColor: string
+  dropOnly?: boolean
 }
 
 type ItemProps = {
@@ -151,14 +140,17 @@ const Board = () => {
       <BoardColumn title="In progress" column="IN_PROCESS" headingColor="text-blue-200" />
       <BoardColumn title="User update" column="USER_UPDATE" headingColor="text-blue-200" />
       <BoardColumn title="Complete" column="COMPLETED" headingColor="text-emerald-200" />
-      <BoardColumn title="Cancelled" column="CANCELLED" headingColor="text-red-200" />
-      <BoardColumn title="Refund" column="REFUND" headingColor="text-red-200" />
-      {/* <DeleteZone /> */}
+      <BoardColumn title="Refund" column="REFUND" headingColor="text-red-200" dropOnly />
     </div>
   )
 }
 
-const BoardColumn = ({ title, headingColor, column: status }: BoardColumnProps) => {
+const BoardColumn = ({
+  title,
+  headingColor,
+  column: status,
+  dropOnly = false,
+}: BoardColumnProps) => {
   const { getItemsByStatus, moveItem } = useDraggable()
   const [active, setActive] = useState(false)
 
@@ -184,7 +176,7 @@ const BoardColumn = ({ title, headingColor, column: status }: BoardColumnProps) 
   const filteredItems = getItemsByStatus(status)
 
   return (
-    <div className="w-56 shrink-0">
+    <div className={`w-56 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className={`font-medium ${headingColor}`}>{title}</h3>
         <span className="rounded text-sm text-neutral-400">{filteredItems.length}</span>
@@ -199,24 +191,39 @@ const BoardColumn = ({ title, headingColor, column: status }: BoardColumnProps) 
       >
         <DropIndicator status={status} isActive={active} />
         {filteredItems.map((item) => (
-          <DraggableItem key={item.id} {...item} handleDragStart={handleDragStart} />
+          <DraggableItem
+            key={item.id}
+            {...item}
+            handleDragStart={handleDragStart}
+            dropOnly={dropOnly}
+          />
         ))}
       </div>
     </div>
   )
 }
 
-const DraggableItem = ({ title, id, status, handleDragStart }: ItemProps) => {
+const DraggableItem = ({
+  title,
+  id,
+  status,
+  handleDragStart,
+  dropOnly,
+}: ItemProps & { dropOnly?: boolean }) => {
   return (
     <motion.div
       layout
-      layoutId={id}
-      draggable
+      layoutId={id} // Add layoutId back to maintain animation between columns
+      draggable={!dropOnly}
       // @ts-expect-error ignore
-      onDragStart={(e) => handleDragStart(e, { title, id, status })}
-      className="mb-2 cursor-grab rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing"
+      onDragStart={(e) => !dropOnly && handleDragStart(e, { id, title, status } as DraggableItem)}
+      className={`mb-2 rounded border border-neutral-700 bg-neutral-800 p-3 ${
+        !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'
+      }`}
     >
-      <p className="text-sm text-neutral-100">{title}</p>
+      <motion.p layout="position" className="text-sm font-medium">
+        {title}
+      </motion.p>
     </motion.div>
   )
 }
