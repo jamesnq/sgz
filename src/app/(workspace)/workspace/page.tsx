@@ -1,6 +1,14 @@
 'use client'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Order, ProductVariant, User } from '@/payload-types'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
@@ -97,6 +105,9 @@ type BoardColumnProps = {
   column: Order['status']
   headingColor: string
   dropOnly?: boolean
+  setPendingDrop: (
+    drop: { orderId: string; status: Order['status']; columnTitle: string } | null,
+  ) => void
 }
 
 type OrderItemProps = {
@@ -110,26 +121,93 @@ type DropIndicatorProps = {
   isActive?: boolean
 }
 
+type PendingDropType = {
+  orderId: string
+  status: Order['status']
+  columnTitle: string
+} | null
+
 const DraggableBoard = () => {
+  const [pendingDrop, setPendingDrop] = useState<PendingDropType>(null)
+
+  const handleConfirmDrop = () => {
+    if (!pendingDrop) return
+    const { orderId, status } = pendingDrop
+    setPendingDrop(null)
+    // Get context and move the order
+    const context = document
+      .querySelector('[data-draggable-context]')
+      ?.getAttribute('data-order-id')
+    if (context === orderId) {
+      const event = new CustomEvent('confirmDrop', { detail: { orderId, status } })
+      document.dispatchEvent(event)
+    }
+  }
+
   return (
-    <div className="h-screen w-full">
+    <div className="h-screen w-full" data-draggable-context>
       <DraggableProvider>
-        <Board />
+        <Board setPendingDrop={setPendingDrop} />
       </DraggableProvider>
+
+      <Dialog open={!!pendingDrop} onOpenChange={() => setPendingDrop(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận chuyển trạng thái</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn chuyển đơn hàng #{pendingDrop?.orderId} sang trạng thái{' '}
+              {pendingDrop?.columnTitle}? Sau khi chuyển sẽ không thể kéo ra khỏi trạng thái này.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingDrop(null)}>
+              Hủy
+            </Button>
+            <Button onClick={handleConfirmDrop}>Xác nhận</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
 export default DraggableBoard
 
-const Board = () => {
+const Board = ({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => void }) => {
   return (
     <div className="flex h-full w-full gap-3 overflow-scroll p-12">
-      <BoardColumn title="In queue" column="IN_QUEUE" headingColor="text-yellow-200" />
-      <BoardColumn title="In progress" column="IN_PROCESS" headingColor="text-blue-200" />
-      <BoardColumn title="User update" column="USER_UPDATE" headingColor="text-blue-200" />
-      <BoardColumn title="Complete" column="COMPLETED" headingColor="text-emerald-200" />
-      <BoardColumn title="Refund" column="REFUND" headingColor="text-red-200" dropOnly />
+      <BoardColumn
+        title="In queue"
+        column="IN_QUEUE"
+        headingColor="text-yellow-200"
+        setPendingDrop={setPendingDrop}
+      />
+      <BoardColumn
+        title="In progress"
+        column="IN_PROCESS"
+        headingColor="text-blue-200"
+        setPendingDrop={setPendingDrop}
+      />
+      <BoardColumn
+        title="User update"
+        column="USER_UPDATE"
+        headingColor="text-blue-200"
+        setPendingDrop={setPendingDrop}
+      />
+      <BoardColumn
+        title="Complete"
+        column="COMPLETED"
+        headingColor="text-emerald-200"
+        dropOnly
+        setPendingDrop={setPendingDrop}
+      />
+      <BoardColumn
+        title="Refund"
+        column="REFUND"
+        headingColor="text-red-200"
+        dropOnly
+        setPendingDrop={setPendingDrop}
+      />
     </div>
   )
 }
@@ -139,18 +217,42 @@ const BoardColumn = ({
   headingColor,
   column: status,
   dropOnly = false,
+  setPendingDrop,
 }: BoardColumnProps) => {
   const { getOrdersByStatus, moveOrder } = useDraggable()
   const [active, setActive] = useState(false)
 
+  useEffect(() => {
+    const handleConfirmDrop = (e: CustomEvent<{ orderId: string; status: Order['status'] }>) => {
+      const { orderId, status: targetStatus } = e.detail
+      if (status === targetStatus) {
+        moveOrder(orderId, status)
+      }
+    }
+
+    document.addEventListener('confirmDrop', handleConfirmDrop as EventListener)
+    return () => {
+      document.removeEventListener('confirmDrop', handleConfirmDrop as EventListener)
+    }
+  }, [moveOrder, status])
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, order: Order) => {
     e.dataTransfer.setData('orderId', order.id.toString())
+    const container = document.querySelector('[data-draggable-context]')
+    if (container) {
+      container.setAttribute('data-order-id', order.id.toString())
+    }
   }
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     const orderId = e.dataTransfer.getData('orderId')
     setActive(false)
-    moveOrder(orderId, status)
+
+    if (dropOnly) {
+      setPendingDrop({ orderId, status, columnTitle: title })
+    } else {
+      moveOrder(orderId, status)
+    }
   }
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
