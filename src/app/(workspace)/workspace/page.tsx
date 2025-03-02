@@ -15,7 +15,16 @@ import { formatOrderDate } from '@/utilities/formatOrderDate'
 import payloadClient from '@/utilities/payloadClient'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  memo,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 interface DraggableContextType {
   orders: Order[]
@@ -63,33 +72,38 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
     setOrders(data)
   }, [data])
 
-  const moveOrder = async (orderId: string, targetStatus: Order['status']) => {
-    const orderToMove = orders.find((order) => order.id.toString() === orderId)
-    if (!orderToMove) return
+  const moveOrder = useCallback(
+    async (orderId: string, targetStatus: Order['status']) => {
+      const orderToMove = orders.find((order) => order.id.toString() === orderId)
+      if (!orderToMove) return
 
-    await payloadClient.updateById({
-      collection: 'orders',
-      id: Number(orderId),
-      data: { status: targetStatus },
-    })
-    refetch()
-  }
-
-  const getOrdersByStatus = (status: string) => {
-    return orders.filter((order) => order.status === status)
-  }
-
-  return (
-    <DraggableContext.Provider
-      value={{
-        orders,
-        moveOrder,
-        getOrdersByStatus,
-      }}
-    >
-      {children}
-    </DraggableContext.Provider>
+      await payloadClient.updateById({
+        collection: 'orders',
+        id: Number(orderId),
+        data: { status: targetStatus },
+      })
+      refetch()
+    },
+    [orders, refetch],
   )
+
+  const getOrdersByStatus = useCallback(
+    (status: string) => {
+      return orders.filter((order) => order.status === status)
+    },
+    [orders],
+  )
+
+  const contextValue = useMemo(
+    () => ({
+      orders,
+      moveOrder,
+      getOrdersByStatus,
+    }),
+    [orders, moveOrder, getOrdersByStatus],
+  )
+
+  return <DraggableContext.Provider value={contextValue}>{children}</DraggableContext.Provider>
 }
 
 export function useDraggable() {
@@ -98,27 +112,6 @@ export function useDraggable() {
     throw new Error('useDraggable must be used within a DraggableProvider')
   }
   return context
-}
-
-type BoardColumnProps = {
-  title: string
-  column: Order['status']
-  headingColor: string
-  dropOnly?: boolean
-  setPendingDrop: (
-    drop: { orderId: string; status: Order['status']; columnTitle: string } | null,
-  ) => void
-}
-
-type OrderItemProps = {
-  order: Order
-  handleDragStart: (e: React.DragEvent<HTMLDivElement>, order: Order) => void
-  dropOnly?: boolean
-}
-
-type DropIndicatorProps = {
-  status: Order['status']
-  isActive?: boolean
 }
 
 type PendingDropType = {
@@ -130,11 +123,10 @@ type PendingDropType = {
 const DraggableBoard = () => {
   const [pendingDrop, setPendingDrop] = useState<PendingDropType>(null)
 
-  const handleConfirmDrop = () => {
+  const handleConfirmDrop = useCallback(() => {
     if (!pendingDrop) return
     const { orderId, status } = pendingDrop
     setPendingDrop(null)
-    // Get context and move the order
     const context = document
       .querySelector('[data-draggable-context]')
       ?.getAttribute('data-order-id')
@@ -142,7 +134,7 @@ const DraggableBoard = () => {
       const event = new CustomEvent('confirmDrop', { detail: { orderId, status } })
       document.dispatchEvent(event)
     }
-  }
+  }, [pendingDrop])
 
   return (
     <div className="h-screen w-full" data-draggable-context>
@@ -173,7 +165,7 @@ const DraggableBoard = () => {
 
 export default DraggableBoard
 
-const Board = ({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => void }) => {
+const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => void }) => {
   return (
     <div className="flex h-full w-full gap-3 overflow-scroll p-12">
       <BoardColumn
@@ -198,7 +190,6 @@ const Board = ({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => 
         title="Complete"
         column="COMPLETED"
         headingColor="text-emerald-200"
-        dropOnly
         setPendingDrop={setPendingDrop}
       />
       <BoardColumn
@@ -210,91 +201,108 @@ const Board = ({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => 
       />
     </div>
   )
+})
+Board.displayName = 'Board'
+
+type BoardColumnProps = {
+  title: string
+  column: Order['status']
+  headingColor: string
+  dropOnly?: boolean
+  setPendingDrop: (
+    drop: { orderId: string; status: Order['status']; columnTitle: string } | null,
+  ) => void
 }
 
-const BoardColumn = ({
-  title,
-  headingColor,
-  column: status,
-  dropOnly = false,
-  setPendingDrop,
-}: BoardColumnProps) => {
-  const { getOrdersByStatus, moveOrder } = useDraggable()
-  const [active, setActive] = useState(false)
+const BoardColumn = memo(
+  ({ title, headingColor, column: status, dropOnly = false, setPendingDrop }: BoardColumnProps) => {
+    const { getOrdersByStatus, moveOrder } = useDraggable()
+    const [active, setActive] = useState(false)
 
-  useEffect(() => {
-    const handleConfirmDrop = (e: CustomEvent<{ orderId: string; status: Order['status'] }>) => {
-      const { orderId, status: targetStatus } = e.detail
-      if (status === targetStatus) {
-        moveOrder(orderId, status)
+    useEffect(() => {
+      const handleConfirmDrop = (e: CustomEvent<{ orderId: string; status: Order['status'] }>) => {
+        const { orderId, status: targetStatus } = e.detail
+        if (status === targetStatus) {
+          moveOrder(orderId, status)
+        }
       }
-    }
 
-    document.addEventListener('confirmDrop', handleConfirmDrop as EventListener)
-    return () => {
-      document.removeEventListener('confirmDrop', handleConfirmDrop as EventListener)
-    }
-  }, [moveOrder, status])
+      document.addEventListener('confirmDrop', handleConfirmDrop as EventListener)
+      return () => {
+        document.removeEventListener('confirmDrop', handleConfirmDrop as EventListener)
+      }
+    }, [moveOrder, status])
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, order: Order) => {
-    e.dataTransfer.setData('orderId', order.id.toString())
-    const container = document.querySelector('[data-draggable-context]')
-    if (container) {
-      container.setAttribute('data-order-id', order.id.toString())
-    }
-  }
+    const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, order: Order) => {
+      e.dataTransfer.setData('orderId', order.id.toString())
+      const container = document.querySelector('[data-draggable-context]')
+      if (container) {
+        container.setAttribute('data-order-id', order.id.toString())
+      }
+    }, [])
 
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    const orderId = e.dataTransfer.getData('orderId')
-    setActive(false)
+    const handleDragEnd = useCallback(
+      (e: React.DragEvent<HTMLDivElement>) => {
+        const orderId = e.dataTransfer.getData('orderId')
+        setActive(false)
 
-    if (dropOnly) {
-      setPendingDrop({ orderId, status, columnTitle: title })
-    } else {
-      moveOrder(orderId, status)
-    }
-  }
+        if (dropOnly) {
+          setPendingDrop({ orderId, status, columnTitle: title })
+        } else {
+          moveOrder(orderId, status)
+        }
+      },
+      [dropOnly, moveOrder, setPendingDrop, status, title],
+    )
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setActive(true)
-  }
+    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      setActive(true)
+    }, [])
 
-  const handleDragLeave = () => {
-    setActive(false)
-  }
+    const handleDragLeave = useCallback(() => {
+      setActive(false)
+    }, [])
 
-  const orders = getOrdersByStatus(status)
+    const orders = useMemo(() => getOrdersByStatus(status), [getOrdersByStatus, status])
 
-  return (
-    <div className={`w-56 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className={`font-medium ${headingColor}`}>{title}</h3>
-        <span className="rounded text-sm text-neutral-400">{orders.length}</span>
+    return (
+      <div className={`w-56 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className={`font-medium ${headingColor}`}>{title}</h3>
+          <span className="rounded text-sm text-neutral-400">{orders.length}</span>
+        </div>
+        <div
+          onDrop={handleDragEnd}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={`h-full w-full transition-colors ${
+            active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'
+          }`}
+        >
+          <DropIndicator status={status} isActive={active} />
+          {orders.map((order) => (
+            <OrderItem
+              key={order.id}
+              order={order}
+              handleDragStart={handleDragStart}
+              dropOnly={dropOnly}
+            />
+          ))}
+        </div>
       </div>
-      <div
-        onDrop={handleDragEnd}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className={`h-full w-full transition-colors ${
-          active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'
-        }`}
-      >
-        <DropIndicator status={status} isActive={active} />
-        {orders.map((order) => (
-          <OrderItem
-            key={order.id}
-            order={order}
-            handleDragStart={handleDragStart}
-            dropOnly={dropOnly}
-          />
-        ))}
-      </div>
-    </div>
-  )
+    )
+  },
+)
+BoardColumn.displayName = 'BoardColumn'
+
+type OrderItemProps = {
+  order: Order
+  handleDragStart: (e: React.DragEvent<HTMLDivElement>, order: Order) => void
+  dropOnly?: boolean
 }
 
-const OrderItem = ({ order, handleDragStart, dropOnly }: OrderItemProps) => {
+const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
   return (
     <motion.div
       layout
@@ -350,9 +358,10 @@ const OrderItem = ({ order, handleDragStart, dropOnly }: OrderItemProps) => {
       </Card>
     </motion.div>
   )
-}
+})
+OrderItem.displayName = 'OrderItem'
 
-const DropIndicator = ({ status, isActive }: DropIndicatorProps) => {
+const DropIndicator = ({ status, isActive }: { status: Order['status']; isActive?: boolean }) => {
   return (
     <div
       data-status={status}
