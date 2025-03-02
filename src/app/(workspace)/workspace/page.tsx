@@ -1,5 +1,6 @@
 'use client'
-import { Order } from '@/payload-types'
+import { Order, ProductVariant } from '@/payload-types'
+import { formatOrderDate } from '@/utilities/formatOrderDate'
 import payloadClient from '@/utilities/payloadClient'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -7,7 +8,6 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 
 export type DraggableItem = {
   id: string
-  title: string
   status: Order['status']
   data: Order
 }
@@ -57,7 +57,6 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
     if (!data || data.length === 0) return
     const mappedItems = data.map((order) => ({
       id: order.id.toString(),
-      title: `Order #${order.id}`,
       status: order.status,
       data: order,
     }))
@@ -110,9 +109,9 @@ type BoardColumnProps = {
 }
 
 type ItemProps = {
-  title: string
   id: string
   status: Order['status']
+  data: Order
   handleDragStart: (e: React.DragEvent<HTMLDivElement>, item: DraggableItem) => void
 }
 
@@ -204,26 +203,45 @@ const BoardColumn = ({
 }
 
 const DraggableItem = ({
-  title,
   id,
   status,
+  data,
   handleDragStart,
   dropOnly,
 }: ItemProps & { dropOnly?: boolean }) => {
   return (
     <motion.div
       layout
-      layoutId={id} // Add layoutId back to maintain animation between columns
+      layoutId={id}
       draggable={!dropOnly}
       // @ts-expect-error ignore
-      onDragStart={(e) => !dropOnly && handleDragStart(e, { id, title, status } as DraggableItem)}
+      onDragStart={(e) => !dropOnly && handleDragStart(e, { id, status, data } as DraggableItem)}
       className={`mb-2 rounded border border-neutral-700 bg-neutral-800 p-3 ${
         !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'
       }`}
     >
-      <motion.p layout="position" className="text-sm font-medium">
-        {title}
-      </motion.p>
+      <motion.div layout="position" className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">#{id}</span>
+          <span className="text-xs text-neutral-400">
+            {formatOrderDate(new Date(data.createdAt))}
+          </span>
+        </div>
+        {data.productVariant && (
+          <span className="text-xs text-neutral-300 line-clamp-2">
+            {(data.productVariant as ProductVariant).name}
+          </span>
+        )}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-emerald-400">{data.quantity}x</span>
+          <span className="text-neutral-400">
+            {Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND',
+            }).format(data.totalPrice || 0)}
+          </span>
+        </div>
+      </motion.div>
     </motion.div>
   )
 }
