@@ -6,16 +6,10 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 
-export type DraggableItem = {
-  id: string
-  status: Order['status']
-  data: Order
-}
-
 interface DraggableContextType {
-  items: DraggableItem[]
-  moveItem: (itemId: string, targetStatus: Order['status']) => void
-  getItemsByStatus: (status: Order['status']) => DraggableItem[]
+  orders: Order[]
+  moveOrder: (orderId: string, targetStatus: Order['status']) => void
+  getOrdersByStatus: (status: Order['status']) => Order[]
 }
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
@@ -36,7 +30,6 @@ const useOrdersByStatus = (orders: { status: Order['status']; limit?: number }[]
       )
       return res
     },
-
     select: (data) => data.map((doc) => doc.docs).flat() as Order[],
   })
   return { data, refetch }
@@ -51,41 +44,35 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
     { status: 'REFUND', limit: 10 },
   ])
 
-  const [items, setItems] = useState<DraggableItem[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
 
   useEffect(() => {
     if (!data || data.length === 0) return
-    const mappedItems = data.map((order) => ({
-      id: order.id.toString(),
-      status: order.status,
-      data: order,
-    }))
-    setItems(mappedItems)
+    setOrders(data)
   }, [data])
 
-  const moveItem = async (itemId: string, targetStatus: Order['status']) => {
-    let itemToMove = items.find((item) => item.id === itemId)
-    if (!itemToMove) return
-    itemToMove = { ...itemToMove, status: targetStatus }
+  const moveOrder = async (orderId: string, targetStatus: Order['status']) => {
+    const orderToMove = orders.find((order) => order.id.toString() === orderId)
+    if (!orderToMove) return
 
     await payloadClient.updateById({
       collection: 'orders',
-      id: Number(itemId),
+      id: Number(orderId),
       data: { status: targetStatus },
     })
     refetch()
   }
 
-  const getItemsByStatus = (status: string) => {
-    return items.filter((item) => item.status === status)
+  const getOrdersByStatus = (status: string) => {
+    return orders.filter((order) => order.status === status)
   }
 
   return (
     <DraggableContext.Provider
       value={{
-        items,
-        moveItem,
-        getItemsByStatus,
+        orders,
+        moveOrder,
+        getOrdersByStatus,
       }}
     >
       {children}
@@ -108,11 +95,10 @@ type BoardColumnProps = {
   dropOnly?: boolean
 }
 
-type ItemProps = {
-  id: string
-  status: Order['status']
-  data: Order
-  handleDragStart: (e: React.DragEvent<HTMLDivElement>, item: DraggableItem) => void
+type OrderItemProps = {
+  order: Order
+  handleDragStart: (e: React.DragEvent<HTMLDivElement>, order: Order) => void
+  dropOnly?: boolean
 }
 
 type DropIndicatorProps = {
@@ -150,17 +136,17 @@ const BoardColumn = ({
   column: status,
   dropOnly = false,
 }: BoardColumnProps) => {
-  const { getItemsByStatus, moveItem } = useDraggable()
+  const { getOrdersByStatus, moveOrder } = useDraggable()
   const [active, setActive] = useState(false)
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: DraggableItem) => {
-    e.dataTransfer.setData('itemId', item.id)
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, order: Order) => {
+    e.dataTransfer.setData('orderId', order.id.toString())
   }
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    const itemId = e.dataTransfer.getData('itemId')
+    const orderId = e.dataTransfer.getData('orderId')
     setActive(false)
-    moveItem(itemId, status)
+    moveOrder(orderId, status)
   }
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -172,13 +158,13 @@ const BoardColumn = ({
     setActive(false)
   }
 
-  const filteredItems = getItemsByStatus(status)
+  const orders = getOrdersByStatus(status)
 
   return (
     <div className={`w-56 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className={`font-medium ${headingColor}`}>{title}</h3>
-        <span className="rounded text-sm text-neutral-400">{filteredItems.length}</span>
+        <span className="rounded text-sm text-neutral-400">{orders.length}</span>
       </div>
       <div
         onDrop={handleDragEnd}
@@ -189,10 +175,10 @@ const BoardColumn = ({
         }`}
       >
         <DropIndicator status={status} isActive={active} />
-        {filteredItems.map((item) => (
-          <DraggableItem
-            key={item.id}
-            {...item}
+        {orders.map((order) => (
+          <OrderItem
+            key={order.id}
+            order={order}
             handleDragStart={handleDragStart}
             dropOnly={dropOnly}
           />
@@ -202,43 +188,37 @@ const BoardColumn = ({
   )
 }
 
-const DraggableItem = ({
-  id,
-  status,
-  data,
-  handleDragStart,
-  dropOnly,
-}: ItemProps & { dropOnly?: boolean }) => {
+const OrderItem = ({ order, handleDragStart, dropOnly }: OrderItemProps) => {
   return (
     <motion.div
       layout
-      layoutId={id}
+      layoutId={order.id.toString()}
       draggable={!dropOnly}
       // @ts-expect-error ignore
-      onDragStart={(e) => !dropOnly && handleDragStart(e, { id, status, data } as DraggableItem)}
+      onDragStart={(e) => !dropOnly && handleDragStart(e, order)}
       className={`mb-2 rounded border border-neutral-700 bg-neutral-800 p-3 ${
         !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'
       }`}
     >
       <motion.div layout="position" className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">#{id}</span>
+          <span className="text-sm font-medium">#{order.id}</span>
           <span className="text-xs text-neutral-400">
-            {formatOrderDate(new Date(data.createdAt))}
+            {formatOrderDate(new Date(order.createdAt))}
           </span>
         </div>
-        {data.productVariant && (
+        {order.productVariant && (
           <span className="text-xs text-neutral-300 line-clamp-2">
-            {(data.productVariant as ProductVariant).name}
+            {(order.productVariant as ProductVariant).name}
           </span>
         )}
         <div className="flex items-center justify-between text-xs">
-          <span className="text-emerald-400">{data.quantity}x</span>
+          <span className="text-emerald-400">{order.quantity}x</span>
           <span className="text-neutral-400">
             {Intl.NumberFormat('vi-VN', {
               style: 'currency',
               currency: 'VND',
-            }).format(data.totalPrice || 0)}
+            }).format(order.totalPrice || 0)}
           </span>
         </div>
       </motion.div>
