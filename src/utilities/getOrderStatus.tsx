@@ -1,4 +1,6 @@
-export const orderStatus: Record<string, React.ReactNode> = {
+import { Order } from '@/payload-types'
+
+export const orderStatus: Record<Order['status'], React.ReactNode> = {
   // PENDING: 'Chờ thanh toán',
   IN_QUEUE: <p style={{ color: '#3B82F6' }}>Chờ xử lý</p>,
   IN_PROCESS: <p style={{ color: '#EAB308' }}>Đang xử lý</p>,
@@ -9,6 +11,6 @@ export const orderStatus: Record<string, React.ReactNode> = {
   REFUND: <p style={{ color: '#EF4444' }}>Hoàn trả</p>,
 }
 
-export function getOrderStatus(status: string) {
+export function getOrderStatus(status: Order['status']) {
   return orderStatus[status]
 }

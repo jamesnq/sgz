@@ -24,6 +24,7 @@ import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatTimeAgo } from '@/utilities/formatTimeAgo'
+import { getOrderStatus } from '@/utilities/getOrderStatus'
 import payloadClient from '@/utilities/payloadClient'
 import { cn } from '@/utilities/ui'
 import { useQuery } from '@tanstack/react-query'
@@ -103,7 +104,7 @@ const useOrders = (queries: OrderQuery[]) => {
           payloadClient.find({
             collection: 'orders',
             where,
-            sort: 'updatedAt',
+            sort: '-updatedAt',
             depth: 2,
             limit: limit ?? -1,
           }),
@@ -120,7 +121,6 @@ function DraggableProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
-  const [pendingConfirmation, setPendingConfirmation] = useState<PendingDropType>(null)
 
   const activeQueries = useMemo(() => createSearchQuery(searchQuery), [searchQuery])
 
@@ -218,7 +218,7 @@ function useDraggable() {
 type PendingDropType = {
   orderId: string
   status: Order['status']
-  columnTitle: string
+  columnTitle: React.ReactNode
 } | null
 
 const DraggableBoard = () => {
@@ -291,37 +291,32 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
         </div>
         <div className="flex h-full w-full gap-3">
           <BoardColumn
-            title={columnConfigs['IN_QUEUE'].title}
+            title={getOrderStatus('IN_QUEUE')}
             column="IN_QUEUE"
-            headingColor="text-yellow-200"
             dropOnly={columnConfigs['IN_QUEUE'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title={columnConfigs['IN_PROCESS'].title}
+            title={getOrderStatus('IN_PROCESS')}
             column="IN_PROCESS"
-            headingColor="text-blue-200"
             dropOnly={columnConfigs['IN_PROCESS'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title={columnConfigs['USER_UPDATE'].title}
+            title={getOrderStatus('USER_UPDATE')}
             column="USER_UPDATE"
-            headingColor="text-blue-200"
             dropOnly={columnConfigs['USER_UPDATE'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title={columnConfigs['COMPLETED'].title}
+            title={getOrderStatus('COMPLETED')}
             column="COMPLETED"
-            headingColor="text-emerald-200"
             dropOnly={columnConfigs['COMPLETED'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title={columnConfigs['REFUND'].title}
+            title={getOrderStatus('REFUND')}
             column="REFUND"
-            headingColor="text-red-200"
             dropOnly={columnConfigs['REFUND'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
@@ -333,17 +328,17 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
 Board.displayName = 'Board'
 
 type BoardColumnProps = {
-  title: string
+  title: React.ReactNode
   column: Order['status']
-  headingColor: string
+
   dropOnly?: boolean
   setPendingDrop: (
-    drop: { orderId: string; status: Order['status']; columnTitle: string } | null,
+    drop: { orderId: string; status: Order['status']; columnTitle: React.ReactNode } | null,
   ) => void
 }
 
 const BoardColumn = memo(
-  ({ title, headingColor, column: status, dropOnly = false, setPendingDrop }: BoardColumnProps) => {
+  ({ title, column: status, dropOnly = false, setPendingDrop }: BoardColumnProps) => {
     const { getOrdersByStatus, moveOrder } = useDraggable()
     const [active, setActive] = useState(false)
 
@@ -397,7 +392,7 @@ const BoardColumn = memo(
     return (
       <Card className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className={`font-medium ${headingColor} font-bold`}>{title}</h3>
+          <h3 className={`font-bold`}>{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
         </div>
         <div
@@ -437,13 +432,13 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!dropOnly && !isUpdating) {
+      if (!isUpdating) {
         e.preventDefault()
         e.stopPropagation()
         setIsOpen(true)
       }
     },
-    [dropOnly, isUpdating],
+    [isUpdating],
   )
 
   const handlers = useMemo(() => {
@@ -507,7 +502,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               onClick={handleClick}
               className={cn(
                 'mb-2 text-xs relative transition-all',
-                !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75',
+                !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
                 isUpdating && 'opacity-50 cursor-progress',
                 isOpen && 'ring-2 ring-highlight ring-offset-1',
               )}
@@ -646,7 +641,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
 
 OrderItem.displayName = 'OrderItem'
 
-const DropIndicator = ({ status, isActive }: { status: Order['status']; isActive?: boolean }) => {
+const DropIndicator = ({ isActive }: { status: Order['status']; isActive?: boolean }) => {
   return (
     <div
       className={`mb-3 h-0.5 w-full bg-highlight transition-opacity ${
