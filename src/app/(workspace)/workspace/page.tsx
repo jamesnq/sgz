@@ -572,7 +572,11 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
           className="w-full sm:w-[80%] md:w-[60%] lg:w-[40%] xl:w-[30%]"
         >
           <SheetHeader>
-            <SheetTitle>Chi tiết đơn hàng #{order.id}</SheetTitle>
+            <SheetTitle>
+              <div className="flex space-x-2">
+                {getOrderStatus(order.status)} <div>-</div> <div>Đơn hàng #{order.id}</div>
+              </div>
+            </SheetTitle>
           </SheetHeader>
           <div className="mt-6 space-y-6">
             <div>
@@ -601,6 +605,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               <div className="mt-3 rounded-md border p-3">
                 <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
                 <p className="text-sm">Email: {orderedBy.email}</p>
+                <p className="text-sm">Số dư: {formatPrice(orderedBy.balance)}</p>
                 {orderedBy.note && <p className="text-sm">Note: {orderedBy.note}</p>}
               </div>
             </div>
