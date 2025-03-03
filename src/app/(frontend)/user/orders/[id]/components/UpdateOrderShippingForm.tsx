@@ -37,7 +37,6 @@ export function UpdateOrderShippingForm({ disabled, order }: { order: Order; dis
                       setFormSubmissionData((p: any) => {
                         const newData = {
                           ...p,
-                          //@ts-expect-error ignore
                           [field.name]: v,
                         }
                         return newData

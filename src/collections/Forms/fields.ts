@@ -333,44 +333,44 @@ const Email: Block = {
   },
 }
 
-const Country: Block = {
-  slug: 'country',
-  fields: [
-    {
-      type: 'row',
-      fields: [
-        {
-          ...name,
-          admin: {
-            width: '50%',
-          },
-        },
-        {
-          ...label,
-          admin: {
-            width: '50%',
-          },
-        },
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          ...description,
-          admin: {
-            width: '50%',
-          },
-        },
-      ],
-    },
-    required,
-  ],
-  labels: {
-    plural: 'Country Fields',
-    singular: 'Country',
-  },
-}
+// const Country: Block = {
+//   slug: 'country',
+//   fields: [
+//     {
+//       type: 'row',
+//       fields: [
+//         {
+//           ...name,
+//           admin: {
+//             width: '50%',
+//           },
+//         },
+//         {
+//           ...label,
+//           admin: {
+//             width: '50%',
+//           },
+//         },
+//       ],
+//     },
+//     {
+//       type: 'row',
+//       fields: [
+//         {
+//           ...description,
+//           admin: {
+//             width: '50%',
+//           },
+//         },
+//       ],
+//     },
+//     required,
+//   ],
+//   labels: {
+//     plural: 'Country Fields',
+//     singular: 'Country',
+//   },
+// }
 
 const Checkbox: Block = {
   slug: 'checkbox',
@@ -415,20 +415,20 @@ const Checkbox: Block = {
   },
 }
 
-const Message: Block = {
-  slug: 'message',
-  fields: [
-    {
-      name: 'message',
-      type: 'richText',
-      localized: true,
-    },
-  ],
-  labels: {
-    plural: 'Message Blocks',
-    singular: 'Message',
-  },
-}
+// const Message: Block = {
+//   slug: 'message',
+//   fields: [
+//     {
+//       name: 'message',
+//       type: 'richText',
+//       localized: true,
+//     },
+//   ],
+//   labels: {
+//     plural: 'Message Blocks',
+//     singular: 'Message',
+//   },
+// }
 // TODO change name to key
 export const fields = {
   checkbox: Checkbox,
