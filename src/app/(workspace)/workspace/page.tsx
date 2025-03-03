@@ -200,6 +200,17 @@ const DraggableBoard = () => {
     }
   }, [pendingDrop])
 
+  useEffect(() => {
+    const handleShowConfirmation = (e: CustomEvent<PendingDropType>) => {
+      setPendingDrop(e.detail)
+    }
+
+    document.addEventListener('showConfirmation', handleShowConfirmation as EventListener)
+    return () => {
+      document.removeEventListener('showConfirmation', handleShowConfirmation as EventListener)
+    }
+  }, [])
+
   return (
     <div className="h-screen w-full" data-draggable-context>
       <DraggableProvider>
@@ -343,7 +354,12 @@ const BoardColumn = memo(
     const orders = useMemo(() => getOrdersByStatus(status), [getOrdersByStatus, status])
 
     return (
-      <Card className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
+      <Card
+        className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}
+        data-column={status}
+        data-drop-only={dropOnly.toString()}
+        data-column-title={title}
+      >
         <div className="mb-3 flex items-center justify-between">
           <h3 className={`font-medium ${headingColor} font-bold`}>{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
@@ -421,7 +437,26 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
   const handleStatusChange = useCallback(
     (status: Order['status']) => {
       if (!dropOnly && !isUpdating) {
-        moveOrder(order.id.toString(), status)
+        const targetColumn = document.querySelector(`[data-column="${status}"]`)
+        const isTargetDropOnly = targetColumn?.getAttribute('data-drop-only') === 'true'
+
+        if (isTargetDropOnly) {
+          const columnTitle = targetColumn?.getAttribute('data-column-title') || ''
+          const container = document.querySelector('[data-draggable-context]')
+          if (container) {
+            container.setAttribute('data-order-id', order.id.toString())
+            const event = new CustomEvent('showConfirmation', {
+              detail: {
+                orderId: order.id.toString(),
+                status,
+                columnTitle,
+              },
+            })
+            document.dispatchEvent(event)
+          }
+        } else {
+          moveOrder(order.id.toString(), status)
+        }
       }
     },
     [dropOnly, isUpdating, moveOrder, order.id],
