@@ -399,8 +399,8 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
     return (order.productVariant as ProductVariant)?.name || ''
   }, [order.productVariant])
 
-  const orderedByEmail = useMemo(() => {
-    return (order.orderedBy as User)?.email || ''
+  const orderedBy = useMemo(() => {
+    return order.orderedBy as User
   }, [order.orderedBy])
 
   return (
@@ -415,9 +415,10 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
       >
         <Card
           className={cn(
-            'mb-2 text-xs relative',
+            'mb-2 text-xs relative transition-all',
             !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75',
             isUpdating && 'opacity-50 cursor-progress',
+            isOpen && 'ring-2 ring-highlight ring-offset-1',
           )}
         >
           {isUpdating && (
@@ -441,12 +442,12 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 <span className="text-muted-foreground">{formatPrice(order.totalPrice || 0)}</span>
               </div>
 
-              {orderedByEmail && (
-                <span className="text-xs">By: {formatEmailToUsername(orderedByEmail)}</span>
+              {orderedBy.email && (
+                <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
               )}
               {handlers.length > 0 && (
                 <>
-                  <span className="text-muted-foreground">Handlers:</span>
+                  <span className="text-muted-foreground">Người xử lý:</span>
                   <div className="flex flex-wrap gap-1">
                     {handlers.map((username, index) => (
                       <span key={index} className="text-xs">
@@ -460,9 +461,8 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
           </CardContent>
         </Card>
       </motion.div>
-
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px]">
+        <SheetContent className="w-[450px] sm:w-[540px]">
           <SheetHeader>
             <SheetTitle>Chi tiết đơn hàng #{order.id}</SheetTitle>
           </SheetHeader>
@@ -485,8 +485,9 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
             <div>
               <h4 className="text-sm font-medium">Thông tin người mua</h4>
               <div className="mt-3 rounded-md border p-3">
-                <p className="text-sm">Email: {orderedByEmail}</p>
-                <p className="text-sm">Username: {formatEmailToUsername(orderedByEmail)}</p>
+                <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
+                <p className="text-sm">Email: {orderedBy.email}</p>
+                {orderedBy.note && <p className="text-sm">Note: {orderedBy.note}</p>}
               </div>
             </div>
 
@@ -504,13 +505,9 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 )}
               </div>
             </div>
-
             <div>
               <h4 className="text-sm font-medium">Thông tin đơn hàng</h4>
               <div className="mt-3 space-y-2 rounded-md border p-3">
-                <p className="text-sm">
-                  Trạng thái: <span className="font-medium">{order.status}</span>
-                </p>
                 <p className="text-sm">Ngày tạo: {formatOrderDate(order.createdAt)}</p>
                 <p className="text-sm">Cập nhật: {formatOrderDate(order.updatedAt)}</p>
               </div>
