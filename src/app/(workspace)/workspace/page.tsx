@@ -44,6 +44,49 @@ interface OrderQuery {
   limit?: number
 }
 
+const DEFAULT_QUERIES: OrderQuery[] = [
+  {
+    where: {
+      status: { in: ['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE'] },
+    },
+  },
+  {
+    where: {
+      status: { equals: 'COMPLETED' },
+    },
+    limit: 10,
+  },
+  {
+    where: {
+      status: { equals: 'REFUND' },
+    },
+    limit: 10,
+  },
+]
+
+const createSearchQuery = (searchTerm: string): OrderQuery[] => {
+  if (!searchTerm) return DEFAULT_QUERIES
+
+  return [
+    {
+      where: {
+        or: [
+          {
+            id: {
+              like: searchTerm,
+            },
+          },
+          {
+            'productVariant.name': {
+              like: searchTerm,
+            },
+          },
+        ],
+      },
+    },
+  ]
+}
+
 const useOrders = (queries: OrderQuery[]) => {
   const { data, refetch } = useQuery({
     queryKey: ['orders', queries],
@@ -68,50 +111,12 @@ const useOrders = (queries: OrderQuery[]) => {
 
 export function DraggableProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
-
-  const { data, refetch } = useOrders(
-    searchQuery
-      ? [
-          {
-            where: {
-              or: [
-                {
-                  id: {
-                    like: searchQuery,
-                  },
-                },
-                {
-                  'productVariant.name': {
-                    like: searchQuery,
-                  },
-                },
-              ],
-            },
-          },
-        ]
-      : [
-          {
-            where: {
-              status: { in: ['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE'] },
-            },
-          },
-          {
-            where: {
-              status: { equals: 'COMPLETED' },
-            },
-            limit: 10,
-          },
-          {
-            where: {
-              status: { equals: 'REFUND' },
-            },
-            limit: 10,
-          },
-        ],
-  )
-
   const [orders, setOrders] = useState<Order[]>([])
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+
+  const activeQueries = useMemo(() => createSearchQuery(searchQuery), [searchQuery])
+
+  const { data, refetch } = useOrders(activeQueries)
 
   useEffect(() => {
     if (!data || data.length === 0) return
@@ -227,7 +232,7 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
       <div className="flex flex-col h-full w-full gap-3">
         <div className="w-full max-w-sm">
           <Input
-            placeholder="Tìm kiếm theo ID hoặc email..."
+            placeholder="Tìm kiếm theo ID hoặc Sản phẩm..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
