@@ -106,7 +106,7 @@ const useOrders = (queries: OrderQuery[]) => {
   return { data, refetch }
 }
 
-export function DraggableProvider({ children }: { children: ReactNode }) {
+function DraggableProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
@@ -162,7 +162,7 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
   return <DraggableContext.Provider value={contextValue}>{children}</DraggableContext.Provider>
 }
 
-export function useDraggable() {
+function useDraggable() {
   const context = useContext(DraggableContext)
   if (context === undefined) {
     throw new Error('useDraggable must be used within a DraggableProvider')
