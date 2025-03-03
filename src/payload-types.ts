@@ -510,7 +510,7 @@ export interface Order {
     };
     [k: string]: unknown;
   } | null;
-  status: 'PENDING' | 'IN_QUEUE' | 'IN_PROCESS' | 'USER_UPDATE' | 'COMPLETED' | 'CANCELLED' | 'REFUND';
+  status: 'IN_QUEUE' | 'IN_PROCESS' | 'USER_UPDATE' | 'COMPLETED' | 'REFUND';
   orderedBy: number | User;
   handlers: (number | User)[];
   productVariant: number | ProductVariant;

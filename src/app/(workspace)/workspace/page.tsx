@@ -46,6 +46,8 @@ interface DraggableContextType {
   updatingOrderId: string | null
   searchQuery: string
   setSearchQuery: (query: string) => void
+  columnConfigs: Record<Order['status'], { title: string; dropOnly: boolean }>
+  showConfirmation: (orderId: string, status: Order['status'], columnTitle: string) => void
 }
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
@@ -118,6 +120,7 @@ function DraggableProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+  const [pendingConfirmation, setPendingConfirmation] = useState<PendingDropType>(null)
 
   const activeQueries = useMemo(() => createSearchQuery(searchQuery), [searchQuery])
 
@@ -155,6 +158,30 @@ function DraggableProvider({ children }: { children: ReactNode }) {
     [orders],
   )
 
+  // Define column configurations centrally
+  const columnConfigs = useMemo(
+    () => ({
+      IN_QUEUE: { title: 'Chờ xử lý', dropOnly: false },
+      IN_PROCESS: { title: 'Đang xử lý', dropOnly: false },
+      USER_UPDATE: { title: 'Chờ cập nhật', dropOnly: false },
+      COMPLETED: { title: 'Hoàn thành', dropOnly: false },
+      REFUND: { title: 'Hoàn trả', dropOnly: true },
+    }),
+    [],
+  )
+
+  // Function to show confirmation dialog
+  const showConfirmation = useCallback(
+    (orderId: string, status: Order['status'], columnTitle: string) => {
+      // Create and dispatch custom event
+      const event = new CustomEvent('showConfirmation', {
+        detail: { orderId, status, columnTitle },
+      })
+      document.dispatchEvent(event)
+    },
+    [],
+  )
+
   const contextValue = useMemo(
     () => ({
       orders,
@@ -163,8 +190,18 @@ function DraggableProvider({ children }: { children: ReactNode }) {
       updatingOrderId,
       searchQuery,
       setSearchQuery,
+      columnConfigs,
+      showConfirmation,
     }),
-    [orders, moveOrder, getOrdersByStatus, updatingOrderId, searchQuery],
+    [
+      orders,
+      moveOrder,
+      getOrdersByStatus,
+      updatingOrderId,
+      searchQuery,
+      columnConfigs,
+      showConfirmation,
+    ],
   )
 
   return <DraggableContext.Provider value={contextValue}>{children}</DraggableContext.Provider>
@@ -240,7 +277,7 @@ const DraggableBoard = () => {
 export default DraggableBoard
 
 const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => void }) => {
-  const { searchQuery, setSearchQuery } = useDraggable()
+  const { searchQuery, setSearchQuery, columnConfigs } = useDraggable()
 
   return (
     <Shell>
@@ -254,34 +291,38 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
         </div>
         <div className="flex h-full w-full gap-3">
           <BoardColumn
-            title="Chờ xử lý"
+            title={columnConfigs['IN_QUEUE'].title}
             column="IN_QUEUE"
             headingColor="text-yellow-200"
+            dropOnly={columnConfigs['IN_QUEUE'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="Đang xử lý"
+            title={columnConfigs['IN_PROCESS'].title}
             column="IN_PROCESS"
             headingColor="text-blue-200"
+            dropOnly={columnConfigs['IN_PROCESS'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="Chờ cập nhật"
+            title={columnConfigs['USER_UPDATE'].title}
             column="USER_UPDATE"
             headingColor="text-blue-200"
+            dropOnly={columnConfigs['USER_UPDATE'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="Hoàn thành"
+            title={columnConfigs['COMPLETED'].title}
             column="COMPLETED"
             headingColor="text-emerald-200"
+            dropOnly={columnConfigs['COMPLETED'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="Hoàn trả"
+            title={columnConfigs['REFUND'].title}
             column="REFUND"
             headingColor="text-red-200"
-            dropOnly
+            dropOnly={columnConfigs['REFUND'].dropOnly}
             setPendingDrop={setPendingDrop}
           />
         </div>
@@ -354,12 +395,7 @@ const BoardColumn = memo(
     const orders = useMemo(() => getOrdersByStatus(status), [getOrdersByStatus, status])
 
     return (
-      <Card
-        className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}
-        data-column={status}
-        data-drop-only={dropOnly.toString()}
-        data-column-title={title}
-      >
+      <Card className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
         <div className="mb-3 flex items-center justify-between">
           <h3 className={`font-medium ${headingColor} font-bold`}>{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
@@ -395,7 +431,7 @@ interface OrderItemProps {
 }
 
 const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
-  const { updatingOrderId, moveOrder } = useDraggable()
+  const { updatingOrderId, moveOrder, columnConfigs, showConfirmation } = useDraggable()
   const isUpdating = updatingOrderId === order.id.toString()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -437,29 +473,23 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
   const handleStatusChange = useCallback(
     (status: Order['status']) => {
       if (!dropOnly && !isUpdating) {
-        const targetColumn = document.querySelector(`[data-column="${status}"]`)
-        const isTargetDropOnly = targetColumn?.getAttribute('data-drop-only') === 'true'
+        const targetColumnConfig = columnConfigs[status]
 
-        if (isTargetDropOnly) {
-          const columnTitle = targetColumn?.getAttribute('data-column-title') || ''
+        if (targetColumnConfig.dropOnly) {
+          // Get the container and set the order ID for the confirmation
           const container = document.querySelector('[data-draggable-context]')
           if (container) {
             container.setAttribute('data-order-id', order.id.toString())
-            const event = new CustomEvent('showConfirmation', {
-              detail: {
-                orderId: order.id.toString(),
-                status,
-                columnTitle,
-              },
-            })
-            document.dispatchEvent(event)
+            // Use the showConfirmation function from context
+            showConfirmation(order.id.toString(), status, targetColumnConfig.title)
           }
         } else {
+          // Directly move the order if not a dropOnly column
           moveOrder(order.id.toString(), status)
         }
       }
     },
-    [dropOnly, isUpdating, moveOrder, order.id],
+    [dropOnly, isUpdating, moveOrder, order.id, columnConfigs, showConfirmation],
   )
 
   return (
@@ -619,7 +649,6 @@ OrderItem.displayName = 'OrderItem'
 const DropIndicator = ({ status, isActive }: { status: Order['status']; isActive?: boolean }) => {
   return (
     <div
-      data-status={status}
       className={`mb-3 h-0.5 w-full bg-highlight transition-opacity ${
         isActive ? 'opacity-100' : 'opacity-0'
       }`}

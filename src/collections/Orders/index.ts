@@ -185,12 +185,10 @@ export const Orders: CollectionConfig = {
         beforeChange: [refundHook],
       },
       options: [
-        { value: 'PENDING', label: 'Pending' },
         { value: 'IN_QUEUE', label: 'In Queue' },
         { value: 'IN_PROCESS', label: 'In Process' },
         { value: 'USER_UPDATE', label: 'User Update' },
         { value: 'COMPLETED', label: 'Completed' },
-        { value: 'CANCELLED', label: 'Cancelled' },
         { value: 'REFUND', label: 'Refund' },
       ],
       required: true,
