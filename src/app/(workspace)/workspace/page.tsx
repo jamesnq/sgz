@@ -1,4 +1,5 @@
 'use client'
+import { Shell } from '@/components/shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
@@ -9,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Order, ProductVariant, User } from '@/payload-types'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
@@ -31,22 +33,29 @@ interface DraggableContextType {
   moveOrder: (orderId: string, targetStatus: Order['status']) => void
   getOrdersByStatus: (status: Order['status']) => Order[]
   updatingOrderId: string | null
+  searchQuery: string
+  setSearchQuery: (query: string) => void
 }
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
 
-const useOrdersByStatus = (orders: { status: Order['status']; limit?: number }[]) => {
+interface OrderQuery {
+  where?: Record<string, any>
+  limit?: number
+}
+
+const useOrders = (queries: OrderQuery[]) => {
   const { data, refetch } = useQuery({
-    queryKey: ['orders', orders],
+    queryKey: ['orders', queries],
     queryFn: async () => {
       const res = await Promise.all(
-        orders.map(({ status, limit }) =>
+        queries.map(({ where, limit }) =>
           payloadClient.find({
             collection: 'orders',
-            where: { status: { equals: status } },
+            where,
             sort: 'updatedAt',
             depth: 2,
-            limit,
+            limit: limit ?? -1,
           }),
         ),
       )
@@ -58,13 +67,48 @@ const useOrdersByStatus = (orders: { status: Order['status']; limit?: number }[]
 }
 
 export function DraggableProvider({ children }: { children: ReactNode }) {
-  const { data, refetch } = useOrdersByStatus([
-    { status: 'IN_QUEUE', limit: -1 },
-    { status: 'IN_PROCESS', limit: -1 },
-    { status: 'USER_UPDATE', limit: -1 },
-    { status: 'COMPLETED', limit: 10 },
-    { status: 'REFUND', limit: 10 },
-  ])
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const { data, refetch } = useOrders(
+    searchQuery
+      ? [
+          {
+            where: {
+              or: [
+                {
+                  id: {
+                    like: searchQuery,
+                  },
+                },
+                {
+                  'productVariant.name': {
+                    like: searchQuery,
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : [
+          {
+            where: {
+              status: { in: ['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE'] },
+            },
+          },
+          {
+            where: {
+              status: { equals: 'COMPLETED' },
+            },
+            limit: 10,
+          },
+          {
+            where: {
+              status: { equals: 'REFUND' },
+            },
+            limit: 10,
+          },
+        ],
+  )
 
   const [orders, setOrders] = useState<Order[]>([])
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
@@ -107,8 +151,10 @@ export function DraggableProvider({ children }: { children: ReactNode }) {
       moveOrder,
       getOrdersByStatus,
       updatingOrderId,
+      searchQuery,
+      setSearchQuery,
     }),
-    [orders, moveOrder, getOrdersByStatus, updatingOrderId],
+    [orders, moveOrder, getOrdersByStatus, updatingOrderId, searchQuery],
   )
 
   return <DraggableContext.Provider value={contextValue}>{children}</DraggableContext.Provider>
@@ -174,40 +220,53 @@ const DraggableBoard = () => {
 export default DraggableBoard
 
 const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => void }) => {
+  const { searchQuery, setSearchQuery } = useDraggable()
+
   return (
-    <div className="flex h-full w-full gap-3 overflow-scroll p-12">
-      <BoardColumn
-        title="In queue"
-        column="IN_QUEUE"
-        headingColor="text-yellow-200"
-        setPendingDrop={setPendingDrop}
-      />
-      <BoardColumn
-        title="In progress"
-        column="IN_PROCESS"
-        headingColor="text-blue-200"
-        setPendingDrop={setPendingDrop}
-      />
-      <BoardColumn
-        title="User update"
-        column="USER_UPDATE"
-        headingColor="text-blue-200"
-        setPendingDrop={setPendingDrop}
-      />
-      <BoardColumn
-        title="Complete"
-        column="COMPLETED"
-        headingColor="text-emerald-200"
-        setPendingDrop={setPendingDrop}
-      />
-      <BoardColumn
-        title="Refund"
-        column="REFUND"
-        headingColor="text-red-200"
-        dropOnly
-        setPendingDrop={setPendingDrop}
-      />
-    </div>
+    <Shell>
+      <div className="flex flex-col h-full w-full gap-3">
+        <div className="w-full max-w-sm">
+          <Input
+            placeholder="Tìm kiếm theo ID hoặc email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex h-full w-full gap-3">
+          <BoardColumn
+            title="In queue"
+            column="IN_QUEUE"
+            headingColor="text-yellow-200"
+            setPendingDrop={setPendingDrop}
+          />
+          <BoardColumn
+            title="In progress"
+            column="IN_PROCESS"
+            headingColor="text-blue-200"
+            setPendingDrop={setPendingDrop}
+          />
+          <BoardColumn
+            title="User update"
+            column="USER_UPDATE"
+            headingColor="text-blue-200"
+            setPendingDrop={setPendingDrop}
+          />
+          <BoardColumn
+            title="Complete"
+            column="COMPLETED"
+            headingColor="text-emerald-200"
+            setPendingDrop={setPendingDrop}
+          />
+          <BoardColumn
+            title="Refund"
+            column="REFUND"
+            headingColor="text-red-200"
+            dropOnly
+            setPendingDrop={setPendingDrop}
+          />
+        </div>
+      </div>
+    </Shell>
   )
 })
 Board.displayName = 'Board'
