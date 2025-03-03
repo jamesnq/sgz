@@ -432,9 +432,9 @@ const Message: Block = {
 // TODO change name to key
 export const fields = {
   checkbox: Checkbox,
-  country: Country,
+  // country: Country,
   email: Email,
-  message: Message,
+  // message: Message,
   number: Number,
   select: Select,
   text: Text,

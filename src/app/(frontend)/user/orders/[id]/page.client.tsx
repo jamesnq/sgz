@@ -1,86 +1,18 @@
 'use client'
 
 import { Shell } from '@/components/shell'
-import { Form, FormSubmission, Order, Product, ProductVariant } from '@/payload-types'
+import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect } from 'react'
 
-import { updateOrderAction } from '@/app/_actions/updateFormSubmissionAction'
-import { fields } from '@/blocks/Form/fields'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
 import Link from 'next/link'
-import { useActionWarper } from '@/utilities/useActionWarper'
-import { Loader2 } from 'lucide-react'
-
-function UpdateOrderShippingForm({ disabled, order }: { order: Order; disabled?: boolean }) {
-  const formSubmission = useMemo(() => order.formSubmission as FormSubmission, [order])
-  const form = useMemo(() => formSubmission.form as Form, [formSubmission])
-  const [formSubmissionData, setFormSubmissionData] = useState(formSubmission?.submissionData || {})
-  const { executeAsync, isExecuting } = useActionWarper(updateOrderAction)
-  return (
-    <Card>
-      <CardHeader>Cung cấp thông tin tài khoản</CardHeader>
-      <CardContent>
-        <div>
-          {form.fields &&
-            form.fields.map((field, index) => {
-              const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
-              if (!Field) {
-                return null
-              }
-              // @ts-expect-error ignore
-              field.defaultValue = formSubmissionData[field.name]
-              return (
-                <div className="mb-4 last:mb-0" key={index}>
-                  <Field
-                    field={field}
-                    disabled={disabled}
-                    onChange={(v: string) =>
-                      setFormSubmissionData((p: any) => {
-                        const newData = {
-                          ...p,
-                          //@ts-expect-error ignore
-                          [field.name]: v,
-                        }
-                        return newData
-                      })
-                    }
-                  />
-                </div>
-              )
-            })}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button
-          disabled={disabled || isExecuting}
-          className="w-full"
-          onClick={() => {
-            executeAsync({
-              id: order.id,
-              shippingFields: formSubmissionData,
-            })
-          }}
-        >
-          {isExecuting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Đang cập nhật...
-            </>
-          ) : (
-            'Cập nhật thông tin'
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
-  )
-}
+import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant

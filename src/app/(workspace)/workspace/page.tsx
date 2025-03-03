@@ -1,7 +1,7 @@
 'use client'
 import { Shell } from '@/components/shell'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Order, ProductVariant, User } from '@/payload-types'
+import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-types'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import payloadClient from '@/utilities/payloadClient'
@@ -30,6 +30,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { cn } from '@/utilities/ui'
 import { formatPrice } from '@/utilities/formatPrice'
+import { OrderShippingForm } from '@/components/OrderShippingForm'
 
 interface DraggableContextType {
   orders: Order[]
@@ -371,6 +372,7 @@ interface OrderItemProps {
 }
 
 const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
+  console.log('🚀 ~ OrderItem ~ order:', order)
   const { updatingOrderId } = useDraggable()
   const isUpdating = updatingOrderId === order.id.toString()
   const [isOpen, setIsOpen] = useState(false)
@@ -402,6 +404,13 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
   const orderedBy = useMemo(() => {
     return order.orderedBy as User
   }, [order.orderedBy])
+
+  const formSubmission = useMemo(() => {
+    return order.formSubmission as FormSubmission & {
+      submissionData: Record<string, any>
+      form: Form
+    }
+  }, [order.formSubmission])
 
   return (
     <>
@@ -466,7 +475,6 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
           <SheetHeader>
             <SheetTitle>Chi tiết đơn hàng #{order.id}</SheetTitle>
           </SheetHeader>
-
           <div className="mt-6 space-y-6">
             <div>
               <h4 className="text-sm font-medium">Thông tin sản phẩm</h4>
@@ -479,6 +487,13 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 <p className="text-sm text-muted-foreground">
                   Tổng: {formatPrice(order.totalPrice)}
                 </p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium">Thông tin cung cấp</h4>
+              <div className="mt-3">
+                {formSubmission?.form?.fields && <OrderShippingForm order={order} />}
               </div>
             </div>
 
