@@ -27,6 +27,9 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { cn } from '@/utilities/ui'
+import { formatPrice } from '@/utilities/formatPrice'
 
 interface DraggableContextType {
   orders: Order[]
@@ -52,13 +55,7 @@ const DEFAULT_QUERIES: OrderQuery[] = [
   },
   {
     where: {
-      status: { equals: 'COMPLETED' },
-    },
-    limit: 10,
-  },
-  {
-    where: {
-      status: { equals: 'REFUND' },
+      status: { in: ['REFUND', 'COMPLETED'] },
     },
     limit: 10,
   },
@@ -200,7 +197,6 @@ const DraggableBoard = () => {
       <DraggableProvider>
         <Board setPendingDrop={setPendingDrop} />
       </DraggableProvider>
-
       <Dialog open={!!pendingDrop} onOpenChange={() => setPendingDrop(null)}>
         <DialogContent>
           <DialogHeader>
@@ -239,31 +235,31 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
         </div>
         <div className="flex h-full w-full gap-3">
           <BoardColumn
-            title="In queue"
+            title="Chờ xử lý"
             column="IN_QUEUE"
             headingColor="text-yellow-200"
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="In progress"
+            title="Đang xử lý"
             column="IN_PROCESS"
             headingColor="text-blue-200"
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="User update"
+            title="Chờ cập nhật"
             column="USER_UPDATE"
             headingColor="text-blue-200"
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="Complete"
+            title="Hoàn thành"
             column="COMPLETED"
             headingColor="text-emerald-200"
             setPendingDrop={setPendingDrop}
           />
           <BoardColumn
-            title="Refund"
+            title="Hoàn trả"
             column="REFUND"
             headingColor="text-red-200"
             dropOnly
@@ -368,7 +364,7 @@ const BoardColumn = memo(
 )
 BoardColumn.displayName = 'BoardColumn'
 
-type OrderItemProps = {
+interface OrderItemProps {
   order: Order
   handleDragStart: (e: React.DragEvent<HTMLDivElement>, order: Order) => void
   dropOnly?: boolean
@@ -377,70 +373,155 @@ type OrderItemProps = {
 const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
   const { updatingOrderId } = useDraggable()
   const isUpdating = updatingOrderId === order.id.toString()
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!dropOnly && !isUpdating) {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsOpen(true)
+      }
+    },
+    [dropOnly, isUpdating],
+  )
+
+  const handlers = useMemo(() => {
+    return (
+      order.handlers?.map((handler) => {
+        const user = handler as User
+        return formatEmailToUsername(user.email)
+      }) || []
+    )
+  }, [order.handlers])
+
+  const productName = useMemo(() => {
+    return (order.productVariant as ProductVariant)?.name || ''
+  }, [order.productVariant])
+
+  const orderedByEmail = useMemo(() => {
+    return (order.orderedBy as User)?.email || ''
+  }, [order.orderedBy])
 
   return (
-    <motion.div
-      layout
-      layoutId={order.id.toString()}
-      draggable={!dropOnly && !isUpdating}
-      // @ts-expect-error ignore
-      onDragStart={(e) => !dropOnly && !isUpdating && handleDragStart(e, order)}
-    >
-      <Card
-        className={`mb-2 text-xs ${
-          !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75'
-        } ${isUpdating ? 'opacity-50 cursor-progress' : ''} relative`}
+    <>
+      <motion.div
+        layout
+        layoutId={order.id.toString()}
+        draggable={!dropOnly && !isUpdating}
+        onClick={handleClick}
+        // @ts-expect-error ignore
+        onDragStart={(e) => !dropOnly && !isUpdating && handleDragStart(e, order)}
       >
-        {isUpdating && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        )}
-        <CardHeader className="p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">#{order.id}</span>
-            <span className="text-xs text-muted-foreground">
-              {formatOrderDate(new Date(order.createdAt))}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <motion.div layout="position" className="flex flex-col gap-1">
-            {order.productVariant && (
-              <span className="text-xs line-clamp-2">
-                {(order.productVariant as ProductVariant).name}
-              </span>
-            )}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{order.quantity}x</span>
-              <span className="text-muted-foreground">
-                {Intl.NumberFormat('vi-VN', {
-                  style: 'currency',
-                  currency: 'VND',
-                }).format(order.totalPrice || 0)}
+        <Card
+          className={cn(
+            'mb-2 text-xs relative',
+            !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-75',
+            isUpdating && 'opacity-50 cursor-progress',
+          )}
+        >
+          {isUpdating && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          )}
+          <CardHeader className="p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">#{order.id}</span>
+              <span className="text-xs text-muted-foreground">
+                {formatOrderDate(order.createdAt)}
               </span>
             </div>
-            {order.orderedBy && (
-              <span className="text-xs">
-                By: {formatEmailToUsername((order.orderedBy as User).email)}
-              </span>
-            )}
-            <span className="text-muted-foreground">Handlers:</span>
-            {order.handlers && (
-              <div className="flex flex-wrap gap-1">
-                {order.handlers.map((handler, index) => (
-                  <span key={index} className="">
-                    {formatEmailToUsername((handler as User).email)}
-                  </span>
-                ))}
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <motion.div layout="position" className="flex flex-col gap-1">
+              {productName && <span className="text-xs line-clamp-2">{productName}</span>}
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{order.quantity}x</span>
+                <span className="text-muted-foreground">{formatPrice(order.totalPrice || 0)}</span>
               </div>
-            )}
-          </motion.div>
-        </CardContent>
-      </Card>
-    </motion.div>
+
+              {orderedByEmail && (
+                <span className="text-xs">By: {formatEmailToUsername(orderedByEmail)}</span>
+              )}
+              {handlers.length > 0 && (
+                <>
+                  <span className="text-muted-foreground">Handlers:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {handlers.map((username, index) => (
+                      <span key={index} className="text-xs">
+                        {username}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent className="w-[400px] sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle>Chi tiết đơn hàng #{order.id}</SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            <div>
+              <h4 className="text-sm font-medium">Thông tin sản phẩm</h4>
+              <div className="mt-3 rounded-md border p-3">
+                <p className="font-medium">{productName}</p>
+                <p className="text-sm text-muted-foreground">
+                  Giá: {formatPrice((order.productVariant as ProductVariant)?.price)}
+                </p>
+                <p className="text-sm text-muted-foreground">Số lượng: {order.quantity}x</p>
+                <p className="text-sm text-muted-foreground">
+                  Tổng: {formatPrice(order.totalPrice)}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium">Thông tin người mua</h4>
+              <div className="mt-3 rounded-md border p-3">
+                <p className="text-sm">Email: {orderedByEmail}</p>
+                <p className="text-sm">Username: {formatEmailToUsername(orderedByEmail)}</p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium">Người xử lý</h4>
+              <div className="mt-3 rounded-md border p-3">
+                {handlers.length > 0 ? (
+                  handlers.map((username, index) => (
+                    <p key={index} className="text-sm">
+                      {username}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Chưa có người xử lý</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium">Thông tin đơn hàng</h4>
+              <div className="mt-3 space-y-2 rounded-md border p-3">
+                <p className="text-sm">
+                  Trạng thái: <span className="font-medium">{order.status}</span>
+                </p>
+                <p className="text-sm">Ngày tạo: {formatOrderDate(order.createdAt)}</p>
+                <p className="text-sm">Cập nhật: {formatOrderDate(order.updatedAt)}</p>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   )
 })
+
 OrderItem.displayName = 'OrderItem'
 
 const DropIndicator = ({ status, isActive }: { status: Order['status']; isActive?: boolean }) => {
