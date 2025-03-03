@@ -17,6 +17,7 @@ import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-typ
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
+import { formatTimeAgo } from '@/utilities/formatTimeAgo'
 import payloadClient from '@/utilities/payloadClient'
 import { cn } from '@/utilities/ui'
 import { useQuery } from '@tanstack/react-query'
@@ -523,8 +524,14 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
             <div>
               <h4 className="text-sm font-medium">Thông tin đơn hàng</h4>
               <div className="mt-3 space-y-2 rounded-md border p-3">
-                <p className="text-sm">Ngày tạo: {formatOrderDate(order.createdAt)}</p>
-                <p className="text-sm">Cập nhật: {formatOrderDate(order.updatedAt)}</p>
+                <p className="text-sm">
+                  Ngày tạo: {formatOrderDate(order.createdAt)} (
+                  {formatTimeAgo(new Date(order.createdAt))})
+                </p>
+                <p className="text-sm">
+                  Cập nhật: {formatOrderDate(order.updatedAt)} (
+                  {formatTimeAgo(new Date(order.updatedAt))})
+                </p>
               </div>
             </div>
           </div>
