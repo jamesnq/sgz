@@ -136,6 +136,9 @@ function RechargeCard() {
     },
   })
 
+  const code = form.watch('code')
+  const serial = form.watch('serial')
+
   useEffect(() => {
     async function fetchFeeData() {
       try {
@@ -206,8 +209,8 @@ function RechargeCard() {
     return (
       selectedTelco !== '' &&
       selectedDenomination > 0 &&
-      form.getValues('code') !== '' &&
-      form.getValues('serial') !== ''
+      code !== '' &&
+      serial !== ''
     )
   }
 
@@ -226,8 +229,8 @@ function RechargeCard() {
           toast.success(message)
 
           // Only reset the card code and serial, keep telco and amount selections
-          form.setValue('code', '')
-          form.setValue('serial', '')
+          form.setValue('code', '', { shouldValidate: true, shouldDirty: true })
+          form.setValue('serial', '', { shouldValidate: true, shouldDirty: true })
         } else if (res.message) {
           toast.error(res.message || 'Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
         }

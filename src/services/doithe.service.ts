@@ -329,7 +329,7 @@ export class DoiThe {
         response.message = 'Sai mệnh giá thẻ'
         break
       case CardStatus.INVALID_CARD:
-        response.message = 'Vui lòng kiểm tra lại thẻ'
+        response.message = 'Vui lòng kiểm tra lại thẻ, thẻ không hợp lệ hoặc đã được sử dụng'
         break
       case CardStatus.MAINTENANCE:
         response.message = 'Hệ thống bảo trì'
@@ -438,10 +438,12 @@ export class DoiThe {
 
       // Update recharge status based on the callback status
       let newStatus = 'PENDING'
-      if (callbackData.status === CardStatus.SUCCESS) {
+      if (
+        callbackData.status === CardStatus.SUCCESS ||
+        callbackData.status === CardStatus.WRONG_AMOUNT
+      ) {
         newStatus = 'SUCCESS'
       } else if (
-        callbackData.status === CardStatus.WRONG_AMOUNT ||
         callbackData.status === CardStatus.INVALID_CARD ||
         callbackData.status === CardStatus.MAINTENANCE
       ) {
@@ -465,8 +467,6 @@ export class DoiThe {
       // If the recharge is successful, update user balance and create transaction
       if (newStatus === 'SUCCESS') {
         const amount = callbackData.amount || callbackData.value || 0
-        console.log('🚀 ~ DoiThe ~ webhookHandle ~ callbackData:', callbackData)
-
         await payload.db.drizzle.transaction(async (tx) => {
           const [user] = await tx
             .update(users)
@@ -482,7 +482,7 @@ export class DoiThe {
           await tx.insert(transactions).values({
             amount: amount.toString(),
             user: recharge.user as number,
-            description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial}`,
+            description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT && 'phạt 50% sai mệnh giá'}`,
             balance: user.balance,
           })
         })
