@@ -101,16 +101,23 @@ function RechargeBank() {
   )
 }
 
+// Define FeeData interface
+interface FeeData {
+  telco: string
+  value: number
+  fees: number
+  penalty: number
+}
+
+// Define ServerNotification interface for error responses
+interface ServerNotification {
+  notify: string
+  message: string
+}
+
 function RechargeCard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [feeData, setFeeData] = useState<
-    Array<{
-      telco: string
-      value: number
-      fees: number
-      penalty: number
-    }>
-  >([])
+  const [feeData, setFeeData] = useState<FeeData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedTelco, setSelectedTelco] = useState('')
   const [selectedDenomination, setSelectedDenomination] = useState<number>(0)
@@ -142,7 +149,9 @@ function RechargeCard() {
 
           // Get unique telco providers and sort them
           const priorityTelcos = ['VIETTEL', 'MOBIFONE', 'VINAPHONE', 'VIETNAMOBILE', 'GMOBILE']
-          const allTelcos = Array.from(new Set(data.data.map((item: any) => item.telco)))
+          const allTelcos = Array.from<string>(
+            new Set(data.data.map((item: FeeData) => item.telco)),
+          )
 
           const sortedTelcos = allTelcos.sort((a: string, b: string) => {
             const aIndex = priorityTelcos.indexOf(a)
@@ -168,14 +177,14 @@ function RechargeCard() {
           })
 
           if (sortedTelcos.length > 0) {
-            const firstTelco = sortedTelcos[0]
+            const firstTelco = sortedTelcos[0] as string
             form.setValue('telco', firstTelco)
             setSelectedTelco(firstTelco)
 
             // Get denominations for the first telco
             const denominations = data.data
-              .filter((item: any) => item.telco === firstTelco)
-              .map((item: any) => item.value)
+              .filter((item: FeeData) => item.telco === firstTelco)
+              .map((item: FeeData) => item.value)
 
             setAvailableDenominations(denominations)
 
@@ -186,7 +195,7 @@ function RechargeCard() {
 
               // Set current fee info
               const feeInfo = data.data.find(
-                (item: any) => item.telco === firstTelco && item.value === firstDenom,
+                (item: FeeData) => item.telco === firstTelco && item.value === firstDenom,
               )
 
               if (feeInfo) {
@@ -221,7 +230,7 @@ function RechargeCard() {
     setAvailableDenominations(denominations)
 
     if (denominations.length > 0) {
-      const firstDenom = denominations[0]
+      const firstDenom = denominations[0] as number
       form.setValue('amount', firstDenom)
       setSelectedDenomination(firstDenom)
 
@@ -269,7 +278,8 @@ function RechargeCard() {
       if (res && typeof res === 'object') {
         if ('success' in res && res.success) {
           // Success case from StandardResponse
-          const message = 'message' in res ? res.message : 'Thẻ đã được gửi đi, vui lòng đợi xử lý'
+          const message: string =
+            'message' in res ? (res.message as string) : 'Thẻ đã được gửi đi, vui lòng đợi xử lý'
           toast.success(message)
           form.reset()
           setSelectedTelco('')
@@ -278,7 +288,10 @@ function RechargeCard() {
           setCurrentFeeInfo(null)
         } else if ('notify' in res) {
           // Error case from ServerNotification
-          toast.error(res.message || 'Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
+          toast.error(
+            (res as ServerNotification).message ||
+              'Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại',
+          )
         } else {
           // Generic error case
           toast.error('Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
