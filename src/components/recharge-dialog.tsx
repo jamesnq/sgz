@@ -147,65 +147,7 @@ function RechargeCard() {
         if (data.success && data.data) {
           setFeeData(data.data)
 
-          // Get unique telco providers and sort them
-          const priorityTelcos = ['VIETTEL', 'MOBIFONE', 'VINAPHONE', 'VIETNAMOBILE', 'GMOBILE']
-          const allTelcos = Array.from<string>(
-            new Set(data.data.map((item: FeeData) => item.telco)),
-          )
-
-          const sortedTelcos = allTelcos.sort((a: string, b: string) => {
-            const aIndex = priorityTelcos.indexOf(a)
-            const bIndex = priorityTelcos.indexOf(b)
-
-            // If both are priority telcos, sort by their order in the priority list
-            if (aIndex !== -1 && bIndex !== -1) {
-              return aIndex - bIndex
-            }
-
-            // If only a is a priority telco, it comes first
-            if (aIndex !== -1) {
-              return -1
-            }
-
-            // If only b is a priority telco, it comes first
-            if (bIndex !== -1) {
-              return 1
-            }
-
-            // If neither is a priority telco, sort alphabetically
-            return a.localeCompare(b)
-          })
-
-          if (sortedTelcos.length > 0) {
-            const firstTelco = sortedTelcos[0] as string
-            form.setValue('telco', firstTelco)
-            setSelectedTelco(firstTelco)
-
-            // Get denominations for the first telco
-            const denominations = data.data
-              .filter((item: FeeData) => item.telco === firstTelco)
-              .map((item: FeeData) => item.value)
-
-            setAvailableDenominations(denominations)
-
-            if (denominations.length > 0) {
-              const firstDenom = denominations[0]
-              form.setValue('amount', firstDenom)
-              setSelectedDenomination(firstDenom)
-
-              // Set current fee info
-              const feeInfo = data.data.find(
-                (item: FeeData) => item.telco === firstTelco && item.value === firstDenom,
-              )
-
-              if (feeInfo) {
-                setCurrentFeeInfo({
-                  fees: feeInfo.fees,
-                  penalty: feeInfo.penalty,
-                })
-              }
-            }
-          }
+          // No longer automatically setting default values
         } else {
           toast.error('Không thể tải thông tin nhà mạng và mệnh giá')
         }
@@ -229,18 +171,11 @@ function RechargeCard() {
 
     setAvailableDenominations(denominations)
 
-    if (denominations.length > 0) {
-      const firstDenom = denominations[0] as number
-      form.setValue('amount', firstDenom)
-      setSelectedDenomination(firstDenom)
-
-      // Update fee info
-      updateFeeInfo(telco, firstDenom)
-    } else {
-      form.setValue('amount', 0)
-      setSelectedDenomination(0)
-      setCurrentFeeInfo(null)
-    }
+    // No longer automatically setting the first denomination
+    // Clear the current amount selection
+    form.setValue('amount', 0)
+    setSelectedDenomination(0)
+    setCurrentFeeInfo(null)
   }
 
   const handleDenominationChange = (value: string) => {
@@ -265,6 +200,15 @@ function RechargeCard() {
     } else {
       setCurrentFeeInfo(null)
     }
+  }
+
+  const isFormValid = () => {
+    return (
+      selectedTelco !== '' &&
+      selectedDenomination > 0 &&
+      form.getValues('code') !== '' &&
+      form.getValues('serial') !== ''
+    )
   }
 
   async function onSubmit(values: z.infer<typeof RechargeDoiTheSchema>) {
@@ -361,10 +305,7 @@ function RechargeCard() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Loại thẻ</FormLabel>
-                    <Select
-                      onValueChange={(value) => handleTelcoChange(value)}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={(value) => handleTelcoChange(value)} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Chọn nhà mạng" />
@@ -391,7 +332,7 @@ function RechargeCard() {
                     <FormLabel>Mệnh giá</FormLabel>
                     <Select
                       onValueChange={handleDenominationChange}
-                      defaultValue={field.value.toString()}
+                      value={field.value.toString()}
                       disabled={availableDenominations.length === 0}
                     >
                       <FormControl>
@@ -469,7 +410,7 @@ function RechargeCard() {
                 )}
               />
 
-              <Button className="w-32" type="submit" disabled={isSubmitting}>
+              <Button className="w-32" type="submit" disabled={isSubmitting || !isFormValid()}>
                 {isSubmitting ? 'Đang xử lý...' : 'Nạp thẻ'}
               </Button>
             </form>

@@ -143,15 +143,6 @@ export class DoiThe {
   }
 
   /**
-   * Generate a random request ID
-   * @returns A random number between 100000 and 999999
-   */
-  private generateRequestId(): number {
-    //TODO check duplicate on database
-    return Math.floor(Math.random() * 900000) + 100000
-  }
-
-  /**
    * Generate signature using MD5
    * @param pin - Card PIN
    * @param serial - Card serial number
@@ -159,40 +150,6 @@ export class DoiThe {
    */
   private generateSignature(pin: string, serial: string): string {
     return CryptoJS.MD5(this.partnerKey + pin + serial).toString()
-  }
-
-  /**
-   * Charge card using GET method
-   * @param telco - Card provider (VIETTEL, MOBIFONE, VINAPHONE, etc.)
-   * @param code - Card PIN
-   * @param serial - Card serial number
-   * @param amount - Card amount in VND
-   * @param customRequestId - Optional custom request ID
-   * @returns Promise with the API response
-   */
-  async chargeCardGet(
-    telco: string,
-    code: string,
-    serial: string,
-    amount: number,
-    customRequestId?: number,
-  ): Promise<StandardResponse> {
-    try {
-      const requestId = customRequestId || this.generateRequestId()
-      const signature = this.generateSignature(code, serial)
-
-      const url = `${this.apiUrl}?sign=${signature}&telco=${telco}&code=${code}&serial=${serial}&amount=${amount}&request_id=${requestId}&partner_id=${this.partnerId}&command=charging`
-
-      const response = await fetch(url)
-      const data = (await response.json()) as ApiResponse
-
-      return this.processResponse(data)
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Error charging card via GET: ${error.message}`)
-      }
-      throw new Error('Unknown error charging card via GET')
-    }
   }
 
   /**
@@ -540,7 +497,8 @@ export class DoiThe {
 
       // If the recharge is successful, update user balance and create transaction
       if (newStatus === 'SUCCESS') {
-        const amount = callbackData.value || callbackData.amount || 0
+        const amount = callbackData.amount || callbackData.value || 0
+        console.log('🚀 ~ DoiThe ~ webhookHandle ~ callbackData:', callbackData)
 
         await payload.db.drizzle.transaction(async (tx) => {
           const [user] = await tx
@@ -557,7 +515,7 @@ export class DoiThe {
           await tx.insert(transactions).values({
             amount: amount.toString(),
             user: recharge.user as number,
-            description: `Nạp thẻ ${callbackData.telco} mã nạp #${recharge.orderCode}`,
+            description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial}`,
             balance: user.balance,
           })
         })
