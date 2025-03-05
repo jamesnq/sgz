@@ -1,9 +1,127 @@
 import { env } from '@/config'
+import { transactions, users } from '@/payload-generated-schema'
 import payloadConfig from '@payload-config'
+import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import CryptoJS from 'crypto-js'
 import { getPayload } from 'payload'
-import { transactions, users } from '@/payload-generated-schema'
-import { eq, sql } from '@payloadcms/db-postgres/drizzle'
+
+/**
+ * Enum for telco providers
+ */
+export enum TelcoProvider {
+  VIETTEL = 'VIETTEL',
+  MOBIFONE = 'MOBIFONE',
+  VINAPHONE = 'VINAPHONE',
+  VIETNAMOBILE = 'VIETNAMOBILE',
+  ZING = 'ZING',
+  GATE = 'GATE',
+}
+
+/**
+ * Enum for card status codes
+ */
+export enum CardStatus {
+  SUCCESS = 1,
+  WRONG_AMOUNT = 2,
+  INVALID_CARD = 3,
+  MAINTENANCE = 4,
+  PENDING = 99,
+}
+
+/**
+ * Interface for raw API response
+ */
+export interface ApiResponse {
+  status: number
+  message?: string
+  request_id?: number
+  trans_id?: string
+  declared_value?: number
+  value?: number
+  amount?: number
+  code?: string
+  serial?: string
+  telco?: string
+  [key: string]: any // For any additional fields
+}
+
+/**
+ * Interface for standardized response after processing
+ */
+export interface StandardResponse {
+  success: boolean
+  status: number
+  message: string
+  data: ApiResponse
+}
+
+/**
+ * Interface for fee information
+ */
+export interface FeeResponse {
+  success: boolean
+  data: Array<{
+    telco: string
+    value: number
+    fees: number
+    penalty: number
+  }>
+}
+
+/**
+ * Interface for callback data from DoiThe1s
+ */
+export interface CallbackData {
+  status: number
+  message?: string
+  request_id: number
+  trans_id?: string
+  declared_value?: number
+  value?: number
+  amount?: number
+  code: string
+  serial: string
+  telco: string
+  callback_sign: string
+  [key: string]: any // For any additional fields
+}
+
+/**
+ * Interface for processed callback data
+ */
+export interface ProcessedCallbackData {
+  status: number
+  message?: string
+  request_id: number
+  trans_id?: string
+  declared_value?: number
+  value?: number
+  amount?: number
+  code: string
+  serial: string
+  telco: string
+}
+
+/**
+ * Interface for API request data
+ */
+export interface PostData {
+  request_id: number
+  code: string
+  partner_id: string
+  serial: string
+  telco: string
+  amount: number
+  command: 'charging' | 'check'
+  sign: string
+}
+
+/**
+ * Interface for webhook response
+ */
+export interface WebhookResponse {
+  message: string
+}
 
 /**
  * DoiThe - A TypeScript class for integrating with DoiThe1s.vn API
@@ -58,7 +176,7 @@ export class DoiThe {
     serial: string,
     amount: number,
     customRequestId?: number,
-  ): Promise<any> {
+  ): Promise<StandardResponse> {
     try {
       const requestId = customRequestId || this.generateRequestId()
       const signature = this.generateSignature(code, serial)
@@ -66,13 +184,14 @@ export class DoiThe {
       const url = `${this.apiUrl}?sign=${signature}&telco=${telco}&code=${code}&serial=${serial}&amount=${amount}&request_id=${requestId}&partner_id=${this.partnerId}&command=charging`
 
       const response = await fetch(url)
-      const data = await response.json()
+      const data = (await response.json()) as ApiResponse
 
       return this.processResponse(data)
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Error charging card via GET: ${error.message}`)
       }
+      throw new Error('Unknown error charging card via GET')
     }
   }
 
@@ -93,7 +212,7 @@ export class DoiThe {
     amount: number,
     userId: number,
     customRequestId?: number,
-  ): Promise<any> {
+  ): Promise<StandardResponse> {
     const maxAttempts = 3
     let attempt = 0
 
@@ -119,7 +238,7 @@ export class DoiThe {
         })
         const signature = this.generateSignature(code, serial)
 
-        const postData = {
+        const postData: PostData = {
           request_id: requestId,
           code,
           partner_id: this.partnerId,
@@ -137,7 +256,7 @@ export class DoiThe {
           },
           body: JSON.stringify(postData),
         })
-        const data = await response.json()
+        const data = (await response.json()) as ApiResponse
 
         return this.processResponse(data)
       } catch (error) {
@@ -152,6 +271,8 @@ export class DoiThe {
         }
       }
     }
+    // This should never be reached due to the throw in the catch block
+    throw new Error('Unexpected error in chargeCardPost')
   }
 
   /**
@@ -169,20 +290,21 @@ export class DoiThe {
     serial: string,
     amount: number,
     requestId: number,
-  ): Promise<any> {
+  ): Promise<StandardResponse> {
     try {
       const signature = this.generateSignature(code, serial)
 
       const url = `${this.apiUrl}?sign=${signature}&telco=${telco}&code=${code}&serial=${serial}&amount=${amount}&request_id=${requestId}&partner_id=${this.partnerId}&command=check`
 
       const response = await fetch(url)
-      const data = await response.json()
+      const data = (await response.json()) as ApiResponse
 
       return this.processResponse(data)
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Error checking card status via GET: ${error.message}`)
       }
+      throw new Error('Unknown error checking card status via GET')
     }
   }
 
@@ -201,11 +323,11 @@ export class DoiThe {
     serial: string,
     amount: number,
     requestId: number,
-  ): Promise<any> {
+  ): Promise<StandardResponse> {
     try {
       const signature = this.generateSignature(code, serial)
 
-      const postData = {
+      const postData: PostData = {
         request_id: requestId,
         code,
         partner_id: this.partnerId,
@@ -223,13 +345,14 @@ export class DoiThe {
         },
         body: JSON.stringify(postData),
       })
-      const data = await response.json()
+      const data = (await response.json()) as ApiResponse
 
       return this.processResponse(data)
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Error checking card status via POST: ${error.message}`)
       }
+      throw new Error('Unknown error checking card status via POST')
     }
   }
 
@@ -237,7 +360,7 @@ export class DoiThe {
    * Get card exchange fees
    * @returns Promise with the card exchange fees for all telcos
    */
-  async getFees(): Promise<any> {
+  async getFees(): Promise<FeeResponse> {
     try {
       const url = `${this.apiUrl}/getfee?partner_id=${this.partnerId}`
 
@@ -254,8 +377,9 @@ export class DoiThe {
       }
       return {
         success: false,
+        data: [],
         message: 'Unknown error occurred while getting card fees',
-      }
+      } as unknown as FeeResponse
     }
   }
 
@@ -264,8 +388,8 @@ export class DoiThe {
    * @param result - API response
    * @returns Standardized result object
    */
-  private processResponse(result: any): any {
-    const response = {
+  private processResponse(result: ApiResponse): StandardResponse {
+    const response: StandardResponse = {
       success: false,
       status: result.status,
       message: result.message || '',
@@ -273,20 +397,20 @@ export class DoiThe {
     }
 
     switch (result.status) {
-      case 1:
+      case CardStatus.SUCCESS:
         response.success = true
         response.message = 'Nạp thẻ thành công'
         break
-      case 2:
+      case CardStatus.WRONG_AMOUNT:
         response.message = 'Sai mệnh giá thẻ'
         break
-      case 3:
+      case CardStatus.INVALID_CARD:
         response.message = 'Vui lòng kiểm tra lại thẻ'
         break
-      case 4:
+      case CardStatus.MAINTENANCE:
         response.message = 'Hệ thống bảo trì'
         break
-      case 99:
+      case CardStatus.PENDING:
         response.success = true
         response.message = 'Gửi thẻ thành công, đang chờ xử lý'
         break
@@ -314,7 +438,7 @@ export class DoiThe {
    * @param callbackData - Callback data from DoiThe1s
    * @returns Processed callback data if signature is valid, null otherwise
    */
-  processCallback(callbackData: any): any {
+  processCallback(callbackData: CallbackData): ProcessedCallbackData | null {
     try {
       // For GET method callback (query parameters)
       if (
@@ -359,7 +483,7 @@ export class DoiThe {
    * @param data - Webhook data from DoiThe1s
    * @returns Response message
    */
-  async webhookHandle(data: any) {
+  async webhookHandle(data: CallbackData): Promise<WebhookResponse> {
     try {
       // Process and validate the callback data
       const callbackData = this.processCallback(data)
@@ -390,12 +514,12 @@ export class DoiThe {
 
       // Update recharge status based on the callback status
       let newStatus = 'PENDING'
-      if (callbackData.status === 1) {
+      if (callbackData.status === CardStatus.SUCCESS) {
         newStatus = 'SUCCESS'
       } else if (
-        callbackData.status === 2 ||
-        callbackData.status === 3 ||
-        callbackData.status === 4
+        callbackData.status === CardStatus.WRONG_AMOUNT ||
+        callbackData.status === CardStatus.INVALID_CARD ||
+        callbackData.status === CardStatus.MAINTENANCE
       ) {
         newStatus = 'CANCEL'
       }
