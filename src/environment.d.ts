@@ -19,6 +19,8 @@ declare global {
       PAYOS_WEBHOOK_URL: string
       PAYOS_CANCEL_URL: string
       PAYOS_RETURN_URL: string
+      DOITHE_PARTNER_ID: string
+      DOITHE_PARTNER_KEY: string
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
       CHATWOOT_HMAC_TOKEN: string

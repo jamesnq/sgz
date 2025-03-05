@@ -21,25 +21,12 @@ function getRandomInt(min: number, max: number) {
 
 export class PaymentService {
   payos = new PayOS(env.PAYOS_CLIENT_KEY, env.PAYOS_API_KEY, env.PAYOS_CHECKSUM_KEY)
-  // private sgzStoreChannel: Channel | null = null
-
   async init() {
     await this.payos.confirmWebhook(env.PAYOS_WEBHOOK_URL)
   }
-  // async getNotifyChannel() {
-  //   if (!this.sgzStoreChannel) {
-  //     this.sgzStoreChannel = await discordUtils.getChannel('1314128793136398396')
-  //     if (!this.sgzStoreChannel) {
-  //       throw new Error('Discord notify channel not found')
-  //     }
-  //   }
-  //   if (!this.sgzStoreChannel.isSendable()) {
-  //     throw new Error('Cannot send message to discord notify channel')
-  //   }
-  //   return this.sgzStoreChannel
-  // }
+
   async createPaymentLink(data: z.infer<typeof CreatePaymentLinkSchema>) {
-    const { amount, currency } = CreatePaymentLinkSchema.parse(data)
+    const { amount, currency, userId } = CreatePaymentLinkSchema.parse(data)
     let attempt = 0
     const maxAttempts = 3
     let result: CheckoutResponseDataType | undefined = undefined
@@ -70,6 +57,18 @@ export class PaymentService {
     if (!result) {
       throw new Error('Failed to create payment link')
     }
+    const payload = await getPayload({ config: payloadConfig })
+    const _recharge = await payload.create({
+      collection: 'recharges',
+      data: {
+        gateway: 'PAYOS',
+        orderCode: result.orderCode.toString(),
+        amount,
+        user: userId,
+        status: 'PENDING',
+        data: result,
+      },
+    })
 
     return result
   }

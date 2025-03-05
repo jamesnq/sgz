@@ -1,7 +1,7 @@
 'use client'
 
-import { rechargeAction } from '@/app/_actions/rechargeAction'
-import { RechargeSchema } from '@/app/_actions/schema'
+import { rechargePayosAction } from '@/app/_actions/rechargeAction'
+import { RechargePayosSchema } from '@/app/_actions/schema'
 import {
   Accordion,
   AccordionContent,
@@ -25,15 +25,15 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 function RechargeBank() {
-  const form = useForm<z.infer<typeof RechargeSchema>>({
-    resolver: zodResolver(RechargeSchema),
+  const form = useForm<z.infer<typeof RechargePayosSchema>>({
+    resolver: zodResolver(RechargePayosSchema),
     defaultValues: {
       amount: 0,
     },
   })
 
-  async function onSubmit(values: z.infer<typeof RechargeSchema>) {
-    const res = await rechargeAction(values)
+  async function onSubmit(values: z.infer<typeof RechargePayosSchema>) {
+    const res = await rechargePayosAction(values)
     if (!res?.data) return
     window.open(res.data?.checkoutUrl, '_blank')
   }

@@ -550,7 +550,7 @@ export interface Recharge {
   id: number;
   status: 'PENDING' | 'CANCEL' | 'SUCCESS' | 'REFUND';
   orderCode: string;
-  gateway: 'PAYOS';
+  gateway: 'PAYOS' | 'DOITHE';
   data?:
     | {
         [k: string]: unknown;

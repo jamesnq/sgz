@@ -1,7 +1,13 @@
 import { z } from 'zod'
 
-export const RechargeSchema = z.object({
+export const RechargePayosSchema = z.object({
   amount: z.coerce.number().min(2000),
+})
+export const RechargeDoiTheSchema = z.object({
+  telco: z.string(),
+  code: z.string(),
+  serial: z.string(),
+  amount: z.coerce.number(),
 })
 export const CheckoutSchema = z.object({
   productVariantId: z.coerce.number(),

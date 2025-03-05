@@ -21,6 +21,8 @@ export const env = createEnv({
     PAYOS_WEBHOOK_URL: z.string().url(),
     PAYOS_CANCEL_URL: z.string().url(),
     PAYOS_RETURN_URL: z.string().url(),
+    DOITHE_PARTNER_ID: z.string(),
+    DOITHE_PARTNER_KEY: z.string(),
     NOVU_SECRET_KEY: z.string(),
     CHATWOOT_HMAC_TOKEN: z.string(),
   },
