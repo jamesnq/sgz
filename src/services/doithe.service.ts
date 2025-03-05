@@ -233,39 +233,6 @@ export class DoiThe {
   }
 
   /**
-   * Check card status using GET method
-   * @param telco - Card provider (VIETTEL, MOBIFONE, VINAPHONE, etc.)
-   * @param code - Card PIN
-   * @param serial - Card serial number
-   * @param amount - Card amount in VND
-   * @param requestId - Request ID of the card to check
-   * @returns Promise with the API response
-   */
-  async checkCardStatusGet(
-    telco: string,
-    code: string,
-    serial: string,
-    amount: number,
-    requestId: number,
-  ): Promise<StandardResponse> {
-    try {
-      const signature = this.generateSignature(code, serial)
-
-      const url = `${this.apiUrl}?sign=${signature}&telco=${telco}&code=${code}&serial=${serial}&amount=${amount}&request_id=${requestId}&partner_id=${this.partnerId}&command=check`
-
-      const response = await fetch(url)
-      const data = (await response.json()) as ApiResponse
-
-      return this.processResponse(data)
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Error checking card status via GET: ${error.message}`)
-      }
-      throw new Error('Unknown error checking card status via GET')
-    }
-  }
-
-  /**
    * Check card status using POST method
    * @param telco - Card provider (VIETTEL, MOBIFONE, VINAPHONE, etc.)
    * @param code - Card PIN

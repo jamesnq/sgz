@@ -214,37 +214,28 @@ function RechargeCard() {
   async function onSubmit(values: z.infer<typeof RechargeDoiTheSchema>) {
     try {
       setIsSubmitting(true)
-      const res = await rechargeDoiTheAction(values)
+      const response = await rechargeDoiTheAction(values)
 
-      // Handle the response based on the structure returned by doiThe.chargeCardPost
-      // The response might have a 'success' property from StandardResponse
-      // or it might be a ServerNotification with 'notify' and 'message' properties
-      if (res && typeof res === 'object') {
-        if ('success' in res && res.success) {
-          // Success case from StandardResponse
-          const message: string =
-            'message' in res ? (res.message as string) : 'Thẻ đã được gửi đi, vui lòng đợi xử lý'
+      if (response && response.data) {
+        const res = response.data
+
+        if (res.success) {
+          const message =
+            res.message ||
+            'Thẻ đã được gửi đi, vui lòng đợi xử lý, sẽ có thông báo sau khi xử lý xong'
           toast.success(message)
-          form.reset()
-          setSelectedTelco('')
-          setSelectedDenomination(0)
-          setAvailableDenominations([])
-          setCurrentFeeInfo(null)
-        } else if ('notify' in res) {
-          // Error case from ServerNotification
-          toast.error(
-            (res as ServerNotification).message ||
-              'Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại',
-          )
-        } else {
-          // Generic error case
-          toast.error('Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
+
+          // Only reset the card code and serial, keep telco and amount selections
+          form.setValue('code', '')
+          form.setValue('serial', '')
+        } else if (res.message) {
+          toast.error(res.message || 'Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
         }
       } else {
-        // Fallback error case
         toast.error('Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
       }
-    } catch {
+    } catch (error) {
+      console.error('Error in rechargeDoiTheAction:', error)
       toast.error('Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
     } finally {
       setIsSubmitting(false)
