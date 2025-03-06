@@ -6,11 +6,11 @@ import { Transaction } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatPrice } from '@/utilities/formatPrice'
 import { useDebounce } from '@/utilities/useDebounce'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
-import { useEffect } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import {
   Table,
   TableBody,
@@ -18,8 +18,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function formatTransactionDate(date: Date): string {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -32,8 +33,47 @@ function formatTransactionDate(date: Date): string {
   }).format(date)
 }
 
+function TransactionTableSkeleton() {
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Thời gian</TableHead>
+            <TableHead>Số tiền</TableHead>
+            <TableHead>Số dư</TableHead>
+            <TableHead>Nội dung</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array(10)
+            .fill(0)
+            .map((_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton className="h-5 w-32" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-full" />
+                </TableCell>
+              </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
 function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [isSearching, setIsSearching] = useState(false)
   const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
   const debouncedSearch = useDebounce(search, 500)
   const [page, setPage] = useQueryState(
@@ -42,13 +82,24 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
   )
 
   useEffect(() => {
-    const params = new URLSearchParams({
-      q: debouncedSearch,
-      page: page.toString(),
-    }).toString()
-    const url = `/user/transactions${params ? `?${params}` : ''}`
-    router.push(url)
-  }, [debouncedSearch, page, router])
+    if (debouncedSearch !== search) {
+      setIsSearching(true)
+    }
+
+    startTransition(() => {
+      const params = new URLSearchParams({
+        q: debouncedSearch,
+        page: page.toString(),
+      }).toString()
+      const url = `/user/transactions${params ? `?${params}` : ''}`
+      router.push(url)
+    })
+
+    // Reset searching state after navigation
+    return () => {
+      setIsSearching(false)
+    }
+  }, [debouncedSearch, page, router, search])
 
   return (
     <Card className="max-md:border-0">
@@ -57,20 +108,30 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
         <div>Thông tin các giao dịch của tài khoản</div>
         <div className="md:flex md:justify-end">
           <div className="flex gap-2 max-md:flex-col">
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="min-w-72 max-md:w-full"
-              placeholder="Nội dung giao dịch"
-            ></Input>
+            <div className="relative">
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="min-w-72 max-md:w-full pr-10"
+                placeholder="Nội dung giao dịch"
+                disabled={isPending}
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent className="max-md:p-1">
-        {data?.docs && data.docs.length > 0 ? (
+        {isPending ? (
+          <TransactionTableSkeleton />
+        ) : data?.docs && data.docs.length > 0 ? (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -87,8 +148,11 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
                     <TableCell className="font-medium">
                       {formatTransactionDate(new Date(transaction.createdAt))}
                     </TableCell>
-                    <TableCell className={transaction.amount > 0 ? "text-green-600" : "text-red-600"}>
-                      {transaction.amount > 0 ? "+" : ""}{formatPrice(transaction.amount, 'VND')}
+                    <TableCell
+                      className={transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}
+                    >
+                      {transaction.amount > 0 ? '+' : ''}
+                      {formatPrice(transaction.amount, 'VND')}
                     </TableCell>
                     <TableCell>{formatPrice(transaction.balance, 'VND')}</TableCell>
                     <TableCell>{transaction.description}</TableCell>
@@ -109,7 +173,7 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
                 variant={'ghost'}
                 size={'icon'}
                 onClick={() => data.prevPage && setPage(data.prevPage)}
-                disabled={!data.hasPrevPage}
+                disabled={!data.hasPrevPage || isPending}
               >
                 <ChevronLeft />
               </Button>
@@ -123,6 +187,7 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
                       variant={p === page ? 'default' : 'outline'}
                       size={'icon'}
                       onClick={() => setPage(p)}
+                      disabled={isPending}
                     >
                       {p}
                     </Button>
@@ -131,7 +196,7 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
                 variant={'ghost'}
                 size={'icon'}
                 onClick={() => data.nextPage && setPage(data.nextPage)}
-                disabled={!data.hasNextPage}
+                disabled={!data.hasNextPage || isPending}
               >
                 <ChevronRight />
               </Button>
