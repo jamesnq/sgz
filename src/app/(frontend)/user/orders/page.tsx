@@ -1,19 +1,18 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { Shell } from '@/components/shell'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  OrderCardSkeleton,
+  PageHeaderSkeleton,
+  PageSkeleton,
+  PaginationSkeleton,
+} from '@/components/skeletons'
+import { CardContent } from '@/components/ui/card'
 import { ProductVariant } from '@/payload-types'
 import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import { z } from 'zod'
 import PageClient from './page.client'
-import { 
-  OrderCardSkeleton, 
-  PageHeaderSkeleton, 
-  PageSkeleton, 
-  PaginationSkeleton 
-} from '@/components/skeletons'
 
 const SearchParamsSchema = z.object({
   q: z.string().optional(),
