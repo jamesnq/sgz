@@ -10,12 +10,12 @@ import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus, orderStatus } from '@/utilities/getOrderStatus'
 import { useDebounce } from '@/utilities/useDebounce'
-import { ChevronLeft, ChevronRight, Eye, Loader2, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useTransition } from 'react'
 
 function OrderCard({ o }: { o: Order }) {
   // @ts-expect-error ignore
@@ -110,12 +110,10 @@ function OrderCardSkeleton() {
     </Card>
   )
 }
-
 function Orders({ data }: { data: PaginatedDocs<Order> }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [isSearching, setIsSearching] = useState(false)
-  const [isStatusFiltering, setIsStatusFiltering] = useState(false)
+
   const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
   const debouncedSearch = useDebounce(search, 500)
   const [status, setStatus] = useQueryState(
@@ -128,10 +126,6 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
   )
 
   useEffect(() => {
-    if (debouncedSearch !== search) {
-      setIsSearching(true)
-    }
-
     startTransition(() => {
       const params = new URLSearchParams({
         q: debouncedSearch,
@@ -141,16 +135,9 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
       const url = `/user/orders${params ? `?${params}` : ''}`
       router.push(url)
     })
-
-    // Reset searching state after navigation
-    return () => {
-      setIsSearching(false)
-      setIsStatusFiltering(false)
-    }
   }, [debouncedSearch, status, page, router, search])
 
   const handleStatusChange = (newStatus: string) => {
-    setIsStatusFiltering(true)
     setStatus(newStatus)
     setPage(1)
   }
@@ -167,11 +154,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                 className="w-full rounded-full"
                 variant={!status ? 'default' : 'outline'}
                 onClick={() => handleStatusChange('')}
-                disabled={isPending}
               >
-                {isStatusFiltering && !status ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
                 Tất cả
               </Button>
               {Object.entries(orderStatus).map(([k, v]) => (
@@ -180,11 +163,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                   className="w-full rounded-full"
                   variant={status === k ? 'default' : 'outline'}
                   onClick={() => handleStatusChange(k)}
-                  disabled={isPending}
                 >
-                  {isStatusFiltering && status === k ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : null}
                   {v}
                 </Button>
               ))}
@@ -198,13 +177,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                 }}
                 className="min-w-72 max-md:w-full pr-10"
                 placeholder="Mã đơn / Tên sản phẩm"
-                disabled={isPending}
               />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
             </div>
           </div>
         </div>
