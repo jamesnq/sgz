@@ -51,25 +51,23 @@ async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }
   const { user } = await payload.auth({
     headers: headersData,
   })
-
-  const queryWhere: any = {}
-  if (query) {
-    queryWhere.or = [
-      {
-        description: {
-          like: query,
-        },
-      },
-    ]
+  if (!user) {
+    return null
   }
-
+  let queryWhere: any = { user: { equals: user.id } }
+  if (query) {
+    queryWhere = {
+      description: {
+        like: query,
+      },
+    }
+  }
   const res = await payload.find({
     collection: 'transactions',
     depth: 0,
     limit: 10,
-    user,
-    overrideAccess: false,
     where: queryWhere,
+    overrideAccess: true,
     page,
     sort: '-createdAt', // Sort by newest first
   })
