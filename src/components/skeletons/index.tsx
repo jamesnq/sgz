@@ -1,6 +1,5 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Shell } from '@/components/shell'
 
 export function PageHeaderSkeleton({
   title = true,

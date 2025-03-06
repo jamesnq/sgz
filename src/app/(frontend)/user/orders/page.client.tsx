@@ -1,9 +1,9 @@
 'use client'
 import { Media } from '@/components/Media'
-import { Shell } from '@/components/shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
@@ -16,7 +16,6 @@ import { useRouter } from 'next/navigation'
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
 import { useEffect, useState, useTransition } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
 
 function OrderCard({ o }: { o: Order }) {
   // @ts-expect-error ignore
