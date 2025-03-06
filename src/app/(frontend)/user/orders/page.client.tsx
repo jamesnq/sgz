@@ -10,12 +10,13 @@ import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus, orderStatus } from '@/utilities/getOrderStatus'
 import { useDebounce } from '@/utilities/useDebounce'
-import { ChevronLeft, ChevronRight, Eye, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Loader2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
-import { useEffect } from 'react'
+import { useEffect, useState, useTransition } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function OrderCard({ o }: { o: Order }) {
   // @ts-expect-error ignore
@@ -78,8 +79,44 @@ function OrderCard({ o }: { o: Order }) {
   )
 }
 
+function OrderCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="p-4">
+        <div className="flex justify-between">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-32" />
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <div className="flex items-start max-md:flex-col md:items-center gap-4">
+          <div className="flex items-start gap-2">
+            <Skeleton className="w-[64px] h-[85px] rounded-lg" />
+            <div className="flex-1">
+              <Skeleton className="h-5 w-48 mb-2" />
+              <Skeleton className="h-5 w-32 mb-2" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          </div>
+          <div className="text-center max-md:hidden md:flex-1">
+            <Skeleton className="h-5 w-20 mx-auto mb-1" />
+            <Skeleton className="h-5 w-10 mx-auto" />
+          </div>
+          <div className="flex flex-wrap gap-[8px] max-md:w-full md:flex-col">
+            <Skeleton className="h-9 w-28" />
+            <Skeleton className="h-9 w-28" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 function Orders({ data }: { data: PaginatedDocs<Order> }) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [isSearching, setIsSearching] = useState(false)
+  const [isStatusFiltering, setIsStatusFiltering] = useState(false)
   const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
   const debouncedSearch = useDebounce(search, 500)
   const [status, setStatus] = useQueryState(
@@ -90,29 +127,52 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
     'page',
     parseAsInteger.withDefault(data.page || 1).withOptions({ shallow: false }),
   )
+
   useEffect(() => {
-    const params = new URLSearchParams({
-      q: debouncedSearch,
-      status,
-      page: page.toString(),
-    }).toString()
-    const url = `/user/orders${params ? `?${params}` : ''}`
-    router.push(url)
-  }, [debouncedSearch, status, page, router])
+    if (debouncedSearch !== search) {
+      setIsSearching(true)
+    }
+
+    startTransition(() => {
+      const params = new URLSearchParams({
+        q: debouncedSearch,
+        status,
+        page: page.toString(),
+      }).toString()
+      const url = `/user/orders${params ? `?${params}` : ''}`
+      router.push(url)
+    })
+
+    // Reset searching state after navigation
+    return () => {
+      setIsSearching(false)
+      setIsStatusFiltering(false)
+    }
+  }, [debouncedSearch, status, page, router, search])
+
+  const handleStatusChange = (newStatus: string) => {
+    setIsStatusFiltering(true)
+    setStatus(newStatus)
+    setPage(1)
+  }
 
   return (
     <Card className="max-md:border-0">
       <CardHeader className="max-md:p-1">
         <h4 className="font-bold">Lịch sử đơn hàng</h4>
-        <div> thông tin các sản phẩm bạn đã mua</div>
+        <div>Thông tin các sản phẩm bạn đã mua</div>
         <div className="md:flex md:justify-end">
           <div className="flex gap-2 max-md:flex-col">
             <div className="flex gap-2">
               <Button
                 className="w-full rounded-full"
                 variant={!status ? 'default' : 'outline'}
-                onClick={() => setStatus('')}
+                onClick={() => handleStatusChange('')}
+                disabled={isPending}
               >
+                {isStatusFiltering && !status ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
                 Tất cả
               </Button>
               {Object.entries(orderStatus).map(([k, v]) => (
@@ -120,29 +180,46 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                   key={k}
                   className="w-full rounded-full"
                   variant={status === k ? 'default' : 'outline'}
-                  onClick={() => {
-                    setStatus(k)
-                    setPage(1)
-                  }}
+                  onClick={() => handleStatusChange(k)}
+                  disabled={isPending}
                 >
+                  {isStatusFiltering && status === k ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
                   {v}
                 </Button>
               ))}
             </div>
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="min-w-72 max-md:w-full"
-              placeholder="Mã đơn / Tên sản phẩm"
-            ></Input>
+            <div className="relative">
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="min-w-72 max-md:w-full pr-10"
+                placeholder="Mã đơn / Tên sản phẩm"
+                disabled={isPending}
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent className="max-md:p-1">
-        {data?.docs && data.docs.length > 0 ? (
+        {isPending ? (
+          <div className="flex flex-col text-sm gap-2">
+            {Array(5)
+              .fill(0)
+              .map((_, i) => (
+                <OrderCardSkeleton key={i} />
+              ))}
+          </div>
+        ) : data?.docs && data.docs.length > 0 ? (
           <div className="flex flex-col text-sm gap-2">
             {data.docs.map((o: any) => (
               <OrderCard key={o.id} o={o} />
@@ -160,7 +237,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                 variant={'ghost'}
                 size={'icon'}
                 onClick={() => data.prevPage && setPage(data.prevPage)}
-                disabled={!data.hasPrevPage}
+                disabled={!data.hasPrevPage || isPending}
               >
                 <ChevronLeft />
               </Button>
@@ -174,6 +251,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                       variant={p === page ? 'default' : 'outline'}
                       size={'icon'}
                       onClick={() => setPage(p)}
+                      disabled={isPending}
                     >
                       {p}
                     </Button>
@@ -182,7 +260,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                 variant={'ghost'}
                 size={'icon'}
                 onClick={() => data.nextPage && setPage(data.nextPage)}
-                disabled={!data.hasNextPage}
+                disabled={!data.hasNextPage || isPending}
               >
                 <ChevronRight />
               </Button>

@@ -1,12 +1,18 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { Card, CardContent } from '@/components/ui/card'
 import { headers } from 'next/headers'
-import PageClient from './page.client'
-import { z } from 'zod'
 import { Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { z } from 'zod'
+import PageClient from './page.client'
+import {
+  PageHeaderSkeleton,
+  PageSkeleton,
+  PaginationSkeleton,
+  TransactionRowSkeleton,
+  TransactionTableHeaderSkeleton,
+} from '@/components/skeletons'
 
 const SearchParamsSchema = z.object({
   q: z.string().optional(),
@@ -19,25 +25,22 @@ type Args = {
 
 function TransactionsTableSkeleton() {
   return (
-    <Card className="max-md:border-0">
-      <CardHeader className="max-md:p-1">
-        <Skeleton className="h-6 w-48 mb-2" />
-        <Skeleton className="h-4 w-64 mb-4" />
-        <div className="flex justify-end">
-          <Skeleton className="h-10 w-72" />
-        </div>
-      </CardHeader>
+    <PageSkeleton>
+      <PageHeaderSkeleton filters={false} />
       <CardContent className="max-md:p-1">
         <div className="rounded-md border">
           <div className="p-4">
-            <Skeleton className="h-10 w-full mb-4" />
-            {Array(5).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full mb-2" />
-            ))}
+            <TransactionTableHeaderSkeleton />
+            {Array(10)
+              .fill(0)
+              .map((_, i) => (
+                <TransactionRowSkeleton key={i} />
+              ))}
           </div>
         </div>
       </CardContent>
-    </Card>
+      <PaginationSkeleton />
+    </PageSkeleton>
   )
 }
 

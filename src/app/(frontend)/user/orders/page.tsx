@@ -1,20 +1,50 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { headers } from 'next/headers'
-import PageClient from './page.client'
+import { Shell } from '@/components/shell'
+import { Card, CardContent } from '@/components/ui/card'
 import { ProductVariant } from '@/payload-types'
+import { headers } from 'next/headers'
+import { Suspense } from 'react'
 import { z } from 'zod'
+import PageClient from './page.client'
+import { 
+  OrderCardSkeleton, 
+  PageHeaderSkeleton, 
+  PageSkeleton, 
+  PaginationSkeleton 
+} from '@/components/skeletons'
+
 const SearchParamsSchema = z.object({
   q: z.string().optional(),
   status: z.string().optional(),
   page: z.coerce.number().default(1),
 })
+
 type Args = {
   searchParams: Promise<any>
 }
-export default async function Page({ searchParams: searchParamsPromise }: Args) {
-  const { q: query, status, page } = SearchParamsSchema.parse(await searchParamsPromise)
+
+function OrdersPageSkeleton() {
+  return (
+    <PageSkeleton>
+      <PageHeaderSkeleton filters={true} />
+      <CardContent className="max-md:p-1">
+        <div className="flex flex-col text-sm gap-2">
+          {Array(5)
+            .fill(0)
+            .map((_, i) => (
+              <OrderCardSkeleton key={i} />
+            ))}
+        </div>
+      </CardContent>
+      <PaginationSkeleton />
+    </PageSkeleton>
+  )
+}
+
+async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
+  const { q: query, status, page } = SearchParamsSchema.parse(await searchParams)
   const payload = await getPayload({ config: configPromise })
   const headersData = await headers()
   const { user } = await payload.auth({
@@ -99,4 +129,12 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     })
   }
   return <PageClient data={res} />
+}
+
+export default function Page({ searchParams: searchParamsPromise }: Args) {
+  return (
+    <Suspense fallback={<OrdersPageSkeleton />}>
+      <OrdersPage searchParams={searchParamsPromise} />
+    </Suspense>
+  )
 }
