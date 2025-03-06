@@ -119,9 +119,5 @@ export function TransactionTableHeaderSkeleton() {
 }
 
 export function PageSkeleton({ children }: { children: React.ReactNode }) {
-  return (
-    <Shell>
-      <Card className="max-md:border-0">{children}</Card>
-    </Shell>
-  )
+  return <Card className="max-md:border-0">{children}</Card>
 }

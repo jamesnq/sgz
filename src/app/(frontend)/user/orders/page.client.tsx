@@ -280,11 +280,7 @@ const PageClient = ({ data }: { data: PaginatedDocs<Order> }) => {
     setHeaderTheme('dark')
   }, [setHeaderTheme])
 
-  return (
-    <Shell>
-      <Orders data={data} />
-    </Shell>
-  )
+  return <Orders data={data} />
 }
 
 export default PageClient

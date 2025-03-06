@@ -216,11 +216,7 @@ const PageClient = ({ data }: { data: PaginatedDocs<Transaction> }) => {
     setHeaderTheme('dark')
   }, [setHeaderTheme])
 
-  return (
-    <Shell>
-      <Transactions data={data} />
-    </Shell>
-  )
+  return <Transactions data={data} />
 }
 
 export default PageClient
