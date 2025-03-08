@@ -89,12 +89,12 @@ const Sidebar = ({
   isPending: boolean
 }) => {
   const [categorySearchTerm, setCategorySearchTerm] = useState('')
-  
+
   // Filter categories based on search term
-  const filteredCategories = categories.filter(category => 
-    category.title.toLowerCase().includes(categorySearchTerm.toLowerCase())
+  const filteredCategories = categories.filter((category) =>
+    category.title.toLowerCase().includes(categorySearchTerm.toLowerCase()),
   )
-  
+
   return (
     <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-6 mb-8 lg:mb-0">
       <div className="sticky top-24">
@@ -131,7 +131,7 @@ const Sidebar = ({
                 </button>
               )}
             </div>
-            
+
             <div className="relative mb-4">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -143,23 +143,25 @@ const Sidebar = ({
                 disabled={isPending}
               />
             </div>
-            
+
             {selectedCategoryIds.length > 0 && (
               <div className="mb-3">
-                <p className="text-xs text-muted-foreground mb-2">Đã chọn {selectedCategoryIds.length} danh mục</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Đã chọn {selectedCategoryIds.length} danh mục
+                </p>
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {selectedCategoryIds.map(id => {
-                    const category = categories.find(c => c.id.toString() === id)
+                  {selectedCategoryIds.map((id) => {
+                    const category = categories.find((c) => c.id.toString() === id)
                     if (!category) return null
-                    
+
                     return (
-                      <Badge 
-                        key={`selected-${id}`} 
+                      <Badge
+                        key={`selected-${id}`}
                         variant="default"
                         className="pr-1 flex items-center gap-1"
                       >
                         {category.title}
-                        <button 
+                        <button
                           className="hover:bg-primary-foreground/20 rounded-full p-0.5"
                           onClick={() => handleCategoryToggle(id)}
                           disabled={isPending}
@@ -172,17 +174,19 @@ const Sidebar = ({
                 </div>
               </div>
             )}
-            
+
             <div className="max-h-[300px] overflow-y-auto pr-2">
               <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
                 {filteredCategories.length > 0 ? (
                   filteredCategories.map((category) => (
                     <Badge
                       key={category.id}
-                      variant={selectedCategoryIds.includes(category.id.toString()) ? "default" : "outline"}
+                      variant={
+                        selectedCategoryIds.includes(category.id.toString()) ? 'default' : 'outline'
+                      }
                       className={cn(
-                        "cursor-pointer hover:bg-secondary/80 transition-colors lg:w-full lg:justify-start",
-                        isPending && "opacity-70 pointer-events-none"
+                        'cursor-pointer hover:bg-secondary/80 transition-colors lg:w-full lg:justify-start',
+                        isPending && 'opacity-70 pointer-events-none',
                       )}
                       onClick={() => handleCategoryToggle(category.id.toString())}
                     >
@@ -254,34 +258,34 @@ const PageClient = ({
   // Handle category filter change
   const handleCategoryToggle = (categoryId: string) => {
     if (isPending) return
-    
+
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString())
       let newSelectedCategories = [...selectedCategoryIds]
-      
+
       if (newSelectedCategories.includes(categoryId)) {
         // Remove category if already selected
-        newSelectedCategories = newSelectedCategories.filter(id => id !== categoryId)
+        newSelectedCategories = newSelectedCategories.filter((id) => id !== categoryId)
       } else {
         // Add category if not selected
         newSelectedCategories.push(categoryId)
       }
-      
+
       if (newSelectedCategories.length > 0) {
         params.set('categories', newSelectedCategories.join(','))
       } else {
         params.delete('categories')
       }
-      
+
       params.set('page', '1')
       router.push(`/products?${params.toString()}`)
     })
   }
-  
+
   // Clear all selected categories
   const handleClearCategories = () => {
     if (isPending) return
-    
+
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString())
       params.delete('categories')
@@ -313,7 +317,7 @@ const PageClient = ({
 
         <div className="flex flex-col lg:flex-row lg:gap-6">
           {/* Sidebar for search and filters */}
-          <Sidebar 
+          <Sidebar
             searchTerm={searchTerm}
             handleSearchChange={handleSearchChange}
             categories={categories}

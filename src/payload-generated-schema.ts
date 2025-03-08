@@ -30,12 +30,10 @@ export const enum_product_variants_status = pgEnum('enum_product_variants_status
   'STOPPED',
 ])
 export const enum_orders_status = pgEnum('enum_orders_status', [
-  'PENDING',
   'IN_QUEUE',
   'IN_PROCESS',
   'USER_UPDATE',
   'COMPLETED',
-  'CANCELLED',
   'REFUND',
 ])
 export const enum_recharges_status = pgEnum('enum_recharges_status', [
@@ -44,7 +42,7 @@ export const enum_recharges_status = pgEnum('enum_recharges_status', [
   'SUCCESS',
   'REFUND',
 ])
-export const enum_recharges_gateway = pgEnum('enum_recharges_gateway', ['PAYOS'])
+export const enum_recharges_gateway = pgEnum('enum_recharges_gateway', ['PAYOS', 'DOITHE'])
 
 export const media = pgTable(
   'media',
@@ -438,31 +436,6 @@ export const forms_blocks_checkbox = pgTable(
   }),
 )
 
-export const forms_blocks_country = pgTable(
-  'forms_blocks_country',
-  {
-    _order: integer('_order').notNull(),
-    _parentID: integer('_parent_id').notNull(),
-    _path: text('_path').notNull(),
-    id: varchar('id').primaryKey(),
-    name: varchar('name').notNull(),
-    label: varchar('label'),
-    description: jsonb('description'),
-    required: boolean('required'),
-    blockName: varchar('block_name'),
-  },
-  (columns) => ({
-    _orderIdx: index('forms_blocks_country_order_idx').on(columns._order),
-    _parentIDIdx: index('forms_blocks_country_parent_id_idx').on(columns._parentID),
-    _pathIdx: index('forms_blocks_country_path_idx').on(columns._path),
-    _parentIdFk: foreignKey({
-      columns: [columns['_parentID']],
-      foreignColumns: [forms.id],
-      name: 'forms_blocks_country_parent_id_fk',
-    }).onDelete('cascade'),
-  }),
-)
-
 export const forms_blocks_email = pgTable(
   'forms_blocks_email',
   {
@@ -483,28 +456,6 @@ export const forms_blocks_email = pgTable(
       columns: [columns['_parentID']],
       foreignColumns: [forms.id],
       name: 'forms_blocks_email_parent_id_fk',
-    }).onDelete('cascade'),
-  }),
-)
-
-export const forms_blocks_message = pgTable(
-  'forms_blocks_message',
-  {
-    _order: integer('_order').notNull(),
-    _parentID: integer('_parent_id').notNull(),
-    _path: text('_path').notNull(),
-    id: varchar('id').primaryKey(),
-    message: jsonb('message'),
-    blockName: varchar('block_name'),
-  },
-  (columns) => ({
-    _orderIdx: index('forms_blocks_message_order_idx').on(columns._order),
-    _parentIDIdx: index('forms_blocks_message_parent_id_idx').on(columns._parentID),
-    _pathIdx: index('forms_blocks_message_path_idx').on(columns._path),
-    _parentIdFk: foreignKey({
-      columns: [columns['_parentID']],
-      foreignColumns: [forms.id],
-      name: 'forms_blocks_message_parent_id_fk',
     }).onDelete('cascade'),
   }),
 )
@@ -1058,25 +1009,11 @@ export const relations_forms_blocks_checkbox = relations(forms_blocks_checkbox, 
     relationName: '_blocks_checkbox',
   }),
 }))
-export const relations_forms_blocks_country = relations(forms_blocks_country, ({ one }) => ({
-  _parentID: one(forms, {
-    fields: [forms_blocks_country._parentID],
-    references: [forms.id],
-    relationName: '_blocks_country',
-  }),
-}))
 export const relations_forms_blocks_email = relations(forms_blocks_email, ({ one }) => ({
   _parentID: one(forms, {
     fields: [forms_blocks_email._parentID],
     references: [forms.id],
     relationName: '_blocks_email',
-  }),
-}))
-export const relations_forms_blocks_message = relations(forms_blocks_message, ({ one }) => ({
-  _parentID: one(forms, {
-    fields: [forms_blocks_message._parentID],
-    references: [forms.id],
-    relationName: '_blocks_message',
   }),
 }))
 export const relations_forms_blocks_number = relations(forms_blocks_number, ({ one }) => ({
@@ -1124,14 +1061,8 @@ export const relations_forms = relations(forms, ({ many }) => ({
   _blocks_checkbox: many(forms_blocks_checkbox, {
     relationName: '_blocks_checkbox',
   }),
-  _blocks_country: many(forms_blocks_country, {
-    relationName: '_blocks_country',
-  }),
   _blocks_email: many(forms_blocks_email, {
     relationName: '_blocks_email',
-  }),
-  _blocks_message: many(forms_blocks_message, {
-    relationName: '_blocks_message',
   }),
   _blocks_number: many(forms_blocks_number, {
     relationName: '_blocks_number',
@@ -1275,9 +1206,7 @@ type DatabaseSchema = {
   orders_rels: typeof orders_rels
   recharges: typeof recharges
   forms_blocks_checkbox: typeof forms_blocks_checkbox
-  forms_blocks_country: typeof forms_blocks_country
   forms_blocks_email: typeof forms_blocks_email
-  forms_blocks_message: typeof forms_blocks_message
   forms_blocks_number: typeof forms_blocks_number
   forms_blocks_select_options: typeof forms_blocks_select_options
   forms_blocks_select: typeof forms_blocks_select
@@ -1305,9 +1234,7 @@ type DatabaseSchema = {
   relations_orders: typeof relations_orders
   relations_recharges: typeof relations_recharges
   relations_forms_blocks_checkbox: typeof relations_forms_blocks_checkbox
-  relations_forms_blocks_country: typeof relations_forms_blocks_country
   relations_forms_blocks_email: typeof relations_forms_blocks_email
-  relations_forms_blocks_message: typeof relations_forms_blocks_message
   relations_forms_blocks_number: typeof relations_forms_blocks_number
   relations_forms_blocks_select_options: typeof relations_forms_blocks_select_options
   relations_forms_blocks_select: typeof relations_forms_blocks_select
