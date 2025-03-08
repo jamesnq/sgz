@@ -1,59 +1,63 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Product, Category } from '@/payload-types'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Media } from '@/components/Media'
-import { formatSold } from '@/utilities/formatSold'
 import RichText from '@/components/RichText'
-import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Category, Product } from '@/payload-types'
+import { formatSold } from '@/utilities/formatSold'
 import { ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface RelatedProductsProps {
   title?: string
   products: Product[]
-  category?: Category
   categoryIds?: string[]
   maxDisplay?: number
+  searchQuery?: string
 }
 
 const RelatedProducts = ({
   title = 'Sản phẩm tương tự',
   products,
-  category,
   categoryIds,
   maxDisplay = 4,
+  searchQuery = '',
 }: RelatedProductsProps) => {
   const router = useRouter()
+
   const displayProducts = products.slice(0, maxDisplay)
-  
-  // Determine which category IDs to use for the "View more" link
-  const categoryIdsForFilter = categoryIds || (category ? [category.id.toString()] : [])
-  
+
   const handleViewMore = () => {
-    if (categoryIdsForFilter.length > 0) {
-      router.push(`/products?categories=${categoryIdsForFilter.join(',')}`)
-    } else {
-      router.push('/products')
+    const params = new URLSearchParams()
+
+    if (categoryIds?.length) {
+      params.set('categories', categoryIds.join(','))
     }
+
+    if (searchQuery) {
+      params.set('name', searchQuery)
+    }
+
+    router.push(`/products?${params.toString()}`)
   }
-  
+
   if (products.length === 0) return null
-  
+
   return (
     <div className="w-full py-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-medium">{title}</h2>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="text-sm flex items-center gap-1 hover:bg-secondary/20"
           onClick={handleViewMore}
         >
           Xem thêm <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {displayProducts.map((product) => (
           <Link

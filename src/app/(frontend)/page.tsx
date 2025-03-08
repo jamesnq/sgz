@@ -93,14 +93,10 @@ export default async function Home() {
         </div>
       </div>
       <ProductGroup />
-      
+
       {/* Featured Products Section */}
       <div className="my-12">
-        <RelatedProductsSection 
-          categoryIds={['33']} 
-          title="Sản phẩm nổi bật" 
-          maxDisplay={4}
-        />
+        <RelatedProductsSection searchQuery="pc" title="Sản phẩm nổi bật" maxDisplay={4} />
       </div>
     </div>
   )

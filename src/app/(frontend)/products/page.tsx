@@ -37,13 +37,13 @@ function ProductsLoading() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input type="search" placeholder="Tìm kiếm sản phẩm..." className="pl-8" disabled />
               </div>
-              
+
               <h2 className="text-lg font-medium mb-4">Danh mục</h2>
               <div className="relative mb-4">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input type="search" placeholder="Tìm kiếm danh mục..." className="pl-8" disabled />
               </div>
-              
+
               <div className="max-h-[300px] overflow-y-auto pr-2">
                 <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
                   <Skeleton className="h-8 w-20 lg:w-full" />
@@ -98,7 +98,7 @@ async function ProductsData({
   const name = resolvedParams.name || ''
   const page = resolvedParams.page || '1'
   const categoriesParam = resolvedParams.categories || ''
-  
+
   // Parse the categories parameter (comma-separated list of IDs)
   const selectedCategoryIds = categoriesParam ? categoriesParam.split(',') : []
 
@@ -141,12 +141,14 @@ async function ProductsData({
     depth: 1,
   })
 
-  return <PageClient 
-    data={productsData} 
-    searchQuery={name} 
-    categories={categoriesData.docs} 
-    selectedCategoryIds={selectedCategoryIds} 
-  />
+  return (
+    <PageClient
+      data={productsData}
+      searchQuery={name}
+      categories={categoriesData.docs}
+      selectedCategoryIds={selectedCategoryIds}
+    />
+  )
 }
 
 export default function Page({ searchParams: searchParamsPromise }: Args) {
