@@ -1,26 +1,26 @@
 'use client'
 
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { useEffect, useState, useTransition } from 'react'
+import { debounce } from 'lodash'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 
 import { Media } from '@/components/Media'
-import { Product } from '@/payload-types'
+import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-  PaginationEllipsis,
 } from '@/components/ui/pagination'
-import RichText from '@/components/RichText'
+import { Product } from '@/payload-types'
 import { formatSold } from '@/utilities/formatSold'
-import Link from 'next/link'
 import { Loader2, Search } from 'lucide-react'
+import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
 
 const ProductCard = ({ product }: { product: Product }) => {
@@ -87,21 +87,31 @@ const PageClient = ({
     setHeaderTheme('dark')
   }, [setHeaderTheme])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString())
+  // Create a debounced search function
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      startTransition(() => {
+        const params = new URLSearchParams(searchParams.toString())
 
-      if (searchTerm) {
-        params.set('name', searchTerm)
-      } else {
-        params.delete('name')
-      }
+        if (value) {
+          params.set('name', value)
+        } else {
+          params.delete('name')
+        }
 
-      params.set('page', '1')
-      router.push(`/products?${params.toString()}`)
-    })
+        params.set('page', '1')
+        router.push(`/products?${params.toString()}`)
+      })
+    }, 300),
+    [searchParams, router],
+  )
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchTerm(value)
+    debouncedSearch(value)
   }
 
   // Helper function to create pagination URLs
@@ -126,29 +136,22 @@ const PageClient = ({
         <h1 className="text-3xl font-bold mb-8">Sản phẩm</h1>
 
         <div className="mb-8">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Tìm kiếm sản phẩm..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={isPending}
-              />
-            </div>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang tìm...
-                </>
-              ) : (
-                'Tìm kiếm'
-              )}
-            </Button>
-          </form>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Tìm kiếm sản phẩm..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              disabled={isPending}
+            />
+            {isPending && (
+              <div className="absolute right-2.5 top-2.5">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            )}
+          </div>
         </div>
 
         {data.docs.length > 0 ? (
@@ -165,7 +168,7 @@ const PageClient = ({
                   <PaginationContent>
                     <PaginationItem>
                       <Link href={getPaginationUrl(1)} passHref>
-                        <PaginationLink 
+                        <PaginationLink
                           isActive={currentPage === 1}
                           onClick={(e) => {
                             if (currentPage !== 1 && !isPending) {
@@ -231,7 +234,7 @@ const PageClient = ({
                     {data.totalPages > 1 && (
                       <PaginationItem>
                         <Link href={getPaginationUrl(data.totalPages)} passHref>
-                          <PaginationLink 
+                          <PaginationLink
                             isActive={currentPage === data.totalPages}
                             onClick={(e) => {
                               if (currentPage !== data.totalPages && !isPending) {
@@ -246,7 +249,7 @@ const PageClient = ({
                         </Link>
                       </PaginationItem>
                     )}
-                    
+
                     {isPending && (
                       <PaginationItem>
                         <div className="flex items-center justify-center ml-2">
