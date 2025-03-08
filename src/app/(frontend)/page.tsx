@@ -8,6 +8,7 @@ import Link from 'next/link'
 import RichText from '@/components/RichText'
 import { formatSold } from '@/utilities/formatSold'
 import { env } from '@/config'
+import RelatedProductsSection from '@/components/RelatedProductsSection'
 
 export const revalidate = 3600
 
@@ -92,6 +93,15 @@ export default async function Home() {
         </div>
       </div>
       <ProductGroup />
+      
+      {/* Featured Products Section */}
+      <div className="my-12">
+        <RelatedProductsSection 
+          categoryIds={['33']} 
+          title="Sản phẩm nổi bật" 
+          maxDisplay={4}
+        />
+      </div>
     </div>
   )
 }
