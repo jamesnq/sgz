@@ -17,7 +17,7 @@ type Args = {
   searchParams: Promise<{
     name?: string
     page?: string
-    category?: string
+    categories?: string
   }>
 }
 
@@ -30,7 +30,7 @@ function ProductsLoading() {
 
         <div className="flex flex-col lg:flex-row lg:gap-6">
           {/* Sidebar skeleton */}
-          <div className="w-full lg:w-[250px] lg:min-w-[250px] lg:pr-6 mb-8 lg:mb-0">
+          <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-6 mb-8 lg:mb-0">
             <div className="sticky top-24">
               <h2 className="text-lg font-medium mb-4">Tìm kiếm</h2>
               <div className="relative mb-6">
@@ -39,11 +39,20 @@ function ProductsLoading() {
               </div>
               
               <h2 className="text-lg font-medium mb-4">Danh mục</h2>
-              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-3">
-                <Skeleton className="h-8 w-20 lg:w-full" />
-                <Skeleton className="h-8 w-24 lg:w-full" />
-                <Skeleton className="h-8 w-16 lg:w-full" />
-                <Skeleton className="h-8 w-28 lg:w-full" />
+              <div className="relative mb-4">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input type="search" placeholder="Tìm kiếm danh mục..." className="pl-8" disabled />
+              </div>
+              
+              <div className="max-h-[300px] overflow-y-auto pr-2">
+                <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
+                  <Skeleton className="h-8 w-20 lg:w-full" />
+                  <Skeleton className="h-8 w-24 lg:w-full" />
+                  <Skeleton className="h-8 w-16 lg:w-full" />
+                  <Skeleton className="h-8 w-28 lg:w-full" />
+                  <Skeleton className="h-8 w-22 lg:w-full" />
+                  <Skeleton className="h-8 w-18 lg:w-full" />
+                </div>
               </div>
             </div>
           </div>
@@ -82,13 +91,16 @@ function ProductsLoading() {
 async function ProductsData({
   searchParams,
 }: {
-  searchParams: Promise<{ name?: string; page?: string; category?: string }>
+  searchParams: Promise<{ name?: string; page?: string; categories?: string }>
 }) {
   // Await the searchParams promise
   const resolvedParams = await searchParams
   const name = resolvedParams.name || ''
   const page = resolvedParams.page || '1'
-  const categoryId = resolvedParams.category || ''
+  const categoriesParam = resolvedParams.categories || ''
+  
+  // Parse the categories parameter (comma-separated list of IDs)
+  const selectedCategoryIds = categoriesParam ? categoriesParam.split(',') : []
 
   const currentPage = parseInt(page, 10) || 1
   const limit = 12
@@ -114,10 +126,10 @@ async function ProductsData({
     }
   }
 
-  // Add category filter if selected
-  if (categoryId) {
+  // Add category filter if categories are selected
+  if (selectedCategoryIds.length > 0) {
     where.categories = {
-      contains: categoryId,
+      in: selectedCategoryIds,
     }
   }
 
@@ -133,7 +145,7 @@ async function ProductsData({
     data={productsData} 
     searchQuery={name} 
     categories={categoriesData.docs} 
-    selectedCategoryId={categoryId} 
+    selectedCategoryIds={selectedCategoryIds} 
   />
 }
 

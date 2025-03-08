@@ -21,7 +21,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Product, Category } from '@/payload-types'
 import { formatSold } from '@/utilities/formatSold'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
 
@@ -75,19 +75,28 @@ const Sidebar = ({
   searchTerm,
   handleSearchChange,
   categories,
-  selectedCategoryId,
-  handleCategoryClick,
+  selectedCategoryIds,
+  handleCategoryToggle,
+  handleClearCategories,
   isPending,
 }: {
   searchTerm: string
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   categories: Category[]
-  selectedCategoryId: string
-  handleCategoryClick: (categoryId: string) => void
+  selectedCategoryIds: string[]
+  handleCategoryToggle: (categoryId: string) => void
+  handleClearCategories: () => void
   isPending: boolean
 }) => {
+  const [categorySearchTerm, setCategorySearchTerm] = useState('')
+  
+  // Filter categories based on search term
+  const filteredCategories = categories.filter(category => 
+    category.title.toLowerCase().includes(categorySearchTerm.toLowerCase())
+  )
+  
   return (
-    <div className="w-full lg:w-[250px] lg:min-w-[250px] lg:pr-6 mb-8 lg:mb-0">
+    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-6 mb-8 lg:mb-0">
       <div className="sticky top-24">
         <h2 className="text-lg font-medium mb-4">Tìm kiếm</h2>
         <div className="relative mb-6">
@@ -109,21 +118,81 @@ const Sidebar = ({
 
         {categories.length > 0 && (
           <div>
-            <h2 className="text-lg font-medium mb-4">Danh mục</h2>
-            <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-3">
-              {categories.map((category) => (
-                <Badge
-                  key={category.id}
-                  variant={selectedCategoryId === category.id.toString() ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer hover:bg-secondary/80 transition-colors lg:w-full lg:justify-start",
-                    isPending && "opacity-70 pointer-events-none"
-                  )}
-                  onClick={() => handleCategoryClick(category.id.toString())}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium">Danh mục</h2>
+              {selectedCategoryIds.length > 0 && (
+                <button
+                  onClick={handleClearCategories}
+                  className="text-xs text-muted-foreground hover:text-primary flex items-center"
+                  disabled={isPending}
                 >
-                  {category.title}
-                </Badge>
-              ))}
+                  <X className="h-3 w-3 mr-1" />
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
+            
+            <div className="relative mb-4">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Tìm kiếm danh mục..."
+                className="pl-8"
+                value={categorySearchTerm}
+                onChange={(e) => setCategorySearchTerm(e.target.value)}
+                disabled={isPending}
+              />
+            </div>
+            
+            {selectedCategoryIds.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-muted-foreground mb-2">Đã chọn {selectedCategoryIds.length} danh mục</p>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {selectedCategoryIds.map(id => {
+                    const category = categories.find(c => c.id.toString() === id)
+                    if (!category) return null
+                    
+                    return (
+                      <Badge 
+                        key={`selected-${id}`} 
+                        variant="default"
+                        className="pr-1 flex items-center gap-1"
+                      >
+                        {category.title}
+                        <button 
+                          className="hover:bg-primary-foreground/20 rounded-full p-0.5"
+                          onClick={() => handleCategoryToggle(id)}
+                          disabled={isPending}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            
+            <div className="max-h-[300px] overflow-y-auto pr-2">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
+                {filteredCategories.length > 0 ? (
+                  filteredCategories.map((category) => (
+                    <Badge
+                      key={category.id}
+                      variant={selectedCategoryIds.includes(category.id.toString()) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer hover:bg-secondary/80 transition-colors lg:w-full lg:justify-start",
+                        isPending && "opacity-70 pointer-events-none"
+                      )}
+                      onClick={() => handleCategoryToggle(category.id.toString())}
+                    >
+                      {category.title}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Không tìm thấy danh mục phù hợp</p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -136,12 +205,12 @@ const PageClient = ({
   data,
   searchQuery = '',
   categories = [],
-  selectedCategoryId = '',
+  selectedCategoryIds = [],
 }: {
   data: PaginatedDocs<Product>
   searchQuery?: string
   categories?: Category[]
-  selectedCategoryId?: string
+  selectedCategoryIds?: string[]
 }) => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
@@ -183,20 +252,39 @@ const PageClient = ({
   }
 
   // Handle category filter change
-  const handleCategoryClick = (categoryId: string) => {
+  const handleCategoryToggle = (categoryId: string) => {
     if (isPending) return
     
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString())
+      let newSelectedCategories = [...selectedCategoryIds]
       
-      if (categoryId === selectedCategoryId) {
-        // If clicking the already selected category, remove the filter
-        params.delete('category')
+      if (newSelectedCategories.includes(categoryId)) {
+        // Remove category if already selected
+        newSelectedCategories = newSelectedCategories.filter(id => id !== categoryId)
       } else {
-        // Otherwise set the new category filter
-        params.set('category', categoryId)
+        // Add category if not selected
+        newSelectedCategories.push(categoryId)
       }
       
+      if (newSelectedCategories.length > 0) {
+        params.set('categories', newSelectedCategories.join(','))
+      } else {
+        params.delete('categories')
+      }
+      
+      params.set('page', '1')
+      router.push(`/products?${params.toString()}`)
+    })
+  }
+  
+  // Clear all selected categories
+  const handleClearCategories = () => {
+    if (isPending) return
+    
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('categories')
       params.set('page', '1')
       router.push(`/products?${params.toString()}`)
     })
@@ -229,8 +317,9 @@ const PageClient = ({
             searchTerm={searchTerm}
             handleSearchChange={handleSearchChange}
             categories={categories}
-            selectedCategoryId={selectedCategoryId}
-            handleCategoryClick={handleCategoryClick}
+            selectedCategoryIds={selectedCategoryIds}
+            handleCategoryToggle={handleCategoryToggle}
+            handleClearCategories={handleClearCategories}
             isPending={isPending}
           />
 
