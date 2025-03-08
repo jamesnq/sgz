@@ -281,7 +281,6 @@ function ShippingForm({ form }: { form: Form }) {
                 <div className="mb-4 last:mb-0" key={index}>
                   <Field
                     field={field}
-                    //@ts-expect-error ignore
                     onChange={(value: string) => setShippingInfo(field.name, value)}
                   />
                 </div>
