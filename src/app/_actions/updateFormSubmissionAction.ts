@@ -6,7 +6,7 @@ import { getPayload } from 'payload'
 import { UpdateFormSubmissionSchema } from './schema'
 
 const orderCanUpdate = (order: Order) => {
-  const canUpdateStatus: Order['status'][] = ['PENDING', 'IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE']
+  const canUpdateStatus: Order['status'][] = ['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE']
   return canUpdateStatus.includes(order.status)
 }
 
