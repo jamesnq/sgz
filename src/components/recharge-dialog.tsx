@@ -34,15 +34,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+import { formatPrice } from '@/utilities/formatPrice'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CirclePlus } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from 'zod'
-import { Badge } from './ui/badge'
-import { formatPrice } from '@/utilities/formatPrice'
 
 function RechargeBank() {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
@@ -61,7 +60,7 @@ function RechargeBank() {
       }
       window.open(res.data?.checkoutUrl, '_blank')
       toast.success('Đã mở trang thanh toán')
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi tạo liên kết thanh toán')
     }
   }
