@@ -312,138 +312,136 @@ const PageClient = ({
 
   return (
     <Shell>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-8">Sản phẩm</h1>
+      <h1 className="text-3xl font-bold mb-8">Sản phẩm</h1>
 
-        <div className="flex flex-col lg:flex-row lg:gap-6">
-          {/* Sidebar for search and filters */}
-          <Sidebar
-            searchTerm={searchTerm}
-            handleSearchChange={handleSearchChange}
-            categories={categories}
-            selectedCategoryIds={selectedCategoryIds}
-            handleCategoryToggle={handleCategoryToggle}
-            handleClearCategories={handleClearCategories}
-            isPending={isPending}
-          />
+      <div className="flex flex-col lg:flex-row lg:gap-6">
+        {/* Sidebar for search and filters */}
+        <Sidebar
+          searchTerm={searchTerm}
+          handleSearchChange={handleSearchChange}
+          categories={categories}
+          selectedCategoryIds={selectedCategoryIds}
+          handleCategoryToggle={handleCategoryToggle}
+          handleClearCategories={handleClearCategories}
+          isPending={isPending}
+        />
 
-          {/* Main content area */}
-          <div className="flex-1">
-            {data.docs.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  {data.docs.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+        {/* Main content area */}
+        <div className="flex-1">
+          {data.docs.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {data.docs.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
 
-                {data.totalPages > 1 && (
-                  <div className="flex justify-center mt-8">
-                    <Pagination>
-                      <PaginationContent>
+              {data.totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <Link href={getPaginationUrl(1)} passHref>
+                          <PaginationLink
+                            isActive={currentPage === 1}
+                            onClick={(e) => {
+                              if (currentPage !== 1 && !isPending) {
+                                e.preventDefault()
+                                handlePageChange(1)
+                              }
+                            }}
+                            aria-disabled={isPending}
+                          >
+                            1
+                          </PaginationLink>
+                        </Link>
+                      </PaginationItem>
+
+                      {currentPage > 3 && <PaginationEllipsis />}
+
+                      {currentPage > 2 && (
                         <PaginationItem>
-                          <Link href={getPaginationUrl(1)} passHref>
+                          <Link href={getPaginationUrl(currentPage - 1)} passHref>
                             <PaginationLink
-                              isActive={currentPage === 1}
                               onClick={(e) => {
-                                if (currentPage !== 1 && !isPending) {
+                                if (!isPending) {
                                   e.preventDefault()
-                                  handlePageChange(1)
+                                  handlePageChange(currentPage - 1)
                                 }
                               }}
                               aria-disabled={isPending}
                             >
-                              1
+                              {currentPage - 1}
                             </PaginationLink>
                           </Link>
                         </PaginationItem>
+                      )}
 
-                        {currentPage > 3 && <PaginationEllipsis />}
+                      {currentPage !== 1 && currentPage !== data.totalPages && (
+                        <PaginationItem>
+                          <Link href={getPaginationUrl(currentPage)} passHref>
+                            <PaginationLink isActive>{currentPage}</PaginationLink>
+                          </Link>
+                        </PaginationItem>
+                      )}
 
-                        {currentPage > 2 && (
-                          <PaginationItem>
-                            <Link href={getPaginationUrl(currentPage - 1)} passHref>
-                              <PaginationLink
-                                onClick={(e) => {
-                                  if (!isPending) {
-                                    e.preventDefault()
-                                    handlePageChange(currentPage - 1)
-                                  }
-                                }}
-                                aria-disabled={isPending}
-                              >
-                                {currentPage - 1}
-                              </PaginationLink>
-                            </Link>
-                          </PaginationItem>
-                        )}
+                      {currentPage < data.totalPages - 1 && (
+                        <PaginationItem>
+                          <Link href={getPaginationUrl(currentPage + 1)} passHref>
+                            <PaginationLink
+                              onClick={(e) => {
+                                if (!isPending) {
+                                  e.preventDefault()
+                                  handlePageChange(currentPage + 1)
+                                }
+                              }}
+                              aria-disabled={isPending}
+                            >
+                              {currentPage + 1}
+                            </PaginationLink>
+                          </Link>
+                        </PaginationItem>
+                      )}
 
-                        {currentPage !== 1 && currentPage !== data.totalPages && (
-                          <PaginationItem>
-                            <Link href={getPaginationUrl(currentPage)} passHref>
-                              <PaginationLink isActive>{currentPage}</PaginationLink>
-                            </Link>
-                          </PaginationItem>
-                        )}
+                      {currentPage < data.totalPages - 2 && <PaginationEllipsis />}
 
-                        {currentPage < data.totalPages - 1 && (
-                          <PaginationItem>
-                            <Link href={getPaginationUrl(currentPage + 1)} passHref>
-                              <PaginationLink
-                                onClick={(e) => {
-                                  if (!isPending) {
-                                    e.preventDefault()
-                                    handlePageChange(currentPage + 1)
-                                  }
-                                }}
-                                aria-disabled={isPending}
-                              >
-                                {currentPage + 1}
-                              </PaginationLink>
-                            </Link>
-                          </PaginationItem>
-                        )}
+                      {data.totalPages > 1 && (
+                        <PaginationItem>
+                          <Link href={getPaginationUrl(data.totalPages)} passHref>
+                            <PaginationLink
+                              isActive={currentPage === data.totalPages}
+                              onClick={(e) => {
+                                if (currentPage !== data.totalPages && !isPending) {
+                                  e.preventDefault()
+                                  handlePageChange(data.totalPages)
+                                }
+                              }}
+                              aria-disabled={isPending}
+                            >
+                              {data.totalPages}
+                            </PaginationLink>
+                          </Link>
+                        </PaginationItem>
+                      )}
 
-                        {currentPage < data.totalPages - 2 && <PaginationEllipsis />}
-
-                        {data.totalPages > 1 && (
-                          <PaginationItem>
-                            <Link href={getPaginationUrl(data.totalPages)} passHref>
-                              <PaginationLink
-                                isActive={currentPage === data.totalPages}
-                                onClick={(e) => {
-                                  if (currentPage !== data.totalPages && !isPending) {
-                                    e.preventDefault()
-                                    handlePageChange(data.totalPages)
-                                  }
-                                }}
-                                aria-disabled={isPending}
-                              >
-                                {data.totalPages}
-                              </PaginationLink>
-                            </Link>
-                          </PaginationItem>
-                        )}
-
-                        {isPending && (
-                          <PaginationItem>
-                            <div className="flex items-center justify-center ml-2">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            </div>
-                          </PaginationItem>
-                        )}
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-medium mb-2">Không tìm thấy sản phẩm nào</h3>
-                <p className="text-muted-foreground">Vui lòng thử tìm kiếm với từ khóa khác</p>
-              </div>
-            )}
-          </div>
+                      {isPending && (
+                        <PaginationItem>
+                          <div className="flex items-center justify-center ml-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        </PaginationItem>
+                      )}
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-medium mb-2">Không tìm thấy sản phẩm nào</h3>
+              <p className="text-muted-foreground">Vui lòng thử tìm kiếm với từ khóa khác</p>
+            </div>
+          )}
         </div>
       </div>
     </Shell>
