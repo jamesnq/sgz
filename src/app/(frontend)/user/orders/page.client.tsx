@@ -101,7 +101,7 @@ function OrderCardSkeleton() {
             <Skeleton className="h-5 w-20 mx-auto mb-1" />
             <Skeleton className="h-5 w-10 mx-auto" />
           </div>
-          <div className="flex flex-wrap gap-[8px] max-md:w-full md:flex-col">
+          <div className="flex flex-wrap gap-[8px] max-lg:w-full lg:flex-col">
             <Skeleton className="h-9 w-28" />
             <Skeleton className="h-9 w-28" />
           </div>
