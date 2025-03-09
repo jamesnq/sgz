@@ -176,7 +176,7 @@ export const Orders: CollectionConfig = {
     {
       name: 'status',
       type: 'select',
-      defaultValue: 'PENDING',
+      defaultValue: 'IN_QUEUE',
       access: {
         create: hasRole(['admin', 'staff']),
         update: hasRole(['admin', 'staff']),

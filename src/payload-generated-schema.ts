@@ -321,7 +321,7 @@ export const orders = pgTable(
     id: serial('id').primaryKey(),
     note: jsonb('note'),
     message: jsonb('message'),
-    status: enum_orders_status('status').notNull().default('PENDING'),
+    status: enum_orders_status('status').notNull().default('IN_QUEUE'),
     orderedBy: integer('ordered_by_id')
       .notNull()
       .references(() => users.id, {
