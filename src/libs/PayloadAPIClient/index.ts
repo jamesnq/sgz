@@ -1,9 +1,9 @@
+import { Config } from '@/payload-types'
+import type { BulkOperationResult, CollectionSlug, PaginatedDocs, Where } from 'payload'
 import queryString from 'qs'
 import type { DeepPartial } from 'ts-essentials'
 
-import type { BulkOperationResult, Config, PaginatedDocs, Where } from './payload-types'
-
-type MakeOptional<T, K extends keyof T> = Omit<T, K> & Pick<Partial<T>, K>
+type MakeOptional<T, K extends string> = Omit<T, K> & Partial<Pick<T, K & keyof T>>
 
 export type PayloadApiClientOptions = {
   apiURL: string
@@ -19,7 +19,7 @@ export class PayloadApiClient<C extends Config> {
     this.apiURL = apiURL
   }
 
-  private createReqiest(path: string, init?: RequestInit) {
+  private createRequest(path: string, init?: RequestInit) {
     return new Request(`${this.apiURL}${path}`, init)
   }
 
@@ -33,9 +33,9 @@ export class PayloadApiClient<C extends Config> {
     data: MakeOptional<C['collections'][T], 'id'>
     depth?: number
     draft?: boolean
-    fallbackLocale?: C['locale']
+    fallbackLocale?: C['locale'] | null
     file?: File
-    locale?: C['locale']
+    locale?: C['locale'] | null
   }): Promise<C['collections'][T]> {
     const qs = buildQueryString(toQs)
 
@@ -48,6 +48,11 @@ export class PayloadApiClient<C extends Config> {
       formData.set('_payload', JSON.stringify(data))
 
       requestInit.body = formData
+    } else {
+      requestInit.body = JSON.stringify(data)
+      requestInit.headers = {
+        'Content-Type': 'application/json',
+      }
     }
 
     const response = await this.fetcher(`${this.apiURL}/${collection.toString()}${qs}`, requestInit)
@@ -62,10 +67,10 @@ export class PayloadApiClient<C extends Config> {
     collection: T
     depth?: number
     draft?: boolean
-    fallbackLocale?: C['locale']
-    locale?: C['locale']
+    fallbackLocale?: C['locale'] | null
+    locale?: C['locale'] | null
     where: Where
-  }): Promise<BulkOperationResult<C['collections'][T]>> {
+  }): Promise<BulkOperationResult<T & CollectionSlug, any>> {
     const qs = buildQueryString(toQs)
 
     const response = await this.fetcher(`${this.apiURL}/${collection.toString()}${qs}`, {
@@ -83,9 +88,9 @@ export class PayloadApiClient<C extends Config> {
     collection: T
     depth?: number
     draft?: boolean
-    fallbackLocale?: C['locale']
-    id: C['collections'][T]['id']
-    locale?: C['locale']
+    fallbackLocale?: C['locale'] | null
+    id: string | number
+    locale?: C['locale'] | null
   }): Promise<C['collections'][T]> {
     const qs = buildQueryString(toQs)
 
@@ -96,23 +101,21 @@ export class PayloadApiClient<C extends Config> {
     return response.json()
   }
 
-  async find<T extends keyof C['collections'], K extends (keyof C['collections'][T])[]>({
+  async find<T extends keyof C['collections'], K extends keyof C['collections'][T] = never>({
     collection,
     ...toQs
   }: {
     collection: T
     depth?: number
     draft?: boolean
-    fallbackLocale?: C['locale']
+    fallbackLocale?: C['locale'] | null
     limit?: number
-    locale?: 'all' | C['locale']
+    locale?: 'all' | C['locale'] | null
     page?: number
-    select?: K
+    select?: K[]
     sort?: `-${Exclude<keyof C['collections'][T], symbol>}` | keyof C['collections'][T]
     where?: Where
-  }): Promise<
-    PaginatedDocs<K extends undefined ? C['collections'][T] : Pick<C['collections'][T], K[0]>>
-  > {
+  }): Promise<PaginatedDocs<K extends never ? C['collections'][T] : Pick<C['collections'][T], K>>> {
     const qs = buildQueryString(toQs)
 
     const response = await this.fetcher(`${this.apiURL}/${collection.toString()}${qs}`)
@@ -120,7 +123,7 @@ export class PayloadApiClient<C extends Config> {
     return response.json()
   }
 
-  async findById<T extends keyof C['collections'], K extends (keyof C['collections'][T])[]>({
+  async findById<T extends keyof C['collections'], K extends keyof C['collections'][T] = never>({
     collection,
     id,
     ...toQs
@@ -128,11 +131,11 @@ export class PayloadApiClient<C extends Config> {
     collection: T
     depth?: number
     draft?: boolean
-    fallbackLocale?: C['locale']
-    id: C['collections'][T]['id']
-    locale?: 'all' | C['locale']
-    select?: K
-  }): Promise<K extends undefined ? C['collections'][T] : Pick<C['collections'][T], K[0]>> {
+    fallbackLocale?: C['locale'] | null
+    id: string | number
+    locale?: 'all' | C['locale'] | null
+    select?: K[]
+  }): Promise<K extends never ? C['collections'][T] : Pick<C['collections'][T], K>> {
     const qs = buildQueryString(toQs)
 
     const response = await this.fetcher(`${this.apiURL}/${collection.toString()}/${id}${qs}`)
@@ -140,16 +143,16 @@ export class PayloadApiClient<C extends Config> {
     return response.json()
   }
 
-  async findGlobal<T extends keyof C['globals'], K extends (keyof C['globals'][T])[]>({
+  async findGlobal<T extends keyof C['globals'], K extends keyof C['globals'][T] = never>({
     slug,
     ...toQs
   }: {
     depth?: number
-    fallbackLocale?: C['locale']
-    locale?: 'all' | C['locale']
-    select?: K
+    fallbackLocale?: C['locale'] | null
+    locale?: 'all' | C['locale'] | null
+    select?: K[]
     slug: T
-  }): Promise<K extends undefined ? C['globals'][T] : Pick<C['globals'][T], K[0]>> {
+  }): Promise<K extends never ? C['globals'][T] : Pick<C['globals'][T], K>> {
     const qs = buildQueryString(toQs)
 
     const response = await this.fetcher(`${this.apiURL}/globals/${slug.toString()}${qs}`)
@@ -174,11 +177,11 @@ export class PayloadApiClient<C extends Config> {
     data: DeepPartial<C['collections'][T]>
     depth?: number
     draft?: boolean
-    fallbackLocale?: C['locale']
-    id: C['collections'][T]['id']
-    locale?: C['locale']
+    fallbackLocale?: C['locale'] | null
+    id: string | number
+    locale?: C['locale'] | null
     where: Where
-  }): Promise<BulkOperationResult<C['collections'][T]>> {
+  }): Promise<BulkOperationResult<T & CollectionSlug, any>> {
     const qs = buildQueryString(toQs)
 
     const response = await this.fetcher(`${this.apiURL}/${collection.toString()}${qs}`, {
@@ -186,7 +189,7 @@ export class PayloadApiClient<C extends Config> {
       headers: {
         'Content-Type': 'application/json',
       },
-      method: 'DELETE',
+      method: 'PATCH',
     })
 
     return response.json()
@@ -203,20 +206,22 @@ export class PayloadApiClient<C extends Config> {
     data: DeepPartial<C['collections'][T]>
     depth?: number
     fallbackLocale?: C['locale'] | null
-    id: C['collections'][T]['id']
+    id: string | number
   }): Promise<C['collections'][T]> {
     const qs = buildQueryString({
       depth,
       'fallback-locale': fallbackLocale,
     })
-    const requestInit: RequestInit = { method: 'PATCH' }
-    const formData = new FormData()
-    formData.set('_payload', JSON.stringify(data))
-    requestInit.body = formData
 
     const response = await this.fetcher(
       `${this.apiURL}/${collection.toString()}/${id.toString()}${qs}`,
-      requestInit,
+      {
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'PATCH',
+      },
     )
 
     return response.json()
@@ -229,14 +234,17 @@ export class PayloadApiClient<C extends Config> {
   }: {
     data: DeepPartial<C['globals'][T]>
     depth?: number
-    fallbackLocale?: C['locale']
-    locale?: C['locale']
+    fallbackLocale?: C['locale'] | null
+    locale?: C['locale'] | null
     slug: T
   }): Promise<C['globals'][T]> {
     const qs = buildQueryString(toQs)
 
     const response = await this.fetcher(`${this.apiURL}/globals/${slug.toString()}${qs}`, {
       body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'PATCH',
     })
 
