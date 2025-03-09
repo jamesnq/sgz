@@ -41,6 +41,8 @@ import { useForm } from 'react-hook-form'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from 'zod'
+import { Badge } from './ui/badge'
+import { formatPrice } from '@/utilities/formatPrice'
 
 function RechargeBank() {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
@@ -108,13 +110,7 @@ interface FeeData {
   fees: number
   penalty: number
 }
-
-// Define ServerNotification interface for error responses
-interface ServerNotification {
-  notify: string
-  message: string
-}
-
+// TODO display fee
 function RechargeCard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feeData, setFeeData] = useState<FeeData[]>([])
@@ -125,6 +121,10 @@ function RechargeCard() {
   const [currentFeeInfo, setCurrentFeeInfo] = useState<{ fees: number; penalty: number } | null>(
     null,
   )
+  // Add state for telco fee ranges
+  const [telcoFeeRanges, setTelcoFeeRanges] = useState<
+    Record<string, { min: number; max: number }>
+  >({})
 
   const form = useForm<z.infer<typeof RechargeDoiTheSchema>>({
     resolver: zodResolver(RechargeDoiTheSchema),
@@ -150,7 +150,32 @@ function RechargeCard() {
         if (data.success && data.data) {
           setFeeData(data.data)
 
-          // No longer automatically setting default values
+          // Calculate min and max fees for each telco - completely restructured to avoid TypeScript errors
+          const feeRanges: Record<string, { min: number; max: number }> = {}
+
+          // First pass: collect all telcos with proper typing
+          const telcos: string[] = Array.from(
+            new Set(data.data.map((item: FeeData) => item.telco as string)),
+          )
+
+          // Initialize all telcos with default values
+          telcos.forEach((telco: string) => {
+            feeRanges[telco] = {
+              min: Number.MAX_VALUE,
+              max: 0,
+            }
+          })
+
+          // Second pass: calculate min and max for each telco
+          data.data.forEach((item: FeeData) => {
+            const telco = item.telco
+            if (feeRanges[telco]) {
+              feeRanges[telco].min = Math.min(feeRanges[telco].min, item.fees)
+              feeRanges[telco].max = Math.max(feeRanges[telco].max, item.fees)
+            }
+          })
+
+          setTelcoFeeRanges(feeRanges)
         } else {
           toast.error('Không thể tải thông tin nhà mạng và mệnh giá')
         }
@@ -205,13 +230,14 @@ function RechargeCard() {
     }
   }
 
+  // Function to get fee for a specific telco and denomination
+  const getFeeForDenomination = (telco: string, amount: number): number => {
+    const feeInfo = feeData.find((item) => item.telco === telco && item.value === amount)
+    return feeInfo ? feeInfo.fees : 0
+  }
+
   const isFormValid = () => {
-    return (
-      selectedTelco !== '' &&
-      selectedDenomination > 0 &&
-      code !== '' &&
-      serial !== ''
-    )
+    return selectedTelco !== '' && selectedDenomination > 0 && code !== '' && serial !== ''
   }
 
   async function onSubmit(values: z.infer<typeof RechargeDoiTheSchema>) {
@@ -308,7 +334,24 @@ function RechargeCard() {
                       <SelectContent>
                         {uniqueTelcos.map((telco) => (
                           <SelectItem key={telco} value={telco}>
-                            {telco}
+                            <div className="flex space-x-2 w-full items-center">
+                              <span className="font-medium">{telco}</span>
+                              {telcoFeeRanges[telco] && (
+                                <div className="text-xs text-amber-500">
+                                  Phí: {telcoFeeRanges[telco].min}
+                                  {telcoFeeRanges[telco].min !== telcoFeeRanges[telco].max ? (
+                                    <>
+                                      {' '}
+                                      <span className="mx-1 font-bold">→</span>{' '}
+                                      {telcoFeeRanges[telco].max}
+                                    </>
+                                  ) : (
+                                    ''
+                                  )}
+                                  %
+                                </div>
+                              )}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -335,11 +378,17 @@ function RechargeCard() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableDenominations.map((amount) => (
-                          <SelectItem key={amount} value={amount.toString()}>
-                            {amount.toLocaleString('vi-VN')} VND
-                          </SelectItem>
-                        ))}
+                        {availableDenominations.map((amount) => {
+                          const fee = getFeeForDenomination(selectedTelco, amount)
+                          return (
+                            <SelectItem key={amount} value={amount.toString()}>
+                              <div className="flex space-x-2 justify-between w-full items-center">
+                                <span className="font-medium">{formatPrice(amount)}</span>
+                                <span className="text-amber-500 text-xs"> Phí: {fee}%</span>
+                              </div>
+                            </SelectItem>
+                          )
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
