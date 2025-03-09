@@ -176,6 +176,10 @@ export const ProductVariants: CollectionConfig = {
       editor: defaultLexicalEditor,
       label: 'Description',
     },
+    {
+      name: 'metadata',
+      type: 'json',
+    },
   ],
   hooks: {
     afterChange: [revalidateProduct],

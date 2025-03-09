@@ -326,6 +326,15 @@ export interface ProductVariant {
     };
     [k: string]: unknown;
   } | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -801,6 +810,7 @@ export interface ProductVariantsSelect<T extends boolean = true> {
   max?: T;
   note?: T;
   description?: T;
+  metadata?: T;
   updatedAt?: T;
   createdAt?: T;
 }
