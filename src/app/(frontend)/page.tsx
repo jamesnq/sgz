@@ -9,6 +9,8 @@ import RichText from '@/components/RichText'
 import { formatSold } from '@/utilities/formatSold'
 import { env } from '@/config'
 import RelatedProductsSection from '@/components/RelatedProductsSection'
+import { redirect, RedirectType } from 'next/navigation'
+import { Routes } from '@/utilities/routes'
 
 export const revalidate = 3600
 
@@ -79,6 +81,7 @@ async function ProductGroup() {
 }
 
 export default async function Home() {
+  return redirect(Routes.PRODUCTS)
   return (
     <div className="container">
       <PageClient />

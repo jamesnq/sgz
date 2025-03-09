@@ -28,6 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/Auth'
 import { ThemeToggle } from '@/providers/Theme/theme-toggle'
 import { cn } from '@/utilities/ui'
+import { Routes } from '@/utilities/routes'
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,
@@ -75,18 +76,14 @@ export function AuthDropdown({ className, ...props }: AuthDropdownProps) {
           }
         >
           <DropdownMenuGroup>
-            {/* <DropdownMenuItem asChild>
-              <Link href="/user/recharges">
-                <CircleDollarSign className="mr-2 size-4" aria-hidden="true" />
-                Nạp tiền
-              </Link>
-            </DropdownMenuItem> */}
-            <DropdownMenuItem asChild>
-              <Link href="/user/orders">
-                <Package className="mr-2 size-4" aria-hidden="true" />
-                Lịch sử đơn hàng
-              </Link>
-            </DropdownMenuItem>
+            {Routes.USER_NAV.map((item) => (
+              <DropdownMenuItem key={item.label} asChild>
+                <Link href={item.href}>
+                  <item.icon className="mr-2 size-4" aria-hidden="true" />
+                  {item.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuGroup>
         </React.Suspense>
         <DropdownMenuSeparator />

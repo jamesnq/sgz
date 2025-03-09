@@ -7,7 +7,7 @@ export default function UserLayout({ children }: { children: ReactNode }) {
   return (
     <Shell>
       <div className="flex flex-col md:flex-row gap-4">
-        <aside className="hidden md:block md:w-[250px] md:flex-shrink-0">
+        <aside className="hidden lg:block md:w-[250px] md:flex-shrink-0">
           <Card className="">
             <CardContent className="p-4">
               <SidebarNavClient />

@@ -1,22 +1,9 @@
 'use client'
 
+import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
-import { ShoppingCartIcon, CreditCardIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-const sidebarItems = [
-  {
-    title: 'Đơn hàng',
-    href: '/user/orders',
-    icon: ShoppingCartIcon,
-  },
-  {
-    title: 'Giao dịch',
-    href: '/user/transactions',
-    icon: CreditCardIcon,
-  },
-]
 
 export default function SidebarNavClient({
   className,
@@ -26,7 +13,7 @@ export default function SidebarNavClient({
 
   return (
     <nav className={cn('flex flex-col space-y-1', className)} {...props}>
-      {sidebarItems.map((item) => (
+      {Routes.USER_NAV.map((item) => (
         <Link
           key={item.href}
           href={item.href}
@@ -38,7 +25,7 @@ export default function SidebarNavClient({
           )}
         >
           <item.icon className="mr-2 h-4 w-4" />
-          <span>{item.title}</span>
+          <span>{item.label}</span>
         </Link>
       ))}
     </nav>

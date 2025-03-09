@@ -9,6 +9,7 @@ import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus, orderStatus } from '@/utilities/getOrderStatus'
+import { Routes } from '@/utilities/routes'
 import { useDebounce } from '@/utilities/useDebounce'
 import { ChevronLeft, ChevronRight, Eye, Pencil } from 'lucide-react'
 import Link from 'next/link'
@@ -22,6 +23,8 @@ function OrderCard({ o }: { o: Order }) {
   const image = o.productVariant.image || o.productVariant.product.image
   const variant = o.productVariant as ProductVariant
   const product = variant.product as Product
+  const productUrl = Routes.product(product.slug as string)
+  const orderUrl = Routes.order(o.id)
   return (
     <Card key={o.id}>
       <CardHeader className="p-4">
@@ -41,7 +44,7 @@ function OrderCard({ o }: { o: Order }) {
               <Media resource={image}></Media>
             </div>
             <div className="flex-1">
-              <Link href={`/products/${product.slug}`}>{variant.name || product.name}</Link>
+              <Link href={productUrl}>{variant.name || product.name}</Link>
               <div className="mt-2 flex items-center gap-2 max-md:hidden">
                 <span>Mã đơn hàng:</span>
                 <span className="-ml-1">#{o.id}</span>
@@ -59,13 +62,13 @@ function OrderCard({ o }: { o: Order }) {
             <span>x{o.quantity}</span>
           </div>
           <div className="flex flex-wrap gap-[8px] max-md:w-full md:flex-col">
-            <Link href={`/user/orders/${o.id}`}>
+            <Link href={orderUrl}>
               <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
                 <Eye size={18}></Eye>
                 <span>Chi tiết</span>
               </Button>
             </Link>
-            <Link href={`/user/orders/${o.id}#update`}>
+            <Link href={orderUrl + '#update'}>
               <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
                 <Pencil size={18}></Pencil>
                 <span>Sửa thông tin</span>
@@ -132,7 +135,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
         status,
         page: page.toString(),
       }).toString()
-      const url = `/user/orders${params ? `?${params}` : ''}`
+      const url = Routes.ORDERS + (params ? `?${params}` : '')
       router.push(url)
     })
   }, [debouncedSearch, status, page, router, search])
@@ -143,12 +146,12 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
   }
 
   return (
-    <Card className="max-md:border-0">
-      <CardHeader className="max-md:p-1">
+    <Card className="max-lg:border-0">
+      <CardHeader className="max-lg:p-1">
         <h4 className="font-bold">Lịch sử đơn hàng</h4>
         <div>Thông tin các sản phẩm bạn đã mua</div>
-        <div className="md:flex md:justify-end">
-          <div className="flex gap-2 max-md:flex-col">
+        <div className="lg:flex lg:justify-end">
+          <div className="flex gap-2 max-xl:flex-col">
             <div className="flex gap-2">
               <Button
                 className="w-full rounded-full"
@@ -175,14 +178,14 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                className="min-w-72 max-md:w-full pr-10"
+                className="min-w-72 max-lg:w-full pr-10"
                 placeholder="Mã đơn / Tên sản phẩm"
               />
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="max-md:p-1">
+      <CardContent className="max-lg:p-1">
         {isPending ? (
           <div className="flex flex-col text-sm gap-2">
             {Array(5)

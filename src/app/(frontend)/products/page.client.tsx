@@ -24,6 +24,7 @@ import { formatSold } from '@/utilities/formatSold'
 import { Loader2, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
+import { env } from '@/config'
 
 const ProductCard = ({ product }: { product: Product }) => {
   return (
@@ -98,7 +99,6 @@ const Sidebar = ({
   return (
     <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-6 mb-8 lg:mb-0">
       <div className="sticky top-24">
-        <h2 className="text-lg font-medium mb-4">Tìm kiếm</h2>
         <div className="relative mb-6">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -312,7 +312,16 @@ const PageClient = ({
 
   return (
     <Shell>
-      <h1 className="text-3xl font-bold mb-8">Sản phẩm</h1>
+      <div className="grid container items-center pb-4 max-w-6xl gap-0">
+        <div className="flex max-w-[61.25rem] flex-col md:py-6 md:pb-4 lg:py-12 lg:pb-10 mx-auto items-center gap-2 text-center">
+          <div className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
+            {env.NEXT_PUBLIC_SITE_NAME}
+          </div>
+          <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
+            Cung cấp dịch vụ nạp game và ứng dụng giá rẻ
+          </h1>
+        </div>
+      </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-6">
         {/* Sidebar for search and filters */}
