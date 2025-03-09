@@ -147,7 +147,7 @@ function RechargeCard() {
         const data = await response.json()
 
         if (data.success && data.data) {
-          setFeeData(data.data)
+          setFeeData(data.data.filter((item: FeeData) => item.fees <= 20))
 
           // Calculate min and max fees for each telco - completely restructured to avoid TypeScript errors
           const feeRanges: Record<string, { min: number; max: number }> = {}
