@@ -2,6 +2,7 @@ import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import {
   DefaultNodeTypes,
   SerializedBlockNode,
+  SerializedInlineBlockNode,
   SerializedLinkNode,
 } from '@payloadcms/richtext-lexical'
 import { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical'
@@ -11,23 +12,23 @@ import {
   RichText as RichTextWithoutBlocks,
 } from '@payloadcms/richtext-lexical/react'
 
-import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
-
 import { BannerBlock } from '@/blocks/Banner/Component'
+import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
 import type {
   BannerBlock as BannerBlockProps,
-  // CallToActionBlock as CTABlockProps,
+  InlineDialog as InlineDialogProps,
   MediaBlock as MediaBlockProps,
   TableBlock as TableBlockProps,
 } from '@/payload-types'
-// import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 
-import { cn } from '@/utilities/ui'
 import { TableBlock } from '@/blocks/TableBlock/Component'
+import { cn } from '@/utilities/ui'
+import { InlineDialog } from '@/blocks/InlineDialog/Component'
 
 type NodeTypes =
   | DefaultNodeTypes
   | SerializedBlockNode<MediaBlockProps | BannerBlockProps | CodeBlockProps | TableBlockProps>
+  | SerializedInlineBlockNode<InlineDialogProps>
 
 const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
   const { value, relationTo } = linkNode.fields.doc!
@@ -41,6 +42,9 @@ const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
 const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => ({
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
+  inlineBlocks: {
+    inlineDialog: ({ node }) => <InlineDialog {...node.fields} />,
+  },
   blocks: {
     banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
     mediaBlock: ({ node }) => (
