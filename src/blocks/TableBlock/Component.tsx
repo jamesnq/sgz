@@ -76,7 +76,7 @@ export const TableBlock: React.FC<Props> = (props) => {
   return (
     <div className="rounded-md border overflow-auto">
       {caption && <div className="mb-2 ml-2 text-lg font-semibold">{caption}</div>}
-      <div className="relative w-full sm:w-64 mb-2 ml-2 flex items-center">
+      <div className="relative w-64 ml-2 flex items-center">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Filter className="h-4 w-4 text-muted-foreground" />
         </div>
