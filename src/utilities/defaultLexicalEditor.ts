@@ -1,6 +1,7 @@
 import { Banner } from '@/blocks/Banner/config'
 import { Code } from '@/blocks/Code/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
+import { TableBlock } from '@/blocks/TableBlock/config'
 import {
   BlocksFeature,
   FixedToolbarFeature,
@@ -17,7 +18,7 @@ export const defaultLexicalEditor = lexicalEditor({
       ...rootFeatures,
       ...defaultFeatures,
       HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-      BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+      BlocksFeature({ blocks: [Banner, Code, MediaBlock, TableBlock] }),
       FixedToolbarFeature(),
       InlineToolbarFeature(),
       HorizontalRuleFeature(),

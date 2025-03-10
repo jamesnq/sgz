@@ -1072,6 +1072,36 @@ export interface MediaBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableBlock".
+ */
+export interface TableBlock {
+  caption?: string | null;
+  showRowNumbers?: boolean | null;
+  columns?:
+    | {
+        header: string;
+        isSecret?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  rows?:
+    | {
+        rowName?: string | null;
+        cells?:
+          | {
+              content?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
