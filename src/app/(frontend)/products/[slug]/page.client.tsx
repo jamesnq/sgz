@@ -402,7 +402,7 @@ function Screen() {
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
         <div className="flex-[2] flex-col space-y-2 max-md:order-2">
-          {currentVariant?.important?.root.direction && (
+          {currentVariant?.important?.root.children.length && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">
@@ -428,7 +428,7 @@ function Screen() {
                 />
               ))}
           </div>
-          {product.description?.root.direction && (
+          {product.description?.root.children.length && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">
