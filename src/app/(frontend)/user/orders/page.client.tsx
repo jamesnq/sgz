@@ -29,14 +29,17 @@ function OrderCard({ o }: { o: Order }) {
     <Card key={o.id}>
       <CardHeader className="p-4">
         <div className="flex justify-between">
-          <div>{formatOrderDate(new Date(o.createdAt))}</div>
-          <div>{`Bằng số dư ${formatPrice(o.totalPrice, 'VND')}`}</div>
+          <div className="text-muted-foreground">{formatOrderDate(new Date(o.createdAt))}</div>
+          <div>
+            <span className="mr-1 text-muted-foreground">Bằng số dư</span>
+            <span>{formatPrice(o.totalPrice, 'VND')}</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="flex items-start max-md:flex-col md:items-center gap-4">
+        <div className="flex items-start max-md:flex-col md:items-center gap-2">
           <div className="md:hidden space-x-2">
-            <span className="md:hidden">Mã DH:</span>
+            <span className="text-muted-foreground md:hidden">Mã DH:</span>
             <span className="-ml-1">#{o.id}</span>
           </div>
           <div className="flex items-start gap-2">
@@ -46,7 +49,7 @@ function OrderCard({ o }: { o: Order }) {
             <div className="flex-1">
               <Link href={productUrl}>{variant.name || product.name}</Link>
               <div className="mt-2 flex items-center gap-2 max-md:hidden">
-                <span>Mã đơn hàng:</span>
+                <span className="text-muted-foreground">Mã đơn hàng:</span>
                 <span className="-ml-1">#{o.id}</span>
               </div>
               <div className="mt-2 flex items-center gap-2">
@@ -61,7 +64,7 @@ function OrderCard({ o }: { o: Order }) {
             <div>{formatPrice(variant.price, 'VND')}</div>
             <span>x{o.quantity}</span>
           </div>
-          <div className="flex flex-wrap gap-[8px] max-md:w-full md:flex-col">
+          <div className="flex flex-wrap gap-[8px] max-md:w-full flex-col">
             <Link href={orderUrl}>
               <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
                 <Eye size={18}></Eye>
@@ -149,7 +152,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
     <Card className="max-lg:border-0">
       <CardHeader className="max-lg:p-1">
         <h4 className="font-bold">Lịch sử đơn hàng</h4>
-        <div>Thông tin các sản phẩm bạn đã mua</div>
+        <div className="text-muted-foreground">Thông tin các sản phẩm bạn đã mua</div>
         <div className="lg:flex lg:justify-end">
           <div className="flex gap-2 max-xl:flex-col">
             <div className="flex gap-2">
