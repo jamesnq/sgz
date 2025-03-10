@@ -44,6 +44,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       orderedBy: true,
       productVariant: true,
       formSubmission: true,
+      deliveryContent: true,
     },
   })
 

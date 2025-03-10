@@ -519,6 +519,24 @@ export interface Order {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Delivery content like key, account,...
+   */
+  deliveryContent?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   status: 'IN_QUEUE' | 'IN_PROCESS' | 'USER_UPDATE' | 'COMPLETED' | 'REFUND';
   orderedBy: number | User;
   handlers: (number | User)[];
@@ -821,6 +839,7 @@ export interface ProductVariantsSelect<T extends boolean = true> {
 export interface OrdersSelect<T extends boolean = true> {
   note?: T;
   message?: T;
+  deliveryContent?: T;
   status?: T;
   orderedBy?: T;
   handlers?: T;

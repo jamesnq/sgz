@@ -94,11 +94,10 @@ export const TableBlock: React.FC<Props> = (props) => {
           />
         )}
       </div>
-      <Table className={cn(className)}>
+      <Table className={cn(className, 'm-0 mt-2')}>
         <TableHeader>
           <TableRow>
             {showRowNumbers && <TableHead>#</TableHead>}
-
             {safeColumns.map((column, index) => (
               <TableHead key={`column-${column?.id || index}`}>
                 <div className="flex items-center justify-between gap-2">

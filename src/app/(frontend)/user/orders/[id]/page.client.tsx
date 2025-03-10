@@ -71,6 +71,7 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
 }
 
 const PageClient = ({ order }: { order: Order }) => {
+  console.log('🚀 ~ PageClient ~ order:', order)
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
 
@@ -91,11 +92,23 @@ const PageClient = ({ order }: { order: Order }) => {
           <OrderCard order={order}></OrderCard>
         </div>
         <div className="flex-[2] flex flex-col gap-4">
-          {order.message && (
+          {order.message?.root.children.length && (
             <Card>
               <CardHeader className="font-bold pb-0">Lời nhắn</CardHeader>
               <CardContent>
                 <RichText data={order.message} enableGutter={false}></RichText>
+              </CardContent>
+            </Card>
+          )}
+          {order.deliveryContent?.root.children.length && (
+            <Card>
+              <CardHeader className="font-bold pb-0">Thông tin giao hàng</CardHeader>
+              <CardContent className="pt-0">
+                <RichText
+                  className="pt-0"
+                  data={order.deliveryContent}
+                  enableGutter={false}
+                ></RichText>
               </CardContent>
             </Card>
           )}

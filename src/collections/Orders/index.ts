@@ -174,6 +174,19 @@ export const Orders: CollectionConfig = {
       },
     },
     {
+      name: 'deliveryContent',
+      type: 'richText',
+      admin: {
+        description: 'Delivery content like key, account,...',
+      },
+      editor: defaultLexicalEditor,
+      access: {
+        create: hasRole(['admin', 'staff']),
+        read: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       defaultValue: 'IN_QUEUE',
