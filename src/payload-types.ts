@@ -1105,9 +1105,9 @@ export interface TableBlock {
  * via the `definition` "InlineDialog".
  */
 export interface InlineDialog {
-  buttonText: string;
-  dialogTitle: string;
-  content: {
+  displayText?: string | null;
+  dialogTitle?: string | null;
+  content?: {
     root: {
       type: string;
       children: {
@@ -1121,8 +1121,7 @@ export interface InlineDialog {
       version: number;
     };
     [k: string]: unknown;
-  };
-  maxWidth?: ('sm' | 'md' | 'lg' | 'xl') | null;
+  } | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'inlineDialog';

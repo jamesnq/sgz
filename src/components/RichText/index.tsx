@@ -43,11 +43,15 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) 
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
   inlineBlocks: {
-    inlineDialog: ({ node }) => <InlineDialog {...node.fields} />,
+    inlineDialog: ({ node }: { node: SerializedInlineBlockNode<{ blockType: string }> }) => (
+      <InlineDialog {...(node.fields as InlineDialogProps)} />
+    ),
   },
   blocks: {
-    banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
-    mediaBlock: ({ node }) => (
+    banner: ({ node }: { node: SerializedBlockNode<BannerBlockProps> }) => (
+      <BannerBlock className="col-start-2 mb-4" {...node.fields} />
+    ),
+    mediaBlock: ({ node }: { node: SerializedBlockNode<MediaBlockProps> }) => (
       <MediaBlock
         className="col-start-1 col-span-3"
         imgClassName="m-0"
@@ -57,8 +61,12 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) 
         disableInnerContainer={true}
       />
     ),
-    code: ({ node }) => <CodeBlock className="col-start-2" {...node.fields} />,
-    tableBlock: ({ node }) => <TableBlock className="col-start-2" {...node.fields} />,
+    code: ({ node }: { node: SerializedBlockNode<CodeBlockProps> }) => (
+      <CodeBlock className="col-start-2" {...node.fields} />
+    ),
+    tableBlock: ({ node }: { node: SerializedBlockNode<TableBlockProps> }) => (
+      <TableBlock className="col-start-2" {...node.fields} />
+    ),
   },
 })
 
@@ -73,7 +81,7 @@ export default function RichText(props: Props) {
   const { className, enableProse = true, enableGutter = true, overrideClassName, ...rest } = props
   return (
     <RichTextWithoutBlocks
-      converters={jsxConverters}
+      converters={jsxConverters as any}
       className={cn(
         !overrideClassName && {
           'container ': enableGutter,
