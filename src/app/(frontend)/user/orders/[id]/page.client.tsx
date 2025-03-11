@@ -71,7 +71,6 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
 }
 
 const PageClient = ({ order }: { order: Order }) => {
-  console.log('🚀 ~ PageClient ~ order:', order)
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
 
