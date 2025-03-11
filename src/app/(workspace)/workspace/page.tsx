@@ -44,9 +44,9 @@ import {
 } from 'react'
 
 interface ColumnConfig {
-  title: string;
-  dropOnly: boolean;
-  allowedTransitions: Array<Order['status']>;
+  title: string
+  dropOnly: boolean
+  allowedTransitions?: Order['status'][]
 }
 
 interface DraggableContextType {
@@ -173,32 +173,29 @@ function DraggableProvider({ children }: { children: ReactNode }) {
   )
 
   // Define column configurations centrally
-  const columnConfigs = useMemo(
+  const columnConfigs: Record<Order['status'], ColumnConfig> = useMemo(
     () => ({
-      IN_QUEUE: { 
-        title: 'Chờ xử lý', 
+      IN_QUEUE: {
+        title: 'Chờ xử lý',
         dropOnly: false,
-        allowedTransitions: ['IN_PROCESS', 'USER_UPDATE', 'COMPLETED', 'REFUND'] as Array<Order['status']>
       },
-      IN_PROCESS: { 
-        title: 'Đang xử lý', 
+      IN_PROCESS: {
+        title: 'Đang xử lý',
         dropOnly: false,
-        allowedTransitions: ['IN_QUEUE', 'USER_UPDATE', 'COMPLETED', 'REFUND'] as Array<Order['status']>
       },
-      USER_UPDATE: { 
-        title: 'Chờ cập nhật', 
+      USER_UPDATE: {
+        title: 'Chờ cập nhật',
         dropOnly: false,
-        allowedTransitions: ['IN_QUEUE', 'IN_PROCESS', 'COMPLETED', 'REFUND'] as Array<Order['status']>
       },
-      COMPLETED: { 
-        title: 'Hoàn thành', 
+      COMPLETED: {
+        title: 'Hoàn thành',
         dropOnly: false,
-        allowedTransitions: ['REFUND'] as Array<Order['status']>
+        allowedTransitions: ['REFUND'] as Order['status'][],
       },
-      REFUND: { 
-        title: 'Hoàn trả', 
+      REFUND: {
+        title: 'Hoàn trả',
         dropOnly: true,
-        allowedTransitions: [] as Array<Order['status']>
+        allowedTransitions: [] as Order['status'][],
       },
     }),
     [],
@@ -208,12 +205,15 @@ function DraggableProvider({ children }: { children: ReactNode }) {
   const isTransitionAllowed = useCallback(
     (fromStatus: Order['status'], toStatus: Order['status']) => {
       // If the statuses are the same, it's always allowed (no change)
-      if (fromStatus === toStatus) return true;
-      
+      if (fromStatus === toStatus) return true
+
+      // If allowedTransitions is undefined, all transitions are allowed
+      if (columnConfigs[fromStatus].allowedTransitions === undefined) return true
+
       // Check if the transition is allowed based on the configuration
-      return columnConfigs[fromStatus].allowedTransitions.includes(toStatus);
+      return columnConfigs[fromStatus].allowedTransitions!.includes(toStatus)
     },
-    [columnConfigs]
+    [columnConfigs],
   )
 
   // Function to show confirmation dialog
@@ -331,7 +331,7 @@ const DraggableBoard = () => {
 export default DraggableBoard
 
 const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType) => void }) => {
-  const { searchQuery, setSearchQuery, columnConfigs, currentDragStatus } = useDraggable()
+  const { searchQuery, setSearchQuery, columnConfigs } = useDraggable()
 
   return (
     <Shell>
@@ -392,13 +392,13 @@ type BoardColumnProps = {
 
 const BoardColumn = memo(
   ({ title, column: status, dropOnly = false, setPendingDrop }: BoardColumnProps) => {
-    const { 
-      getOrdersByStatus, 
-      moveOrder, 
-      refetch, 
-      isTransitionAllowed, 
-      currentDragStatus, 
-      setCurrentDragStatus 
+    const {
+      getOrdersByStatus,
+      moveOrder,
+      refetch,
+      isTransitionAllowed,
+      currentDragStatus,
+      setCurrentDragStatus,
     } = useDraggable()
     const [active, setActive] = useState(false)
     const [isProcessingAll, setIsProcessingAll] = useState(false)
@@ -407,9 +407,9 @@ const BoardColumn = memo(
 
     // Determine if this column is a valid drop target based on the current drag status
     const isValidDropTarget = useMemo(() => {
-      if (!currentDragStatus) return true;
-      return isTransitionAllowed(currentDragStatus, status);
-    }, [currentDragStatus, isTransitionAllowed, status]);
+      if (!currentDragStatus) return true
+      return isTransitionAllowed(currentDragStatus, status)
+    }, [currentDragStatus, isTransitionAllowed, status])
 
     useEffect(() => {
       const handleConfirmDrop = (e: CustomEvent<{ orderId: string; status: Order['status'] }>) => {
@@ -425,32 +425,35 @@ const BoardColumn = memo(
       }
     }, [moveOrder, status])
 
-    const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, order: Order) => {
-      e.dataTransfer.setData('orderId', order.id.toString())
-      e.dataTransfer.setData('orderStatus', order.status)
-      
-      // Set the current drag status in the context
-      setCurrentDragStatus(order.status);
-      
-      const container = document.querySelector('[data-draggable-context]')
-      if (container) {
-        container.setAttribute('data-order-id', order.id.toString())
-        container.setAttribute('data-order-status', order.status)
-      }
-    }, [setCurrentDragStatus])
+    const handleDragStart = useCallback(
+      (e: React.DragEvent<HTMLDivElement>, order: Order) => {
+        e.dataTransfer.setData('orderId', order.id.toString())
+        e.dataTransfer.setData('orderStatus', order.status)
+
+        // Set the current drag status in the context
+        setCurrentDragStatus(order.status)
+
+        const container = document.querySelector('[data-draggable-context]')
+        if (container) {
+          container.setAttribute('data-order-id', order.id.toString())
+          container.setAttribute('data-order-status', order.status)
+        }
+      },
+      [setCurrentDragStatus],
+    )
 
     const handleDragEnd = useCallback(
       (e: React.DragEvent<HTMLDivElement>) => {
         const orderId = e.dataTransfer.getData('orderId')
         const fromStatus = e.dataTransfer.getData('orderStatus') as Order['status']
-        
+
         // Reset the drag status
-        setCurrentDragStatus(null);
-        setActive(false);
+        setCurrentDragStatus(null)
+        setActive(false)
 
         // Check if the transition is allowed
         if (!isTransitionAllowed(fromStatus, status)) {
-          return;
+          return
         }
 
         if (dropOnly) {
@@ -459,20 +462,31 @@ const BoardColumn = memo(
           moveOrder(orderId, status)
         }
       },
-      [dropOnly, moveOrder, setPendingDrop, status, title, isTransitionAllowed, setCurrentDragStatus],
+      [
+        dropOnly,
+        moveOrder,
+        setPendingDrop,
+        status,
+        title,
+        isTransitionAllowed,
+        setCurrentDragStatus,
+      ],
     )
 
-    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      
-      // Only set active state if this is a valid drop target
-      if (isValidDropTarget) {
-        e.dataTransfer.dropEffect = 'move'
-        setActive(true)
-      } else {
-        e.dataTransfer.dropEffect = 'none'
-      }
-    }, [isValidDropTarget])
+    const handleDragOver = useCallback(
+      (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+
+        // Only set active state if this is a valid drop target
+        if (isValidDropTarget) {
+          e.dataTransfer.dropEffect = 'move'
+          setActive(true)
+        } else {
+          e.dataTransfer.dropEffect = 'none'
+        }
+      },
+      [isValidDropTarget],
+    )
 
     const handleDragLeave = useCallback(() => {
       setActive(false)
@@ -541,10 +555,10 @@ const BoardColumn = memo(
     }
 
     return (
-      <Card 
-        className={`w-56 p-2 shrink-0 transition-opacity duration-200 
-          ${dropOnly ? 'opacity-90' : ''} 
-          ${currentDragStatus && !isValidDropTarget ? 'opacity-50 cursor-not-allowed' : ''} 
+      <Card
+        className={`w-56 p-2 shrink-0 transition-opacity duration-200
+          ${dropOnly ? 'opacity-90' : ''}
+          ${currentDragStatus && !isValidDropTarget ? 'opacity-50 cursor-not-allowed' : ''}
           ${active ? 'ring-2 ring-primary' : ''}`}
       >
         <div className="mb-3 flex items-center justify-between">
