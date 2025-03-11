@@ -18,3 +18,7 @@ export const UpdateFormSubmissionSchema = z.object({
   id: z.coerce.number(),
   shippingFields: z.any(),
 })
+
+export const autoProcessOrderSchema = z.object({
+  orderId: z.number(),
+})

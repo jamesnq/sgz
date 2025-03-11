@@ -19,26 +19,29 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-types'
+import { cn } from '@/utilities/ui'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatTimeAgo } from '@/utilities/formatTimeAgo'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
-import payloadClient from '@/utilities/payloadClient'
-import { cn } from '@/utilities/ui'
-import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
+import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-types'
 import {
   createContext,
   memo,
-  ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  ReactNode,
   useState,
 } from 'react'
+import { motion } from 'framer-motion'
+import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
+import { toast } from 'react-toastify'
+import { useQuery } from '@tanstack/react-query'
+import payloadClient from '@/utilities/payloadClient'
+import { Bot } from 'lucide-react'
 
 interface DraggableContextType {
   orders: Order[]
@@ -112,7 +115,7 @@ const useOrders = (queries: OrderQuery[]) => {
       )
       return res
     },
-    select: (data) => data.map((doc) => doc.docs).flat() as Order[],
+    select: (data: any[]) => data.map((doc: any) => doc.docs).flat() as Order[],
   })
   return { data, refetch }
 }
@@ -429,6 +432,8 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
   const { updatingOrderId, moveOrder, columnConfigs, showConfirmation } = useDraggable()
   const isUpdating = updatingOrderId === order.id.toString()
   const [isOpen, setIsOpen] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const { refetch } = useOrders(DEFAULT_QUERIES)
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -439,6 +444,35 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
       }
     },
     [isUpdating],
+  )
+
+  const handleAutoProcess = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (isProcessing || isUpdating) return
+
+      setIsProcessing(true)
+      try {
+        const result = await autoProcessOrderAction({ orderId: order.id })
+        if (result?.data?.success) {
+          toast.success(result?.data.message)
+          // Fetch orders after successful processing
+          refetch()
+        }
+      } catch (error: any) {
+        // Handle error from ServerNotification
+        if (error.serverError?.notify) {
+          toast.error(error.serverError.message)
+        } else {
+          toast.error('Đã xảy ra lỗi khi xử lý đơn hàng')
+        }
+      } finally {
+        setIsProcessing(false)
+      }
+    },
+    [order.id, isProcessing, isUpdating, refetch],
   )
 
   const handlers = useMemo(() => {
@@ -515,9 +549,27 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               <CardHeader className="p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">#{order.id}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatOrderDate(order.createdAt)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {order.status == 'IN_QUEUE' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={handleAutoProcess}
+                        disabled={isProcessing || isUpdating}
+                        title="Xử lý tự động"
+                      >
+                        {isProcessing ? (
+                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        ) : (
+                          <Bot></Bot>
+                        )}
+                      </Button>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {formatOrderDate(order.createdAt)}
+                    </span>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-3 pt-0">
