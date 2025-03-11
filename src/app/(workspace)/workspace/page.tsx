@@ -41,7 +41,7 @@ import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
 import { toast } from 'react-toastify'
 import { useQuery } from '@tanstack/react-query'
 import payloadClient from '@/utilities/payloadClient'
-import { Bot } from 'lucide-react'
+import { Bot, Loader2 } from 'lucide-react'
 
 interface DraggableContextType {
   orders: Order[]
@@ -333,7 +333,6 @@ Board.displayName = 'Board'
 type BoardColumnProps = {
   title: React.ReactNode
   column: Order['status']
-
   dropOnly?: boolean
   setPendingDrop: (
     drop: { orderId: string; status: Order['status']; columnTitle: React.ReactNode } | null,
@@ -344,6 +343,9 @@ const BoardColumn = memo(
   ({ title, column: status, dropOnly = false, setPendingDrop }: BoardColumnProps) => {
     const { getOrdersByStatus, moveOrder } = useDraggable()
     const [active, setActive] = useState(false)
+    const [isProcessingAll, setIsProcessingAll] = useState(false)
+    const [processedCount, setProcessedCount] = useState(0)
+    const [totalToProcess, setTotalToProcess] = useState(0)
 
     useEffect(() => {
       const handleConfirmDrop = (e: CustomEvent<{ orderId: string; status: Order['status'] }>) => {
@@ -383,6 +385,7 @@ const BoardColumn = memo(
 
     const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
       setActive(true)
     }, [])
 
@@ -392,12 +395,100 @@ const BoardColumn = memo(
 
     const orders = useMemo(() => getOrdersByStatus(status), [getOrdersByStatus, status])
 
+    const handleProcessAllOrders = async () => {
+      if (isProcessingAll) return
+
+      try {
+        const ordersToProcess = getOrdersByStatus('IN_QUEUE')
+        if (ordersToProcess.length === 0) {
+          toast.info('Không có đơn hàng nào cần xử lý')
+          return
+        }
+
+        setIsProcessingAll(true)
+        setProcessedCount(0)
+        setTotalToProcess(ordersToProcess.length)
+
+        // Process orders one by one
+        let successCount = 0
+        let errorCount = 0
+
+        for (const order of ordersToProcess) {
+          try {
+            const result = await autoProcessOrderAction({
+              orderId: order.id,
+            })
+
+            if (result && result.data?.success) {
+              successCount++
+            } else {
+              errorCount++
+            }
+
+            // Update progress
+            setProcessedCount((prev) => prev + 1)
+          } catch (error) {
+            console.error(`Error processing order ${order.id}:`, error)
+            errorCount++
+            setProcessedCount((prev) => prev + 1)
+          }
+        }
+
+        // Show final result
+        if (successCount > 0) {
+          toast.success(
+            `Đã xử lý ${successCount} đơn hàng thành công${errorCount > 0 ? `, ${errorCount} lỗi` : ''}`,
+          )
+
+          // Refresh the board data after a short delay
+          setTimeout(() => {
+            window.location.reload()
+          }, 500)
+        } else if (errorCount > 0) {
+          toast.error(`Lỗi khi xử lý ${errorCount} đơn hàng`)
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Lỗi khi xử lý đơn hàng')
+      } finally {
+        setIsProcessingAll(false)
+        setProcessedCount(0)
+        setTotalToProcess(0)
+      }
+    }
+
     return (
       <Card className={`w-56 p-2 shrink-0 ${dropOnly ? 'opacity-90' : ''}`}>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className={`font-bold`}>{title}</h3>
+          <h3 className="text-sm font-medium">{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
         </div>
+
+        {status === 'IN_QUEUE' && (
+          <div className="mb-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              onClick={handleProcessAllOrders}
+              disabled={isProcessingAll || getOrdersByStatus('IN_QUEUE').length === 0}
+            >
+              {isProcessingAll ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {processedCount > 0
+                    ? `Đang xử lý (${processedCount}/${totalToProcess})`
+                    : 'Đang xử lý...'}
+                </>
+              ) : (
+                <>
+                  <Bot className="mr-2 h-4 w-4" />
+                  Xử lý tất cả
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
         <div
           onDrop={handleDragEnd}
           onDragOver={handleDragOver}
@@ -456,8 +547,8 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
       setIsProcessing(true)
       try {
         const result = await autoProcessOrderAction({ orderId: order.id })
-        if (result?.data?.success) {
-          toast.success(result?.data.message)
+        if (result && result.data?.success) {
+          toast.success(result.data.message)
           // Fetch orders after successful processing
           refetch()
         }
