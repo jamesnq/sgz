@@ -2,6 +2,7 @@ import { Order } from '@/payload-types'
 import payloadConfig from '@payload-config'
 import { CollectionAfterChangeHook, getPayload } from 'payload'
 import { orderProcessingService } from '../orderProcessingService'
+import { env } from '@/config'
 
 export const autoProcessOrder = async (orderId: number) => {
   try {
@@ -17,7 +18,7 @@ export const autoProcessOrder = async (orderId: number) => {
           collection: 'orders',
           id: orderId,
           data: result.data,
-          user: 1,
+          user: env.AUTO_PROCESS_USER_ID,
         })
 
         // Log the successful processing
