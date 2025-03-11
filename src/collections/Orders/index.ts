@@ -10,14 +10,14 @@ import {
 import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
+import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
 import { novu } from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
-import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 import { after } from 'next/server'
-import { transactions, users } from '@/payload-generated-schema'
+import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -36,8 +36,9 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
 
   const user = req.user
   if (!user) throw new ConflictsError('Not authenticated')
-  if (!(data.handlers as number[]).includes(user.id)) {
-    ;(data.handlers as number[]).push(user.id)
+  const userId = typeof user === 'object' ? user.id : user
+  if (!(data.handlers as number[]).includes(userId)) {
+    ;(data.handlers as number[]).push(userId)
   }
   return data
 }
@@ -49,6 +50,8 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
 }) => {
   if (operation !== 'update' || !previousDoc) return
   const user = req.user
+  if (!user) throw new ConflictsError('Not authenticated')
+  const userId = typeof user === 'object' ? user.id : user
   if (previousDoc.status != doc.status) {
     if (doc.status === 'USER_UPDATE') {
       after(async () => {
@@ -68,7 +71,7 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
     if (
       previousDoc.status === 'USER_UPDATE' &&
       doc.status != 'USER_UPDATE' &&
-      user?.id == doc.orderedBy
+      userId == doc.orderedBy
     ) {
       after(async () => {
         await novu.trigger({

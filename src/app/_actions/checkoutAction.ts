@@ -1,15 +1,16 @@
 'use server'
+import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
+import { novu } from '@/services/novu.service'
+import { autoProcessOrder } from '@/services/orderProcessing'
+import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
+import { after } from 'next/server'
 import { getPayload } from 'payload'
 import { CheckoutSchema } from './schema'
-import { after } from 'next/server'
-import { novu } from '@/services/novu.service'
-import { formatOrderDate } from '@/utilities/formatOrderDate'
-import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 
 export const checkoutAction = authActionClient
   .schema(CheckoutSchema)
@@ -30,6 +31,7 @@ export const checkoutAction = authActionClient
         max: true,
         form: true,
         product: true,
+        metadata: true,
       },
     })
     if (!pv) {
@@ -136,5 +138,14 @@ export const checkoutAction = authActionClient
         }),
       ])
     })
+    if (
+      pv.metadata &&
+      typeof pv.metadata === 'object' &&
+      'isAuto' in pv.metadata &&
+      pv.metadata.isAuto &&
+      'type' in pv.metadata
+    ) {
+      await autoProcessOrder(order.id)
+    }
     return { order }
   })

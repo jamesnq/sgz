@@ -1,81 +1,76 @@
 import type { TableBlock } from '@/payload-types'
 
+interface TableOptions {
+  caption?: string
+  showRowNumbers?: boolean
+  blockName?: string
+}
+
+interface Column {
+  header: string
+  isSecret?: boolean
+}
+
+interface Cell {
+  content: string
+}
+
+interface Row {
+  rowName?: string
+  cells: Cell[]
+}
+
+interface TableBuilderArgs {
+  columns: Column[]
+  rows: Row[]
+  options?: TableOptions
+}
+
 /**
  * Helper function to create a table block for the rich text editor
- * @param columns Array of column headers
- * @param rows Array of row data
- * @param options Additional table options
+ * @param args Object containing columns, rows, and options
  * @returns A TableBlock object ready to be used in a rich text field
  */
-export const tableBlockBuilder = (
-  columns: Array<{ header: string; isSecret?: boolean }>,
-  rows: Array<{ rowName?: string; cells: Array<{ content: string }> }>,
-  options?: {
-    caption?: string
-    showRowNumbers?: boolean
-    blockName?: string
-  },
-): TableBlock => {
+export const tableBlockBuilder = ({
+  columns,
+  rows,
+  options = {},
+}: TableBuilderArgs): TableBlock => {
   return {
     blockType: 'tableBlock',
-    caption: options?.caption || null,
-    showRowNumbers: options?.showRowNumbers || false,
-    blockName: options?.blockName || null,
-    columns: columns.map((column) => ({
-      header: column.header,
-      isSecret: column.isSecret || false,
-    })),
-    rows: rows.map((row) => ({
-      rowName: row.rowName || null,
-      cells: row.cells.map((cell) => ({
-        content: cell.content || null,
-      })),
+    caption: options.caption || null,
+    showRowNumbers: options.showRowNumbers || false,
+    blockName: options.blockName || null,
+    columns: columns.map(({ header, isSecret = false }) => ({ header, isSecret })),
+    rows: rows.map(({ rowName = null, cells }) => ({
+      rowName,
+      cells: cells.map(({ content }) => ({ content: content || null })),
     })),
   }
 }
 
 /**
  * Creates a table block node for use in a rich text document structure
- * @param columns Array of column headers
- * @param rows Array of row data
- * @param options Additional table options
+ * @param args Object containing columns, rows, and options
  * @returns A block node containing a TableBlock
  */
-export const createTableBlockNode = (
-  columns: Array<{ header: string; isSecret?: boolean }>,
-  rows: Array<{ rowName?: string; cells: Array<{ content: string }> }>,
-  options?: {
-    caption?: string
-    showRowNumbers?: boolean
-    blockName?: string
-  },
-) => {
+export const createTableBlockNode = (args: TableBuilderArgs) => {
   return {
     type: 'block',
-    fields: tableBlockBuilder(columns, rows, options),
+    fields: tableBlockBuilder(args),
   }
 }
 
 /**
  * Creates a complete rich text document structure with a table block
- * @param columns Array of column headers
- * @param rows Array of row data
- * @param options Additional table options
+ * @param args Object containing columns, rows, and options
  * @returns A complete rich text document structure with a table block
  */
-export const createRichTextWithTable = (
-  columns: Array<{ header: string; isSecret?: boolean }>,
-  rows: Array<{ rowName?: string; cells: Array<{ content: string }> }>,
-  options?: {
-    caption?: string
-    showRowNumbers?: boolean
-    blockName?: string
-  },
-) => {
+export const createRichTextWithTable = (args: TableBuilderArgs) => {
   return {
     root: {
       type: 'root',
-      children: [createTableBlockNode(columns, rows, options)],
+      children: [createTableBlockNode(args)],
     },
   }
 }
