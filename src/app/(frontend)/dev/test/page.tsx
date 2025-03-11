@@ -1,14 +1,13 @@
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+// import configPromise from '@payload-config'
+// import { getPayload } from 'payload'
 
-import { createRichTextWithTable } from '@/utilities/RichTextHelper'
 import PageClient from './page.client'
 
 export default async function Page() {
-  const { headers: nextHeaders } = await import('next/headers')
-  const headers = await nextHeaders()
-  const payload = await getPayload({ config: configPromise })
-  const { user } = await payload.auth({ headers })
+  // const { headers: nextHeaders } = await import('next/headers')
+  // const headers = await nextHeaders()
+  // const payload = await getPayload({ config: configPromise })
+  // const { user } = await payload.auth({ headers })
 
   // const tableBlock = createRichTextWithTable(
   //   [{ header: 'Column 1' }, { header: 'Column 2' }],
