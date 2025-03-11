@@ -14,14 +14,14 @@ export const Providers: React.FC<{
   return (
     <ReactQueryProvider>
       <AuthProvider>
-        <ThemeProvider>
-          <NuqsAdapter>
+        <NuqsAdapter>
+          <ThemeProvider>
             <HeaderThemeProvider>
               <ClientProviders>{children}</ClientProviders>
               <ChatwootLoader />
             </HeaderThemeProvider>
-          </NuqsAdapter>
-        </ThemeProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
       </AuthProvider>
     </ReactQueryProvider>
   )
