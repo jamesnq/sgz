@@ -16,24 +16,24 @@ export class SteamWalletProcessor implements OrderProcessor {
   async processOrder(order: Order): Promise<ProcessResult> {
     try {
       // Validate the metadata
-      const metadataValidate = this.validateMetadata(order)
-      if (!metadataValidate.success) {
-        return metadataValidate
+      const { metadata, ...result } = this.validateMetadata(order)
+      if (!result.success) {
+        return result
       }
 
       // Ensure metadata.data is defined before using it
-      if (!metadataValidate.data) {
+      if (!metadata) {
         return {
           success: false,
-          message: 'Invalid metadata: data is undefined after validation',
+          message: 'Invalid metadata: metadata is undefined after validation',
         }
       }
-      const metadata = metadataValidate.data
+
       // Simulate calling a third-party API to purchase the Steam Wallet code
       const steamCode = await this.purchaseSteamWalletCode(metadata)
 
       // Create delivery content with the code
-      const deliveryContent = createRichTextWithTable({
+      const deliveryContent: any = createRichTextWithTable({
         columns: [{ header: 'Steam Code' }, { header: 'Region' }, { header: 'Denomination' }],
         rows: [
           {
@@ -49,8 +49,7 @@ export class SteamWalletProcessor implements OrderProcessor {
       return {
         success: true,
         message: 'Steam Wallet code purchased successfully',
-        deliveryContent,
-        status: 'COMPLETED',
+        data: { deliveryContent, status: 'COMPLETED' },
       }
     } catch (error) {
       return {
@@ -62,7 +61,7 @@ export class SteamWalletProcessor implements OrderProcessor {
 
   private validateMetadata(order: Order): {
     success: boolean
-    data?: SteamWalletMetadata
+    metadata?: SteamWalletMetadata
     message: string
   } {
     try {
@@ -85,7 +84,7 @@ export class SteamWalletProcessor implements OrderProcessor {
 
       // Validate with Zod schema
       const validatedData = SteamWalletMetadataSchema.parse(productVariant.metadata)
-      return { success: true, data: validatedData, message: 'Metadata validated successfully' }
+      return { success: true, metadata: validatedData, message: 'Metadata validated successfully' }
     } catch (error) {
       if (error instanceof z.ZodError) {
         return {

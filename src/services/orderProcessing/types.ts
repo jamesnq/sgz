@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import type { Order, ProductVariant } from '@/payload-types'
+import { z } from 'zod'
 
 // Base metadata schema that all product types will extend
 export const BaseMetadataSchema = z.object({
@@ -18,8 +18,7 @@ export interface OrderProcessor {
 export interface ProcessResult {
   success: boolean
   message: string
-  deliveryContent?: Order['deliveryContent']
-  status?: Order['status']
+  data?: Partial<Order>
 }
 
 // Helper type for safely accessing product variant metadata

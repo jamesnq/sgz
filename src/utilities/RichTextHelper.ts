@@ -62,15 +62,24 @@ export const createTableBlockNode = (args: TableBuilderArgs) => {
 }
 
 /**
+ * Creates a complete rich text document structure
+ * @param children Array of block nodes
+ * @returns A complete rich text document structure
+ */
+export const createRichTextDocument = (children: any[]) => {
+  return {
+    root: {
+      type: 'root',
+      children,
+    },
+  }
+}
+
+/**
  * Creates a complete rich text document structure with a table block
  * @param args Object containing columns, rows, and options
  * @returns A complete rich text document structure with a table block
  */
 export const createRichTextWithTable = (args: TableBuilderArgs) => {
-  return {
-    root: {
-      type: 'root',
-      children: [createTableBlockNode(args)],
-    },
-  }
+  return createRichTextDocument([createTableBlockNode(args)])
 }

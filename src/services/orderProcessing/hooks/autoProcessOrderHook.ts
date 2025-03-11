@@ -10,26 +10,13 @@ export const autoProcessOrder = async (orderId: number) => {
 
     // If processing was successful, update the order with the delivery content and status
     if (result.success) {
-      const updateData: Partial<Order> = {}
-
-      // Update delivery content if provided
-      if (result.deliveryContent) {
-        // Use proper Lexical format for rich text
-        updateData.deliveryContent = result.deliveryContent
-      }
-
-      // Update status if provided
-      if (result.status) {
-        updateData.status = result.status
-      }
-
       // Only update if there are changes to make
-      if (Object.keys(updateData).length > 0) {
+      if (result.data) {
         const payload = await getPayload({ config: payloadConfig })
         await payload.update({
           collection: 'orders',
           id: orderId,
-          data: updateData,
+          data: result.data,
           user: 1,
         })
 
