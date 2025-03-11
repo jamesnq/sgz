@@ -1,6 +1,7 @@
 'use client'
 
 import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import { useTheme } from './Theme'
 
 export const ClientProviders: React.FC<{

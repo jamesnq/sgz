@@ -47,11 +47,12 @@ interface DraggableContextType {
   orders: Order[]
   moveOrder: (orderId: string, targetStatus: Order['status']) => void
   getOrdersByStatus: (status: Order['status']) => Order[]
-  updatingOrderId: string | null
+  updatingOrderIds: string[]
   searchQuery: string
   setSearchQuery: (query: string) => void
   columnConfigs: Record<Order['status'], { title: string; dropOnly: boolean }>
   showConfirmation: (orderId: string, status: Order['status'], columnTitle: string) => void
+  refetch: () => Promise<any>
 }
 
 const DraggableContext = createContext<DraggableContextType | undefined>(undefined)
@@ -123,7 +124,7 @@ const useOrders = (queries: OrderQuery[]) => {
 function DraggableProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+  const [updatingOrderIds, setUpdatingOrderIds] = useState<string[]>([])
 
   const activeQueries = useMemo(() => createSearchQuery(searchQuery), [searchQuery])
 
@@ -139,7 +140,7 @@ function DraggableProvider({ children }: { children: ReactNode }) {
       const orderToMove = orders.find((order) => order.id.toString() === orderId)
       if (!orderToMove) return
 
-      setUpdatingOrderId(orderId)
+      setUpdatingOrderIds((prev) => [...prev, orderId])
       try {
         await payloadClient.updateById({
           collection: 'orders',
@@ -148,7 +149,7 @@ function DraggableProvider({ children }: { children: ReactNode }) {
         })
         await refetch()
       } finally {
-        setUpdatingOrderId(null)
+        setUpdatingOrderIds((prev) => prev.filter((id) => id !== orderId))
       }
     },
     [orders, refetch],
@@ -190,20 +191,22 @@ function DraggableProvider({ children }: { children: ReactNode }) {
       orders,
       moveOrder,
       getOrdersByStatus,
-      updatingOrderId,
+      updatingOrderIds,
       searchQuery,
       setSearchQuery,
       columnConfigs,
       showConfirmation,
+      refetch,
     }),
     [
       orders,
       moveOrder,
       getOrdersByStatus,
-      updatingOrderId,
+      updatingOrderIds,
       searchQuery,
       columnConfigs,
       showConfirmation,
+      refetch,
     ],
   )
 
@@ -341,7 +344,7 @@ type BoardColumnProps = {
 
 const BoardColumn = memo(
   ({ title, column: status, dropOnly = false, setPendingDrop }: BoardColumnProps) => {
-    const { getOrdersByStatus, moveOrder } = useDraggable()
+    const { getOrdersByStatus, moveOrder, refetch } = useDraggable()
     const [active, setActive] = useState(false)
     const [isProcessingAll, setIsProcessingAll] = useState(false)
     const [processedCount, setProcessedCount] = useState(0)
@@ -415,6 +418,7 @@ const BoardColumn = memo(
 
         for (const order of ordersToProcess) {
           try {
+            // TODO promise all
             const result = await autoProcessOrderAction({
               orderId: order.id,
             })
@@ -441,9 +445,7 @@ const BoardColumn = memo(
           )
 
           // Refresh the board data after a short delay
-          setTimeout(() => {
-            window.location.reload()
-          }, 500)
+          refetch()
         } else if (errorCount > 0) {
           toast.error(`Lỗi khi xử lý ${errorCount} đơn hàng`)
         }
@@ -520,11 +522,10 @@ interface OrderItemProps {
 }
 
 const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
-  const { updatingOrderId, moveOrder, columnConfigs, showConfirmation } = useDraggable()
-  const isUpdating = updatingOrderId === order.id.toString()
+  const { updatingOrderIds, moveOrder, columnConfigs, showConfirmation, refetch } = useDraggable()
+  const isUpdating = updatingOrderIds.includes(order.id.toString())
   const [isOpen, setIsOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-  const { refetch } = useOrders(DEFAULT_QUERIES)
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
