@@ -1,7 +1,7 @@
 import { Order } from '@/payload-types'
 import payloadConfig from '@payload-config'
 import { CollectionAfterChangeHook, getPayload } from 'payload'
-import { orderProcessingService } from '../OrderProcessingService'
+import { orderProcessingService } from '../orderProcessingService'
 
 export const autoProcessOrder = async (orderId: number) => {
   try {
@@ -41,12 +41,9 @@ export const autoProcessOrder = async (orderId: number) => {
  * Hook to automatically process orders when they are created or updated
  * This can be attached to the Orders collection's afterChange hook
  */
-export const autoProcessOrderHook: CollectionAfterChangeHook<Order> = async ({
-  doc,
-  operation,
-}) => {
+export const autoProcessOrderHook: CollectionAfterChangeHook<Order> = async ({ doc }) => {
   // Only process orders that are in the IN_QUEUE status
-  if (doc.status !== 'IN_QUEUE' || operation !== 'create') {
+  if (doc.status !== 'IN_QUEUE') {
     return doc
   }
 
