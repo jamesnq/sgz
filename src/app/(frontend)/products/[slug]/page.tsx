@@ -32,7 +32,7 @@ export async function generateStaticParams() {
     return params
   } catch {}
 
-  return [{ slug: '' }]
+  return []
 }
 
 type Args = {

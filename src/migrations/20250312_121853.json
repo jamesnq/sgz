@@ -1,5 +1,5 @@
 {
-  "id": "f43efda5-881f-4756-b376-9011d5f011c7",
+  "id": "2d5c7ae1-35c2-4ad0-9145-352b46f97a04",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -741,12 +741,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "meta_title": {
           "name": "meta_title",
           "type": "varchar",
@@ -1201,6 +1195,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp(3) with time zone",
@@ -1358,6 +1358,12 @@
         },
         "message": {
           "name": "message",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_content": {
+          "name": "delivery_content",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
