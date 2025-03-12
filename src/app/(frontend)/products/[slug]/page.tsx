@@ -11,26 +11,25 @@ import PageClient from './page.client'
 
 export const revalidate = 3600
 
-// TODO here
-// export async function generateStaticParams() {
-//   const payload = await getPayload({ config: configPromise })
-//   const products = await payload.find({
-//     collection: 'products',
-//     draft: false,
-//     limit: 1000,
-//     overrideAccess: false,
-//     pagination: false,
-//     select: {
-//       slug: true,
-//     },
-//   })
+export async function generateStaticParams() {
+  const payload = await getPayload({ config: configPromise })
+  const products = await payload.find({
+    collection: 'products',
+    draft: false,
+    limit: 1000,
+    overrideAccess: false,
+    pagination: false,
+    select: {
+      slug: true,
+    },
+  })
 
-//   const params = products.docs.map(({ slug }) => {
-//     return { slug }
-//   })
+  const params = products.docs.map(({ slug }) => {
+    return { slug }
+  })
 
-//   return params
-// }
+  return params
+}
 
 type Args = {
   params: Promise<{

@@ -109,7 +109,7 @@ interface FeeData {
   fees: number
   penalty: number
 }
-// TODO display fee
+
 function RechargeCard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feeData, setFeeData] = useState<FeeData[]>([])
