@@ -19,6 +19,12 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { cn } from '@/utilities/ui'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
@@ -625,7 +631,14 @@ interface OrderItemProps {
 }
 
 const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) => {
-  const { updatingOrderIds, moveOrder, columnConfigs, showConfirmation, refetch } = useDraggable()
+  const {
+    updatingOrderIds,
+    moveOrder,
+    columnConfigs,
+    showConfirmation,
+    refetch,
+    isTransitionAllowed,
+  } = useDraggable()
   const isUpdating = updatingOrderIds.includes(order.id.toString())
   const [isOpen, setIsOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -725,93 +738,163 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
         // @ts-expect-error ignore
         onDragStart={(e) => !dropOnly && !isUpdating && handleDragStart(e, order)}
       >
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <Card
-              onClick={handleClick}
-              className={cn(
-                'mb-2 text-xs relative transition-all',
-                !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
-                isUpdating && 'opacity-50 cursor-progress',
-                isOpen && 'ring-2 ring-highlight ring-offset-1',
-              )}
-            >
-              {isUpdating && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        {dropOnly ? (
+          <Card
+            onClick={handleClick}
+            className={cn(
+              'mb-2 text-xs relative transition-all',
+              !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
+              isUpdating && 'opacity-50 cursor-progress',
+              isOpen && 'ring-2 ring-highlight ring-offset-1',
+            )}
+          >
+            {isUpdating && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            )}
+            <CardHeader className="p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-base font-bold text-highlight">#{order.id}</span>
+                <div className="flex items-center gap-2">
+                  {order.status == 'IN_QUEUE' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={handleAutoProcess}
+                      disabled={isProcessing || isUpdating}
+                      title="Xử lý tự động"
+                    >
+                      {isProcessing ? (
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      ) : (
+                        <Bot></Bot>
+                      )}
+                    </Button>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {formatOrderDate(order.createdAt)}
+                  </span>
                 </div>
-              )}
-              <CardHeader className="p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-bold text-highlight">#{order.id}</span>
-                  <div className="flex items-center gap-2">
-                    {order.status == 'IN_QUEUE' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={handleAutoProcess}
-                        disabled={isProcessing || isUpdating}
-                        title="Xử lý tự động"
-                      >
-                        {isProcessing ? (
-                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        ) : (
-                          <Bot></Bot>
-                        )}
-                      </Button>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {formatOrderDate(order.createdAt)}
-                    </span>
-                  </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <motion.div layout="position" className="flex flex-col gap-1">
+                {productName && <span className="text-xs line-clamp-2">{productName}</span>}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{order.quantity}x</span>
+                  <span className="text-muted-foreground">
+                    {formatPrice(order.totalPrice || 0)}
+                  </span>
                 </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <motion.div layout="position" className="flex flex-col gap-1">
-                  {productName && <span className="text-xs line-clamp-2">{productName}</span>}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{order.quantity}x</span>
-                    <span className="text-muted-foreground">
-                      {formatPrice(order.totalPrice || 0)}
-                    </span>
-                  </div>
 
-                  {orderedBy.email && (
-                    <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
-                  )}
-                  {handlers.length > 0 && (
-                    <>
-                      <span className="text-muted-foreground">Người xử lý:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {handlers.map((username, index) => (
-                          <span key={index} className="text-xs">
-                            {username}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              </CardContent>
-            </Card>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => handleStatusChange('IN_QUEUE')}>
-              Chờ xử lý
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('IN_PROCESS')}>
-              Đang xử lý
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('USER_UPDATE')}>
-              Chờ cập nhật
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('COMPLETED')}>
-              Hoàn thành
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('REFUND')}>Hoàn trả</ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
+                {orderedBy.email && (
+                  <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
+                )}
+                {handlers.length > 0 && (
+                  <>
+                    <span className="text-muted-foreground">Người xử lý:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {handlers.map((username, index) => (
+                        <span key={index} className="text-xs">
+                          {username}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            </CardContent>
+          </Card>
+        ) : (
+          <ContextMenu>
+            <ContextMenuTrigger asChild>
+              <Card
+                onClick={handleClick}
+                className={cn(
+                  'mb-2 text-xs relative transition-all',
+                  !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
+                  isUpdating && 'opacity-50 cursor-progress',
+                  isOpen && 'ring-2 ring-highlight ring-offset-1',
+                )}
+              >
+                {isUpdating && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
+                <CardHeader className="p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold text-highlight">#{order.id}</span>
+                    <div className="flex items-center gap-2">
+                      {order.status == 'IN_QUEUE' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={handleAutoProcess}
+                          disabled={isProcessing || isUpdating}
+                          title="Xử lý tự động"
+                        >
+                          {isProcessing ? (
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                          ) : (
+                            <Bot></Bot>
+                          )}
+                        </Button>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatOrderDate(order.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <motion.div layout="position" className="flex flex-col gap-1">
+                    {productName && <span className="text-xs line-clamp-2">{productName}</span>}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{order.quantity}x</span>
+                      <span className="text-muted-foreground">
+                        {formatPrice(order.totalPrice || 0)}
+                      </span>
+                    </div>
+
+                    {orderedBy.email && (
+                      <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
+                    )}
+                    {handlers.length > 0 && (
+                      <>
+                        <span className="text-muted-foreground">Người xử lý:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {handlers.map((username, index) => (
+                            <span key={index} className="text-xs">
+                              {username}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              {['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE', 'COMPLETED', 'REFUND'].map((status) => {
+                const targetStatus = status as Order['status']
+                // Only show status options that are allowed based on current order status
+                if (isTransitionAllowed(order.status, targetStatus)) {
+                  return (
+                    <ContextMenuItem key={status} onClick={() => handleStatusChange(targetStatus)}>
+                      {getOrderStatus(targetStatus)}
+                    </ContextMenuItem>
+                  )
+                }
+                return null
+              })}
+            </ContextMenuContent>
+          </ContextMenu>
+        )}
       </motion.div>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent
@@ -826,72 +909,98 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-4 overflow-y-auto flex-grow pb-4">
-            <div>
-              <h4 className="text-lg font-bold">Thông tin sản phẩm</h4>
-              <div className="mt-3 rounded-md border p-3">
-                <p className="font-medium">{productName}</p>
-                <p className="text-sm text-muted-foreground">
-                  Giá: {formatPrice((order.productVariant as ProductVariant)?.price)}
-                </p>
-                <p className="text-sm text-muted-foreground">Số lượng: {order.quantity}x</p>
-                <p className="text-sm text-muted-foreground">
-                  Tổng: {formatPrice(order.totalPrice)}
-                </p>
-              </div>
-            </div>
+            <Accordion
+              type="multiple"
+              defaultValue={['product', 'submission', 'buyer']}
+              className="space-y-4"
+            >
+              <AccordionItem value="product" className="border rounded-md">
+                <AccordionTrigger className="px-3">
+                  <h4 className="text-lg font-bold">Thông tin sản phẩm</h4>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  <p className="text-lg font-medium text-highlight">{productName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Giá: {formatPrice((order.productVariant as ProductVariant)?.price)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Số lượng: {order.quantity}x</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tổng: {formatPrice(order.totalPrice)}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
 
-            <div>
-              <h4 className="text-lg font-bold">Thông tin giao hàng</h4>
-              <div className="mt-3">
-                {order.deliveryContent?.root.children.length && (
-                  <RichText data={order.deliveryContent} enableGutter={false} />
-                )}
-              </div>
-            </div>
-            <div>
-              <h4 className="text-lg font-bold">Thông tin cung cấp</h4>
-              <div className="mt-3">
-                {formSubmission?.form?.fields && <OrderShippingForm order={order} />}
-              </div>
-            </div>
+              <AccordionItem value="delivery" className="border rounded-md">
+                <AccordionTrigger className="px-3">
+                  <h4 className="text-lg font-bold">Thông tin giao hàng</h4>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  {order.deliveryContent?.root.children.length && (
+                    <RichText data={order.deliveryContent} enableGutter={false} />
+                  )}
+                </AccordionContent>
+              </AccordionItem>
 
-            <div>
-              <h4 className="text-lg font-bold">Thông tin người mua</h4>
-              <div className="mt-3 rounded-md border p-3">
-                <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
-                <p className="text-sm">Email: {orderedBy.email}</p>
-                <p className="text-sm">Số dư: {formatPrice(orderedBy.balance)}</p>
-                {orderedBy.note && <p className="text-sm">Note: {orderedBy.note}</p>}
-              </div>
-            </div>
+              <AccordionItem value="submission" className="border rounded-md">
+                <AccordionTrigger className="px-3">
+                  <h4 className="text-lg font-bold">Thông tin cung cấp</h4>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  {formSubmission?.form?.fields && <OrderShippingForm order={order} />}
+                </AccordionContent>
+              </AccordionItem>
 
-            <div>
-              <h4 className="text-lg font-bold">Người xử lý</h4>
-              <div className="mt-3 rounded-md border p-3">
-                {handlers.length > 0 ? (
-                  handlers.map((username, index) => (
-                    <p key={index} className="text-sm">
-                      {username}
+              <AccordionItem value="buyer" className="border rounded-md">
+                <AccordionTrigger className="px-3">
+                  <h4 className="text-lg font-bold">Thông tin người mua</h4>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
+                    <p className="text-sm">Email: {orderedBy.email}</p>
+                    <p className="text-sm">Số dư: {formatPrice(orderedBy.balance)}</p>
+                    {orderedBy.note && <p className="text-sm">Note: {orderedBy.note}</p>}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="handlers" className="border rounded-md">
+                <AccordionTrigger className="px-3">
+                  <h4 className="text-lg font-bold">Người xử lý</h4>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  <div className="rounded-md border p-3">
+                    {handlers.length > 0 ? (
+                      handlers.map((username, index) => (
+                        <p key={index} className="text-sm">
+                          {username}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Chưa có người xử lý</p>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="details" className="border rounded-md">
+                <AccordionTrigger className="px-3">
+                  <h4 className="text-lg font-bold">Thông tin chi tiết</h4>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  <div className="space-y-2 rounded-md border p-3">
+                    <p className="text-sm">
+                      Ngày tạo: {formatOrderDate(order.createdAt)} (
+                      {formatTimeAgo(new Date(order.createdAt))})
                     </p>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">Chưa có người xử lý</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <h4 className="text-lg font-bold">Thông tin chi tiết</h4>
-              <div className="mt-3 space-y-2 rounded-md border p-3">
-                <p className="text-sm">
-                  Ngày tạo: {formatOrderDate(order.createdAt)} (
-                  {formatTimeAgo(new Date(order.createdAt))})
-                </p>
-                <p className="text-sm">
-                  Cập nhật: {formatOrderDate(order.updatedAt)} (
-                  {formatTimeAgo(new Date(order.updatedAt))})
-                </p>
-              </div>
-            </div>
+                    <p className="text-sm">
+                      Cập nhật: {formatOrderDate(order.updatedAt)} (
+                      {formatTimeAgo(new Date(order.updatedAt))})
+                    </p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </SheetContent>
       </Sheet>
