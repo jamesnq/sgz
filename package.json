@@ -104,8 +104,10 @@
     "tailwindcss": "^3.4.17",
     "typescript": "5.7.3"
   },
-  "resolutions": {
-    "sharp": "0.32.6"
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp"
+    ]
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0"
