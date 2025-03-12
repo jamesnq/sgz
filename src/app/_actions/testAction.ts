@@ -9,8 +9,5 @@ export const testAction = authActionClient.action(async ({ ctx }) => {
   if (!userHasRole(user, ['admin'])) {
     return
   }
-  const payload = await getPayload({ config: payloadConfig })
-  const { users } = payload.db.tables
-
-  console.log('🚀 ~ .action ~  payload.db.tables:', users)
+  const _payload = await getPayload({ config: payloadConfig })
 })

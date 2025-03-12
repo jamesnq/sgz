@@ -47,7 +47,7 @@ export const createAppleIdForm: Partial<Form> = {
     {
       id: '67a2ed4a74e1ef7840aa09e7',
       name: 'phone-code',
-      label: 'Mã xác thực từ điẹn thoại',
+      label: 'Mã xác thực từ điện thoại',
       defaultValue: null,
       required: null,
       blockName: null,

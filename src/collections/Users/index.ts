@@ -9,10 +9,10 @@ import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 
-function createSubscriberHash(subscriberId: string) {
+export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
 }
-function createChatwootHash(email: string) {
+export function createChatwootHash(email: string) {
   return CryptoJS.HmacSHA256(email, env.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
 }
 
@@ -43,15 +43,17 @@ async function createNovuSubscriber({
   })
   return { novuHash: createSubscriberHash(subscriberId), subscriberId }
 }
-
+// Careful when add more roles that role can get system notification
+export const managerRoles = ['admin', 'staff'] as const
+export const userRoles = ['admin', 'staff', 'user'] as const
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: hasRoleOrSelf(['admin', 'staff']),
+    admin: hasRoleOrSelf(managerRoles),
     create: () => false,
     delete: hasRole(['admin']),
-    read: hasRoleOrSelf(['admin', 'staff']),
-    update: hasRoleOrSelf(['admin', 'staff']),
+    read: hasRoleOrSelf(managerRoles),
+    update: hasRoleOrSelf(managerRoles),
   },
   hooks: {
     afterLogin: [
@@ -216,11 +218,7 @@ export const Users: CollectionConfig = {
     {
       name: 'roles',
       type: 'select',
-      options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'Staff', value: 'staff' },
-        { label: 'User', value: 'user' },
-      ],
+      options: userRoles.map((role) => ({ label: role.toUpperCase(), value: role })),
       access: {
         create: hasRole(['admin']),
         update: hasRole(['admin']),

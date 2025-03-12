@@ -10,18 +10,19 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { Categories } from './collections/Categories'
 import { Forms } from './collections/Forms'
 import { FormSubmissions } from './collections/FormSubmission'
+import { Footer } from './collections/Globals/Footer/config'
+import { Header } from './collections/Globals/Header/config'
 import { Media } from './collections/Media'
+import { NovuChannels } from './collections/NovuChannels/config'
 import { Orders } from './collections/Orders'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
 import { Recharges } from './collections/Recharges'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
-import { Footer } from './Footer/config'
-import { Header } from './Header/config'
+import { env } from './config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
-import { env } from './config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -29,12 +30,14 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
+      // actions: ['@/components/novu-inbox#NovuInboxAdmin'],
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeLogin` statement on line 15.
       beforeLogin: ['@/components/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
       beforeDashboard: ['@/components/BeforeDashboard'],
+      // providers: ['@/providers/payload-providers#PayloadProviders'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -70,7 +73,9 @@ export default buildConfig({
   // },
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
-  db: postgresAdapter({ pool: { connectionString: process.env.DATABASE_URI } }),
+  db: postgresAdapter({
+    pool: { connectionString: process.env.DATABASE_URI },
+  }),
   collections: [
     Media,
     Categories,
@@ -82,6 +87,7 @@ export default buildConfig({
     Recharges,
     Forms,
     FormSubmissions,
+    NovuChannels,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

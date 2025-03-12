@@ -1,5 +1,4 @@
 'use client'
-import { HookSafeActionFn, useAction, UseActionHookReturn } from 'next-safe-action/hooks'
 
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -7,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
-import AuthDialog from '@/Header/AuthDialog'
+import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import { checkoutAction } from '@/app/_actions/checkoutAction'
 import { fields } from '@/blocks/Form/fields'
 import RichText from '@/components/RichText'
@@ -30,10 +29,9 @@ import { Input } from '@/components/ui/input'
 import { useAuth } from '@/providers/Auth'
 import { formatPrice } from '@/utilities/formatPrice'
 import { cn } from '@/utilities/ui'
+import { useActionWarper } from '@/utilities/useActionWarper'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { toast } from 'react-toastify'
-import { Schema } from 'zod'
 
 type ProductPageContextType = {
   product: Product
@@ -283,7 +281,6 @@ function ShippingForm({ form }: { form: Form }) {
                 <div className="mb-4 last:mb-0" key={index}>
                   <Field
                     field={field}
-                    //@ts-expect-error ignore
                     onChange={(value: string) => setShippingInfo(field.name, value)}
                   />
                 </div>
@@ -294,32 +291,6 @@ function ShippingForm({ form }: { form: Form }) {
       </CardContent>
     </Card>
   )
-}
-
-function useActionWarper<
-  ServerError,
-  S extends Schema | undefined,
-  const BAS extends readonly Schema[],
-  CVE,
-  CBAVE,
-  Data,
->(
-  action: HookSafeActionFn<ServerError, S, BAS, CVE, CBAVE, Data>,
-): UseActionHookReturn<ServerError, S, BAS, CVE, CBAVE, Data> {
-  return useAction(action, {
-    onSettled({ result }) {
-      if (result.serverError) {
-        const error: any = result.serverError
-        if (error.notify) {
-          if (error.notify.type === 'toast') {
-            toast.error(error.message)
-            return
-          }
-        }
-        toast.error(error.message)
-      }
-    },
-  })
 }
 
 function CheckoutButton() {
@@ -339,7 +310,7 @@ function CheckoutButton() {
   }
 
   return (
-    <Button className="w-full" disabled={isExecuting} onClick={() => checkout()}>
+    <Button className="w-full font-bold" disabled={isExecuting} onClick={() => checkout()}>
       {isExecuting && <Loader2 className="animate-spin" />}
       Thanh toán
     </Button>
@@ -404,18 +375,19 @@ function Checkout({ className }: { className?: string }) {
         </div>
       )}
 
-      <div className="flex w-full items-center justify-between space-y-2">
+      <div className="flex w-full text-sm items-center justify-between">
         <span>Giá gốc</span>
         <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
       </div>
-      <div className="flex w-full items-center justify-between">
+      <div className="flex w-full text-sm items-center justify-between">
         <span>Giá giảm</span>
         <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
       </div>
-      <div className="mt-4 space-y-4">
+      <hr className="my-4 border-t border-border" />
+      <div className="space-y-4">
         <div className="flex w-full items-center justify-between">
           <span className="font-bold">Tổng tiền</span>
-          <span className="font-bold">{formatPrice(calc.totalPrice, 'VND')}</span>
+          <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
         </div>
         {user ? <CheckoutButton></CheckoutButton> : <AuthDialog className="w-full"></AuthDialog>}
       </div>
@@ -430,7 +402,7 @@ function Screen() {
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
         <div className="flex-[2] flex-col space-y-2 max-md:order-2">
-          {currentVariant?.important?.root.direction && (
+          {currentVariant?.important?.root.children.length && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">
@@ -456,7 +428,7 @@ function Screen() {
                 />
               ))}
           </div>
-          {product.description?.root.direction && (
+          {product.description?.root.children.length && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">

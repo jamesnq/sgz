@@ -8,26 +8,32 @@ import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import Notification from '../../notification'
 import PageClient from './page.client'
-// TODO here
-// export async function generateStaticParams() {
-//   const payload = await getPayload({ config: configPromise })
-//   const products = await payload.find({
-//     collection: 'products',
-//     draft: false,
-//     limit: 1000,
-//     overrideAccess: false,
-//     pagination: false,
-//     select: {
-//       slug: true,
-//     },
-//   })
 
-//   const params = products.docs.map(({ slug }) => {
-//     return { slug }
-//   })
+export const revalidate = 3600
 
-//   return params
-// }
+export async function generateStaticParams() {
+  try {
+    const payload = await getPayload({ config: configPromise })
+    const products = await payload.find({
+      collection: 'products',
+      draft: false,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      select: {
+        slug: true,
+      },
+    })
+
+    const params = products.docs.map(({ slug }) => {
+      return { slug }
+    })
+
+    return params
+  } catch {}
+
+  return []
+}
 
 type Args = {
   params: Promise<{
@@ -53,48 +59,53 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 }
 
 const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
-  // TODO optimize query using drizzle
-  const payload = await getPayload({ config: configPromise })
+  try {
+    // TODO optimize query using drizzle
+    const payload = await getPayload({ config: configPromise })
 
-  const result = await payload.find({
-    collection: 'products',
-    limit: 1,
-    depth: 1,
-    pagination: false,
-    where: {
-      slug: {
-        equals: slug,
+    const result = await payload.find({
+      collection: 'products',
+      limit: 1,
+      depth: 1,
+      pagination: false,
+      where: {
+        slug: {
+          equals: slug,
+        },
       },
-    },
-  })
-  const product = result.docs?.[0] || null
-  if (!product || !product.variants?.length) {
-    return null
-  }
-  if (product && product.variants) {
-    product.variants = product.variants.sort((a: any, b: any) => a.originalPrice - b.originalPrice)
-  }
+    })
+    const product = result.docs?.[0] || null
+    if (!product || !product.variants?.length) {
+      return null
+    }
+    if (product && product.variants) {
+      product.variants = product.variants.sort(
+        (a: any, b: any) => a.originalPrice - b.originalPrice,
+      )
+    }
 
-  const formIds = Array.from(
-    new Set(
-      product.variants?.map((variant) => (variant as ProductVariant).form).filter(Boolean) || [],
-    ),
-  )
-  if (!formIds.length) return product
-
-  const { docs: forms } = await payload.find({
-    collection: 'forms',
-    where: {
-      id: {
-        in: formIds,
-      },
-    },
-    depth: 1,
-  })
-  product.variants.forEach((variant) => {
-    ;(variant as ProductVariant).form = forms.find(
-      (form) => form.id === (variant as ProductVariant).form,
+    const formIds = Array.from(
+      new Set(
+        product.variants?.map((variant) => (variant as ProductVariant).form).filter(Boolean) || [],
+      ),
     )
-  })
-  return product
+    if (!formIds.length) return product
+
+    const { docs: forms } = await payload.find({
+      collection: 'forms',
+      where: {
+        id: {
+          in: formIds,
+        },
+      },
+      depth: 1,
+    })
+    product.variants.forEach((variant) => {
+      ;(variant as ProductVariant).form = forms.find(
+        (form) => form.id === (variant as ProductVariant).form,
+      )
+    })
+    return product
+  } catch {}
+  return null
 })

@@ -1,19 +1,28 @@
 import React from 'react'
 
-import { AuthProvider } from './Auth'
-import { HeaderThemeProvider } from './HeaderTheme'
-import { ThemeProvider } from './Theme'
+import { ChatwootLoader } from '@/components/chatwoot'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { AuthProvider } from './Auth'
+import { ClientProviders } from './client-providers'
+import { HeaderThemeProvider } from './HeaderTheme'
+import { ReactQueryProvider } from './react-query-provider'
+import { ThemeProvider } from './Theme'
+
 export const Providers: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   return (
-    <AuthProvider>
-      <ThemeProvider>
+    <ReactQueryProvider>
+      <AuthProvider>
         <NuqsAdapter>
-          <HeaderThemeProvider>{children}</HeaderThemeProvider>
+          <ThemeProvider>
+            <HeaderThemeProvider>
+              <ClientProviders>{children}</ClientProviders>
+              <ChatwootLoader />
+            </HeaderThemeProvider>
+          </ThemeProvider>
         </NuqsAdapter>
-      </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ReactQueryProvider>
   )
 }

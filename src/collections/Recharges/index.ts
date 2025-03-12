@@ -39,7 +39,10 @@ export const Recharges: CollectionConfig = {
       name: 'gateway',
       type: 'select',
       defaultValue: 'PAYOS',
-      options: [{ value: 'PAYOS', label: 'PAYOS' }],
+      options: [
+        { value: 'PAYOS', label: 'PAYOS' },
+        { value: 'DOITHE', label: 'DOITHE' }
+      ],
       required: true,
     },
     {

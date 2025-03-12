@@ -68,7 +68,6 @@ export const FormSubmissions: CollectionConfig = {
         if (!payload) {
           return true
         }
-
         const submissionData = (data as any).submissionData
         const form = await payload.findByID({
           id: (data as any).form,

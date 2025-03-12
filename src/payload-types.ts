@@ -64,6 +64,7 @@ export interface Config {
   auth: {
     users: UserAuthOperations;
   };
+  blocks: {};
   collections: {
     media: Media;
     categories: Category;
@@ -75,6 +76,7 @@ export interface Config {
     recharges: Recharge;
     forms: Form;
     'form-submissions': FormSubmission;
+    'novu-channels': NovuChannel;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -91,6 +93,7 @@ export interface Config {
     recharges: RechargesSelect<false> | RechargesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
+    'novu-channels': NovuChannelsSelect<false> | NovuChannelsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -323,6 +326,15 @@ export interface ProductVariant {
     };
     [k: string]: unknown;
   } | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -347,53 +359,10 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            description?: {
-              root: {
-                type: string;
-                children: {
-                  type: string;
-                  version: number;
-                  [k: string]: unknown;
-                }[];
-                direction: ('ltr' | 'rtl') | null;
-                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                indent: number;
-                version: number;
-              };
-              [k: string]: unknown;
-            } | null;
-            required?: boolean | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'country';
-          }
-        | {
-            name: string;
-            label?: string | null;
             required?: boolean | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'email';
-          }
-        | {
-            message?: {
-              root: {
-                type: string;
-                children: {
-                  type: string;
-                  version: number;
-                  [k: string]: unknown;
-                }[];
-                direction: ('ltr' | 'rtl') | null;
-                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                indent: number;
-                version: number;
-              };
-              [k: string]: unknown;
-            } | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'message';
           }
         | {
             name: string;
@@ -550,11 +519,31 @@ export interface Order {
     };
     [k: string]: unknown;
   } | null;
-  status: 'PENDING' | 'IN_QUEUE' | 'IN_PROCESS' | 'COMPLETED' | 'CANCELLED' | 'REFUND';
+  /**
+   * Delivery content like key, account,...
+   */
+  deliveryContent?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  status: 'IN_QUEUE' | 'IN_PROCESS' | 'USER_UPDATE' | 'COMPLETED' | 'REFUND';
   orderedBy: number | User;
   handlers: (number | User)[];
   productVariant: number | ProductVariant;
   formSubmission?: (number | null) | FormSubmission;
+  subTotal: number;
+  totalDiscount: number;
   totalPrice: number;
   quantity: number;
   updatedAt: string;
@@ -588,7 +577,7 @@ export interface Recharge {
   id: number;
   status: 'PENDING' | 'CANCEL' | 'SUCCESS' | 'REFUND';
   orderCode: string;
-  gateway: 'PAYOS';
+  gateway: 'PAYOS' | 'DOITHE';
   data?:
     | {
         [k: string]: unknown;
@@ -600,6 +589,17 @@ export interface Recharge {
     | null;
   amount: number;
   user: number | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "novu-channels".
+ */
+export interface NovuChannel {
+  id: number;
+  subscriberId: string;
+  hash: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -649,6 +649,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'form-submissions';
         value: number | FormSubmission;
+      } | null)
+    | ({
+        relationTo: 'novu-channels';
+        value: number | NovuChannel;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -824,6 +828,7 @@ export interface ProductVariantsSelect<T extends boolean = true> {
   max?: T;
   note?: T;
   description?: T;
+  metadata?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -834,11 +839,14 @@ export interface ProductVariantsSelect<T extends boolean = true> {
 export interface OrdersSelect<T extends boolean = true> {
   note?: T;
   message?: T;
+  deliveryContent?: T;
   status?: T;
   orderedBy?: T;
   handlers?: T;
   productVariant?: T;
   formSubmission?: T;
+  subTotal?: T;
+  totalDiscount?: T;
   totalPrice?: T;
   quantity?: T;
   updatedAt?: T;
@@ -877,29 +885,12 @@ export interface FormsSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
-        country?:
-          | T
-          | {
-              name?: T;
-              label?: T;
-              description?: T;
-              required?: T;
-              id?: T;
-              blockName?: T;
-            };
         email?:
           | T
           | {
               name?: T;
               label?: T;
               required?: T;
-              id?: T;
-              blockName?: T;
-            };
-        message?:
-          | T
-          | {
-              message?: T;
               id?: T;
               blockName?: T;
             };
@@ -971,6 +962,16 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   user?: T;
   form?: T;
   submissionData?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "novu-channels_select".
+ */
+export interface NovuChannelsSelect<T extends boolean = true> {
+  subscriberId?: T;
+  hash?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1087,6 +1088,62 @@ export interface MediaBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'mediaBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableBlock".
+ */
+export interface TableBlock {
+  caption?: string | null;
+  showRowNumbers?: boolean | null;
+  columns?:
+    | {
+        header: string;
+        isSecret?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  rows?:
+    | {
+        rowName?: string | null;
+        cells?:
+          | {
+              content?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InlineDialog".
+ */
+export interface InlineDialog {
+  displayText?: string | null;
+  dialogTitle?: string | null;
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'inlineDialog';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

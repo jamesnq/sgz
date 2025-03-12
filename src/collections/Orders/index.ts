@@ -1,5 +1,6 @@
 import {
   APIError,
+  CollectionAfterChangeHook,
   CollectionBeforeChangeHook,
   FieldHook,
   type Access,
@@ -9,10 +10,13 @@ import {
 import { authenticated } from '@/access/authenticated'
 import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
+import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
+import { novu } from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
+import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 class ConflictsError extends APIError {
@@ -32,10 +36,58 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
 
   const user = req.user
   if (!user) throw new ConflictsError('Not authenticated')
-  if (!(data.handlers as number[]).includes(user.id)) {
-    ;(data.handlers as number[]).push(user.id)
+  const userId = typeof user === 'object' ? user.id : user
+  if (!(data.handlers as number[]).includes(userId)) {
+    ;(data.handlers as number[]).push(userId)
   }
   return data
+}
+const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
+  previousDoc,
+  doc,
+  operation,
+  req,
+}) => {
+  if (operation !== 'update' || !previousDoc) return
+  const user = req.user
+  if (!user) throw new ConflictsError('Not authenticated')
+  const userId = typeof user === 'object' ? user.id : user
+  if (previousDoc.status != doc.status) {
+    if (doc.status === 'USER_UPDATE') {
+      after(async () => {
+        await novu.trigger({
+          workflowId: 'order-update',
+          to: {
+            subscriberId: doc.orderedBy.toString(),
+          },
+          payload: {
+            message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
+            subject: `Yêu cầu hành động với đơn hàng #${doc.id}`,
+            redirect: `/user/orders/${doc.id}`,
+          },
+        })
+      })
+    }
+    if (
+      previousDoc.status === 'USER_UPDATE' &&
+      doc.status != 'USER_UPDATE' &&
+      userId == doc.orderedBy
+    ) {
+      after(async () => {
+        await novu.trigger({
+          workflowId: 'order-update',
+          to: {
+            subscriberId: 'staff',
+          },
+          payload: {
+            message: `Người dùng cập nhật đơn hàng #${doc.id}`,
+            subject: `Đơn hàng #${doc.id} đang đợi xử lý`,
+            redirect: `/admin/collections/orders/${doc.id}`,
+          },
+        })
+      })
+    }
+  }
 }
 
 const refundHook: FieldHook<Order> = async ({
@@ -49,20 +101,21 @@ const refundHook: FieldHook<Order> = async ({
   if (previousValue === 'REFUND' && value !== 'REFUND')
     throw new ConflictsError('Không thể cập nhật trạng thái đơn hàng đã hoàn trả')
   if (previousValue !== 'REFUND' && value === 'REFUND') {
-    const { users, transactions } = payload.db.tables
     const orderBy = data.orderedBy
     if (!orderBy) throw new ConflictsError('Không tìm thấy người dùng')
+    if (!data.totalPrice) throw new ConflictsError('Không tìm thấy giá trị đơn hàng')
+
     await payload.db.drizzle.transaction(async (tx) => {
       const [newUser] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
-        .where(eq(users.id, orderBy))
+        .where(eq(users.id, orderBy as number))
         .returning({ balance: users.balance })
-      if (!newUser) throw new ConflictsError('Không tìm thấy người dùng')
+      if (!newUser || !newUser.balance) throw new ConflictsError('Không tìm thấy người dùng')
 
       await tx.insert(transactions).values({
-        amount: data.totalPrice,
-        user: orderBy,
+        amount: (data.totalPrice as number).toString(),
+        user: orderBy as number,
         description: `Hoàn trả đơn hàng #${data.id}`,
         balance: newUser.balance,
       })
@@ -82,6 +135,7 @@ export const Orders: CollectionConfig = {
   },
   hooks: {
     beforeChange: [trackHandlersHook],
+    afterChange: [notificationUpdateHook],
   },
   admin: {
     defaultColumns: [
@@ -102,6 +156,7 @@ export const Orders: CollectionConfig = {
       admin: {
         description: 'Internal note only admin and staff can see',
       },
+      editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
         read: hasRole(['admin', 'staff']),
@@ -122,9 +177,22 @@ export const Orders: CollectionConfig = {
       },
     },
     {
+      name: 'deliveryContent',
+      type: 'richText',
+      admin: {
+        description: 'Delivery content like key, account,...',
+      },
+      editor: defaultLexicalEditor,
+      access: {
+        create: hasRole(['admin', 'staff']),
+        read: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
+    },
+    {
       name: 'status',
       type: 'select',
-      defaultValue: 'PENDING',
+      defaultValue: 'IN_QUEUE',
       access: {
         create: hasRole(['admin', 'staff']),
         update: hasRole(['admin', 'staff']),
@@ -133,11 +201,10 @@ export const Orders: CollectionConfig = {
         beforeChange: [refundHook],
       },
       options: [
-        { value: 'PENDING', label: 'Pending' },
         { value: 'IN_QUEUE', label: 'In Queue' },
         { value: 'IN_PROCESS', label: 'In Process' },
+        { value: 'USER_UPDATE', label: 'User Update' },
         { value: 'COMPLETED', label: 'Completed' },
-        { value: 'CANCELLED', label: 'Cancelled' },
         { value: 'REFUND', label: 'Refund' },
       ],
       required: true,
@@ -193,6 +260,30 @@ export const Orders: CollectionConfig = {
       access: {
         create: noOne,
         update: noOne,
+      },
+    },
+    {
+      name: 'subTotal',
+      type: 'number',
+      required: true,
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'totalDiscount',
+      type: 'number',
+      required: true,
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+      admin: {
+        readOnly: true,
       },
     },
     {

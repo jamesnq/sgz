@@ -9,6 +9,7 @@ export const env = createEnv({
   server: {
     PAYLOAD_SECRET: z.string(),
     DATABASE_URI: z.string(),
+    AUTO_PROCESS_USER_ID: z.number().positive(),
     S3_ACCESS_KEY_ID: z.string(),
     S3_SECRET_ACCESS_KEY: z.string(),
     S3_BUCKET: z.string(),
@@ -21,6 +22,8 @@ export const env = createEnv({
     PAYOS_WEBHOOK_URL: z.string().url(),
     PAYOS_CANCEL_URL: z.string().url(),
     PAYOS_RETURN_URL: z.string().url(),
+    DOITHE_PARTNER_ID: z.string(),
+    DOITHE_PARTNER_KEY: z.string(),
     NOVU_SECRET_KEY: z.string(),
     CHATWOOT_HMAC_TOKEN: z.string(),
   },
@@ -49,6 +52,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
     NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
     NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER,
+    AUTO_PROCESS_USER_ID: Number(process.env.AUTO_PROCESS_USER_ID),
   } /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
    * useful for Docker builds.

@@ -5,83 +5,8 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type { Theme, ThemeContextType } from './types'
 
 import canUseDOM from '@/utilities/canUseDOM'
-import { ToastContainer } from 'react-toastify'
 import { defaultTheme, getImplicitPreference, themeLocalStorageKey } from './shared'
 import { themeIsValid } from './types'
-import { env } from '@/config'
-import { useAuth } from '../Auth'
-import { User } from '@/payload-types'
-function chatwootSetUser(user: User | null) {
-  if (!user) return
-  // @ts-expect-error ignore
-  window.$chatwoot.setUser(user?.email, {
-    email: user?.email,
-    name: user?.email.split('@')[0],
-  })
-}
-function ChatwootLoader() {
-  const { theme } = useTheme()
-  const { user } = useAuth()
-
-  useEffect(() => {
-    if (user === undefined) return
-
-    const SCRIPT_URL = `${env.NEXT_PUBLIC_CHATWOOT_BASE_URL}/packs/js/sdk.js`
-    const onReady = (): void => {
-      chatwootSetUser(user)
-    }
-    const onError = (error: unknown): void => {
-      chatwootSetUser(null)
-      console.log(error)
-    }
-
-    window.addEventListener('chatwoot:ready', onReady)
-
-    window.addEventListener('chatwoot:error', onError)
-    const loadChatwoot = () => {
-      // @ts-expect-error ignore
-      window.chatwootSettings = {
-        locale: 'vi_VN',
-        darkMode: theme,
-        position: 'right',
-        type: 'standard',
-        launcherTitle: '',
-      }
-
-      const script = document.createElement('script')
-      script.src = SCRIPT_URL
-      script.defer = true
-      script.async = true
-
-      script.onload = () => {
-        // @ts-expect-error ignore
-        if (window.chatwootSDK) {
-          // @ts-expect-error ignore
-          window.chatwootSDK.run({
-            websiteToken: env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN,
-            baseUrl: env.NEXT_PUBLIC_CHATWOOT_BASE_URL,
-          })
-        }
-      }
-
-      document.body.appendChild(script)
-    }
-
-    loadChatwoot()
-
-    // Clean up script when the component unmounts
-    return () => {
-      const existingScript = document.querySelector(`script[src="${SCRIPT_URL}"]`)
-
-      if (existingScript) {
-        document.body.removeChild(existingScript)
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
-
-  return null
-}
 
 const initialContext: ThemeContextType = {
   setTheme: () => null,
@@ -126,24 +51,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     setThemeState(themeToSet)
   }, [])
 
-  return (
-    <ThemeContext.Provider value={{ setTheme, theme }}>
-      {children}
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme={theme}
-      />
-      <ChatwootLoader />
-    </ThemeContext.Provider>
-  )
+  return <ThemeContext.Provider value={{ setTheme, theme }}>{children}</ThemeContext.Provider>
 }
 
 export const useTheme = (): ThemeContextType => useContext(ThemeContext)

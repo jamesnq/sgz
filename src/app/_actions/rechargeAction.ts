@@ -1,12 +1,11 @@
 'use server'
+import doiThe from '@/services/doithe.service'
 import paymentService from '@/services/payment.service'
 import { authActionClient } from '@/utilities/safe-action'
-import payloadConfig from '@payload-config'
-import { getPayload } from 'payload'
-import { RechargeSchema } from './schema'
+import { RechargeDoiTheSchema, RechargePayosSchema } from './schema'
 
-export const rechargeAction = authActionClient
-  .schema(RechargeSchema)
+export const rechargePayosAction = authActionClient
+  .schema(RechargePayosSchema)
   .action(async ({ parsedInput: { amount }, ctx }) => {
     const { user } = ctx
     const res = await paymentService.createPaymentLink({
@@ -18,19 +17,15 @@ export const rechargeAction = authActionClient
     if (!res) {
       throw new Error('Payment link undefined')
     }
-    const payload = await getPayload({ config: payloadConfig })
-    const _recharge = await payload.create({
-      collection: 'recharges',
-      data: {
-        gateway: 'PAYOS',
-        orderCode: res.orderCode.toString(),
-        amount,
-        user: user.id,
-        status: 'PENDING',
-        data: res,
-      },
-    })
+
     return {
       checkoutUrl: res.checkoutUrl,
     }
+  })
+
+export const rechargeDoiTheAction = authActionClient
+  .schema(RechargeDoiTheSchema)
+  .action(async ({ parsedInput: { amount, telco, code, serial }, ctx }) => {
+    const res = await doiThe.chargeCardPost(telco, code, serial, amount, ctx.user.id)
+    return res
   })

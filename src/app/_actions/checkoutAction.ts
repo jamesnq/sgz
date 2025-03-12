@@ -1,14 +1,16 @@
 'use server'
+import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
+import { novu } from '@/services/novu.service'
+import { autoProcessOrder } from '@/services/orderProcessing'
+import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
+import { after } from 'next/server'
 import { getPayload } from 'payload'
 import { CheckoutSchema } from './schema'
-import { after } from 'next/server'
-import { novu } from '@/services/novu.service'
-import { formatOrderDate } from '@/utilities/formatOrderDate'
 
 export const checkoutAction = authActionClient
   .schema(CheckoutSchema)
@@ -22,12 +24,14 @@ export const checkoutAction = authActionClient
       select: {
         id: true,
         price: true,
+        originalPrice: true,
         status: true,
         sku: true,
         min: true,
         max: true,
         form: true,
         product: true,
+        metadata: true,
       },
     })
     if (!pv) {
@@ -45,9 +49,9 @@ export const checkoutAction = authActionClient
     if (pv.form && !shippingFields) {
       throw new ServerNotification('Vui lòng cung cấp thông tin giao hàng')
     }
-
+    const subTotal = quantity * pv.originalPrice
     const totalPrice = quantity * pv.price
-    const { users, transactions, orders } = payload.db.tables
+    const totalDiscount = subTotal - totalPrice
 
     let formSubmissionId: any = undefined
     try {
@@ -73,7 +77,8 @@ export const checkoutAction = authActionClient
         .where(eq(users.id, user.id))
         .returning({ balance: users.balance })
       if (!newUser) throw new ServerNotification('Không tìm thấy người dùng')
-      if (newUser.balance < 0) throw new ServerNotification('Số dư không đủ')
+      const newUserBalance = parseFloat(newUser.balance as string)
+      if (newUserBalance < 0) throw new ServerNotification('Số dư không đủ')
 
       const [order] = await tx
         .insert(orders)
@@ -82,22 +87,24 @@ export const checkoutAction = authActionClient
           orderedBy: user.id,
           productVariant: pv.id,
           formSubmission: formSubmissionId,
-          quantity,
-          totalPrice,
+          quantity: quantity.toString(),
+          totalDiscount: totalDiscount.toString(),
+          subTotal: subTotal.toString(),
+          totalPrice: totalPrice.toString(),
         })
         .returning({ id: orders.id, orderedBy: orders.orderedBy, createdAt: orders.createdAt })
       if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
       await tx.insert(transactions).values({
-        amount: -totalPrice,
+        amount: (-totalPrice).toString(),
         user: user.id,
         description: `Thanh toán đơn hàng #${order.id}`,
-        balance: newUser.balance,
+        balance: newUserBalance.toString(),
       })
       return order
     })
     after(async () => {
       // update product and product_variant sold
-      const { products, product_variants } = payload.db.tables
+
       await Promise.all([
         db
           .update(products)
@@ -113,11 +120,32 @@ export const checkoutAction = authActionClient
             subscriberId: order.orderedBy.toString(),
           },
           payload: {
-            orderId: order.id,
-            createAt: formatOrderDate(new Date(order.createdAt)),
+            subject: `Tạo đơn hàng mới thành công`,
+            message: `Đơn hàng #${order.id} được tạo thành công lúc ${formatOrderDate(new Date(order.createdAt))} ấn để xem chi tiết`,
+            redirect: `/user/orders/${order.id}`,
+          },
+        }),
+        novu.trigger({
+          workflowId: 'new-order',
+          to: {
+            subscriberId: 'staff',
+          },
+          payload: {
+            subject: `Có đơn hàng mới #${order.id}`,
+            message: ``,
+            redirect: `/admin/collections/orders/${order.id}`,
           },
         }),
       ])
     })
+    if (
+      pv.metadata &&
+      typeof pv.metadata === 'object' &&
+      'isAuto' in pv.metadata &&
+      pv.metadata.isAuto &&
+      'type' in pv.metadata
+    ) {
+      await autoProcessOrder(order.id)
+    }
     return { order }
   })

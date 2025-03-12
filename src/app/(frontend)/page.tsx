@@ -1,13 +1,16 @@
+import { Media } from '@/components/Media'
+import RelatedProductsSection from '@/components/RelatedProductsSection'
+import RichText from '@/components/RichText'
 import { Card } from '@/components/ui/card'
+import { env } from '@/config'
 import { Product } from '@/payload-types'
 import config from '@/payload.config'
+import { formatSold } from '@/utilities/formatSold'
+import { Routes } from '@/utilities/routes'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 import PageClient from './page.client'
-import { Media } from '@/components/Media'
-import Link from 'next/link'
-import RichText from '@/components/RichText'
-import { formatSold } from '@/utilities/formatSold'
-import { env } from '@/config'
 
 export const revalidate = 3600
 
@@ -33,18 +36,18 @@ function ProductCard({ product }: { product: Product }) {
                   {product.name}
                 </div>
                 <div className="peer mt-2 flex items-end">
-                  {/* <span className="leading-[13px] text-[#FFD25F]">24,500đ ~ 2,376,000đ</span> */}
+                  {/* <span className="leading-[13px] text-muted-foreground">24,500đ ~ 2,376,000đ</span> */}
                 </div>
-                {product.description.root.direction && (
+                {product.description.root.children.length && (
                   <RichText
-                    className=" text-[12px] text-[#fff9] mt-2 line-clamp-2 overflow-hidden"
+                    className=" text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"
                     data={product.description}
                     enableGutter={false}
                   />
                 )}
               </div>
               <div className="flex w-full items-center justify-end">
-                <span className="text-[12px] leading-none text-[#fff9]">
+                <span className="text-[12px] leading-none text-muted-foreground">
                   Đã bán {formatSold(product.sold)}
                 </span>
               </div>
@@ -78,6 +81,7 @@ async function ProductGroup() {
 }
 
 export default async function Home() {
+  return redirect(Routes.PRODUCTS)
   return (
     <div className="container">
       <PageClient />
@@ -92,6 +96,11 @@ export default async function Home() {
         </div>
       </div>
       <ProductGroup />
+
+      {/* Featured Products Section */}
+      <div className="my-12">
+        <RelatedProductsSection searchQuery="pc" title="Sản phẩm nổi bật" maxDisplay={4} />
+      </div>
     </div>
   )
 }

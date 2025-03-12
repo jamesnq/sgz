@@ -176,6 +176,15 @@ export const ProductVariants: CollectionConfig = {
       editor: defaultLexicalEditor,
       label: 'Description',
     },
+    {
+      name: 'metadata',
+      type: 'json',
+      access: {
+        read: hasRole(['admin']),
+        update: hasRole(['admin']),
+        create: hasRole(['admin']),
+      },
+    },
   ],
   hooks: {
     afterChange: [revalidateProduct],

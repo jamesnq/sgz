@@ -5,6 +5,7 @@ declare global {
       DATABASE_URI: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
+      AUTO_PROCESS_USER_ID: number
       S3_ACCESS_KEY_ID: string
       S3_SECRET_ACCESS_KEY: string
       S3_BUCKET: string
@@ -19,6 +20,8 @@ declare global {
       PAYOS_WEBHOOK_URL: string
       PAYOS_CANCEL_URL: string
       PAYOS_RETURN_URL: string
+      DOITHE_PARTNER_ID: string
+      DOITHE_PARTNER_KEY: string
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
       CHATWOOT_HMAC_TOKEN: string
