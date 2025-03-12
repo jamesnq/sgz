@@ -310,7 +310,7 @@ function CheckoutButton() {
   }
 
   return (
-    <Button className="w-full" disabled={isExecuting} onClick={() => checkout()}>
+    <Button className="w-full font-bold" disabled={isExecuting} onClick={() => checkout()}>
       {isExecuting && <Loader2 className="animate-spin" />}
       Thanh toán
     </Button>

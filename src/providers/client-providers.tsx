@@ -1,13 +1,14 @@
 'use client'
 
 import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+
 import { useTheme } from './Theme'
 
 export const ClientProviders: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const { theme } = useTheme()
+  console.log('🚀 ~ theme:', theme)
   return (
     <div>
       <ToastContainer
@@ -20,7 +21,7 @@ export const ClientProviders: React.FC<{
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme={theme || undefined}
+        theme={'dark'}
       />
       {children}
     </div>
