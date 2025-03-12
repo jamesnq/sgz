@@ -39,7 +39,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CirclePlus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { toast, ToastContainer } from 'react-toastify'
+import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from 'zod'
 
@@ -475,7 +475,6 @@ function Recharges() {
 export function RechargeDialog() {
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} />
       <Dialog>
         <DialogTrigger asChild>
           <Button className="rounded-full" variant="ghost" size={'xs'}>
