@@ -1,6 +1,13 @@
 'use client'
+import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
 import { OrderShippingForm } from '@/components/OrderShippingForm'
 import { Shell } from '@/components/shell'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
@@ -19,35 +26,29 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import { cn } from '@/utilities/ui'
+import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-types'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatTimeAgo } from '@/utilities/formatTimeAgo'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
-import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
-import { toast } from 'react-toastify'
-import { useQuery } from '@tanstack/react-query'
 import payloadClient from '@/utilities/payloadClient'
-import { Bot, Loader2 } from 'lucide-react'
+import { cn } from '@/utilities/ui'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-types'
+import { Bot, Loader2 } from 'lucide-react'
 import {
   createContext,
   memo,
+  ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  ReactNode,
   useState,
 } from 'react'
+import { toast } from 'react-toastify'
+
 import RichText from '@/components/RichText'
 
 // TODO check order metadata to know it can auto process or not
@@ -692,9 +693,12 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
     )
   }, [order.handlers])
 
-  const productName = useMemo(() => {
-    return (order.productVariant as ProductVariant)?.name || ''
+  const pv = useMemo(() => {
+    return order.productVariant as ProductVariant
   }, [order.productVariant])
+  const productName = useMemo(() => {
+    return pv?.name || ''
+  }, [pv])
 
   const orderedBy = useMemo(() => {
     return order.orderedBy as User

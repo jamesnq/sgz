@@ -179,6 +179,11 @@ export const ProductVariants: CollectionConfig = {
     {
       name: 'metadata',
       type: 'json',
+      access: {
+        read: hasRole(['admin']),
+        update: hasRole(['admin']),
+        create: hasRole(['admin']),
+      },
     },
   ],
   hooks: {
