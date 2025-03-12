@@ -8,7 +8,7 @@ import type { Header } from '@/payload-types'
 
 import { Logo } from '@/components/Logo/Logo'
 
-import { LucideLogOut, Package } from 'lucide-react'
+import { LucideLogOut } from 'lucide-react'
 import AuthDialog from './AuthDialog'
 import { HeaderNav } from './Nav'
 
@@ -27,8 +27,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/providers/Auth'
 import { ThemeToggle } from '@/providers/Theme/theme-toggle'
-import { cn } from '@/utilities/ui'
 import { Routes } from '@/utilities/routes'
+import { cn } from '@/utilities/ui'
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,

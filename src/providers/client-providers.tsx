@@ -8,9 +8,8 @@ export const ClientProviders: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const { theme } = useTheme()
-  console.log('🚀 ~ theme:', theme)
   return (
-    <div>
+    <>
       <ToastContainer
         position="top-center"
         autoClose={5000}
@@ -21,9 +20,9 @@ export const ClientProviders: React.FC<{
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme={'dark'}
+        theme={theme || undefined}
       />
       {children}
-    </div>
+    </>
   )
 }
