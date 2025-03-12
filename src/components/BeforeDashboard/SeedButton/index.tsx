@@ -35,7 +35,14 @@ export const SeedButton: React.FC = () => {
         toast.error(`An error occurred, please refresh and try again.`)
         return
       }
-
+      
+      // Simple confirmation using window.confirm
+      const isConfirmed = window.confirm('Seeding the database may result in data loss. Are you sure you want to continue?')
+      
+      if (!isConfirmed) {
+        return
+      }
+      
       setLoading(true)
 
       try {
