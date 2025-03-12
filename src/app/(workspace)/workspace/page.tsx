@@ -42,7 +42,9 @@ import {
   ReactNode,
   useState,
 } from 'react'
+import RichText from '@/components/RichText'
 
+// TODO check order metadata to know it can auto process or not
 interface ColumnConfig {
   title: string
   dropOnly: boolean
@@ -562,7 +564,7 @@ const BoardColumn = memo(
           ${active ? 'ring-2 ring-primary' : ''}`}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-medium">{title}</h3>
+          <h3 className="text-lg font-bold">{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
         </div>
 
@@ -741,7 +743,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               )}
               <CardHeader className="p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">#{order.id}</span>
+                  <span className="text-base font-bold text-highlight">#{order.id}</span>
                   <div className="flex items-center gap-2">
                     {order.status == 'IN_QUEUE' && (
                       <Button
@@ -814,7 +816,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent
           style={{ maxWidth: 'none' }}
-          className="w-full sm:w-[80%] md:w-[60%] lg:w-[40%] xl:w-[30%]"
+          className="w-full sm:w-[80%] md:w-[60%] flex flex-col"
         >
           <SheetHeader>
             <SheetTitle>
@@ -823,9 +825,9 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               </div>
             </SheetTitle>
           </SheetHeader>
-          <div className="mt-6 space-y-6">
+          <div className="mt-4 space-y-4 overflow-y-auto flex-grow pb-4">
             <div>
-              <h4 className="text-sm font-medium">Thông tin sản phẩm</h4>
+              <h4 className="text-lg font-bold">Thông tin sản phẩm</h4>
               <div className="mt-3 rounded-md border p-3">
                 <p className="font-medium">{productName}</p>
                 <p className="text-sm text-muted-foreground">
@@ -839,14 +841,22 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium">Thông tin cung cấp</h4>
+              <h4 className="text-lg font-bold">Thông tin giao hàng</h4>
+              <div className="mt-3">
+                {order.deliveryContent?.root.children.length && (
+                  <RichText data={order.deliveryContent} enableGutter={false} />
+                )}
+              </div>
+            </div>
+            <div>
+              <h4 className="text-lg font-bold">Thông tin cung cấp</h4>
               <div className="mt-3">
                 {formSubmission?.form?.fields && <OrderShippingForm order={order} />}
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium">Thông tin người mua</h4>
+              <h4 className="text-lg font-bold">Thông tin người mua</h4>
               <div className="mt-3 rounded-md border p-3">
                 <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
                 <p className="text-sm">Email: {orderedBy.email}</p>
@@ -856,7 +866,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium">Người xử lý</h4>
+              <h4 className="text-lg font-bold">Người xử lý</h4>
               <div className="mt-3 rounded-md border p-3">
                 {handlers.length > 0 ? (
                   handlers.map((username, index) => (
@@ -870,7 +880,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium">Thông tin đơn hàng</h4>
+              <h4 className="text-lg font-bold">Thông tin chi tiết</h4>
               <div className="mt-3 space-y-2 rounded-md border p-3">
                 <p className="text-sm">
                   Ngày tạo: {formatOrderDate(order.createdAt)} (
