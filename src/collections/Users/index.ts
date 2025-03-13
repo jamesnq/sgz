@@ -9,6 +9,7 @@ import type { CollectionConfig, PayloadRequest } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 import { User } from '@/payload-types'
+import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
 
 export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
@@ -79,7 +80,7 @@ export const Users: CollectionConfig = {
       },
     ],
     beforeRead: [
-      async ({ req, doc }: { req: PayloadRequest; doc: User }) => {
+      async ({ req, doc }) => {
         if (!doc) return doc
         const [novuResult, chatwootHash] = await Promise.all([
           !doc.novuHash
@@ -105,7 +106,7 @@ export const Users: CollectionConfig = {
         }
         return { ...doc, ...userUpdate }
       },
-    ],
+    ] as BeforeReadHook<User>[],
   },
   admin: {
     defaultColumns: ['email', 'balance', 'roles'],
