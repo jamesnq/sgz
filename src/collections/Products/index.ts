@@ -23,7 +23,7 @@ export const Products: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['name', 'image', 'slug', 'sold', 'updatedAt'],
+    defaultColumns: ['name', 'status', 'image', 'slug', 'sold', 'updatedAt'],
     useAsTitle: 'name',
   },
   fields: [

@@ -1,8 +1,27 @@
-import { CollectionBeforeDeleteHook, type CollectionAfterChangeHook } from 'payload'
+import { CollectionBeforeDeleteHook, Payload, type CollectionAfterChangeHook } from 'payload'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 
+import { Routes } from '@/utilities/routes'
 import type { Product } from '../../../payload-types'
+
+export const revalidateProductPath = async (payload: Payload, productId: number) => {
+  const product = await payload.findByID({
+    collection: 'products',
+    id: productId,
+    overrideAccess: true,
+    select: { slug: true },
+  })
+
+  if (!product || !product.slug) {
+    payload.logger.error(`Product not found or missing slug for id: ${productId}`)
+    return
+  }
+
+  const path = Routes.product(product.slug)
+  payload.logger.info(`Revalidating product at path: ${path}`)
+  revalidatePath(path)
+}
 
 export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   doc,
@@ -10,7 +29,7 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   req: { payload },
 }) => {
   if (!previousDoc.slug) return doc
-  const oldPath = `/products/${previousDoc.slug}`
+  const oldPath = Routes.product(previousDoc.slug)
 
   payload.logger.info(`Revalidating old product at path: ${oldPath}`)
 
@@ -27,10 +46,12 @@ export const revalidateDelete: CollectionBeforeDeleteHook = async ({
     collection: 'products',
     id,
     overrideAccess: true,
+    select: { slug: true },
   })
 
+  if (!doc || !doc.slug) return doc
   if (!context.disableRevalidate) {
-    const path = `/products/${doc?.slug}`
+    const path = Routes.product(doc?.slug)
 
     revalidatePath(path)
     revalidateTag('products-sitemap')
