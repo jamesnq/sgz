@@ -4,7 +4,9 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 
 import { Routes } from '@/utilities/routes'
 import type { Product } from '../../../payload-types'
-
+export const revalidateProductsPage = () => {
+  revalidatePath(Routes.PRODUCTS)
+}
 export const revalidateProductPath = async (payload: Payload, productId: number) => {
   const product = await payload.findByID({
     collection: 'products',
@@ -34,6 +36,7 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   payload.logger.info(`Revalidating old product at path: ${oldPath}`)
 
   revalidatePath(oldPath)
+  revalidateProductsPage()
   revalidateTag('products-sitemap')
   return doc
 }
@@ -54,6 +57,7 @@ export const revalidateDelete: CollectionBeforeDeleteHook = async ({
     const path = Routes.product(doc?.slug)
 
     revalidatePath(path)
+    revalidateProductsPage()
     revalidateTag('products-sitemap')
   }
   return doc

@@ -26,6 +26,10 @@ export const Products: CollectionConfig = {
     defaultColumns: ['name', 'status', 'image', 'slug', 'sold', 'updatedAt'],
     useAsTitle: 'name',
   },
+  hooks: {
+    afterChange: [revalidateProduct],
+    beforeDelete: [revalidateDelete],
+  },
   fields: [
     {
       name: 'name',
@@ -159,8 +163,4 @@ export const Products: CollectionConfig = {
     },
     ...slugField(),
   ],
-  hooks: {
-    afterChange: [revalidateProduct],
-    beforeDelete: [revalidateDelete],
-  },
 }
