@@ -50,28 +50,34 @@ export const userRoles: User['roles'] = ['admin', 'staff', 'user'] as const
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: hasRoleOrSelf(managerRoles),
+    admin: ({ req }) => {
+      if (hasRole(managerRoles)({ req })) return true
+      if (process.env.NODE_ENV === 'development') {
+        return !!req.user?.id
+      }
+      return false
+    },
     create: () => false,
     delete: hasRole(['admin']),
     read: hasRoleOrSelf(managerRoles),
     update: hasRoleOrSelf(managerRoles),
   },
   hooks: {
-    // afterLogin: [
-    //   async ({ user, req }) => {
-    //     if (userHasRole(user, managerRoles)) return
-    //     after(async () => {
-    //       //@ts-expect-error ignore
-    //       const ip = requestIp.getClientIp(req) || ''
-    //       await req.payload.update({
-    //         collection: 'users',
-    //         overrideAccess: true,
-    //         data: { ip },
-    //         where: { id: user.id },
-    //       })
-    //     })
-    //   },
-    // ],
+    afterLogin: [
+      async ({ user, req }) => {
+        if (userHasRole(user, managerRoles)) return
+        after(async () => {
+          //@ts-expect-error ignore
+          const ip = requestIp.getClientIp(req) || null
+          await req.payload.update({
+            collection: 'users',
+            overrideAccess: true,
+            data: { ip },
+            where: { id: user.id },
+          })
+        })
+      },
+    ],
     beforeLogin: [
       async ({ req, user }) => {
         const [novuResult, chatwootHash] = await Promise.all([
