@@ -23,6 +23,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -36,7 +37,7 @@ import payloadClient from '@/utilities/payloadClient'
 import { cn } from '@/utilities/ui'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Bot, Loader2 } from 'lucide-react'
+import { Bot, Loader2, Pencil } from 'lucide-react'
 import {
   createContext,
   memo,
@@ -907,8 +908,27 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
         >
           <SheetHeader>
             <SheetTitle>
-              <div className="flex space-x-2">
-                {getOrderStatus(order.status)} <div>-</div> <div>Đơn hàng #{order.id}</div>
+              <div className="items-center justify-between w-full">
+                <div className="flex space-x-2">
+                  {getOrderStatus(order.status)} <div>-</div> <div>Đơn hàng #{order.id}</div>
+                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogTitle></DialogTitle>
+                  <DialogDescription></DialogDescription>
+                  <DialogContent className="w-full max-w-4xl h-[80vh] p-0">
+                    <div className="flex-1 h-full">
+                      <iframe
+                        src={`/admin/collections/orders/${order.id}`}
+                        className="w-full h-full border-0"
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </SheetTitle>
           </SheetHeader>
