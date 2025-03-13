@@ -50,7 +50,13 @@ export const userRoles: User['roles'] = ['admin', 'staff', 'user'] as const
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: hasRoleOrSelf(managerRoles),
+    admin: ({ req }) => {
+      if (hasRole(managerRoles)({ req })) return true
+      if (process.env.NODE_ENV === 'development') {
+        return !!req.user?.id
+      }
+      return false
+    },
     create: () => false,
     delete: hasRole(['admin']),
     read: hasRoleOrSelf(managerRoles),
