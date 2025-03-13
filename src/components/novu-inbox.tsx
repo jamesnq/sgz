@@ -26,6 +26,9 @@ interface NovuChannel {
   label?: string
 }
 
+// LocalStorage key for saving channel preference
+const CHANNEL_PREFERENCE_KEY = 'sgz-novu-channel-preference'
+
 export default function NovuInbox() {
   const router = useRouter()
   const { user } = useAuth()
@@ -34,6 +37,7 @@ export default function NovuInbox() {
     hash: string
     label?: string
   } | null>(null)
+  const [savedPreferenceId, setSavedPreferenceId] = useState<string | null>(null)
 
   // Check if user has roles other than just "user"
   const hasAdditionalRoles = user?.roles && user.roles.some((role) => role !== 'user')
@@ -50,6 +54,18 @@ export default function NovuInbox() {
     select: (x: PaginatedDocs<NovuChannel>) => x.docs,
     enabled: !!hasAdditionalRoles && !!user?.id,
   })
+
+  // Load saved preference ID from localStorage
+  useEffect(() => {
+    try {
+      const savedId = localStorage.getItem(CHANNEL_PREFERENCE_KEY)
+      if (savedId) {
+        setSavedPreferenceId(savedId)
+      }
+    } catch (error) {
+      console.error('Error loading channel preference:', error)
+    }
+  }, [])
 
   // Combine user with fetched channels
   const channels = useMemo(() => {
@@ -72,21 +88,48 @@ export default function NovuInbox() {
     return [userChannel, ...fetchedChannels]
   }, [user, fetchedChannels])
 
-  // Set initial channel
+  // Set channel based on preference or default
   useEffect(() => {
-    if (!user?.id || !user.novuHash) return
+    if (!user?.id || !user.novuHash || !channels || channels.length === 0) return
 
-    // Always set user channel as default if no channel is selected
-    if (!currentChannel) {
+    // If we have a saved preference and it exists in the channels
+    if (savedPreferenceId) {
+      const savedChannel = channels.find((channel) => channel.subscriberId === savedPreferenceId)
+
+      if (savedChannel) {
+        setCurrentChannel({
+          subscriberId: savedChannel.subscriberId,
+          hash: savedChannel.hash,
+          label: savedChannel.label,
+        })
+        return
+      }
+    }
+
+    // If no saved preference or it's not found, use the first channel (user channel)
+    if (channels.length > 0) {
+      const userChannel = channels[0] as NovuChannel
       setCurrentChannel({
-        subscriberId: user.id.toString(),
-        hash: user.novuHash,
-        label: 'user',
+        subscriberId: userChannel.subscriberId,
+        hash: userChannel.hash,
+        label: userChannel.label,
       })
     }
-  }, [user, currentChannel])
+  }, [user, channels, savedPreferenceId])
+
+  // Save channel preference to localStorage when it changes
+  useEffect(() => {
+    if (currentChannel) {
+      try {
+        localStorage.setItem(CHANNEL_PREFERENCE_KEY, currentChannel.subscriberId)
+      } catch (error) {
+        console.error('Error saving channel preference:', error)
+      }
+    }
+  }, [currentChannel])
 
   if (!user?.id || !user.novuHash || !currentChannel) return <></>
+
   return (
     <div className="flex items-center">
       {hasAdditionalRoles && channels && channels.length > 1 && (
