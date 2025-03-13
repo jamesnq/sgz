@@ -8,6 +8,7 @@ import { after } from 'next/server'
 import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
+import { User } from '@/payload-types'
 
 export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
@@ -44,8 +45,8 @@ async function createNovuSubscriber({
   return { novuHash: createSubscriberHash(subscriberId), subscriberId }
 }
 // Careful when add more roles that role can get system notification
-export const managerRoles = ['admin', 'staff'] as const
-export const userRoles = ['admin', 'staff', 'user'] as const
+export const managerRoles: User['roles'] = ['admin', 'staff'] as const
+export const userRoles: User['roles'] = ['admin', 'staff', 'user'] as const
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
@@ -58,7 +59,7 @@ export const Users: CollectionConfig = {
   hooks: {
     afterLogin: [
       async ({ user, req }) => {
-        if (userHasRole(user, ['admin', 'staff'])) return
+        if (userHasRole(user, managerRoles)) return
         after(async () => {
           //@ts-expect-error ignore
           const ip = requestIp.getClientIp(req) || ''
@@ -73,34 +74,29 @@ export const Users: CollectionConfig = {
     ],
     beforeLogin: [
       async ({ req, user }) => {
-        if (!user.novuHash) {
-          const { novuHash } = await createNovuSubscriber({
-            subscriberId: user.id.toString(),
-            data: { email: user.email },
-          })
+        const [novuResult, chatwootHash] = await Promise.all([
+          !user.novuHash
+            ? createNovuSubscriber({
+                subscriberId: user.id.toString(),
+                data: { email: user.email },
+              })
+            : null,
+          !user.chatwootHash ? createChatwootHash(user.email) : null,
+        ])
 
+        const userUpdate: Partial<User> = {}
+        if (novuResult) userUpdate.novuHash = novuResult.novuHash
+        if (chatwootHash) userUpdate.chatwootHash = chatwootHash
+
+        if (Object.keys(userUpdate).length > 0) {
           await req.payload.update({
             collection: 'users',
             overrideAccess: true,
-            data: { novuHash },
+            data: userUpdate,
             where: { id: { equals: user.id } },
           })
-
-          user.novuHash = novuHash
         }
-
-        if (!user.chatwootHash) {
-          const chatwootHash = await createChatwootHash(user.email)
-          await req.payload.update({
-            collection: 'users',
-            overrideAccess: true,
-            data: { chatwootHash },
-            where: { id: { equals: user.id } },
-          })
-
-          user.chatwootHash = chatwootHash
-        }
-        return user
+        return { ...user, ...userUpdate }
       },
     ],
   },
