@@ -57,21 +57,21 @@ export const Users: CollectionConfig = {
     update: hasRoleOrSelf(managerRoles),
   },
   hooks: {
-    afterLogin: [
-      async ({ user, req }) => {
-        if (userHasRole(user, managerRoles)) return
-        after(async () => {
-          //@ts-expect-error ignore
-          const ip = requestIp.getClientIp(req) || ''
-          await req.payload.update({
-            collection: 'users',
-            overrideAccess: true,
-            data: { ip },
-            where: { id: user.id },
-          })
-        })
-      },
-    ],
+    // afterLogin: [
+    //   async ({ user, req }) => {
+    //     if (userHasRole(user, managerRoles)) return
+    //     after(async () => {
+    //       //@ts-expect-error ignore
+    //       const ip = requestIp.getClientIp(req) || ''
+    //       await req.payload.update({
+    //         collection: 'users',
+    //         overrideAccess: true,
+    //         data: { ip },
+    //         where: { id: user.id },
+    //       })
+    //     })
+    //   },
+    // ],
     beforeLogin: [
       async ({ req, user }) => {
         const [novuResult, chatwootHash] = await Promise.all([
