@@ -6,184 +6,233 @@ import { Inbox } from '@novu/react'
 import { BellIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from './ui/button'
-// export function NovuInboxAdmin() {
-//   const router = useRouter()
-//   const pathname = usePathname()
-//   const { data: channels } = useQuery({
-//     queryKey: ['novuChannels'],
-//     queryFn: async () => {
-//       return await payloadClient.find({
-//         collection: 'novu-channels',
-//       })
-//     },
-//     select: (x) => x.docs,
-//   })
+import { useEffect, useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import payloadClient from '@/utilities/payloadClient'
+import { PaginatedDocs } from 'payload'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
-//   const [curChannel, setCurChannel] = useState<NovuChannel | undefined>()
-//   useEffect(() => {
-//     if (!channels || channels.length === 0) return
+// Define the NovuChannel type
+interface NovuChannel {
+  id: string
+  subscriberId: string
+  hash: string
+  label?: string
+}
 
-//     setCurChannel(channels[0])
-//   }, [channels])
-//   if (!curChannel) return <></>
-//   return (
-//     <div style={{ display: 'flex', alignItems: 'center' }}>
-//       <select
-//         value={curChannel.subscriberId}
-//         onChange={(e) => setCurChannel(channels?.find((x) => x.subscriberId === e.target.value))}
-//         style={{
-//           marginRight: '0.5rem',
-//           padding: '0.5rem',
-//           border: '1px solid #ccc',
-//           borderRadius: '0.25rem',
-//         }}
-//       >
-//         {channels?.map((channel) => (
-//           <option key={channel.subscriberId} value={channel.subscriberId}>
-//             {channel.subscriberId}
-//           </option>
-//         ))}
-//       </select>
-//       <Inbox
-//         key={curChannel.subscriberId}
-//         appearance={{
-//           elements: {
-//             popoverContent: {
-//               zIndex: 9999,
-//             },
-//           },
-//           variables: {
-//             colorBackground: 'var(--theme-bg)',
-//             colorPrimary: 'red',
-//             colorSecondary: 'doc-controls__label',
-//             colorForeground: 'var(--theme-text)',
-//             colorPrimaryForeground: 'doc-controls__value',
-//             colorSecondaryForeground: 'doc-controls__label',
-//           },
-//         }}
-//         renderBell={(unreadCount) => (
-//           <Button
-//             className="relative"
-//             variant="ghost"
-//             size={'icon'}
-//             style={{
-//               width: '2rem',
-//               height: '2rem',
-//               borderRadius: '9999px',
-//             }}
-//           >
-//             <BellIcon />
-//             {unreadCount > 0 && (
-//               <span
-//                 style={{
-//                   position: 'absolute',
-//                   top: '-0.125rem',
-//                   right: '-0.125rem',
-//                   display: 'flex',
-//                   alignItems: 'center',
-//                   justifyContent: 'center',
-//                   minWidth: '0.625rem',
-//                   height: '20px',
-//                   width: '20px',
-//                   fontWeight: 'bold',
-//                   color: 'white',
-//                   backgroundColor: '#ef4444',
-//                   borderRadius: '9999px',
-//                   padding: '0 0.125rem',
-//                   fontSize: unreadCount > 10 ? '10px' : '12px',
-//                 }}
-//               >
-//                 {unreadCount > 99 ? '99+' : unreadCount}
-//               </span>
-//             )}
-//           </Button>
-//         )}
-//         applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
-//         subscriberId={curChannel.subscriberId}
-//         subscriberHash={curChannel.hash}
-//         routerPush={(path: string) => {
-//           console.log('🚀 ~ NovuInboxAdmin ~ path:', path)
-//           console.log('🚀 ~ NovuInboxAdmin ~ pathname:', pathname)
-
-//           if (pathname !== path) router.push(path)
-//         }}
-//         placement="bottom-end"
-//       />
-//     </div>
-//   )
-// }
+// LocalStorage key for saving channel preference
+const CHANNEL_PREFERENCE_KEY = 'sgz-novu-channel-preference'
 
 export default function NovuInbox() {
   const router = useRouter()
-
   const { user } = useAuth()
-  if (!user?.id || !user.novuHash) return <></>
+  const [currentChannel, setCurrentChannel] = useState<{
+    subscriberId: string
+    hash: string
+    label?: string
+  } | null>(null)
+  const [savedPreferenceId, setSavedPreferenceId] = useState<string | null>(null)
+
+  // Check if user has roles other than just "user"
+  const hasAdditionalRoles = user?.roles && user.roles.some((role) => role !== 'user')
+
+  // Fetch channels if user has additional roles
+  const { data: fetchedChannels } = useQuery({
+    queryKey: ['novuChannels'],
+    queryFn: async () => {
+      return await payloadClient.find({
+        collection: 'novu-channels',
+      })
+    },
+    refetchOnWindowFocus: false,
+    select: (x: PaginatedDocs<NovuChannel>) => x.docs,
+    enabled: !!hasAdditionalRoles && !!user?.id,
+  })
+
+  // Load saved preference ID from localStorage
+  useEffect(() => {
+    try {
+      const savedId = localStorage.getItem(CHANNEL_PREFERENCE_KEY)
+      if (savedId) {
+        setSavedPreferenceId(savedId)
+      }
+    } catch (error) {
+      console.error('Error loading channel preference:', error)
+    }
+  }, [])
+
+  // Combine user with fetched channels
+  const channels = useMemo(() => {
+    if (!user?.id || !user.novuHash) return []
+
+    // Create user channel
+    const userChannel: NovuChannel = {
+      id: user.id.toString(),
+      subscriberId: user.id.toString(),
+      hash: user.novuHash,
+      label: 'user',
+    }
+
+    // If no additional channels, just return user channel
+    if (!fetchedChannels || fetchedChannels.length === 0) {
+      return [userChannel]
+    }
+
+    // Add user channel to the beginning of the array
+    return [userChannel, ...fetchedChannels]
+  }, [user, fetchedChannels])
+
+  // Set channel based on preference or default
+  useEffect(() => {
+    if (!user?.id || !user.novuHash || !channels || channels.length === 0) return
+
+    // If we have a saved preference and it exists in the channels
+    if (savedPreferenceId) {
+      const savedChannel = channels.find((channel) => channel.subscriberId === savedPreferenceId)
+
+      if (savedChannel) {
+        setCurrentChannel({
+          subscriberId: savedChannel.subscriberId,
+          hash: savedChannel.hash,
+          label: savedChannel.label,
+        })
+        return
+      }
+    }
+
+    // If no saved preference or it's not found, use the first channel (user channel)
+    if (channels.length > 0) {
+      const userChannel = channels[0] as NovuChannel
+      setCurrentChannel({
+        subscriberId: userChannel.subscriberId,
+        hash: userChannel.hash,
+        label: userChannel.label,
+      })
+    }
+  }, [user, channels, savedPreferenceId])
+
+  // Save channel preference to localStorage when it changes
+  useEffect(() => {
+    if (currentChannel) {
+      try {
+        localStorage.setItem(CHANNEL_PREFERENCE_KEY, currentChannel.subscriberId)
+      } catch (error) {
+        console.error('Error saving channel preference:', error)
+      }
+    }
+  }, [currentChannel])
+
+  if (!user?.id || !user.novuHash || !currentChannel) return <></>
+
   return (
-    <Inbox
-      localization={{
-        'inbox.filters.dropdownOptions.unread': 'Chỉ chưa đọc',
-        'inbox.filters.dropdownOptions.default': 'Chưa đọc & đã đọc',
-        'inbox.filters.dropdownOptions.archived': 'Đã lưu trữ',
-        'inbox.filters.labels.unread': 'Chưa đọc',
-        'inbox.filters.labels.default': 'Thông báo',
-        'inbox.filters.labels.archived': 'Đã lưu trữ',
-        'notifications.emptyNotice': 'Không có thông báo',
-        'notifications.actions.readAll': 'Đánh dấu tất cả là đã đọc',
-        'notifications.actions.archiveAll': 'Lưu trữ tất cả',
-        'notifications.actions.archiveRead': 'Lưu trữ đã đọc',
-        'notification.actions.read.tooltip': 'Đánh dấu là đã đọc',
-        'notification.actions.unread.tooltip': 'Đánh dấu là chưa đọc',
-        'notifications.newNotifications': ({ notificationCount }: { notificationCount: number }) =>
-          `${notificationCount > 99 ? '99+' : notificationCount} ${
-            notificationCount === 1 ? 'thông báo' : 'thông báo'
-          } mới`,
-        'notification.actions.archive.tooltip': 'Lưu trữ',
-        'notification.actions.unarchive.tooltip': 'Bỏ lưu trữ',
-        'preferences.title': 'Tùy chọn Thông báo',
-        'preferences.global': 'Tùy chọn Chung',
-        'preferences.workflow.disabled.notice':
-          'Liên hệ quản trị viên để bật quản lý đăng ký cho thông báo quan trọng này.',
-        'preferences.workflow.disabled.tooltip': 'Liên hệ quản trị viên để chỉnh sửa',
-        dynamic: {
-          welcome: 'Xin chào',
-          'new-order': 'Đơn hàng mới',
-          'order-update': 'Đơn hàng cập nhật',
-        },
-        locale: 'vi-VN',
-      }}
-      appearance={{
-        elements: {
-          popoverContent: {
-            zIndex: 9999,
-          },
-        },
-        variables: {
-          colorBackground: 'hsl(var(--background))',
-          colorPrimary: 'red',
-          colorSecondary: 'hsl(var(--secondary))',
-          colorForeground: 'hsl(var(--foreground))',
-          colorPrimaryForeground: 'hsl(var(--primary-foreground))',
-          colorSecondaryForeground: 'hsl(var(--secondary-foreground))',
-        },
-      }}
-      renderBell={(unreadCount) => (
-        <Button className="rounded-full relative w-8 h-8" variant="ghost" size={'icon'}>
-          <BellIcon className="text-highlight" />
-          {unreadCount > 0 && (
-            <span
-              className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[0.625rem] h-[20px] w-[20px] font-bold text-white bg-red-500 rounded-full px-0.5"
-              style={{ fontSize: unreadCount > 10 ? '10px' : '12px' }}
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </Button>
+    <div className="flex items-center">
+      {hasAdditionalRoles && channels && channels.length > 1 && (
+        <Select
+          value={currentChannel.subscriberId}
+          onValueChange={(value) => {
+            const selected = channels.find((channel) => channel.subscriberId === value)
+            if (selected && selected.subscriberId && selected.hash) {
+              setCurrentChannel({
+                subscriberId: selected.subscriberId,
+                hash: selected.hash,
+                label: selected.label,
+              })
+            }
+          }}
+        >
+          <SelectTrigger className="w-auto min-w-[140px] max-w-[180px] mr-2 h-8 text-xs">
+            <SelectValue placeholder="Select channel" />
+          </SelectTrigger>
+          <SelectContent>
+            {channels.map((channel: NovuChannel) => (
+              <SelectItem
+                key={channel.subscriberId}
+                value={channel.subscriberId}
+                className="text-xs"
+              >
+                {channel.label || channel.subscriberId}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
-      applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
-      subscriberId={user.id.toString()}
-      subscriberHash={user.novuHash}
-      routerPush={(path: string) => router.push(path)}
-      placement="bottom-end"
-    />
+      <Inbox
+        key={currentChannel.subscriberId}
+        localization={{
+          'inbox.filters.dropdownOptions.unread': 'Chỉ chưa đọc',
+          'inbox.filters.dropdownOptions.default': 'Chưa đọc & đã đọc',
+          'inbox.filters.dropdownOptions.archived': 'Đã lưu trữ',
+          'inbox.filters.labels.unread': 'Chưa đọc',
+          'inbox.filters.labels.default': 'Thông báo',
+          'inbox.filters.labels.archived': 'Đã lưu trữ',
+          'notifications.emptyNotice': 'Không có thông báo',
+          'notifications.actions.readAll': 'Đánh dấu tất cả là đã đọc',
+          'notifications.actions.archiveAll': 'Lưu trữ tất cả',
+          'notifications.actions.archiveRead': 'Lưu trữ đã đọc',
+          'notification.actions.read.tooltip': 'Đánh dấu là đã đọc',
+          'notification.actions.unread.tooltip': 'Đánh dấu là chưa đọc',
+          'notifications.newNotifications': ({
+            notificationCount,
+          }: {
+            notificationCount: number
+          }) =>
+            `${notificationCount > 99 ? '99+' : notificationCount} ${
+              notificationCount === 1 ? 'thông báo' : 'thông báo'
+            } mới`,
+          'notification.actions.archive.tooltip': 'Lưu trữ',
+          'notification.actions.unarchive.tooltip': 'Bỏ lưu trữ',
+          'preferences.title': 'Tùy chọn Thông báo',
+          'preferences.global': 'Tùy chọn Chung',
+          'preferences.workflow.disabled.notice':
+            'Liên hệ quản trị viên để bật quản lý đăng ký cho thông báo quan trọng này.',
+          'preferences.workflow.disabled.tooltip': 'Liên hệ quản trị viên để chỉnh sửa',
+          dynamic: {
+            welcome: 'Xin chào',
+            'new-order': 'Đơn hàng mới',
+            'order-update': 'Đơn hàng cập nhật',
+          },
+          locale: 'vi-VN',
+        }}
+        appearance={{
+          elements: {
+            popoverContent: {
+              zIndex: 9999,
+            },
+          },
+          variables: {
+            colorBackground: 'hsl(var(--background))',
+            colorPrimary: 'red',
+            colorSecondary: 'hsl(var(--secondary))',
+            colorForeground: 'hsl(var(--foreground))',
+            colorPrimaryForeground: 'hsl(var(--primary-foreground))',
+            colorSecondaryForeground: 'hsl(var(--secondary-foreground))',
+          },
+        }}
+        renderBell={(unreadCount) => (
+          <Button className="rounded-full relative w-8 h-8" variant="ghost" size={'icon'}>
+            <BellIcon className="text-highlight" />
+            {unreadCount > 0 && (
+              <span
+                className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[0.625rem] h-[20px] w-[20px] font-bold text-white bg-red-500 rounded-full px-0.5"
+                style={{ fontSize: unreadCount > 10 ? '10px' : '12px' }}
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Button>
+        )}
+        applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
+        subscriberId={currentChannel.subscriberId}
+        subscriberHash={currentChannel.hash}
+        routerPush={(path: string) => router.push(path)}
+        placement="bottom-end"
+      />
+    </div>
   )
 }

@@ -84,19 +84,6 @@ export const seed = async ({
         .map((collection) => payload.db.deleteVersions({ collection, req, where: {} })),
     )
 
-    payload.logger.info(`— Seeding demo author and user...`)
-
-    // await payload.delete({
-    //   collection: 'users',
-    //   depth: 0,
-    //   overrideAccess: true,
-    //   where: {
-    //     email: {
-    //       equals: 'test@example.com',
-    //     },
-    //   },
-    // })
-
     payload.logger.info(`— Seeding form...`)
 
     const brawlhallaForm = await payload.create({
@@ -127,18 +114,30 @@ export const seed = async ({
       fetchFileFromDirectory('./src/endpoints/seed/MammothCoinStack.webp'),
       fetchFileFromDirectory('./src/endpoints/seed/appleid.webp'),
     ])
-
-    const [mmcMedia, appleIdMedia] = await Promise.all([
-      // payload.create({
-      //   collection: 'users',
-      //   overrideAccess: true,
-      //   data: {
-      //     email: 'test@example.com',
-      //     password: '123123',
-      //     roles: ['user', 'admin'],
-      //     _verified: true,
-      //   },
-      // }),
+    if (isDev) {
+      payload.logger.info(`— Seeding demo author and user...`)
+      await payload.delete({
+        collection: 'users',
+        depth: 0,
+        overrideAccess: true,
+        where: {
+          email: {
+            equals: 'test@example.com',
+          },
+        },
+      })
+    }
+    const [_exampleUser, mmcMedia, appleIdMedia] = await Promise.all([
+      payload.create({
+        collection: 'users',
+        overrideAccess: true,
+        data: {
+          email: 'test@example.com',
+          password: '123123',
+          roles: ['user'],
+          _verified: true,
+        },
+      }),
       payload.create({
         collection: 'media',
         overrideAccess: true,

@@ -1,15 +1,15 @@
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { env } from '@/config'
+import { User } from '@/payload-types'
 import { novu } from '@/services/novu.service'
 import { getServerSideURL } from '@/utilities/getURL'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
-import type { CollectionConfig, PayloadRequest } from 'payload'
+import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
+import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
-import { User } from '@/payload-types'
-import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
 
 export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
