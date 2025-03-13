@@ -46,6 +46,7 @@ export default function NovuInbox() {
         collection: 'novu-channels',
       })
     },
+    refetchOnWindowFocus: false,
     select: (x: PaginatedDocs<NovuChannel>) => x.docs,
     enabled: !!hasAdditionalRoles && !!user?.id,
   })
@@ -86,8 +87,6 @@ export default function NovuInbox() {
   }, [user, currentChannel])
 
   if (!user?.id || !user.novuHash || !currentChannel) return <></>
-  console.log('🚀 ~ channels ~ channels:', channels)
-
   return (
     <div className="flex items-center">
       {hasAdditionalRoles && channels && channels.length > 1 && (
