@@ -5,10 +5,11 @@ import { novu } from '@/services/novu.service'
 import { getServerSideURL } from '@/utilities/getURL'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, PayloadRequest } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 import { User } from '@/payload-types'
+import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
 
 export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
@@ -78,16 +79,17 @@ export const Users: CollectionConfig = {
         })
       },
     ],
-    beforeLogin: [
-      async ({ req, user }) => {
+    beforeRead: [
+      async ({ req, doc }) => {
+        if (!doc) return doc
         const [novuResult, chatwootHash] = await Promise.all([
-          !user.novuHash
+          !doc.novuHash
             ? createNovuSubscriber({
-                subscriberId: user.id.toString(),
-                data: { email: user.email },
+                subscriberId: doc.id.toString(),
+                data: { email: doc.email },
               })
             : null,
-          !user.chatwootHash ? createChatwootHash(user.email) : null,
+          !doc.chatwootHash ? createChatwootHash(doc.email) : null,
         ])
 
         const userUpdate: Partial<User> = {}
@@ -99,12 +101,12 @@ export const Users: CollectionConfig = {
             collection: 'users',
             overrideAccess: true,
             data: userUpdate,
-            where: { id: { equals: user.id } },
+            where: { id: { equals: doc.id } },
           })
         }
-        return { ...user, ...userUpdate }
+        return { ...doc, ...userUpdate }
       },
-    ],
+    ] as BeforeReadHook<User>[],
   },
   admin: {
     defaultColumns: ['email', 'balance', 'roles'],
