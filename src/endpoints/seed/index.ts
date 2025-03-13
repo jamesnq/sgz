@@ -11,6 +11,7 @@ import { novu } from '@/services/novu.service'
 import { novuChannels } from '@/utilities/constants'
 import { productAppleId as productAppleIdData } from './product-appleid'
 import { productBrawlhallaCoins as productBrawlhallaCoinsData } from './product-brawlhalla-coins'
+import { novu_channels } from '@/payload-generated-schema'
 const isDev = process.env.NODE_ENV === 'development'
 const collections: CollectionSlug[] = [
   'orders',
@@ -85,16 +86,16 @@ export const seed = async ({
 
     payload.logger.info(`— Seeding demo author and user...`)
 
-    await payload.delete({
-      collection: 'users',
-      depth: 0,
-      overrideAccess: true,
-      where: {
-        email: {
-          equals: 'test@example.com',
-        },
-      },
-    })
+    // await payload.delete({
+    //   collection: 'users',
+    //   depth: 0,
+    //   overrideAccess: true,
+    //   where: {
+    //     email: {
+    //       equals: 'test@example.com',
+    //     },
+    //   },
+    // })
 
     payload.logger.info(`— Seeding form...`)
 
@@ -127,17 +128,17 @@ export const seed = async ({
       fetchFileFromDirectory('./src/endpoints/seed/appleid.webp'),
     ])
 
-    const [demoAuthor, mmcMedia, appleIdMedia] = await Promise.all([
-      payload.create({
-        collection: 'users',
-        overrideAccess: true,
-        data: {
-          email: 'test@example.com',
-          password: '123123',
-          roles: ['user', 'admin'],
-          _verified: true,
-        },
-      }),
+    const [mmcMedia, appleIdMedia] = await Promise.all([
+      // payload.create({
+      //   collection: 'users',
+      //   overrideAccess: true,
+      //   data: {
+      //     email: 'test@example.com',
+      //     password: '123123',
+      //     roles: ['user', 'admin'],
+      //     _verified: true,
+      //   },
+      // }),
       payload.create({
         collection: 'media',
         overrideAccess: true,
@@ -180,15 +181,12 @@ export const seed = async ({
       }),
     ])
 
-    let _demoAuthorID: number | string = demoAuthor.id
-
     let mmcMediaId: number | string = mmcMedia.id
     let appleIdIDMediaId: number | string = appleIdMedia.id
 
     if (payload.db.defaultIDType === 'text') {
       mmcMediaId = `"${mmcMedia.id}"`
       appleIdIDMediaId = `"${appleIdMedia.id}"`
-      _demoAuthorID = `"${_demoAuthorID}"`
     }
 
     payload.logger.info(`— Seeding products...`)
@@ -322,17 +320,11 @@ export const seed = async ({
     novu.subscribers.createBulk({
       subscribers,
     }),
-    Promise.all(
-      novuChannels.map(
-        async (channel) =>
-          await payload.create({
-            collection: 'novu-channels',
-            data: {
-              hash: createSubscriberHash(channel),
-              subscriberId: channel,
-            },
-          }),
-      ),
+    payload.db.drizzle.insert(novu_channels).values(
+      novuChannels.map((channel) => ({
+        hash: createSubscriberHash(channel),
+        subscriberId: channel,
+      })),
     ),
   ])
 
