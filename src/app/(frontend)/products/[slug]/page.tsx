@@ -78,33 +78,48 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
     if (!product || !product.variants?.length) {
       return null
     }
-    if (product && product.variants) {
-      product.variants = product.variants.sort(
-        (a: any, b: any) => a.originalPrice - b.originalPrice,
-      )
+    const imageIds = Array.from(
+      new Set(
+        product.variants?.map((variant) => (variant as ProductVariant).image).filter(Boolean) || [],
+      ),
+    )
+    if (imageIds.length) {
+      const { docs: images } = await payload.find({
+        collection: 'media',
+        where: {
+          id: {
+            in: imageIds,
+          },
+        },
+        depth: 1,
+      })
+      product.variants.forEach((variant) => {
+        ;(variant as ProductVariant).image = images.find(
+          (image) => image.id === (variant as ProductVariant).image,
+        )
+      })
     }
-
     const formIds = Array.from(
       new Set(
         product.variants?.map((variant) => (variant as ProductVariant).form).filter(Boolean) || [],
       ),
     )
-    if (!formIds.length) return product
-
-    const { docs: forms } = await payload.find({
-      collection: 'forms',
-      where: {
-        id: {
-          in: formIds,
+    if (formIds.length) {
+      const { docs: forms } = await payload.find({
+        collection: 'forms',
+        where: {
+          id: {
+            in: formIds,
+          },
         },
-      },
-      depth: 1,
-    })
-    product.variants.forEach((variant) => {
-      ;(variant as ProductVariant).form = forms.find(
-        (form) => form.id === (variant as ProductVariant).form,
-      )
-    })
+        depth: 1,
+      })
+      product.variants.forEach((variant) => {
+        ;(variant as ProductVariant).form = forms.find(
+          (form) => form.id === (variant as ProductVariant).form,
+        )
+      })
+    }
     return product
   } catch {}
   return null
