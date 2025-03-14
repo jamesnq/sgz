@@ -192,9 +192,14 @@ export const Users: CollectionConfig = {
       name: 'balance',
       type: 'number',
       defaultValue: 0,
+      admin: {
+        components: {
+          Field: '@/collections/custom-balance-field#CustomBalanceField',
+        },
+      },
       access: {
-        create: hasRole(['admin']),
-        update: hasRole(['admin']),
+        create: noOne,
+        update: noOne,
       },
     },
     {

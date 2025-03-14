@@ -22,3 +22,9 @@ export const UpdateFormSubmissionSchema = z.object({
 export const autoProcessOrderSchema = z.object({
   orderId: z.number(),
 })
+
+export const adminBalanceSchema = z.object({
+  userId: z.number().positive(),
+  amount: z.number(),
+  note: z.string().optional(),
+})

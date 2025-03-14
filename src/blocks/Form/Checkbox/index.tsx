@@ -29,7 +29,7 @@ export const Checkbox = ({
           {field.label}
           {field.required && <span className="text-red-500 ml-1">* </span>}
         </label>
-        <RichText className="text-[11px] pl-5" data={field.description} enableGutter={false} />
+        <RichText className="text-[11px] pl-5" data={field.description} overrideClassName={true} />
       </div>
     </div>
   )
