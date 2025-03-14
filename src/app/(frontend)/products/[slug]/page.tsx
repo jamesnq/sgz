@@ -23,6 +23,11 @@ export async function generateStaticParams() {
       select: {
         slug: true,
       },
+      where: {
+        status: {
+          not_equals: 'PRIVATE',
+        },
+      },
     })
 
     const params = products.docs.map(({ slug }) => {
@@ -71,6 +76,9 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
       where: {
         slug: {
           equals: slug,
+        },
+        status: {
+          not_equals: 'PRIVATE',
         },
       },
     })

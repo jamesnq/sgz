@@ -123,7 +123,7 @@ async function ProductsData({
 
   const where: any = {
     status: {
-      equals: 'PUBLIC',
+      not_equals: 'PRIVATE',
     },
   }
 

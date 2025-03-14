@@ -1,8 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { anyone } from '@/access/anyone'
-
-import { hasRole } from '@/access/hasRoles'
+import { hasRole, userHasRole } from '@/access/hasRoles'
 import { slugField } from '@/fields/slug'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import {
@@ -17,7 +15,11 @@ import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
 export const Products: CollectionConfig = {
   slug: 'products',
   access: {
-    read: anyone,
+    read: ({ req: { user } }) => {
+      const test = userHasRole(user, ['admin', 'staff'])
+      if (test) return true
+      return { status: { not_equals: 'PRIVATE' } }
+    },
     update: hasRole(['admin', 'staff']),
     create: hasRole(['admin']),
     delete: hasRole(['admin']),

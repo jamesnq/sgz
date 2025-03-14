@@ -1,5 +1,4 @@
-import { anyone } from '@/access/anyone'
-import { hasRole } from '@/access/hasRoles'
+import { hasRole, userHasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
@@ -16,7 +15,11 @@ const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
 export const ProductVariants: CollectionConfig = {
   slug: 'product-variants',
   access: {
-    read: anyone,
+    read: ({ req: { user } }) => {
+      const test = userHasRole(user, ['admin', 'staff'])
+      if (test) return true
+      return { status: { not_equals: 'PRIVATE' } }
+    },
     update: hasRole(['admin', 'staff']),
     create: hasRole(['admin']),
     delete: hasRole(['admin']),
@@ -53,16 +56,20 @@ export const ProductVariants: CollectionConfig = {
       // defaultValue: 'ORDER',
       options: [
         {
-          label: 'Đặt hàng',
+          label: 'Order',
           value: 'ORDER',
         },
         {
-          label: 'Giao ngay',
+          label: 'Available',
           value: 'AVAILABLE',
         },
         {
-          label: 'Ngừng bán',
+          label: 'Stopped',
           value: 'STOPPED',
+        },
+        {
+          label: 'Private',
+          value: 'PRIVATE',
         },
       ],
       required: true,
