@@ -1,51 +1,16 @@
-import type {
-  CollectionAfterChangeHook,
-  CollectionAfterDeleteHook,
-  CollectionConfig,
-  Payload,
-} from 'payload'
 import { anyone } from '@/access/anyone'
 import { hasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
-import { revalidatePath } from 'next/cache'
-
-const revalidateProductPath = async (payload: Payload, productId: number) => {
-  const product = await payload.findByID({
-    collection: 'products',
-    id: productId,
-    overrideAccess: true,
-  })
-
-  if (!product || !product.slug) {
-    payload.logger.error(`Product not found or missing slug for id: ${productId}`)
-    return null
-  }
-
-  const path = `/products/${product.slug}`
-  payload.logger.info(`Revalidating product at path: ${path}`)
-  revalidatePath(path)
-  return path
-}
+import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
+import { revalidateProductPath } from '../Products/hooks/revalidateProduct'
 
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   doc,
   req: { payload },
 }) => {
-  if (typeof doc.product === 'number') {
-    await revalidateProductPath(payload, doc.product)
-  }
-  return doc
-}
-
-const revalidateDelete: CollectionAfterDeleteHook<ProductVariant> = async ({
-  doc,
-  req: { payload, context },
-}) => {
-  if (typeof doc.product === 'number' && !context.disableRevalidate) {
-    await revalidateProductPath(payload, doc.product)
-  }
-  return doc
+  const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
+  await revalidateProductPath(payload, productId)
 }
 
 export const ProductVariants: CollectionConfig = {
@@ -57,7 +22,7 @@ export const ProductVariants: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   admin: {
-    defaultColumns: ['product', 'name', 'sold', 'updatedAt'],
+    defaultColumns: ['name', 'product', 'sold', 'updatedAt'],
     useAsTitle: 'name',
   },
   fields: [
@@ -188,6 +153,5 @@ export const ProductVariants: CollectionConfig = {
   ],
   hooks: {
     afterChange: [revalidateProduct],
-    afterDelete: [revalidateDelete],
   },
 }
