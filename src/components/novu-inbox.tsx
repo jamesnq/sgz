@@ -32,6 +32,7 @@ const CHANNEL_PREFERENCE_KEY = 'sgz-novu-channel-preference'
 // Custom hook to handle Novu notifications with debounce
 function useNovuNotifications() {
   const { on } = useNovu()
+  const router = useRouter()
   const [isReloading, setIsReloading] = useState(false)
   useEffect(() => {
     on('notifications.notification_received', ({ result }) => {
@@ -39,9 +40,10 @@ function useNovuNotifications() {
       if (result.redirect) {
         const currentPath = window.location.pathname
 
-        if (isReloading && currentPath === result.redirect.url) {
-          window.location.reload()
+        if (!isReloading && currentPath === result.redirect.url) {
           setIsReloading(true)
+          router.refresh()
+          setIsReloading(false)
         }
       }
     })
