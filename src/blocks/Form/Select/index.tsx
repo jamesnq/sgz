@@ -47,7 +47,7 @@ export function SelectField({
               ))}
           </SelectContent>
         </Select>
-        <RichText className="text-[11px] pl-5" data={field.description} enableGutter={false} />
+        <RichText className="text-[11px] pl-5" data={field.description} overrideClassName={true} />
       </div>
     </div>
   )

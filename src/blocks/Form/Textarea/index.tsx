@@ -32,7 +32,7 @@ export const TextareaField = ({
             onChange?.(e.target.value)
           }}
         />
-        <RichText className="text-[11px] pl-5" data={field.description} enableGutter={true} />
+        <RichText className="text-[11px] pl-5" data={field.description} overrideClassName={true} />
       </div>
     </div>
   )
