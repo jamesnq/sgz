@@ -1,14 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
 import { noOne } from '@/access/noOne'
-import { hasRole } from '@/access/hasRoles'
+import { hasRole, userHasRole } from '@/access/hasRoles'
 
 export const FormSubmissions: CollectionConfig = {
   slug: 'form-submissions',
   access: {
     create: noOne,
     delete: noOne,
-    read: hasRole(['admin', 'staff']),
+    read: ({ req: { user } }) => {
+      const test = userHasRole(user, ['admin', 'staff'])
+      if (test) return true
+      return { user: { equals: user?.id } }
+    },
     update: hasRole(['admin', 'staff']),
   },
   admin: {

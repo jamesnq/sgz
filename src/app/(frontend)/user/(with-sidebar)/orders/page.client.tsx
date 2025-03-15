@@ -20,10 +20,10 @@ import { useEffect, useTransition } from 'react'
 
 function OrderCard({ o }: { o: Order }) {
   // @ts-expect-error ignore
-  const image = o.productVariant.image || o.productVariant.product.image
+  const image = o.productVariant.image || o.productVariant?.product?.image
   const variant = o.productVariant as ProductVariant
   const product = variant.product as Product
-  const productUrl = Routes.product(product.slug as string)
+  const productUrl = product?.slug ? Routes.product(product?.slug as string) : '/'
   const orderUrl = Routes.order(o.id)
   return (
     <Card key={o.id}>
