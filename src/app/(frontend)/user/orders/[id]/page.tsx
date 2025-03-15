@@ -51,8 +51,6 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   if (!docs.length || !user || !docs[0]) notFound()
   const order = docs[0]
-  console.log('🚀 ~ Page ~ order:', order)
-
   // Filter fields
   let product = (order.productVariant as ProductVariant).product as Product
   if (typeof product == 'object') {

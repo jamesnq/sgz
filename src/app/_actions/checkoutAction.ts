@@ -4,6 +4,7 @@ import { Form, Product } from '@/payload-types'
 import { novu } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
+import { Routes } from '@/utilities/routes'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
@@ -122,7 +123,7 @@ export const checkoutAction = authActionClient
           payload: {
             subject: `Tạo đơn hàng mới thành công`,
             message: `Đơn hàng #${order.id} được tạo thành công lúc ${formatOrderDate(new Date(order.createdAt))} ấn để xem chi tiết`,
-            redirect: `/user/orders/${order.id}`,
+            redirect: Routes.order(order.id),
           },
         }),
         novu.trigger({
@@ -133,7 +134,7 @@ export const checkoutAction = authActionClient
           payload: {
             subject: `Có đơn hàng mới #${order.id}`,
             message: ``,
-            redirect: `/admin/collections/orders/${order.id}`,
+            redirect: Routes.WORKSPACE,
           },
         }),
       ])

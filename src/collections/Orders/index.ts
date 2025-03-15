@@ -18,6 +18,7 @@ import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
+import { Routes } from '@/utilities/routes'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -63,7 +64,7 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
           payload: {
             message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
             subject: `Yêu cầu hành động với đơn hàng #${doc.id}`,
-            redirect: `/user/orders/${doc.id}`,
+            redirect: Routes.order(doc.id),
           },
         })
       })
@@ -80,9 +81,9 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
             subscriberId: 'staff',
           },
           payload: {
-            message: `Người dùng cập nhật đơn hàng #${doc.id}`,
+            message: `Người dùng đã cập nhật đơn hàng #${doc.id}`,
             subject: `Đơn hàng #${doc.id} đang đợi xử lý`,
-            redirect: `/admin/collections/orders/${doc.id}`,
+            redirect: Routes.WORKSPACE,
           },
         })
       })
@@ -172,7 +173,6 @@ export const Orders: CollectionConfig = {
       editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
-        read: hasRole(['admin', 'staff']),
         update: hasRole(['admin', 'staff']),
       },
     },
@@ -185,7 +185,6 @@ export const Orders: CollectionConfig = {
       editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
-        read: hasRole(['admin', 'staff']),
         update: hasRole(['admin', 'staff']),
       },
     },

@@ -6,6 +6,8 @@ export class Routes {
   static readonly PRODUCTS = '/products'
   static readonly ORDERS = '/user/orders'
   static readonly ADMIN = '/admin'
+  static readonly WORKSPACE = 'workspace'
+  static readonly TRANSACTIONS = '/user/transactions'
   static readonly USER_NAV: {
     label: string
     href: string
@@ -13,12 +15,12 @@ export class Routes {
   }[] = [
     {
       label: 'Đơn hàng',
-      href: '/user/orders',
+      href: Routes.ORDERS,
       icon: Package,
     },
     {
       label: 'Lịch sử giao dịch',
-      href: '/user/transactions',
+      href: Routes.TRANSACTIONS,
       icon: ArrowLeftRight,
     },
   ]
