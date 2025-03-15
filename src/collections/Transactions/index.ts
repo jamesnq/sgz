@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
+import { managerGroup } from '@/utilities/constants'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
@@ -14,6 +15,7 @@ export const Transactions: CollectionConfig = {
   admin: {
     defaultColumns: ['user', 'amount', 'balance', 'description', 'createdAt'],
     useAsTitle: 'amount',
+    group: managerGroup,
   },
   fields: [
     {

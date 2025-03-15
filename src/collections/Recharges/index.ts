@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
+import { managerGroup } from '@/utilities/constants'
 // TODO indexes orderCode, gateway
 export const Recharges: CollectionConfig = {
   slug: 'recharges',
@@ -14,6 +15,7 @@ export const Recharges: CollectionConfig = {
   admin: {
     defaultColumns: ['orderCode', 'status', 'amount', 'updatedAt'],
     useAsTitle: 'status',
+    group: managerGroup,
   },
   fields: [
     {
@@ -41,7 +43,7 @@ export const Recharges: CollectionConfig = {
       defaultValue: 'PAYOS',
       options: [
         { value: 'PAYOS', label: 'PAYOS' },
-        { value: 'DOITHE', label: 'DOITHE' }
+        { value: 'DOITHE', label: 'DOITHE' },
       ],
       required: true,
     },

@@ -10,6 +10,7 @@ import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/typ
 import type { CollectionConfig } from 'payload'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
+import { managerGroup } from '@/utilities/constants'
 
 export function createSubscriberHash(subscriberId: string) {
   return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
@@ -111,6 +112,7 @@ export const Users: CollectionConfig = {
   admin: {
     defaultColumns: ['email', 'balance', 'roles'],
     useAsTitle: 'email',
+    group: managerGroup,
   },
   auth: {
     tokenExpiration: 60 * 60 * 24 * 30,

@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { noOne } from '@/access/noOne'
 import { hasRole, userHasRole } from '@/access/hasRoles'
+import { managerGroup } from '@/utilities/constants'
 
 export const FormSubmissions: CollectionConfig = {
   slug: 'form-submissions',
@@ -18,6 +19,7 @@ export const FormSubmissions: CollectionConfig = {
   admin: {
     useAsTitle: 'form',
     defaultColumns: ['id', 'form', 'user', 'createdAt'],
+    group: managerGroup,
   },
   fields: [
     {

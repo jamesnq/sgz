@@ -9,7 +9,7 @@ export const AdminBar = () => {
 
   return (
     <div className="container bg-secondary">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <Link href="/workspace" className="text-sm font-medium hover:underline">
           Workspace
         </Link>
