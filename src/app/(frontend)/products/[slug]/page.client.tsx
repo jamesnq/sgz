@@ -32,6 +32,7 @@ import { cn } from '@/utilities/ui'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { Routes } from '@/utilities/routes'
 
 type ProductPageContextType = {
   product: Product
@@ -305,7 +306,7 @@ function CheckoutButton() {
       shippingFields: shippingInfo,
     }).then((x) => {
       if (!x?.data?.order) return
-      router.push('/user/orders/' + x.data.order.id)
+      router.push(Routes.order(x.data.order.id))
     })
   }
 
@@ -397,7 +398,6 @@ function Checkout({ className }: { className?: string }) {
 
 function Screen() {
   const { product, currentVariant } = useProductPageContext()
-  console.log('🚀 ~ Screen ~ product:', product)
   return (
     <Shell>
       <Head />
@@ -415,7 +415,7 @@ function Screen() {
                 <RichText
                   className="text-sm"
                   data={currentVariant.important}
-                  enableGutter={false}
+                  overrideClassName
                 ></RichText>
               </CardContent>
             </Card>
