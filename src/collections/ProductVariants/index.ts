@@ -3,6 +3,7 @@ import { ProductVariant } from '@/payload-types'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
 import { revalidateProductPath } from '../Products/hooks/revalidateProduct'
+import { mediaGroup } from '@/utilities/constants'
 
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   doc,
@@ -27,6 +28,7 @@ export const ProductVariants: CollectionConfig = {
   admin: {
     defaultColumns: ['name', 'product', 'sold', 'updatedAt'],
     useAsTitle: 'name',
+    group: mediaGroup,
   },
   fields: [
     {

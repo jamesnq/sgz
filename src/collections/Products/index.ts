@@ -11,6 +11,7 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
+import { mediaGroup } from '@/utilities/constants'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -27,6 +28,7 @@ export const Products: CollectionConfig = {
   admin: {
     defaultColumns: ['name', 'status', 'image', 'slug', 'sold', 'updatedAt'],
     useAsTitle: 'name',
+    group: mediaGroup,
   },
   hooks: {
     afterChange: [revalidateProduct],

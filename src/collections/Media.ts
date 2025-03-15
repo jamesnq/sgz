@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 
 import { hasRole } from '@/access/hasRoles'
 import { anyone } from '../access/anyone'
+import { mediaGroup } from '@/utilities/constants'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -21,6 +22,9 @@ export const Media: CollectionConfig = {
     delete: hasRole(['admin', 'staff']),
     read: anyone,
     update: hasRole(['admin', 'staff']),
+  },
+  admin: {
+    group: mediaGroup,
   },
   fields: [
     {

@@ -19,6 +19,7 @@ import { eq } from '@payloadcms/db-postgres/drizzle'
 import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 import { Routes } from '@/utilities/routes'
+import { managerGroup } from '@/utilities/constants'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -149,6 +150,7 @@ export const Orders: CollectionConfig = {
       'createdAt',
     ],
     useAsTitle: 'id',
+    group: managerGroup,
   },
   fields: [
     {

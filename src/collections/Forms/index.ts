@@ -5,6 +5,7 @@ import { anyone } from '../../access/anyone'
 import { fields } from './fields'
 import { Form } from '@/payload-types'
 import { revalidateProductPath } from '../Products/hooks/revalidateProduct'
+import { mediaGroup } from '@/utilities/constants'
 
 const revalidateProduct: CollectionAfterChangeHook<Form> = async ({ doc, req: { payload } }) => {
   const { docs: productVariants } = await payload.find({
@@ -32,6 +33,7 @@ export const Forms: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    group: mediaGroup,
   },
   hooks: {
     afterChange: [revalidateProduct] as CollectionAfterChangeHook<Form>[],
