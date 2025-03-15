@@ -23,7 +23,7 @@ export default async function Page({ params: paramsPromise }: Args) {
   // TODO optimize using drizzle
   const { docs } = await payload.find({
     collection: 'orders',
-    depth: 2,
+    depth: 3,
     limit: 1,
     user,
     pagination: false,
@@ -61,6 +61,5 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   const { name, image } = order.productVariant as ProductVariant
   order.productVariant = { product, name, image } as ProductVariant
-  console.log('🚀 ~ Page ~ order:', order)
   return <PageClient order={order} />
 }
