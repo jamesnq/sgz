@@ -397,6 +397,7 @@ function Checkout({ className }: { className?: string }) {
 
 function Screen() {
   const { product, currentVariant } = useProductPageContext()
+  console.log('🚀 ~ Screen ~ product:', product)
   return (
     <Shell>
       <Head />

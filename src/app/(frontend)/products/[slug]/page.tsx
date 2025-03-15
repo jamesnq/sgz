@@ -67,7 +67,6 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
   try {
     // TODO optimize query using drizzle
     const payload = await getPayload({ config: configPromise })
-
     const result = await payload.find({
       collection: 'products',
       limit: 1,
@@ -81,11 +80,32 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
           not_equals: 'PRIVATE',
         },
       },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        description: true,
+        variants: true,
+        image: true,
+        categories: true,
+        relatedProducts: true,
+        status: true,
+        sold: true,
+      },
     })
     const product = result.docs?.[0] || null
     if (!product || !product.variants?.length) {
       return null
     }
+    product.variants = product.variants
+      .filter((variant) => {
+        return (variant as ProductVariant).status !== 'PRIVATE'
+      })
+      // @ts-expect-error ignore
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .map(({ note, metadata, ...rest }: ProductVariant) => {
+        return rest
+      })
     const imageIds = Array.from(
       new Set(
         product.variants?.map((variant) => (variant as ProductVariant).image).filter(Boolean) || [],
