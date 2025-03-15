@@ -935,7 +935,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
           <div className="mt-4 space-y-4 overflow-y-auto flex-grow pb-4">
             <Accordion
               type="multiple"
-              defaultValue={['product', 'submission', 'buyer']}
+              defaultValue={['product', 'submission', 'buyer', 'delivery', 'message', 'note']}
               className="space-y-4"
             >
               <AccordionItem value="product" className="border rounded-md">
@@ -944,43 +944,67 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 </AccordionTrigger>
                 <AccordionContent className="px-3">
                   <p className="text-lg font-medium text-highlight">{productName}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     Giá: {formatPrice((order.productVariant as ProductVariant)?.price)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Số lượng: {order.quantity}x</p>
+                  </span>
+                  <div className="flex space-x-2 items-center">
+                    <p className="text-sm text-muted-foreground">Số lượng: </p>
+                    <span className="text-sm text-highlight font-bold">x{order.quantity}</span>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Tổng: {formatPrice(order.totalPrice)}
                   </p>
                 </AccordionContent>
               </AccordionItem>
+              {order.note?.root.children.length && (
+                <AccordionItem value="note" className="border rounded-md">
+                  <AccordionTrigger className="px-3">
+                    <h4 className="text-lg font-bold">Ghi chú</h4>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3">
+                    <RichText data={order.note} enableGutter={false} />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-              <AccordionItem value="delivery" className="border rounded-md">
-                <AccordionTrigger className="px-3">
-                  <h4 className="text-lg font-bold">Thông tin giao hàng</h4>
-                </AccordionTrigger>
-                <AccordionContent className="px-3">
-                  {order.deliveryContent?.root.children.length && (
+              {order.message?.root.children.length && (
+                <AccordionItem value="message" className="border rounded-md">
+                  <AccordionTrigger className="px-3">
+                    <h4 className="text-lg font-bold">Lời nhắn</h4>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3">
+                    <RichText data={order.message} enableGutter={false} />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {order.deliveryContent?.root.children.length && (
+                <AccordionItem value="delivery" className="border rounded-md">
+                  <AccordionTrigger className="px-3">
+                    <h4 className="text-lg font-bold">Thông tin hàng</h4>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3">
                     <RichText data={order.deliveryContent} enableGutter={false} />
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="submission" className="border rounded-md">
-                <AccordionTrigger className="px-3">
-                  <h4 className="text-lg font-bold">Thông tin cung cấp</h4>
-                </AccordionTrigger>
-                <AccordionContent className="px-3">
-                  {formSubmission?.form?.fields && <OrderShippingForm order={order} />}
-                </AccordionContent>
-              </AccordionItem>
-
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+              {formSubmission?.form?.fields && (
+                <AccordionItem value="submission" className="border rounded-md">
+                  <AccordionTrigger className="px-3">
+                    <h4 className="text-lg font-bold">Thông tin cung cấp</h4>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3">
+                    <OrderShippingForm order={order} />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
               <AccordionItem value="buyer" className="border rounded-md">
                 <AccordionTrigger className="px-3">
                   <h4 className="text-lg font-bold">Thông tin người mua</h4>
                 </AccordionTrigger>
                 <AccordionContent className="px-3">
                   <div className="rounded-md border p-3">
-                    <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
+                    <p className="text-sm">#{(order.orderedBy as User).id}</p>
                     <p className="text-sm">Email: {orderedBy.email}</p>
                     <p className="text-sm">Số dư: {formatPrice(orderedBy.balance)}</p>
                     {orderedBy.note && <p className="text-sm">Note: {orderedBy.note}</p>}

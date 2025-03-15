@@ -101,7 +101,7 @@ const PageClient = ({ order }: { order: Order }) => {
           )}
           {order.deliveryContent?.root.children.length && (
             <Card>
-              <CardHeader className="font-bold pb-0">Thông tin giao hàng</CardHeader>
+              <CardHeader className="font-bold pb-0">Thông tin hàng</CardHeader>
               <CardContent className="pt-0">
                 <RichText
                   className="pt-0"
