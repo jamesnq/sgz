@@ -107,13 +107,7 @@ const Sidebar = ({
             className="pl-8"
             value={searchTerm}
             onChange={handleSearchChange}
-            disabled={isPending}
           />
-          {isPending && (
-            <div className="absolute right-2.5 top-2.5">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          )}
         </div>
 
         {categories.length > 0 && (
@@ -124,7 +118,6 @@ const Sidebar = ({
                 <button
                   onClick={handleClearCategories}
                   className="text-xs text-muted-foreground hover:text-primary flex items-center"
-                  disabled={isPending}
                 >
                   <X className="h-3 w-3 mr-1" />
                   Xóa bộ lọc
@@ -140,7 +133,6 @@ const Sidebar = ({
                 className="pl-8"
                 value={categorySearchTerm}
                 onChange={(e) => setCategorySearchTerm(e.target.value)}
-                disabled={isPending}
               />
             </div>
 

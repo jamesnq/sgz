@@ -16,9 +16,10 @@ export async function generateStaticParams() {
     const payload = await getPayload({ config: configPromise })
     const products = await payload.find({
       collection: 'products',
+      depth: 0,
       draft: false,
       limit: 1000,
-      overrideAccess: false,
+      overrideAccess: true,
       pagination: false,
       select: {
         slug: true,
@@ -71,6 +72,7 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
       collection: 'products',
       limit: 1,
       depth: 1,
+      overrideAccess: true,
       pagination: false,
       where: {
         slug: {
@@ -114,6 +116,7 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
     if (imageIds.length) {
       const { docs: images } = await payload.find({
         collection: 'media',
+        overrideAccess: true,
         where: {
           id: {
             in: imageIds,
@@ -135,6 +138,7 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
     if (formIds.length) {
       const { docs: forms } = await payload.find({
         collection: 'forms',
+        overrideAccess: true,
         where: {
           id: {
             in: formIds,
