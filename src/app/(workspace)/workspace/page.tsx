@@ -956,7 +956,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
 
               <AccordionItem value="delivery" className="border rounded-md">
                 <AccordionTrigger className="px-3">
-                  <h4 className="text-lg font-bold">Thông tin giao hàng</h4>
+                  <h4 className="text-lg font-bold">Thông tin hàng</h4>
                 </AccordionTrigger>
                 <AccordionContent className="px-3">
                   {order.deliveryContent?.root.children.length && (
