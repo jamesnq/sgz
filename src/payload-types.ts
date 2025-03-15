@@ -303,7 +303,7 @@ export interface ProductVariant {
   } | null;
   name: string;
   image?: (number | null) | Media;
-  status: 'ORDER' | 'AVAILABLE' | 'STOPPED';
+  status: 'ORDER' | 'AVAILABLE' | 'STOPPED' | 'PRIVATE';
   form?: (number | null) | Form;
   sold: number;
   originalPrice: number;

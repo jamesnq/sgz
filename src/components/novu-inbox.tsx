@@ -1,15 +1,5 @@
 'use client'
 
-import { env } from '@/config'
-import { useAuth } from '@/providers/Auth'
-import { Inbox } from '@novu/react'
-import { BellIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { Button } from './ui/button'
-import { useEffect, useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import payloadClient from '@/utilities/payloadClient'
-import { PaginatedDocs } from 'payload'
 import {
   Select,
   SelectContent,
@@ -17,6 +7,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { env } from '@/config'
+import { useAuth } from '@/providers/Auth'
+import payloadClient from '@/utilities/payloadClient'
+import { Inbox, NovuProvider, useNovu } from '@novu/react'
+import { useQuery } from '@tanstack/react-query'
+import { BellIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { PaginatedDocs } from 'payload'
+import { useEffect, useMemo, useState } from 'react'
+import { Button } from './ui/button'
 
 // Define the NovuChannel type
 interface NovuChannel {
@@ -28,6 +28,36 @@ interface NovuChannel {
 
 // LocalStorage key for saving channel preference
 const CHANNEL_PREFERENCE_KEY = 'sgz-novu-channel-preference'
+
+// Custom hook to handle Novu notifications with debounce
+function useNovuNotifications() {
+  const { on } = useNovu()
+  const router = useRouter()
+  const [isReloading, setIsReloading] = useState(false)
+  useEffect(() => {
+    on('notifications.notification_received', ({ result }) => {
+      if (typeof window === 'undefined') return
+      if (result.redirect) {
+        const currentPath = window.location.pathname
+
+        if (!isReloading && currentPath === result.redirect.url) {
+          setIsReloading(true)
+          router.refresh()
+          setIsReloading(false)
+        }
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return null
+}
+
+// Simple component to use the hook
+function NovuNotificationHandler() {
+  useNovuNotifications()
+  return null
+}
 
 export default function NovuInbox() {
   const router = useRouter()
@@ -132,6 +162,14 @@ export default function NovuInbox() {
 
   return (
     <div className="flex items-center">
+      <NovuProvider
+        applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
+        subscriberId={currentChannel.subscriberId}
+        subscriberHash={currentChannel.hash}
+      >
+        <NovuNotificationHandler />
+      </NovuProvider>
+
       {hasAdditionalRoles && channels && channels.length > 1 && (
         <Select
           value={currentChannel.subscriberId}
@@ -230,7 +268,9 @@ export default function NovuInbox() {
         applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
         subscriberId={currentChannel.subscriberId}
         subscriberHash={currentChannel.hash}
-        routerPush={(path: string) => router.push(path)}
+        routerPush={(path: string) =>
+          window.location.href == path ? router.refresh() : router.push(path)
+        }
         placement="bottom-end"
       />
     </div>
