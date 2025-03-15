@@ -935,7 +935,12 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
           <div className="mt-4 space-y-4 overflow-y-auto flex-grow pb-4">
             <Accordion
               type="multiple"
-              defaultValue={['product', 'submission', 'buyer']}
+              defaultValue={[
+                'product',
+                'submission',
+                'buyer',
+                order.deliveryContent?.root.children.length ? 'delivery' : '',
+              ]}
               className="space-y-4"
             >
               <AccordionItem value="product" className="border rounded-md">
@@ -944,10 +949,13 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 </AccordionTrigger>
                 <AccordionContent className="px-3">
                   <p className="text-lg font-medium text-highlight">{productName}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     Giá: {formatPrice((order.productVariant as ProductVariant)?.price)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Số lượng: {order.quantity}x</p>
+                  </span>
+                  <div className="flex space-x-2 items-center">
+                    <p className="text-sm text-muted-foreground">Số lượng: </p>
+                    <span className="text-sm text-highlight font-bold">x{order.quantity}</span>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Tổng: {formatPrice(order.totalPrice)}
                   </p>
@@ -980,7 +988,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 </AccordionTrigger>
                 <AccordionContent className="px-3">
                   <div className="rounded-md border p-3">
-                    <p className="text-sm">Id: {(order.orderedBy as User).id}</p>
+                    <p className="text-sm">#{(order.orderedBy as User).id}</p>
                     <p className="text-sm">Email: {orderedBy.email}</p>
                     <p className="text-sm">Số dư: {formatPrice(orderedBy.balance)}</p>
                     {orderedBy.note && <p className="text-sm">Note: {orderedBy.note}</p>}
