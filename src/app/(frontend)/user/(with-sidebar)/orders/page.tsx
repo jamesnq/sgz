@@ -43,6 +43,7 @@ function OrdersPageSkeleton() {
 }
 
 async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
+  // TODO optimize using drizzle
   const { q: query, status, page } = SearchParamsSchema.parse(await searchParams)
   const payload = await getPayload({ config: configPromise })
   const headersData = await headers()
@@ -94,6 +95,7 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       totalPrice: true,
     },
   })
+
   const productIds = Array.from(new Set(res.docs.map((order: any) => order.productVariant.product)))
   if (productIds.length) {
     const { docs: products } = await payload.find({
@@ -127,6 +129,30 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       }
     })
   }
+  const imageIds = Array.from(new Set(res.docs.map((order: any) => order.productVariant.image)))
+  if (imageIds.length) {
+    const { docs: images } = await payload.find({
+      collection: 'media',
+      depth: 0,
+      where: {
+        id: {
+          in: imageIds,
+        },
+      },
+      overrideAccess: false,
+      pagination: false,
+    })
+    res.docs = res.docs.map((order: any) => {
+      const image = images.find((image) => image.id === order.productVariant.image)
+      order.productVariant.image = image
+      return order
+    })
+  }
+  res.docs = res.docs.map((order: any) => {
+    const { name, image, product, ..._rest } = order.productVariant as ProductVariant
+    order.productVariant = { name, image, product }
+    return order
+  })
   return <PageClient data={res} />
 }
 

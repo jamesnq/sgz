@@ -61,7 +61,7 @@ function OrderCard({ o }: { o: Order }) {
             </div>
           </div>
           <div className="text-center max-md:hidden md:flex-1">
-            <div>{formatPrice(variant.price, 'VND')}</div>
+            <div>{formatPrice(o.totalPrice, 'VND')}</div>
             <span>x{o.quantity}</span>
           </div>
           <div className="flex flex-wrap gap-[8px] max-md:w-full flex-col">

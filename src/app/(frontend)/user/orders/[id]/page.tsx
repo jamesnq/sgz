@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import PageClient from './page.client'
 import { notFound } from 'next/navigation'
+import { Product, ProductVariant } from '@/payload-types'
 
 type Args = {
   params: Promise<{
@@ -19,10 +20,10 @@ export default async function Page({ params: paramsPromise }: Args) {
   const { user } = await payload.auth({
     headers: headersData,
   })
-
+  // TODO optimize using drizzle
   const { docs } = await payload.find({
     collection: 'orders',
-    depth: 1,
+    depth: 2,
     limit: 1,
     user,
     pagination: false,
@@ -50,26 +51,16 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   if (!docs.length || !user || !docs[0]) notFound()
   const order = docs[0]
-  const product = await payload.findByID({
-    collection: 'products',
-    id: (order.productVariant as any).product,
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      image: true,
-    },
-  })
-  ;(order.productVariant as any).product = product
-  if (order.formSubmission && (order.formSubmission as any).form) {
-    const form = await payload.findByID({
-      collection: 'forms',
-      id: (order.formSubmission as any).form,
-      select: {
-        fields: true,
-      },
-    })
-    ;(order.formSubmission as any).form = form
+
+  // Filter fields
+  let product = (order.productVariant as ProductVariant).product as Product
+  if (typeof product == 'object') {
+    const { slug, image } = product
+    product = { slug, image } as Product
   }
+
+  const { name, image } = order.productVariant as ProductVariant
+  order.productVariant = { product, name, image } as ProductVariant
+  console.log('🚀 ~ Page ~ order:', order)
   return <PageClient order={order} />
 }
