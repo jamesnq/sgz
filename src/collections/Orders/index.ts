@@ -172,7 +172,6 @@ export const Orders: CollectionConfig = {
       editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
-        read: hasRole(['admin', 'staff']),
         update: hasRole(['admin', 'staff']),
       },
     },
@@ -185,7 +184,6 @@ export const Orders: CollectionConfig = {
       editor: defaultLexicalEditor,
       access: {
         create: hasRole(['admin', 'staff']),
-        read: hasRole(['admin', 'staff']),
         update: hasRole(['admin', 'staff']),
       },
     },
