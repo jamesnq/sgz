@@ -121,6 +121,7 @@ const createSearchQuery = (searchTerm: string): OrderQuery[] => {
 const useOrders = (queries: OrderQuery[]) => {
   const { data, refetch } = useQuery({
     queryKey: ['orders', queries],
+    refetchInterval: 10000,
     queryFn: async () => {
       const res = await Promise.all(
         queries.map(({ where, limit }) =>
