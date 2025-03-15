@@ -9,6 +9,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
 import { getServerSideURL } from '@/utilities/getURL'
 import './globals.css'
+import { AdminBar } from '@/components/AdminBar'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="antialiased">
         <Providers>
+          <AdminBar />
           <Header />
           {children}
         </Providers>

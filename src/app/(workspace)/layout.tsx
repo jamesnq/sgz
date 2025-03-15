@@ -5,6 +5,7 @@ import { InitTheme } from '@/providers/Theme/InitTheme'
 
 import '../(frontend)/globals.css'
 import { Header } from '@/collections/Globals/Header/Component'
+import { AdminBar } from '@/components/AdminBar'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="antialiased">
         <Providers>
+          <AdminBar />
           <Header />
           {children}
         </Providers>
