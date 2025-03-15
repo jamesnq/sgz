@@ -121,11 +121,14 @@ const refundHook: FieldHook<Order> = async ({
         description: `Hoàn trả đơn hàng #${data.id}`,
         balance: newUser.balance,
       })
+      // TODO notify refund
     })
   }
 
   return value
 }
+
+// TODO add customer review when complete order
 
 export const Orders: CollectionConfig = {
   slug: 'orders',

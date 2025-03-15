@@ -46,9 +46,11 @@ async function createNovuSubscriber({
   })
   return { novuHash: createSubscriberHash(subscriberId), subscriberId }
 }
+
 // Careful when add more roles that role can get system notification
 export const managerRoles: User['roles'] = ['admin', 'staff'] as const
 export const userRoles: User['roles'] = ['admin', 'staff', 'user'] as const
+// TODO add feature add to cart
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
