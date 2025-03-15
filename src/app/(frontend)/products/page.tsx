@@ -146,6 +146,18 @@ async function ProductsData({
     page: currentPage,
     where,
     depth: 1,
+    overrideAccess: true,
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
+      image: true,
+      categories: true,
+      status: true,
+      sold: true,
+    },
+    sort: ['-sold'],
   })
 
   return (
