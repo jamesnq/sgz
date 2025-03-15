@@ -13,6 +13,7 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
 import Link from 'next/link'
 import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
+import { Routes } from '@/utilities/routes'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
@@ -84,7 +85,7 @@ const PageClient = ({ order }: { order: Order }) => {
     <Shell>
       <div className="flex justify-between">
         <h1 className="text-[24px]">Chi tiết đơn hàng</h1>
-        <Link href="/user/orders" className="underline">
+        <Link href={Routes.ORDERS} className="underline">
           Quay lại
         </Link>
       </div>
