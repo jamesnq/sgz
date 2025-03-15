@@ -16,8 +16,8 @@ import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
-  const product = variant.product as Product
-  const image = variant.image || product.image
+  const product = (variant.product as Product) || null
+  const image = variant.image || product?.image
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
@@ -26,8 +26,10 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
             <Media resource={image}></Media>
           </div>
           <div className="size-full flex-1">
-            <Link href={`/products/${product.slug}?variant_id=${variant.id}`}>
-              {variant.name || product.name}
+            <Link
+              href={product?.slug ? `/products/${product?.slug}?variant_id=${variant.id}` : '/'}
+            >
+              {variant.name || product?.name || 'Không xác định'}
             </Link>
             <div className="flex items-center gap-1">
               <span className="max-md:hidden text-muted-foreground">Mã đơn hàng:</span>
@@ -112,7 +114,12 @@ const PageClient = ({ order }: { order: Order }) => {
             </Card>
           )}
           <div>
-            {(order.formSubmission as any)?.form && <UpdateOrderShippingForm order={order} />}
+            {(order.formSubmission as any)?.form && (
+              <UpdateOrderShippingForm
+                order={order}
+                disabled={order.status === 'REFUND' || order.status === 'COMPLETED'}
+              />
+            )}
           </div>
         </div>
       </div>

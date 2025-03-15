@@ -1,7 +1,7 @@
 'use client'
 import { env } from '@/config'
 import { User } from '@/payload-types'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 type ResetPassword = (args: { password: string; token: string }) => Promise<void>
@@ -27,6 +27,7 @@ type AuthContext = {
 const Context = createContext({} as AuthContext)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>()
   // used to track the single event of logging in or logging out
   // useful for `useEffect` hooks that should only run once
@@ -101,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.ok) {
         setUser(null)
         setStatus('loggedOut')
+        router.push('/')
         //@ts-expect-error ignore
         window.$chatwoot.reset()
       } else {
@@ -109,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       throw new Error('An error occurred while attempting to logout.')
     }
-  }, [])
+  }, [router])
   const pathname = usePathname()
   const prevPathname = useRef<string | undefined>(undefined)
   useEffect(() => {

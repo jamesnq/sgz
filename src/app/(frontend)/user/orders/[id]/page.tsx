@@ -26,6 +26,7 @@ export default async function Page({ params: paramsPromise }: Args) {
     depth: 3,
     limit: 1,
     user,
+    overrideAccess: false,
     pagination: false,
     where: {
       id: {
@@ -42,7 +43,6 @@ export default async function Page({ params: paramsPromise }: Args) {
       totalPrice: true,
       message: true,
       updatedAt: true,
-      orderedBy: true,
       productVariant: true,
       formSubmission: true,
       deliveryContent: true,
@@ -51,6 +51,7 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   if (!docs.length || !user || !docs[0]) notFound()
   const order = docs[0]
+  console.log('🚀 ~ Page ~ order:', order)
 
   // Filter fields
   let product = (order.productVariant as ProductVariant).product as Product
