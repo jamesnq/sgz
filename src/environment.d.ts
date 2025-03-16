@@ -22,6 +22,8 @@ declare global {
       PAYOS_RETURN_URL: string
       DOITHE_PARTNER_ID: string
       DOITHE_PARTNER_KEY: string
+      MUATHER_PARTNER_ID: string
+      MUATHER_PARTNER_KEY: string
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
       CHATWOOT_HMAC_TOKEN: string

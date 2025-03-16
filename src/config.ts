@@ -24,6 +24,8 @@ export const env = createEnv({
     PAYOS_RETURN_URL: z.string().url(),
     DOITHE_PARTNER_ID: z.string(),
     DOITHE_PARTNER_KEY: z.string(),
+    MUATHER_PARTNER_ID: z.string(),
+    MUATHER_PARTNER_KEY: z.string(),
     NOVU_SECRET_KEY: z.string(),
     CHATWOOT_HMAC_TOKEN: z.string(),
   },

@@ -83,3 +83,7 @@ export const createRichTextDocument = (children: any[]) => {
 export const createRichTextWithTable = (args: TableBuilderArgs) => {
   return createRichTextDocument([createTableBlockNode(args)])
 }
+
+export function isRichTextNotEmpty(data: { root: { children: any[] } }) {
+  return data?.root?.children?.length > 0
+}

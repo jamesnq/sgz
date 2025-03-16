@@ -398,6 +398,11 @@ function Checkout({ className }: { className?: string }) {
 
 function Screen() {
   const { product, currentVariant } = useProductPageContext()
+  console.log(
+    '🚀 ~ Screen ~ currentVariant?.important?.root.children:',
+    currentVariant?.important?.root.children,
+  )
+
   return (
     <Shell>
       <Head />
