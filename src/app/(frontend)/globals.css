@@ -182,7 +182,7 @@ div
 
 .nv-popoverContent {
   z-index: 9999;
-  width: auto;
+  width: 100%;
   max-width: 400px;
   min-width: 200px;
 }
