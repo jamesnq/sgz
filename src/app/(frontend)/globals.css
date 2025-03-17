@@ -179,3 +179,10 @@ div
     @apply bg-background text-foreground;
   }
 }
+
+.nv-popoverContent {
+  z-index: 9999;
+  width: auto;
+  max-width: 400px;
+  min-width: 200px;
+}
