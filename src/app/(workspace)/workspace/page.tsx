@@ -51,6 +51,7 @@ import {
 import { toast } from 'react-toastify'
 
 import RichText from '@/components/RichText'
+import { isRichTextEmpty } from '@/utilities/RichTextHelper'
 
 // TODO check order metadata to know it can auto process or not
 interface ColumnConfig {
@@ -957,35 +958,35 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              {order.note?.root.children.length && (
+              {!isRichTextEmpty(order.note) && (
                 <AccordionItem value="note" className="border rounded-md">
                   <AccordionTrigger className="px-3">
                     <h4 className="text-lg font-bold">Ghi chú</h4>
                   </AccordionTrigger>
                   <AccordionContent className="px-3">
-                    <RichText data={order.note} enableGutter={false} />
+                    <RichText data={order.note as any} enableGutter={false} />
                   </AccordionContent>
                 </AccordionItem>
               )}
 
-              {order.message?.root.children.length && (
+              {!isRichTextEmpty(order.message) && (
                 <AccordionItem value="message" className="border rounded-md">
                   <AccordionTrigger className="px-3">
                     <h4 className="text-lg font-bold">Lời nhắn</h4>
                   </AccordionTrigger>
                   <AccordionContent className="px-3">
-                    <RichText data={order.message} enableGutter={false} />
+                    <RichText data={order.message as any} enableGutter={false} />
                   </AccordionContent>
                 </AccordionItem>
               )}
 
-              {order.deliveryContent?.root.children.length && (
+              {!isRichTextEmpty(order.deliveryContent) && (
                 <AccordionItem value="delivery" className="border rounded-md">
                   <AccordionTrigger className="px-3">
                     <h4 className="text-lg font-bold">Thông tin hàng</h4>
                   </AccordionTrigger>
                   <AccordionContent className="px-3">
-                    <RichText data={order.deliveryContent} enableGutter={false} />
+                    <RichText data={order.deliveryContent as any} enableGutter={false} />
                   </AccordionContent>
                 </AccordionItem>
               )}
