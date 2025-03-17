@@ -17,7 +17,7 @@ export function UpdateOrderShippingForm({ disabled, order }: { order: Order; dis
   const { executeAsync, isExecuting } = useActionWarper(updateOrderAction)
   return (
     <Card>
-      <CardHeader>Cung cấp thông tin tài khoản</CardHeader>
+      <CardHeader className="font-bold">Thông tin cung cấp</CardHeader>
       <CardContent>
         <div>
           {form.fields &&

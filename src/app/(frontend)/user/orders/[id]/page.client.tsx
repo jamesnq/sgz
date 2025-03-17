@@ -85,7 +85,7 @@ const PageClient = ({ order }: { order: Order }) => {
   return (
     <Shell>
       <div className="flex justify-between">
-        <h1 className="text-[24px]">Chi tiết đơn hàng</h1>
+        <h1 className="text-[24px] font-bold">Chi tiết đơn hàng</h1>
         <Link href={Routes.ORDERS} className="underline">
           Quay lại
         </Link>

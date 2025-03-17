@@ -59,11 +59,13 @@ const ProductCard = ({ product }: { product: Product }) => {
                   />
                 )}
               </div>
-              <div className="flex w-full items-center justify-end">
-                <span className="text-[12px] leading-none text-muted-foreground">
-                  Đã bán {formatSold(product.sold)}
-                </span>
-              </div>
+              {product.sold > 0 && (
+                <div className="flex w-full items-center justify-end">
+                  <span className="text-[12px] leading-none text-muted-foreground">
+                    Đã bán {formatSold(product.sold)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
