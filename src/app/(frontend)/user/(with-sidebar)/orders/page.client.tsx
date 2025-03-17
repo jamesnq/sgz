@@ -155,7 +155,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
         <div className="text-muted-foreground">Thông tin các sản phẩm bạn đã mua</div>
         <div className="lg:flex lg:justify-end">
           <div className="flex gap-2 max-xl:flex-col">
-            <div className="flex gap-2">
+            <div className="grid grid-flow-col auto-cols-fr gap-2 max-lg:grid-rows-2">
               <Button
                 className="w-full rounded-full"
                 variant={!status ? 'default' : 'outline'}
@@ -186,7 +186,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
               />
             </div>
           </div>
-        </div>
+        </div>{' '}
       </CardHeader>
       <CardContent className="max-lg:p-1">
         {isPending ? (

@@ -478,7 +478,7 @@ export function RechargeDialog() {
       <Dialog>
         <DialogTrigger asChild>
           <Button className="rounded-full" variant="ghost" size={'xs'}>
-            <CirclePlus />
+            <CirclePlus className="text-highlight" />
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-[600px]">

@@ -80,6 +80,7 @@ const RelatedProducts = ({
                       <div className="truncate h-auto overflow-hidden text-[14px] font-[400] leading-[17px]">
                         {product.name}
                       </div>
+                      ks
                       {product.description?.root?.direction && (
                         <RichText
                           className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"
@@ -88,11 +89,13 @@ const RelatedProducts = ({
                         />
                       )}
                     </div>
-                    <div className="flex w-full items-center justify-end">
-                      <span className="text-[12px] leading-none text-muted-foreground">
-                        Đã bán {formatSold(product.sold)}
-                      </span>
-                    </div>
+                    {product.sold && (
+                      <div className="flex w-full items-center justify-end">
+                        <span className="text-[12px] leading-none text-muted-foreground">
+                          Đã bán {formatSold(product.sold)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

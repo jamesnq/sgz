@@ -21,6 +21,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -59,13 +60,13 @@ export function AuthDropdown({ className, ...props }: AuthDropdownProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        {/* <DropdownMenuLabel className="font-normal">
+        <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.email}</p>
-            <p className="text-xs leading-none text-muted-foreground">{email}</p>
+            {/* <p className="text-xs leading-none text-muted-foreground">{email}</p> */}
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator /> */}
+        <DropdownMenuSeparator />
         <React.Suspense
           fallback={
             <div className="flex flex-col space-y-1.5 p-1">
@@ -119,8 +120,11 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   }, [headerTheme])
 
   return (
-    <header className="container relative z-20 " {...(theme ? { 'data-theme': theme } : {})}>
-      <div className="py-8 flex justify-between">
+    <header
+      className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      {...(theme ? { 'data-theme': theme } : {})}
+    >
+      <div className="container flex justify-between">
         <div className="flex items-center gap-1">
           <Link href="/" className="flex items-center">
             <Logo loading="eager" priority="high" className="invert dark:invert-0" />

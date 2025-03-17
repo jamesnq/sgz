@@ -4,9 +4,9 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Table,
   TableBody,
   TableCell,
+  TableCustom,
   TableHead,
   TableHeader,
   TableRow,
@@ -35,7 +35,7 @@ function formatTransactionDate(date: Date): string {
 function TransactionTableSkeleton() {
   return (
     <div className="rounded-md border">
-      <Table>
+      <TableCustom>
         <TableHeader>
           <TableRow>
             <TableHead>Thời gian</TableHead>
@@ -64,7 +64,7 @@ function TransactionTableSkeleton() {
               </TableRow>
             ))}
         </TableBody>
-      </Table>
+      </TableCustom>
     </div>
   )
 }
@@ -131,35 +131,35 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
         {isPending ? (
           <TransactionTableSkeleton />
         ) : data?.docs && data.docs.length > 0 ? (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Thời gian</TableHead>
-                  <TableHead>Số tiền</TableHead>
-                  <TableHead>Số dư</TableHead>
-                  <TableHead>Nội dung</TableHead>
+          <TableCustom>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Thời gian</TableHead>
+                <TableHead>Số tiền</TableHead>
+                <TableHead>Số dư</TableHead>
+                <TableHead>Nội dung</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.docs.map((transaction) => (
+                <TableRow key={transaction.id}>
+                  <TableCell className="font-medium">
+                    {formatTransactionDate(new Date(transaction.createdAt))}
+                  </TableCell>
+                  <TableCell className={transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}>
+                    {transaction.amount > 0 ? '+' : ''}
+                    {formatPrice(transaction.amount, 'VND')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-nowrap">{formatPrice(transaction.balance, 'VND')}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-nowrap">{transaction.description}</div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.docs.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">
-                      {formatTransactionDate(new Date(transaction.createdAt))}
-                    </TableCell>
-                    <TableCell
-                      className={transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}
-                    >
-                      {transaction.amount > 0 ? '+' : ''}
-                      {formatPrice(transaction.amount, 'VND')}
-                    </TableCell>
-                    <TableCell>{formatPrice(transaction.balance, 'VND')}</TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </TableCustom>
         ) : (
           <div className="text-center py-8">Không có giao dịch nào</div>
         )}
