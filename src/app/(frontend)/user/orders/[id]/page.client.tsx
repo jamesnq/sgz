@@ -14,6 +14,7 @@ import { getOrderStatus } from '@/utilities/getOrderStatus'
 import Link from 'next/link'
 import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 import { Routes } from '@/utilities/routes'
+import { isRichTextEmpty } from '@/utilities/RichTextHelper'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
@@ -94,21 +95,21 @@ const PageClient = ({ order }: { order: Order }) => {
           <OrderCard order={order}></OrderCard>
         </div>
         <div className="flex-[2] flex flex-col gap-4">
-          {order.message?.root.children.length && (
+          {!isRichTextEmpty(order.message) && (
             <Card>
               <CardHeader className="font-bold pb-0">Lời nhắn</CardHeader>
               <CardContent>
-                <RichText data={order.message} enableGutter={false}></RichText>
+                <RichText data={order.message as any} enableGutter={false}></RichText>
               </CardContent>
             </Card>
           )}
-          {order.deliveryContent?.root.children.length && (
+          {!isRichTextEmpty(order.deliveryContent) && (
             <Card>
               <CardHeader className="font-bold pb-0">Thông tin hàng</CardHeader>
               <CardContent className="pt-0">
                 <RichText
                   className="pt-0"
-                  data={order.deliveryContent}
+                  data={order.deliveryContent as any}
                   enableGutter={false}
                 ></RichText>
               </CardContent>
