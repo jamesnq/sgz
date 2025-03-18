@@ -21,7 +21,7 @@ function ProductStatusName({ status }: { status: string }) {
 export function DisplayProductStatus({ status }: { status: string }) {
   const statusColor: any = {
     AVAILABLE: 'text-green-500',
-    ORDER: 'text-blue-400',
+    ORDER: 'text-highlight',
     STOPPED: 'text-gray-500',
   }
 
