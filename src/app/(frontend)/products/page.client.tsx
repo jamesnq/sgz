@@ -173,21 +173,23 @@ const Sidebar = ({
             <div className="max-h-[300px] overflow-y-auto pr-2">
               <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
                 {filteredCategories.length > 0 ? (
-                  filteredCategories.map((category) => (
-                    <Badge
-                      key={category.id}
-                      variant={
-                        selectedCategoryIds.includes(category.id.toString()) ? 'default' : 'outline'
-                      }
-                      className={cn(
-                        'cursor-pointer hover:bg-secondary/80 transition-colors lg:w-full lg:justify-start',
-                        isPending && 'opacity-70 pointer-events-none',
-                      )}
-                      onClick={() => handleCategoryToggle(category.id.toString())}
-                    >
-                      {category.title}
-                    </Badge>
-                  ))
+                  filteredCategories.map((category) => {
+                    const isSelected = selectedCategoryIds.includes(category.id.toString())
+                    return (
+                      <Badge
+                        key={category.id}
+                        variant={isSelected ? 'default' : 'outline'}
+                        className={cn(
+                          'cursor-pointer transition-colors lg:w-full lg:justify-start',
+                          isPending && 'opacity-70 pointer-events-none',
+                          !isSelected && 'hover:bg-secondary/80',
+                        )}
+                        onClick={() => handleCategoryToggle(category.id.toString())}
+                      >
+                        {category.title}
+                      </Badge>
+                    )
+                  })
                 ) : (
                   <p className="text-sm text-muted-foreground">Không tìm thấy danh mục phù hợp</p>
                 )}

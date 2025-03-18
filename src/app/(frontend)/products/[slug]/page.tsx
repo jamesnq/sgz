@@ -18,7 +18,7 @@ export async function generateStaticParams() {
       collection: 'products',
       depth: 0,
       draft: false,
-      limit: 1000,
+      limit: 5,
       overrideAccess: true,
       pagination: false,
       select: {
@@ -29,6 +29,7 @@ export async function generateStaticParams() {
           not_equals: 'PRIVATE',
         },
       },
+      sort: '-sold',
     })
 
     const params = products.docs.map(({ slug }) => {
