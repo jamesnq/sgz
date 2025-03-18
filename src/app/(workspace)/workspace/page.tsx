@@ -202,7 +202,7 @@ function DraggableProvider({ children }: { children: ReactNode }) {
       COMPLETED: {
         title: 'Hoàn thành',
         dropOnly: false,
-        allowedTransitions: ['REFUND'] as Order['status'][],
+        // allowedTransitions: ['REFUND'] as Order['status'][],
       },
       REFUND: {
         title: 'Hoàn trả',

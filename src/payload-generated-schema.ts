@@ -28,6 +28,7 @@ export const enum_product_variants_status = pgEnum('enum_product_variants_status
   'ORDER',
   'AVAILABLE',
   'STOPPED',
+  'PRIVATE',
 ])
 export const enum_orders_status = pgEnum('enum_orders_status', [
   'IN_QUEUE',
@@ -204,7 +205,7 @@ export const products = pgTable(
     status: enum_products_status('status').notNull(),
     sold: numeric('sold').notNull().default('0'),
     note: varchar('note'),
-    description: jsonb('description').notNull(),
+    description: jsonb('description'),
     meta_title: varchar('meta_title'),
     meta_image: integer('meta_image_id').references(() => media.id, {
       onDelete: 'set null',
