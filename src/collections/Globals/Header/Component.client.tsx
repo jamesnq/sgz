@@ -121,8 +121,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       {...(theme ? { 'data-theme': theme } : {})}
+      className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/10"
     >
       <div className="container flex justify-between">
         <div className="flex items-center gap-1">
