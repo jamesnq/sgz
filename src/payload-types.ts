@@ -249,7 +249,7 @@ export interface Product {
   sold: number;
   note?: string | null;
   variants?: (number | ProductVariant)[] | null;
-  description: {
+  description?: {
     root: {
       type: string;
       children: {
@@ -263,7 +263,7 @@ export interface Product {
       version: number;
     };
     [k: string]: unknown;
-  };
+  } | null;
   relatedProducts?: (number | Product)[] | null;
   categories?: (number | Category)[] | null;
   meta?: {

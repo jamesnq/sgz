@@ -102,7 +102,6 @@ export const Products: CollectionConfig = {
               type: 'richText',
               editor: defaultLexicalEditor,
               label: false,
-              required: true,
             },
           ],
           label: 'Content',

@@ -25,6 +25,7 @@ export const Media: CollectionConfig = {
   },
   admin: {
     group: mediaGroup,
+    defaultColumns: ['filename', 'width', 'height', 'filesize'],
   },
   fields: [
     {
