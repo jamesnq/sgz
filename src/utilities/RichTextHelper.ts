@@ -83,21 +83,3 @@ export const createRichTextDocument = (children: any[]) => {
 export const createRichTextWithTable = (args: TableBuilderArgs) => {
   return createRichTextDocument([createTableBlockNode(args)])
 }
-
-export const isRichTextEmpty = (richText: any): boolean => {
-  if (!richText || !richText.root || !Array.isArray(richText.root.children)) {
-    return true
-  }
-
-  const children = richText.root.children
-  if (children.length === 0) {
-    return true
-  }
-
-  if (children.length === 1 && children[0].type === 'paragraph') {
-    const paragraphChildren = children[0].children
-    return !Array.isArray(paragraphChildren) || paragraphChildren.length === 0
-  }
-
-  return false
-}
