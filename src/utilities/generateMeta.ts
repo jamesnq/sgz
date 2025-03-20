@@ -5,6 +5,7 @@ import type { Media, Product, Config } from '../payload-types'
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getServerSideURL } from './getURL'
 import { env } from '@/config'
+import { imageFallback } from './constants'
 
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   const serverUrl = getServerSideURL()
@@ -20,8 +21,33 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   return url
 }
 
+export const defaultMetadata = (): Metadata => {
+  const serverUrl = getServerSideURL()
+  const defaultImage = serverUrl + imageFallback
+  const title = env.NEXT_PUBLIC_SITE_NAME
+
+  return {
+    description: 'Cung cấp dịch vụ nạp game và ứng dụng giá rẻ',
+    openGraph: mergeOpenGraph({
+      description: 'Cung cấp dịch vụ nạp game và ứng dụng giá rẻ',
+      images: [
+        {
+          url: defaultImage,
+        },
+      ],
+      title,
+      url: '/',
+    }),
+    title,
+  }
+}
+
 export const generateMeta = async (args: { doc: Partial<Product> | null }): Promise<Metadata> => {
   const { doc } = args
+
+  if (!doc) {
+    return defaultMetadata()
+  }
 
   const ogImage = getImageURL(doc?.meta?.image)
 

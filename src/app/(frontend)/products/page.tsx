@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 import { Suspense } from 'react'
 import PageClient from './page.client'
 import { env } from '@/config'
+import { defaultMetadata } from '@/utilities/generateMeta'
 
 export const revalidate = 3600
 
@@ -169,6 +170,8 @@ async function ProductsData({
     />
   )
 }
+
+export const metadata = defaultMetadata()
 
 export default function Page({ searchParams: searchParamsPromise }: Args) {
   return (
