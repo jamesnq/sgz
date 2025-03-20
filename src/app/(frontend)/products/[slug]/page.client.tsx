@@ -33,7 +33,7 @@ import { useActionWarper } from '@/utilities/useActionWarper'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Routes } from '@/utilities/routes'
-import { isRichTextEmpty } from '@/utilities/RichTextHelper'
+import { hasText } from '@payloadcms/richtext-lexical/shared'
 
 type ProductPageContextType = {
   product: Product
@@ -400,16 +400,14 @@ function Checkout({ className }: { className?: string }) {
 function Screen() {
   const { product, currentVariant } = useProductPageContext()
   const description = useMemo(() => {
-    return !isRichTextEmpty(currentVariant.description)
-      ? currentVariant.description
-      : product.description
+    return hasText(currentVariant.description) ? currentVariant.description : product.description
   }, [currentVariant.description, product.description])
   return (
     <Shell>
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
         <div className="flex-[2] flex-col space-y-2 max-md:order-2">
-          {!isRichTextEmpty(currentVariant?.important) && (
+          {hasText(currentVariant?.important) && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">
@@ -435,7 +433,7 @@ function Screen() {
                 />
               ))}
           </div>
-          {!isRichTextEmpty(description) && (
+          {hasText(description) && (
             <Card>
               <CardHeader className="font-bold px-4 pb-1">
                 <div className="flex gap-2">

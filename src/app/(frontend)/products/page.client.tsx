@@ -25,7 +25,7 @@ import { Loader2, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
 import { env } from '@/config'
-import { isRichTextEmpty } from '@/utilities/RichTextHelper'
+import { hasText } from '@payloadcms/richtext-lexical/shared'
 
 const ProductCard = ({ product }: { product: Product }) => {
   return (
@@ -51,7 +51,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 <div className="peer mt-2 flex items-end">
                   {/* <span className="leading-[13px] text-muted-foreground">24,500đ ~ 2,376,000đ</span> */}
                 </div>
-                {!isRichTextEmpty(product.description) && (
+                {hasText(product.description) && (
                   <RichText
                     className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"
                     data={product.description as any}
