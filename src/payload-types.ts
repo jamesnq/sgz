@@ -69,6 +69,7 @@ export interface Config {
     media: Media;
     categories: Category;
     users: User;
+    stocks: Stock;
     transactions: Transaction;
     products: Product;
     'product-variants': ProductVariant;
@@ -86,6 +87,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    stocks: StocksSelect<false> | StocksSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     'product-variants': ProductVariantsSelect<false> | ProductVariantsSelect<true>;
@@ -226,14 +228,154 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "transactions".
+ * via the `definition` "stocks".
  */
-export interface Transaction {
+export interface Stock {
   id: number;
-  amount: number;
-  balance: number;
-  description: string;
-  user: number | User;
+  order?: (number | null) | Order;
+  productVariant: number | ProductVariant;
+  data:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  expiredAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  /**
+   * Internal note only admin and staff can see
+   */
+  note?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Message want to send to customer
+   */
+  message?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Delivery content like key, account,...
+   */
+  deliveryContent?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  status: 'IN_QUEUE' | 'IN_PROCESS' | 'USER_UPDATE' | 'COMPLETED' | 'REFUND';
+  orderedBy: number | User;
+  handlers: (number | User)[];
+  productVariant: number | ProductVariant;
+  formSubmission?: (number | null) | FormSubmission;
+  subTotal: number;
+  totalDiscount: number;
+  totalPrice: number;
+  quantity: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-variants".
+ */
+export interface ProductVariant {
+  id: number;
+  product: number | Product;
+  sold: number;
+  important?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  name: string;
+  image?: (number | null) | Media;
+  status: 'ORDER' | 'AVAILABLE' | 'STOPPED' | 'PRIVATE';
+  form?: (number | null) | Form;
+  originalPrice: number;
+  price: number;
+  min: number;
+  max: number;
+  note?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  autoProcess?: 'key' | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -276,65 +418,6 @@ export interface Product {
   };
   slug?: string | null;
   slugLock?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "product-variants".
- */
-export interface ProductVariant {
-  id: number;
-  product: number | Product;
-  important?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  name: string;
-  image?: (number | null) | Media;
-  status: 'ORDER' | 'AVAILABLE' | 'STOPPED' | 'PRIVATE';
-  form?: (number | null) | Form;
-  sold: number;
-  originalPrice: number;
-  price: number;
-  min: number;
-  max: number;
-  note?: string | null;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  metadata?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -479,78 +562,6 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "orders".
- */
-export interface Order {
-  id: number;
-  /**
-   * Internal note only admin and staff can see
-   */
-  note?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  /**
-   * Message want to send to customer
-   */
-  message?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  /**
-   * Delivery content like key, account,...
-   */
-  deliveryContent?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  status: 'IN_QUEUE' | 'IN_PROCESS' | 'USER_UPDATE' | 'COMPLETED' | 'REFUND';
-  orderedBy: number | User;
-  handlers: (number | User)[];
-  productVariant: number | ProductVariant;
-  formSubmission?: (number | null) | FormSubmission;
-  subTotal: number;
-  totalDiscount: number;
-  totalPrice: number;
-  quantity: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -566,6 +577,19 @@ export interface FormSubmission {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: number;
+  amount: number;
+  balance: number;
+  description: string;
+  user: number | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -621,6 +645,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'stocks';
+        value: number | Stock;
       } | null)
     | ({
         relationTo: 'transactions';
@@ -774,6 +802,18 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stocks_select".
+ */
+export interface StocksSelect<T extends boolean = true> {
+  order?: T;
+  productVariant?: T;
+  data?: T;
+  expiredAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "transactions_select".
  */
 export interface TransactionsSelect<T extends boolean = true> {
@@ -816,18 +856,19 @@ export interface ProductsSelect<T extends boolean = true> {
  */
 export interface ProductVariantsSelect<T extends boolean = true> {
   product?: T;
+  sold?: T;
   important?: T;
   name?: T;
   image?: T;
   status?: T;
   form?: T;
-  sold?: T;
   originalPrice?: T;
   price?: T;
   min?: T;
   max?: T;
   note?: T;
   description?: T;
+  autoProcess?: T;
   metadata?: T;
   updatedAt?: T;
   createdAt?: T;

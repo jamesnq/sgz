@@ -18,6 +18,7 @@ import { Orders } from './collections/Orders'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
 import { Recharges } from './collections/Recharges'
+import { Stocks } from './collections/Stocks'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
 import { env } from './config'
@@ -80,6 +81,7 @@ export default buildConfig({
     Media,
     Categories,
     Users,
+    Stocks,
     Transactions,
     Products,
     ProductVariants,

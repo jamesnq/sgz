@@ -19,6 +19,7 @@ export interface ProcessResult {
   success: boolean
   message: string
   data?: Partial<Order>
+  transactionID?: string | number | null
 }
 
 // Helper type for safely accessing product variant metadata

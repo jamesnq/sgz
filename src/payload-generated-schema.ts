@@ -30,6 +30,9 @@ export const enum_product_variants_status = pgEnum('enum_product_variants_status
   'STOPPED',
   'PRIVATE',
 ])
+export const enum_product_variants_auto_process = pgEnum('enum_product_variants_auto_process', [
+  'key',
+])
 export const enum_orders_status = pgEnum('enum_orders_status', [
   'IN_QUEUE',
   'IN_PROCESS',
@@ -166,6 +169,35 @@ export const users = pgTable(
   }),
 )
 
+export const stocks = pgTable(
+  'stocks',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order_id').references(() => orders.id, {
+      onDelete: 'set null',
+    }),
+    productVariant: integer('product_variant_id')
+      .notNull()
+      .references(() => product_variants.id, {
+        onDelete: 'set null',
+      }),
+    data: jsonb('data').notNull(),
+    expiredAt: timestamp('expired_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    stocks_order_idx: index('stocks_order_idx').on(columns.order),
+    stocks_product_variant_idx: index('stocks_product_variant_idx').on(columns.productVariant),
+    stocks_updated_at_idx: index('stocks_updated_at_idx').on(columns.updatedAt),
+    stocks_created_at_idx: index('stocks_created_at_idx').on(columns.createdAt),
+  }),
+)
+
 export const transactions = pgTable(
   'transactions',
   {
@@ -284,6 +316,7 @@ export const product_variants = pgTable(
       .references(() => products.id, {
         onDelete: 'set null',
       }),
+    sold: numeric('sold').notNull().default('0'),
     important: jsonb('important'),
     name: varchar('name').notNull(),
     image: integer('image_id').references(() => media.id, {
@@ -293,13 +326,13 @@ export const product_variants = pgTable(
     form: integer('form_id').references(() => forms.id, {
       onDelete: 'set null',
     }),
-    sold: numeric('sold').notNull().default('0'),
     originalPrice: numeric('original_price').notNull(),
     price: numeric('price').notNull(),
     min: numeric('min').notNull().default('1'),
     max: numeric('max').notNull().default('1'),
     note: varchar('note'),
     description: jsonb('description'),
+    autoProcess: enum_product_variants_auto_process('auto_process'),
     metadata: jsonb('metadata'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
@@ -694,6 +727,7 @@ export const payload_locked_documents_rels = pgTable(
     mediaID: integer('media_id'),
     categoriesID: integer('categories_id'),
     usersID: integer('users_id'),
+    stocksID: integer('stocks_id'),
     transactionsID: integer('transactions_id'),
     productsID: integer('products_id'),
     'product-variantsID': integer('product_variants_id'),
@@ -716,6 +750,9 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_users_id_idx: index(
       'payload_locked_documents_rels_users_id_idx',
     ).on(columns.usersID),
+    payload_locked_documents_rels_stocks_id_idx: index(
+      'payload_locked_documents_rels_stocks_id_idx',
+    ).on(columns.stocksID),
     payload_locked_documents_rels_transactions_id_idx: index(
       'payload_locked_documents_rels_transactions_id_idx',
     ).on(columns.transactionsID),
@@ -759,6 +796,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['usersID']],
       foreignColumns: [users.id],
       name: 'payload_locked_documents_rels_users_fk',
+    }).onDelete('cascade'),
+    stocksIdFk: foreignKey({
+      columns: [columns['stocksID']],
+      foreignColumns: [stocks.id],
+      name: 'payload_locked_documents_rels_stocks_fk',
     }).onDelete('cascade'),
     transactionsIdFk: foreignKey({
       columns: [columns['transactionsID']],
@@ -903,6 +945,18 @@ export const relations_users_roles = relations(users_roles, ({ one }) => ({
 export const relations_users = relations(users, ({ many }) => ({
   roles: many(users_roles, {
     relationName: 'roles',
+  }),
+}))
+export const relations_stocks = relations(stocks, ({ one }) => ({
+  order: one(orders, {
+    fields: [stocks.order],
+    references: [orders.id],
+    relationName: 'order',
+  }),
+  productVariant: one(product_variants, {
+    fields: [stocks.productVariant],
+    references: [product_variants.id],
+    relationName: 'productVariant',
   }),
 }))
 export const relations_transactions = relations(transactions, ({ one }) => ({
@@ -1116,6 +1170,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [users.id],
       relationName: 'users',
     }),
+    stocksID: one(stocks, {
+      fields: [payload_locked_documents_rels.stocksID],
+      references: [stocks.id],
+      relationName: 'stocks',
+    }),
     transactionsID: one(transactions, {
       fields: [payload_locked_documents_rels.transactionsID],
       references: [transactions.id],
@@ -1194,6 +1253,7 @@ type DatabaseSchema = {
   enum_users_roles: typeof enum_users_roles
   enum_products_status: typeof enum_products_status
   enum_product_variants_status: typeof enum_product_variants_status
+  enum_product_variants_auto_process: typeof enum_product_variants_auto_process
   enum_orders_status: typeof enum_orders_status
   enum_recharges_status: typeof enum_recharges_status
   enum_recharges_gateway: typeof enum_recharges_gateway
@@ -1201,6 +1261,7 @@ type DatabaseSchema = {
   categories: typeof categories
   users_roles: typeof users_roles
   users: typeof users
+  stocks: typeof stocks
   transactions: typeof transactions
   products: typeof products
   products_rels: typeof products_rels
@@ -1229,6 +1290,7 @@ type DatabaseSchema = {
   relations_categories: typeof relations_categories
   relations_users_roles: typeof relations_users_roles
   relations_users: typeof relations_users
+  relations_stocks: typeof relations_stocks
   relations_transactions: typeof relations_transactions
   relations_products_rels: typeof relations_products_rels
   relations_products: typeof relations_products
