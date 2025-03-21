@@ -21,8 +21,8 @@ type Props = TableBlockProps & {
 }
 
 export const TableBlock: React.FC<Props> = (props) => {
-  const { className, columns = [], rows = [], caption, showRowNumbers } = props
-
+  const { className, columns = [], rows = [], caption } = props
+  const showRowNumbers = true
   // Handle null values safely
   const safeColumns = useMemo(() => columns || [], [columns])
   const safeRows = useMemo(() => rows || [], [rows])
@@ -31,6 +31,7 @@ export const TableBlock: React.FC<Props> = (props) => {
   const [copiedCells, setCopiedCells] = useState<Record<string, boolean>>({})
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
+  const [tableCopied, setTableCopied] = useState(false)
 
   // Memoize filtered rows to avoid recalculation on every render
   const filteredRows = useMemo(() => {
@@ -73,33 +74,97 @@ export const TableBlock: React.FC<Props> = (props) => {
     }))
   }
 
+  // Function to copy entire table content
+  const copyTableContent = () => {
+    // Create a simple table format with vertical bars
+    let tableContent = ''
+
+    // Add headers
+    if (safeColumns.length > 0) {
+      if (showRowNumbers) {
+        tableContent += '# | '
+      }
+
+      tableContent += safeColumns.map((column) => column?.header || '').join(' | ')
+      tableContent += '\n'
+    }
+
+    // Add rows
+    filteredRows.forEach((row, rowIndex) => {
+      if (showRowNumbers) {
+        tableContent += `${rowIndex + 1} | `
+      }
+
+      // Process each cell
+      tableContent += (row?.cells || []).map((cell) => cell?.content || '').join(' | ')
+
+      tableContent += '\n'
+    })
+
+    // Copy to clipboard
+    navigator.clipboard
+      .writeText(tableContent)
+      .then(() => {
+        setTableCopied(true)
+        setTimeout(() => setTableCopied(false), 2000)
+      })
+      .catch((err) => {
+        console.error('Failed to copy table: ', err)
+      })
+  }
+
   return (
     <div className="rounded-md border overflow-auto">
       {caption && <div className="mb-2 ml-2 text-lg font-semibold">{caption}</div>}
-      <div className="relative w-64 ml-2 mt-2 flex items-center">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <Input
-          placeholder="Lọc..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-10"
-        />
-        {searchTerm && (
-          <X
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
-            onClick={() => setSearchTerm('')}
-            aria-label="Clear search"
+      <div className="flex items-center justify-between mx-2 mt-2 gap-2">
+        <div className="relative w-64 flex items-center">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <Input
+            placeholder="Lọc..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-10"
           />
-        )}
+          {searchTerm && (
+            <X
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={() => setSearchTerm('')}
+              aria-label="Clear search"
+            />
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={copyTableContent}
+        >
+          {tableCopied ? (
+            <>
+              <Check className="h-4 w-4 text-green-500" />
+              <span>Đã sao chép</span>
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4" />
+              <span>Sao chép bảng</span>
+            </>
+          )}
+        </Button>
       </div>
-      <Table className={cn(className, 'm-0 mt-2')}>
+      <Table className={cn(className, 'm-0 mt-2 border-collapse')}>
         <TableHeader>
-          <TableRow>
-            {showRowNumbers && <TableHead>#</TableHead>}
+          <TableRow className="border-b">
+            {showRowNumbers && <TableHead className="border-r border-t">#</TableHead>}
             {safeColumns.map((column, index) => (
-              <TableHead key={`column-${column?.id || index}`}>
+              <TableHead
+                key={`column-${column?.id || index}`}
+                className={cn('border-r border-t', {
+                  'border-r-0': index === safeColumns.length - 1,
+                })}
+              >
                 <div className="flex items-center justify-between gap-2">
                   <span>{column?.header || ''}</span>
                   {column?.isSecret && (
@@ -133,9 +198,9 @@ export const TableBlock: React.FC<Props> = (props) => {
             </TableRow>
           ) : (
             filteredRows.map((row, rowIndex) => (
-              <TableRow key={`row-${row?.id || rowIndex}`}>
+              <TableRow key={`row-${row?.id || rowIndex}`} className="border-b">
                 {showRowNumbers && (
-                  <TableCell className="font-medium text-muted-foreground ">
+                  <TableCell className="font-medium text-muted-foreground border-r">
                     {rowIndex + 1}
                   </TableCell>
                 )}
@@ -143,11 +208,14 @@ export const TableBlock: React.FC<Props> = (props) => {
                   const cellId = `${rowIndex}-${cellIndex}`
                   const isSecret = safeColumns[cellIndex]?.isSecret
                   const cellContent = cell?.content || ''
+                  const isLastColumn = cellIndex === (row?.cells || []).length - 1
+
                   return (
                     <TableCell
                       key={`cell-${cell?.id || cellId}`}
                       className={cn({
                         'cursor-pointer group': true,
+                        'border-r': !isLastColumn,
                       })}
                       onClick={() => copyToClipboard(cellContent, cellId)}
                     >
