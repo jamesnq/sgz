@@ -34,6 +34,7 @@ export const Stocks: CollectionConfig = {
       type: 'json',
       required: true,
     },
+    // TODO need to handle expiredAt
     {
       name: 'expiredAt',
       type: 'date',

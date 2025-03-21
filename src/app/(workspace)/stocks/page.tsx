@@ -240,7 +240,7 @@ function StockImport() {
               {...register('input')}
               placeholder={
                 importType === 'key'
-                  ? `Enter keys separated by ${STOCK_SEPARATOR} character\nExample: KEY1${STOCK_SEPARATOR}KEY2${STOCK_SEPARATOR}KEY3`
+                  ? `Enter keys separated by new line character\nExample: KEY1\nKEY2\nKEY3`
                   : "Enter JSON data\nExample: ['key1', 'key2'] or { key: 'value' }"
               }
               className="min-h-[200px] font-mono"
