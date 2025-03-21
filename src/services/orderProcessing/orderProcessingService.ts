@@ -131,6 +131,7 @@ export class OrderProcessingService {
       collection: 'stocks',
       where: { productVariant: { equals: productVariant.id }, order: { equals: null } },
       limit: order.quantity,
+      sort: '-createdAt',
       req: { transactionID },
     })
 
