@@ -2,13 +2,13 @@ import { Shell } from '@/components/shell'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { env } from '@/config'
+import { defaultMetadata } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
 import { Search } from 'lucide-react'
 import { getPayload } from 'payload'
 import { Suspense } from 'react'
 import PageClient from './page.client'
-import { env } from '@/config'
-import { defaultMetadata } from '@/utilities/generateMeta'
 
 export const revalidate = 3600
 
@@ -171,7 +171,9 @@ async function ProductsData({
   )
 }
 
-export const metadata = defaultMetadata()
+export async function generateMetadata() {
+  return defaultMetadata()
+}
 
 export default function Page({ searchParams: searchParamsPromise }: Args) {
   return (
