@@ -184,11 +184,18 @@ export class OrderProcessingService {
     orderId: number,
     transactionID: string | number,
   ): Promise<void> {
+    if (stocksAvailable.length < order.quantity) {
+      throw new Error('Not enough stocks available')
+    }
+
+    const headers = Array.from(
+      new Set(stocksAvailable.flatMap((stock) => Object.keys(stock.data || {}))),
+    )
     // Create delivery content with keys from stocks
     const deliveryContent: any = createRichTextWithTable({
-      columns: [{ header: 'Key' }],
+      columns: headers.map((header) => ({ header })),
       rows: stocksAvailable.map((stock) => ({
-        cells: [{ content: (stock.data as any)['key'] }],
+        cells: headers.map((header) => ({ content: (stock.data as any)[header] })),
       })),
     })
 
