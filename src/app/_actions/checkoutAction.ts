@@ -149,7 +149,6 @@ export const checkoutAction = authActionClient
     //   'type' in pv.metadata
     // ) {
     //   const result = await autoProcessOrder(order.id)
-    //   console.log('🚀 ~ .action ~ result:', result)
     // }
     return { order }
   })
