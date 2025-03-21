@@ -21,10 +21,20 @@ export const importStocksAction = authActionClient
     const { user } = ctx
 
     // Check if user has admin role
-    if (!userHasRole(user, ['admin', 'staff'])) {
+    if (!userHasRole(user, ['admin'])) {
       throw new ServerNotification('Không có quyền cho hành động này')
     }
     const payload = await getPayload({ config: payloadConfig })
+    const productVariant = await payload.findByID({
+      collection: 'product-variants',
+      id: productVariantId,
+      depth: 0,
+      select: { autoProcess: true },
+    })
+    if (!productVariant || !productVariant.autoProcess) {
+      throw new ServerNotification('Product variant không có autoProcess')
+    }
+
     const db = payload.db.drizzle
     await db.insert(stocks).values(
       input.map((item) => ({
