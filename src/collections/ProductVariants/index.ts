@@ -32,10 +32,25 @@ export const ProductVariants: CollectionConfig = {
   },
   fields: [
     {
-      name: 'product',
-      type: 'relationship',
-      relationTo: 'products',
-      required: true,
+      type: 'row',
+      fields: [
+        {
+          name: 'product',
+          type: 'relationship',
+          relationTo: 'products',
+          required: true,
+        },
+        {
+          name: 'sold',
+          type: 'number',
+          defaultValue: 0,
+          required: true,
+          access: {
+            read: hasRole(['admin']),
+            update: hasRole(['admin']),
+          },
+        },
+      ],
     },
     {
       name: 'important',
@@ -43,53 +58,53 @@ export const ProductVariants: CollectionConfig = {
       editor: defaultLexicalEditor,
     },
     {
-      name: 'name',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'image',
-      type: 'upload',
-      relationTo: 'media',
-    },
-    {
-      name: 'status',
-      type: 'select',
-      // defaultValue: 'ORDER',
-      options: [
+      type: 'row',
+      fields: [
         {
-          label: 'Order',
-          value: 'ORDER',
+          name: 'name',
+          type: 'text',
+          required: true,
         },
         {
-          label: 'Available',
-          value: 'AVAILABLE',
-        },
-        {
-          label: 'Stopped',
-          value: 'STOPPED',
-        },
-        {
-          label: 'Private',
-          value: 'PRIVATE',
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
         },
       ],
-      required: true,
     },
     {
-      name: 'form',
-      type: 'relationship',
-      relationTo: 'forms',
-    },
-    {
-      name: 'sold',
-      type: 'number',
-      defaultValue: 0,
-      required: true,
-      access: {
-        read: hasRole(['admin']),
-        update: hasRole(['admin']),
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'status',
+          type: 'select',
+          // defaultValue: 'ORDER',
+          options: [
+            {
+              label: 'Order',
+              value: 'ORDER',
+            },
+            {
+              label: 'Available',
+              value: 'AVAILABLE',
+            },
+            {
+              label: 'Stopped',
+              value: 'STOPPED',
+            },
+            {
+              label: 'Private',
+              value: 'PRIVATE',
+            },
+          ],
+          required: true,
+        },
+        {
+          name: 'form',
+          type: 'relationship',
+          relationTo: 'forms',
+        },
+      ],
     },
     {
       type: 'row',
@@ -135,7 +150,6 @@ export const ProductVariants: CollectionConfig = {
         },
       ],
     },
-
     {
       name: 'note',
       type: 'textarea',
@@ -149,6 +163,16 @@ export const ProductVariants: CollectionConfig = {
       type: 'richText',
       editor: defaultLexicalEditor,
       label: 'Description',
+    },
+    {
+      name: 'autoProcess',
+      type: 'select',
+      options: [
+        {
+          label: 'Key',
+          value: 'key',
+        },
+      ],
     },
     {
       name: 'metadata',

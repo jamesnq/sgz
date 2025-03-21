@@ -139,14 +139,16 @@ export const checkoutAction = authActionClient
         }),
       ])
     })
-    if (
-      pv.metadata &&
-      typeof pv.metadata === 'object' &&
-      'isAuto' in pv.metadata &&
-      pv.metadata.isAuto &&
-      'type' in pv.metadata
-    ) {
-      await autoProcessOrder(order.id)
-    }
+    await autoProcessOrder(order.id)
+
+    // if (
+    //   pv.metadata &&
+    //   typeof pv.metadata === 'object' &&
+    //   'isAuto' in pv.metadata &&
+    //   pv.metadata.isAuto &&
+    //   'type' in pv.metadata
+    // ) {
+    //   const result = await autoProcessOrder(order.id)
+    // }
     return { order }
   })

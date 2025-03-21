@@ -1,33 +1,34 @@
 import { Order } from '@/payload-types'
-import payloadConfig from '@payload-config'
-import { CollectionAfterChangeHook, getPayload } from 'payload'
+import { CollectionAfterChangeHook } from 'payload'
 import { orderProcessingService } from '../orderProcessingService'
-import { env } from '@/config'
 
 export const autoProcessOrder = async (orderId: number) => {
   try {
     // Process the order
     const result = await orderProcessingService.processOrder(orderId)
+    console.log('🚀 ~ autoProcessOrder ~ result:', result)
 
-    // If processing was successful, update the order with the delivery content and status
-    if (result.success) {
-      // Only update if there are changes to make
-      if (result.data) {
-        const payload = await getPayload({ config: payloadConfig })
-        await payload.update({
-          collection: 'orders',
-          id: orderId,
-          data: result.data,
-          user: env.AUTO_PROCESS_USER_ID,
-        })
+    // // If processing was successful, update the order with the delivery content and status
+    // if (result.success) {
+    //   // Only update if there are changes to make
+    //   if (result.data) {
+    //     const payload = await getPayload({ config: payloadConfig })
+    //     const updatedOrder = await payload.update({
+    //       collection: 'orders',
+    //       id: orderId,
+    //       data: result.data,
+    //       user: env.AUTO_PROCESS_USER_ID,
+    //       req: { transactionID: result.transactionID },
+    //     })
+    //     console.log('🚀 ~ autoProcessOrder ~ updatedOrder:', updatedOrder)
 
-        // Log the successful processing
-        console.log(`Auto-processed order ${orderId} successfully: ${result.message}`)
-      }
-    } else {
-      // Log the failed processing
-      console.error(`Failed to auto-process order ${orderId}: ${result.message}`)
-    }
+    //     // Log the successful processing
+    //     console.log(`Auto-processed order ${orderId} successfully: ${result.message}`)
+    //   }
+    // } else {
+    //   // Log the failed processing
+    //   console.error(`Failed to auto-process order ${orderId}: ${result.message}`)
+    // }
   } catch (error) {
     // Log any errors
     console.error(
