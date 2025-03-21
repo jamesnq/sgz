@@ -23,6 +23,11 @@ export const autoProcessOrderSchema = z.object({
   orderId: z.number(),
 })
 
+export const importStocksSchema = z.object({
+  productVariantId: z.coerce.number(),
+  input: z.array(z.any()),
+})
+
 export const adminBalanceSchema = z.object({
   userId: z.number().positive(),
   amount: z.number(),
