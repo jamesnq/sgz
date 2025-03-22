@@ -1,4 +1,5 @@
 import { Order } from '@/payload-types'
+import React from 'react'
 export const orderStatusColors: Record<Order['status'], string> = {
   IN_QUEUE: '#3B82F6',
   IN_PROCESS: '#EAB308',
