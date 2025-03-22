@@ -113,11 +113,13 @@ export const checkoutAction = authActionClient
           .update(product_variants)
           .set({ sold: sql`${product_variants.sold} + ${quantity}` })
           .where(eq(product_variants.id, pv.id)),
-        sendNewOrderNotification(order.id, order.orderedBy.toString(), new Date(order.createdAt)),
-        sendNewOrderStaffNotification(order.id),
+        // sendNewOrderNotification(order.id, order.orderedBy.toString(), new Date(order.createdAt)),
       ])
     })
-    await autoProcessOrder(order.id)
+    const result = await autoProcessOrder(order.id)
+    if (!result?.success) {
+      await sendNewOrderStaffNotification(order.id)
+    }
 
     // if (
     //   pv.metadata &&

@@ -6,7 +6,7 @@ export class Routes {
   static readonly PRODUCTS = '/products'
   static readonly ORDERS = '/user/orders'
   static readonly ADMIN = '/admin'
-  static readonly WORKSPACE = 'workspace'
+  static readonly WORKSPACE = '/workspace'
   static readonly TRANSACTIONS = '/user/transactions'
   static readonly USER_NAV: {
     label: string
