@@ -105,20 +105,22 @@ export function OrderShippingForm({ order }: OrderShippingFormProps) {
                 </div>
               </div>
             </div>
-            <button
-              className={cn(
-                'w-[10%] flex border shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-highlight',
-                isProcessRequired && 'text-highlight',
-              )}
-              onClick={() => updateNeedProcessRequiredMutation({ fieldName: field.name })}
-              disabled={isPending && isUpdating}
-            >
-              {isUpdating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <UserPen className="h-5 w-5" />
-              )}
-            </button>
+            {order.status !== 'REFUND' && (
+              <button
+                className={cn(
+                  'w-[10%] flex border shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-highlight',
+                  isProcessRequired && 'text-highlight',
+                )}
+                onClick={() => updateNeedProcessRequiredMutation({ fieldName: field.name })}
+                disabled={isPending && isUpdating}
+              >
+                {isUpdating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPen className="h-5 w-5" />
+                )}
+              </button>
+            )}
           </div>
         )
       })}
