@@ -118,6 +118,7 @@ const PageClient = ({ order }: { order: Order }) => {
           <div>
             {(order.formSubmission as any)?.form && (
               <UpdateOrderShippingForm
+                key={(order.formSubmission as any).updatedAt.toString()}
                 order={order}
                 disabled={order.status === 'REFUND' || order.status === 'COMPLETED'}
               />
