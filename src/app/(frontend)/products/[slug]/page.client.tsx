@@ -134,6 +134,7 @@ function ProductPageProvider({
         currentVariant,
         setCurrentVariant: (variant: ProductVariant) => {
           setCurrentVariant(variant)
+          setQuantity((prevQuantity) => Math.min(prevQuantity, variant.max))
           initShippingInfoFromForm(variant.form as Form)
         },
         quantity,

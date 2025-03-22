@@ -6,8 +6,7 @@ import * as path from 'path'
 import { brawlhallaForm as brawlhallaFormData } from './brawlhalla-form'
 import { createAppleIdForm as appleIdFormData } from './create-apple-id-form'
 
-import { createSubscriberHash } from '@/collections/Users'
-import { novu } from '@/services/novu.service'
+import { createSubscriberHash, resetAndCreateSubscribers } from '@/services/novu.service'
 import { novuChannels } from '@/utilities/constants'
 import { productAppleId as productAppleIdData } from './product-appleid'
 import { productBrawlhallaCoins as productBrawlhallaCoinsData } from './product-brawlhalla-coins'
@@ -307,25 +306,14 @@ export const seed = async ({
   }
 
   payload.logger.info(`— Seeding novu channels...`)
-  const res = await novu.subscribers.list()
-  res.result.data.forEach(async (subscriber) => {
-    if (!subscriber.id) return
-    await novu.subscribers.delete(subscriber.subscriberId)
-  })
+  await resetAndCreateSubscribers(novuChannels)
 
-  const subscribers = [...novuChannels.map((channel) => ({ subscriberId: channel }))]
-
-  await Promise.all([
-    novu.subscribers.createBulk({
-      subscribers,
-    }),
-    payload.db.drizzle.insert(novu_channels).values(
-      novuChannels.map((channel) => ({
-        hash: createSubscriberHash(channel),
-        subscriberId: channel,
-      })),
-    ),
-  ])
+  await payload.db.drizzle.insert(novu_channels).values(
+    novuChannels.map((channel) => ({
+      hash: createSubscriberHash(channel),
+      subscriberId: channel,
+    })),
+  )
 
   payload.logger.info('Seeded database successfully!')
 }

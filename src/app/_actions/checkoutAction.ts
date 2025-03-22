@@ -1,10 +1,8 @@
 'use server'
 import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
-import { novu } from '@/services/novu.service'
+import { sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
-import { formatOrderDate } from '@/utilities/formatOrderDate'
-import { Routes } from '@/utilities/routes'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
@@ -115,31 +113,13 @@ export const checkoutAction = authActionClient
           .update(product_variants)
           .set({ sold: sql`${product_variants.sold} + ${quantity}` })
           .where(eq(product_variants.id, pv.id)),
-        novu.trigger({
-          workflowId: 'new-order',
-          to: {
-            subscriberId: order.orderedBy.toString(),
-          },
-          payload: {
-            subject: `Tạo đơn hàng mới thành công`,
-            message: `Đơn hàng #${order.id} được tạo thành công lúc ${formatOrderDate(new Date(order.createdAt))} ấn để xem chi tiết`,
-            redirect: Routes.order(order.id),
-          },
-        }),
-        novu.trigger({
-          workflowId: 'new-order',
-          to: {
-            subscriberId: 'staff',
-          },
-          payload: {
-            subject: `Có đơn hàng mới #${order.id}`,
-            message: ``,
-            redirect: Routes.WORKSPACE,
-          },
-        }),
+        // sendNewOrderNotification(order.id, order.orderedBy.toString(), new Date(order.createdAt)),
       ])
     })
-    await autoProcessOrder(order.id)
+    const result = await autoProcessOrder(order.id)
+    if (!result?.success) {
+      await sendNewOrderStaffNotification(order.id)
+    }
 
     // if (
     //   pv.metadata &&

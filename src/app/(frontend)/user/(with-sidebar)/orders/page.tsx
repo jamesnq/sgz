@@ -50,7 +50,10 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
   const { user } = await payload.auth({
     headers: headersData,
   })
-  const queryWhere: any = {}
+  if (!user) {
+    return null
+  }
+  const queryWhere: any = { orderedBy: { equals: user.id } }
   if (query || status) {
     queryWhere.and = []
     if (query) {

@@ -2,8 +2,11 @@ import { hasRole, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { env } from '@/config'
 import { User } from '@/payload-types'
-import { novu } from '@/services/novu.service'
-import { getServerSideURL } from '@/utilities/getURL'
+import {
+  createNovuSubscriber,
+  createSubscriberHash,
+  sendWelcomeNotification,
+} from '@/services/novu.service'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
@@ -12,39 +15,27 @@ import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
 import { managerGroup } from '@/utilities/constants'
 
-export function createSubscriberHash(subscriberId: string) {
-  return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
-}
 export function createChatwootHash(email: string) {
   return CryptoJS.HmacSHA256(email, env.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
 }
 
-async function createNovuSubscriber({
+async function createNovuSubscriberAndSendWelcome({
   subscriberId,
   data,
 }: {
   subscriberId: string
   data: { email: string }
 }) {
-  try {
-    await novu.subscribers.create({
-      subscriberId: subscriberId,
-      email: data.email,
-    })
-  } catch {}
-  after(async () => {
-    await novu.trigger({
-      workflowId: 'welcome',
-      to: {
-        subscriberId: subscriberId,
-      },
-      payload: {
-        site: env.NEXT_PUBLIC_SITE_NAME,
-        host: getServerSideURL(),
-      },
-    })
+  const result = await createNovuSubscriber({
+    subscriberId: subscriberId,
+    email: data.email,
   })
-  return { novuHash: createSubscriberHash(subscriberId), subscriberId }
+
+  after(async () => {
+    await sendWelcomeNotification(subscriberId)
+  })
+
+  return result
 }
 
 // Careful when add more roles that role can get system notification
@@ -87,7 +78,7 @@ export const Users: CollectionConfig = {
         if (!doc) return doc
         const [novuResult, chatwootHash] = await Promise.all([
           !doc.novuHash
-            ? createNovuSubscriber({
+            ? createNovuSubscriberAndSendWelcome({
                 subscriberId: doc.id.toString(),
                 data: { email: doc.email },
               })
@@ -96,7 +87,7 @@ export const Users: CollectionConfig = {
         ])
 
         const userUpdate: Partial<User> = {}
-        if (novuResult) userUpdate.novuHash = novuResult.novuHash
+        if (novuResult) userUpdate.novuHash = createSubscriberHash(doc.id.toString())
         if (chatwootHash) userUpdate.chatwootHash = chatwootHash
 
         if (Object.keys(userUpdate).length > 0) {

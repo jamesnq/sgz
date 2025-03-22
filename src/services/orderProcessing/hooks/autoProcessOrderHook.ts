@@ -6,9 +6,7 @@ export const autoProcessOrder = async (orderId: number) => {
   try {
     // Process the order
     const result = await orderProcessingService.processOrder(orderId)
-    if (!result.success) {
-      throw new Error(result.message)
-    }
+    return result
   } catch (error) {
     // Log any errors
     console.error(

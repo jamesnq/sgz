@@ -25,6 +25,10 @@ declare global {
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
       CHATWOOT_HMAC_TOKEN: string
+      DISCORD_ADMIN_WEBHOOK_URL: string
+      DISCORD_STAFF_WEBHOOK_URL: string
+      DISCORD_ADMIN_ROLE_ID: string
+      DISCORD_STAFF_ROLE_ID: string
       SKIP_ENV_VALIDATION: string | undefined
       NOVU_SECRET_KEY: string
       NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: string
