@@ -4,10 +4,52 @@ import CryptoJS from 'crypto-js'
 import { getServerSideURL } from '@/utilities/getURL'
 import { Routes } from '@/utilities/routes'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
+import { orderStatusColors } from '@/utilities/getOrderStatus'
 
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
-
+async function discordWebhook({
+  subject,
+  message,
+  redirect,
+  color,
+  channel,
+}: {
+  subject: string
+  message?: string
+  redirect?: string
+  color?: string | null
+  channel?: 'staff' | 'admin'
+}) {
+  if (!channel) {
+    channel = 'admin'
+  }
+  return fetch(
+    channel === 'staff' ? env.DISCORD_STAFF_WEBHOOK_URL : env.DISCORD_ADMIN_WEBHOOK_URL,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: `<@&${channel === 'staff' ? env.DISCORD_STAFF_ROLE_ID : env.DISCORD_ADMIN_ROLE_ID}>`,
+        attachments: [],
+        embeds: [
+          {
+            title: subject,
+            description: message,
+            url: redirect
+              ? redirect.startsWith('http://') || redirect.startsWith('https://')
+                ? redirect
+                : getServerSideURL() + redirect
+              : undefined,
+            color: color ? parseInt(color.replace('#', ''), 16) : undefined,
+          },
+        ],
+      }),
+    },
+  )
+}
 // Initialize Novu client
 export const novu = new Novu({ secretKey: env.NOVU_SECRET_KEY })
 
@@ -41,10 +83,10 @@ export async function createNovuSubscriber({
   } catch (error) {
     console.error('Error creating Novu subscriber:', error)
   }
-  
-  return { 
-    novuHash: createSubscriberHash(subscriberId), 
-    subscriberId 
+
+  return {
+    novuHash: createSubscriberHash(subscriberId),
+    subscriberId,
   }
 }
 
@@ -78,7 +120,7 @@ export async function sendWelcomeNotification(subscriberId: string): Promise<voi
 export async function sendNewOrderNotification(
   orderId: number | string,
   subscriberId: string,
-  createdAt: Date
+  createdAt: Date,
 ): Promise<void> {
   try {
     await novu.trigger({
@@ -103,16 +145,22 @@ export async function sendNewOrderNotification(
  */
 export async function sendNewOrderStaffNotification(orderId: number | string): Promise<void> {
   try {
+    const payload = {
+      subject: `Có đơn hàng mới #${orderId}`,
+      message: ``,
+      redirect: Routes.WORKSPACE,
+    }
     await novu.trigger({
       workflowId: 'new-order',
       to: {
         subscriberId: 'staff',
       },
-      payload: {
-        subject: `Có đơn hàng mới #${orderId}`,
-        message: ``,
-        redirect: Routes.WORKSPACE,
-      },
+      payload,
+    })
+    await discordWebhook({
+      ...payload,
+      color: orderStatusColors.IN_QUEUE,
+      channel: 'staff',
     })
   } catch (error) {
     console.error('Error sending staff notification:', error)
@@ -126,7 +174,7 @@ export async function sendNewOrderStaffNotification(orderId: number | string): P
  */
 export async function sendOrderUpdateRequiredNotification(
   orderId: number | string,
-  subscriberId: string
+  subscriberId: string,
 ): Promise<void> {
   try {
     await novu.trigger({
@@ -149,18 +197,26 @@ export async function sendOrderUpdateRequiredNotification(
  * Sends a notification to staff when a user updates their order
  * @param orderId - The order ID
  */
-export async function sendOrderUserUpdatedStaffNotification(orderId: number | string): Promise<void> {
+export async function sendOrderUserUpdatedStaffNotification(
+  orderId: number | string,
+): Promise<void> {
+  const payload = {
+    subject: `Đơn hàng #${orderId} đang đợi xử lý`,
+    message: `Người dùng đã cập nhật đơn hàng #${orderId}`,
+    redirect: Routes.WORKSPACE,
+  }
   try {
     await novu.trigger({
       workflowId: 'order-update',
       to: {
         subscriberId: 'staff',
       },
-      payload: {
-        message: `Người dùng đã cập nhật đơn hàng #${orderId}`,
-        subject: `Đơn hàng #${orderId} đang đợi xử lý`,
-        redirect: Routes.WORKSPACE,
-      },
+      payload,
+    })
+    await discordWebhook({
+      ...payload,
+      color: orderStatusColors.USER_UPDATE,
+      channel: 'staff',
     })
   } catch (error) {
     console.error('Error sending staff notification:', error)
@@ -180,7 +236,7 @@ export async function resetAndCreateSubscribers(subscriberIds: string[]): Promis
         if (subscriber.subscriberId) {
           await novu.subscribers.delete(subscriber.subscriberId)
         }
-      })
+      }),
     )
 
     // Create new subscribers

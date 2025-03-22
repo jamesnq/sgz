@@ -12,7 +12,10 @@ import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
-import { sendOrderUpdateRequiredNotification, sendOrderUserUpdatedStaffNotification } from '@/services/novu.service'
+import {
+  sendOrderUpdateRequiredNotification,
+  sendOrderUserUpdatedStaffNotification,
+} from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'

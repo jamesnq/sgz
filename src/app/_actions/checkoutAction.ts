@@ -1,7 +1,7 @@
 'use server'
 import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
-import { sendNewOrderNotification, sendNewOrderStaffNotification } from '@/services/novu.service'
+import { sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'

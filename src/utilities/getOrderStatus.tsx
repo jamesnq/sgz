@@ -1,14 +1,18 @@
 import { Order } from '@/payload-types'
+export const orderStatusColors: Record<Order['status'], string> = {
+  IN_QUEUE: '#3B82F6',
+  IN_PROCESS: '#EAB308',
+  USER_UPDATE: '#d2a8ff',
+  COMPLETED: '#22C55E',
+  REFUND: '#EF4444',
+}
 
 export const orderStatus: Record<Order['status'], React.ReactNode> = {
-  // PENDING: 'Chờ thanh toán',
-  IN_QUEUE: <p style={{ color: '#3B82F6' }}>Chờ xử lý</p>,
-  IN_PROCESS: <p style={{ color: '#EAB308' }}>Đang xử lý</p>,
-  USER_UPDATE: <p style={{ color: '#d2a8ff' }}>Chờ cập nhật</p>,
-  COMPLETED: <p style={{ color: '#22C55E' }}>Hoàn thành</p>,
-  // IN_CART: "Trong vỏ hàng",
-  // CANCELLED: <p style={{ color: '#FCA5A5' }}>Hủy</p>,
-  REFUND: <p style={{ color: '#EF4444' }}>Hoàn trả</p>,
+  IN_QUEUE: <p style={{ color: orderStatusColors.IN_QUEUE }}>Chờ xử lý</p>,
+  IN_PROCESS: <p style={{ color: orderStatusColors.IN_PROCESS }}>Đang xử lý</p>,
+  USER_UPDATE: <p style={{ color: orderStatusColors.USER_UPDATE }}>Chờ cập nhật</p>,
+  COMPLETED: <p style={{ color: orderStatusColors.COMPLETED }}>Hoàn thành</p>,
+  REFUND: <p style={{ color: orderStatusColors.REFUND }}>Hoàn trả</p>,
 }
 
 export function getOrderStatus(status: Order['status']) {

@@ -2,7 +2,11 @@ import { hasRole, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { env } from '@/config'
 import { User } from '@/payload-types'
-import { createNovuSubscriber, createSubscriberHash, sendWelcomeNotification } from '@/services/novu.service'
+import {
+  createNovuSubscriber,
+  createSubscriberHash,
+  sendWelcomeNotification,
+} from '@/services/novu.service'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
@@ -26,11 +30,11 @@ async function createNovuSubscriberAndSendWelcome({
     subscriberId: subscriberId,
     email: data.email,
   })
-  
+
   after(async () => {
     await sendWelcomeNotification(subscriberId)
   })
-  
+
   return result
 }
 

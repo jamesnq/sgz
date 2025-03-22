@@ -26,6 +26,10 @@ export const env = createEnv({
     DOITHE_PARTNER_KEY: z.string(),
     NOVU_SECRET_KEY: z.string(),
     CHATWOOT_HMAC_TOKEN: z.string(),
+    DISCORD_ADMIN_WEBHOOK_URL: z.string().url(),
+    DISCORD_STAFF_WEBHOOK_URL: z.string().url(),
+    DISCORD_ADMIN_ROLE_ID: z.string(),
+    DISCORD_STAFF_ROLE_ID: z.string(),
   },
   /*
    * Environment variables available on the client (and server).
