@@ -9,11 +9,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export function UpdateOrderShippingForm({ disabled, order }: { order: Order; disabled?: boolean }) {
-  const formSubmission = useMemo(() => order.formSubmission as FormSubmission, [order])
+  const formSubmission = useMemo(
+    () => order.formSubmission as FormSubmission,
+    [order.formSubmission],
+  )
+  const router = useRouter()
   const form = useMemo(() => formSubmission.form as Form, [formSubmission])
   const [formSubmissionData, setFormSubmissionData] = useState(formSubmission?.submissionData || {})
+
   const { executeAsync, isExecuting } = useActionWarper(updateOrderAction)
   return (
     <Card>
@@ -57,6 +63,7 @@ export function UpdateOrderShippingForm({ disabled, order }: { order: Order; dis
               id: order.id,
               shippingFields: formSubmissionData,
             })
+            router.refresh()
           }}
         >
           {isExecuting ? (
