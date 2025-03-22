@@ -12,13 +12,12 @@ import { hasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
-import { novu } from '@/services/novu.service'
+import { sendOrderUpdateRequiredNotification, sendOrderUserUpdatedStaffNotification } from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
-import { Routes } from '@/utilities/routes'
 import { managerGroup } from '@/utilities/constants'
 
 class ConflictsError extends APIError {
@@ -57,17 +56,7 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   if (previousDoc.status != doc.status) {
     if (doc.status === 'USER_UPDATE') {
       after(async () => {
-        await novu.trigger({
-          workflowId: 'order-update',
-          to: {
-            subscriberId: doc.orderedBy.toString(),
-          },
-          payload: {
-            message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
-            subject: `Yêu cầu hành động với đơn hàng #${doc.id}`,
-            redirect: Routes.order(doc.id),
-          },
-        })
+        await sendOrderUpdateRequiredNotification(doc.id, doc.orderedBy.toString())
       })
     }
     if (
@@ -76,17 +65,7 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
       userId == doc.orderedBy
     ) {
       after(async () => {
-        await novu.trigger({
-          workflowId: 'order-update',
-          to: {
-            subscriberId: 'staff',
-          },
-          payload: {
-            message: `Người dùng đã cập nhật đơn hàng #${doc.id}`,
-            subject: `Đơn hàng #${doc.id} đang đợi xử lý`,
-            redirect: Routes.WORKSPACE,
-          },
-        })
+        await sendOrderUserUpdatedStaffNotification(doc.id)
       })
     }
   }
