@@ -20,16 +20,18 @@ export function SelectField({
   onChange?: (value: string) => void
   disabled?: boolean
 }) {
+  const isProcessRequired = typeof field.defaultValue === 'object'
   return (
     <div className={cn(className)}>
       <div className="grid w-full items-center gap-1">
         <Label htmlFor={`input-${field.name}`} className="text-xs">
           {field.label}
           {field.required && <span className="text-red-500 ml-1">* </span>}
+          {isProcessRequired && <span className="text-red-500 ml-1">Cần bổ sung để tiếp tục</span>}
         </Label>
         <Select
           name={field.name}
-          defaultValue={field.defaultValue}
+          defaultValue={isProcessRequired ? undefined : field.defaultValue}
           onValueChange={(e) => {
             onChange?.(e)
           }}
