@@ -6,9 +6,9 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
-import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import { checkoutAction } from '@/app/_actions/checkoutAction'
 import { fields } from '@/blocks/Form/fields'
+import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import RichText from '@/components/RichText'
 import { DisplayProductStatus } from '@/components/display-product-status'
 import { Shell } from '@/components/shell'
@@ -28,12 +28,12 @@ import {
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/providers/Auth'
 import { formatPrice } from '@/utilities/formatPrice'
+import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
 import { useActionWarper } from '@/utilities/useActionWarper'
+import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Routes } from '@/utilities/routes'
-import { hasText } from '@payloadcms/richtext-lexical/shared'
 
 type ProductPageContextType = {
   product: Product
@@ -279,17 +279,15 @@ function ShippingForm({ form }: { form: Form }) {
         {form.fields &&
           form.fields.map((field, index) => {
             const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
-            if (Field) {
-              return (
-                <div className="mb-4 last:mb-0" key={index}>
-                  <Field
-                    field={field}
-                    onChange={(value: string) => setShippingInfo(field.name, value)}
-                  />
-                </div>
-              )
-            }
-            return null
+            if (!Field) return null
+            return (
+              <div className="mb-4 last:mb-0" key={index}>
+                <Field
+                  field={field}
+                  onChange={(value: string) => setShippingInfo(field.name, value)}
+                />
+              </div>
+            )
           })}
       </CardContent>
     </Card>
