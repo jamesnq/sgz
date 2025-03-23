@@ -193,6 +193,79 @@ function calculateDiscountPercentage(originalPrice: number, price: number): numb
   return discountPercentage
 }
 
+// Memoized ProductVariantCard component with custom comparison function
+const MemoizedProductVariantCard = React.memo(
+  function ProductVariantCardInner({
+    productVariant,
+    className,
+    currentVariantId,
+    setCurrentVariant,
+    productImage,
+  }: {
+    productVariant: ProductVariant
+    className?: string
+    currentVariantId?: number
+    setCurrentVariant: (variant: ProductVariant) => void
+    productImage: any
+  }) {
+    const discountPercentage = useMemo(
+      () => calculateDiscountPercentage(productVariant.originalPrice, productVariant.price),
+      [productVariant.originalPrice, productVariant.price],
+    )
+
+    return (
+      <Card
+        onClick={() => {
+          setCurrentVariant(productVariant)
+        }}
+        className={cn(
+          'flex transition-all h-[96px] duration-200 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent',
+          className,
+          currentVariantId &&
+            currentVariantId === productVariant.id &&
+            'bg-secondary border-primary',
+        )}
+      >
+        <div className="relative h-[96px] w-[72px] overflow-hidden">
+          <Media
+            resource={productVariant.image || productImage}
+            imgClassName="absolute duration-300 h-[96px] w-[72px] ease-in-out scale-100 group-hover:scale-110"
+          />
+        </div>
+        <div className="flex flex-[3] items-start gap-2 p-4">
+          <div className="flex h-full flex-1 flex-col justify-between">
+            <div className="">{productVariant.name}</div>
+            <DisplayProductStatus status={productVariant.status} />
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="font-bold">{formatPrice(productVariant.price, 'VND')}</div>
+            {discountPercentage > 0 && (
+              <>
+                <div className="text-gray-500 line-through">
+                  {formatPrice(productVariant.originalPrice, 'VND')}
+                </div>
+                <Badge>-{discountPercentage.toFixed(0)}%</Badge>
+              </>
+            )}
+          </div>
+        </div>
+      </Card>
+    )
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if these specific props change
+    return (
+      prevProps.productVariant.id === nextProps.productVariant.id &&
+      prevProps.className === nextProps.className &&
+      prevProps.currentVariantId === nextProps.currentVariantId &&
+      prevProps.productVariant.price === nextProps.productVariant.price &&
+      prevProps.productVariant.originalPrice === nextProps.productVariant.originalPrice &&
+      prevProps.productVariant.status === nextProps.productVariant.status
+    )
+  },
+)
+
+// Wrapper component that gets context values and passes them as props
 function ProductVariantCard({
   productVariant,
   className,
@@ -203,45 +276,15 @@ function ProductVariantCard({
   const setCurrentVariant = useProductPageContext((state) => state.setCurrentVariant)
   const currentVariant = useProductPageContext((state) => state.currentVariant)
   const product = useProductPageContext((state) => state.product)
-  const discountPercentage = useMemo(
-    () => calculateDiscountPercentage(productVariant.originalPrice, productVariant.price),
-    [productVariant.originalPrice, productVariant.price],
-  )
+
   return (
-    <Card
-      onClick={() => {
-        setCurrentVariant(productVariant)
-      }}
-      className={cn(
-        'flex transition-all h-[96px] duration-200 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent',
-        className,
-        currentVariant && currentVariant.id == productVariant.id && 'bg-secondary border-primary',
-      )}
-    >
-      <div className="relative h-[96px] w-[72px] overflow-hidden">
-        <Media
-          resource={productVariant.image || product.image}
-          imgClassName="absolute duration-300 h-[96px] w-[72px] ease-in-out scale-100 group-hover:scale-110"
-        />
-      </div>
-      <div className="flex flex-[3] items-start gap-2 p-4">
-        <div className="flex h-full flex-1 flex-col justify-between">
-          <div className="">{productVariant.name}</div>
-          <DisplayProductStatus status={productVariant.status} />
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className="font-bold">{formatPrice(productVariant.price, 'VND')}</div>
-          {discountPercentage > 0 && (
-            <>
-              <div className="text-gray-500 line-through">
-                {formatPrice(productVariant.originalPrice, 'VND')}
-              </div>
-              <Badge>-{discountPercentage.toFixed(0)}%</Badge>
-            </>
-          )}
-        </div>
-      </div>
-    </Card>
+    <MemoizedProductVariantCard
+      productVariant={productVariant}
+      className={className}
+      currentVariantId={currentVariant?.id}
+      setCurrentVariant={setCurrentVariant}
+      productImage={product.image}
+    />
   )
 }
 
@@ -281,31 +324,63 @@ function ProductVariantsDrawer({
   )
 }
 
-function ShippingForm({ form }: { form: Form }) {
+// Memoized form field component
+const MemoizedFormField = React.memo(
+  function FormField({ field, onChange }: { field: any; onChange: (value: string) => void }) {
+    const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+
+    if (!Field) return null
+
+    return <Field field={field} onChange={onChange} />
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if the field itself changes
+    return (
+      prevProps.field.name === nextProps.field.name &&
+      prevProps.field.blockType === nextProps.field.blockType
+    )
+  },
+)
+
+// Memoized ShippingForm component
+const MemoizedShippingForm = React.memo(function ShippingFormInner({ form }: { form: Form }) {
   const setShippingInfo = useProductPageContext((state) => state.setShippingInfo)
+
+  // Create a stable callback factory that returns a callback for each field
+  const createFieldChangeHandler = React.useCallback(
+    (fieldName: string) => (value: string) => {
+      setShippingInfo(fieldName, value)
+    },
+    [setShippingInfo],
+  )
+
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader>Thông tin đơn hàng</CardHeader>
-      <CardContent className="grid gap-2">
-        {form.fields &&
-          form.fields.map((field, index) => {
+      <CardContent>
+        <div>
+          {form.fields?.map((field: any, index: number) => {
             const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
             if (!Field) return null
+
             return (
               <div className="mb-4 last:mb-0" key={index}>
-                <Field
-                  field={field}
-                  onChange={(value: string) => setShippingInfo(field.name, value)}
-                />
+                <MemoizedFormField field={field} onChange={createFieldChangeHandler(field.name)} />
               </div>
             )
           })}
+        </div>
       </CardContent>
     </Card>
   )
+})
+
+function ShippingForm({ form }: { form: Form }) {
+  return <MemoizedShippingForm form={form} />
 }
 
-function CheckoutButton() {
+// Memoized checkout button component
+const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   const router = useRouter()
   const { executeAsync, isExecuting } = useActionWarper(checkoutAction)
   const currentVariant = useProductPageContext((state) => state.currentVariant)
@@ -313,7 +388,7 @@ function CheckoutButton() {
   const shippingInfo = useProductPageContext((state) => state.shippingInfo)
   const isFormValid = useProductPageContext((state) => state.isFormValid)
 
-  const checkout = () => {
+  const checkout = React.useCallback(() => {
     executeAsync({
       quantity,
       productVariantId: currentVariant.id,
@@ -322,21 +397,22 @@ function CheckoutButton() {
       if (!x?.data?.order) return
       router.push(Routes.order(x.data.order.id))
     })
-  }
+  }, [executeAsync, quantity, currentVariant.id, shippingInfo, router])
 
   return (
-    <Button
-      className="w-full font-bold"
-      disabled={isExecuting || !isFormValid}
-      onClick={() => checkout()}
-    >
+    <Button className="w-full font-bold" disabled={isExecuting || !isFormValid} onClick={checkout}>
       {isExecuting && <Loader2 className="animate-spin mr-2" />}
       Thanh toán
     </Button>
   )
+})
+
+function CheckoutButton() {
+  return <MemoizedCheckoutButton />
 }
 
-function Checkout({ className }: { className?: string }) {
+// Memoized checkout component
+const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { className?: string }) {
   const user = useAuth().user
   const currentVariant = useProductPageContext((state) => state.currentVariant)
   const quantity = useProductPageContext((state) => state.quantity)
@@ -345,6 +421,26 @@ function Checkout({ className }: { className?: string }) {
   const setQuantity = useProductPageContext((state) => state.setQuantity)
   const calc = useProductPageContext((state) => state.calc)
   const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
+
+  const handleQuantityChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10)
+    if (!isNaN(value)) {
+      setEditingQuantity(value)
+    }
+  }, [])
+
+  const handleQuantityBlur = React.useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const parsedValue = Math.min(
+        Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
+        currentVariant.max,
+      )
+      setQuantity(parsedValue)
+      setEditingQuantity(undefined)
+    },
+    [currentVariant.max, currentVariant.min, setQuantity],
+  )
+
   return (
     <Card className={cn('p-6', className)}>
       {currentVariant.max > 1 && (
@@ -358,9 +454,7 @@ function Checkout({ className }: { className?: string }) {
               variant="outline"
               size="icon"
               className="size-8 shrink-0 rounded-r-none"
-              onClick={() => {
-                decQuantity()
-              }}
+              onClick={() => decQuantity()}
             >
               <MinusIcon className="size-3" aria-hidden="true" />
             </Button>
@@ -371,15 +465,8 @@ function Checkout({ className }: { className?: string }) {
               className="h-8 w-16 rounded-none border-x-0"
               value={editingQuantity != undefined ? editingQuantity : quantity}
               onFocus={() => setEditingQuantity(quantity)}
-              onChange={(e) => setEditingQuantity(parseInt(e.target.value, 10))}
-              onBlur={(e) => {
-                const parsedValue = Math.min(
-                  Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
-                  currentVariant.max,
-                )
-                setQuantity(parsedValue)
-                setEditingQuantity(undefined)
-              }}
+              onChange={handleQuantityChange}
+              onBlur={handleQuantityBlur}
             />
             <Button
               id={`increment-quantity`}
@@ -388,9 +475,7 @@ function Checkout({ className }: { className?: string }) {
               variant="outline"
               size="icon"
               className="size-8 shrink-0 rounded-l-none"
-              onClick={() => {
-                incQuantity()
-              }}
+              onClick={() => incQuantity()}
             >
               <PlusIcon className="size-3" aria-hidden="true" />
             </Button>
@@ -412,18 +497,24 @@ function Checkout({ className }: { className?: string }) {
           <span className="font-bold">Tổng tiền</span>
           <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
         </div>
-        {user ? <CheckoutButton></CheckoutButton> : <AuthDialog className="w-full"></AuthDialog>}
+        {user ? <CheckoutButton /> : <AuthDialog className="w-full" />}
       </div>
     </Card>
   )
+})
+
+function Checkout({ className }: { className?: string }) {
+  return <MemoizedCheckout className={className} />
 }
 
-function Screen() {
+// Memoized Screen component
+const MemoizedScreen = React.memo(function ScreenInner() {
   const product = useProductPageContext((state) => state.product)
   const currentVariant = useProductPageContext((state) => state.currentVariant)
   const description = useMemo(() => {
     return hasText(currentVariant.description) ? currentVariant.description : product.description
   }, [currentVariant.description, product.description])
+
   return (
     <Shell>
       <Head />
@@ -487,6 +578,10 @@ function Screen() {
       </div>
     </Shell>
   )
+})
+
+function Screen() {
+  return <MemoizedScreen />
 }
 
 const PageClient = ({ product }: { product: Product }) => {
