@@ -8,6 +8,7 @@ import { fields } from '@/blocks/Form/fields'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { useActionWarper } from '@/utilities/useActionWarper'
+import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -19,6 +20,9 @@ export function UpdateOrderShippingForm({ disabled, order }: { order: Order; dis
   const router = useRouter()
   const form = useMemo(() => formSubmission.form as Form, [formSubmission])
   const [formSubmissionData, setFormSubmissionData] = useState(formSubmission?.submissionData || {})
+  const isFormValid = useMemo(() => {
+    return validateRequiredFields(form.fields || [], formSubmissionData)
+  }, [form.fields, formSubmissionData])
 
   const { executeAsync, isExecuting } = useActionWarper(updateOrderAction)
   return (
@@ -56,7 +60,7 @@ export function UpdateOrderShippingForm({ disabled, order }: { order: Order; dis
       </CardContent>
       <CardFooter>
         <Button
-          disabled={disabled || isExecuting}
+          disabled={disabled || isExecuting || !isFormValid}
           className="w-full"
           onClick={() => {
             executeAsync({

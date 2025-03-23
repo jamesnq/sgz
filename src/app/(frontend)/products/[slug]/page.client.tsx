@@ -2,6 +2,7 @@
 
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useMemo, useState } from 'react'
+import { createContext, useContextSelector } from 'use-context-selector'
 
 import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
@@ -34,6 +35,7 @@ import { useActionWarper } from '@/utilities/useActionWarper'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { validateRequiredFields } from '@/utilities/validateFormFields'
 
 type ProductPageContextType = {
   product: Product
@@ -48,18 +50,17 @@ type ProductPageContextType = {
   }
   currentVariant: ProductVariant
   shippingInfo: { [key: string]: any }
+  isFormValid: boolean
   setCurrentVariant: (variant: ProductVariant) => void
   setShippingInfo: (key: string, value: string | number) => void
 }
 
-const ProductPageContext = React.createContext<ProductPageContextType>({} as ProductPageContextType)
+const ProductPageContext = createContext<ProductPageContextType>({} as ProductPageContextType)
 
-function useProductPageContext() {
-  const context = React.useContext(ProductPageContext)
-  if (!context) {
-    throw new Error('useProductPageContext must be used within a ProductPageProvider')
-  }
-  return context
+function useProductPageContext<Selected>(
+  selector: (state: ProductPageContextType) => Selected,
+): Selected {
+  return useContextSelector(ProductPageContext, selector)
 }
 
 function ProductPageProvider({
@@ -94,6 +95,12 @@ function ProductPageProvider({
   const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>(
     getInitShippingInfo({}),
   )
+
+  const isFormValid = useMemo(() => {
+    const form = currentVariant.form as Form
+    if (!form || !form.fields) return true
+    return validateRequiredFields(form.fields, shippingInfo)
+  }, [currentVariant.form, shippingInfo])
 
   const calc = useMemo(() => {
     const totalOriginalPrice = currentVariant.originalPrice * quantity
@@ -146,6 +153,7 @@ function ProductPageProvider({
           setQuantity((prev) => Math.max(1, prev - by))
         },
         shippingInfo,
+        isFormValid,
         setShippingInfo: (key, value) => {
           setShippingInfo((prev) => ({ ...prev, [key]: value }))
         },
@@ -157,7 +165,8 @@ function ProductPageProvider({
 }
 
 function Head() {
-  const { product, currentVariant } = useProductPageContext()
+  const product = useProductPageContext((state) => state.product)
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
   return (
     <div className="h-60 mb-5">
       <div className="relative flex h-full items-center gap-[24px] max-md:flex-col md:items-end">
@@ -191,7 +200,9 @@ function ProductVariantCard({
   productVariant: ProductVariant
   className?: string
 }) {
-  const { setCurrentVariant, currentVariant, product } = useProductPageContext()
+  const setCurrentVariant = useProductPageContext((state) => state.setCurrentVariant)
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
+  const product = useProductPageContext((state) => state.product)
   const discountPercentage = useMemo(
     () => calculateDiscountPercentage(productVariant.originalPrice, productVariant.price),
     [productVariant.originalPrice, productVariant.price],
@@ -271,7 +282,7 @@ function ProductVariantsDrawer({
 }
 
 function ShippingForm({ form }: { form: Form }) {
-  const { setShippingInfo } = useProductPageContext()
+  const setShippingInfo = useProductPageContext((state) => state.setShippingInfo)
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader>Thông tin đơn hàng</CardHeader>
@@ -297,7 +308,10 @@ function ShippingForm({ form }: { form: Form }) {
 function CheckoutButton() {
   const router = useRouter()
   const { executeAsync, isExecuting } = useActionWarper(checkoutAction)
-  const { currentVariant, quantity, shippingInfo } = useProductPageContext()
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
+  const quantity = useProductPageContext((state) => state.quantity)
+  const shippingInfo = useProductPageContext((state) => state.shippingInfo)
+  const isFormValid = useProductPageContext((state) => state.isFormValid)
 
   const checkout = () => {
     executeAsync({
@@ -311,17 +325,25 @@ function CheckoutButton() {
   }
 
   return (
-    <Button className="w-full font-bold" disabled={isExecuting} onClick={() => checkout()}>
-      {isExecuting && <Loader2 className="animate-spin" />}
+    <Button
+      className="w-full font-bold"
+      disabled={isExecuting || !isFormValid}
+      onClick={() => checkout()}
+    >
+      {isExecuting && <Loader2 className="animate-spin mr-2" />}
       Thanh toán
     </Button>
   )
 }
 
 function Checkout({ className }: { className?: string }) {
-  const { user } = useAuth()
-  const { currentVariant, quantity, incQuantity, decQuantity, setQuantity, calc } =
-    useProductPageContext()
+  const user = useAuth().user
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
+  const quantity = useProductPageContext((state) => state.quantity)
+  const incQuantity = useProductPageContext((state) => state.incQuantity)
+  const decQuantity = useProductPageContext((state) => state.decQuantity)
+  const setQuantity = useProductPageContext((state) => state.setQuantity)
+  const calc = useProductPageContext((state) => state.calc)
   const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
   return (
     <Card className={cn('p-6', className)}>
@@ -397,7 +419,8 @@ function Checkout({ className }: { className?: string }) {
 }
 
 function Screen() {
-  const { product, currentVariant } = useProductPageContext()
+  const product = useProductPageContext((state) => state.product)
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
   const description = useMemo(() => {
     return hasText(currentVariant.description) ? currentVariant.description : product.description
   }, [currentVariant.description, product.description])
