@@ -2,8 +2,8 @@ import { ArrowLeftRight, LucideProps, Package } from 'lucide-react'
 import { ForwardRefExoticComponent, RefAttributes } from 'react'
 
 export class Routes {
-  static readonly HOME = '/'
   static readonly PRODUCTS = '/products'
+  static readonly HOME = this.PRODUCTS
   static readonly ORDERS = '/user/orders'
   static readonly ADMIN = '/admin'
   static readonly WORKSPACE = '/workspace'

@@ -5,10 +5,9 @@ import { fields } from '@/blocks/Form/fields'
 import { Form, FormSubmission, Order } from '@/payload-types'
 import payloadClient from '@/utilities/payloadClient'
 import { cn } from '@/utilities/ui'
-import { validateRequiredFields } from '@/utilities/validateFormFields'
+import { useMutation } from '@tanstack/react-query'
 import { Check, Copy, Loader2, UserPen } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
 
 interface OrderShippingFormProps {
   order: Order
