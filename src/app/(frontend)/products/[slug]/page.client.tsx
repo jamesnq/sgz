@@ -36,6 +36,7 @@ import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
+import { workingTime } from '@/utilities/constants-react'
 
 type ProductPageContextType = {
   product: Product
@@ -497,6 +498,7 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
           <span className="font-bold">Tổng tiền</span>
           <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
         </div>
+        {currentVariant.status === 'ORDER' && workingTime}
         {user ? <CheckoutButton /> : <AuthDialog className="w-full" />}
       </div>
     </Card>

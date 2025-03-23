@@ -43,6 +43,11 @@ function ProductVariantSelect({
       return await payloadClient.find({
         collection: 'product-variants',
         depth: 0,
+        where: {
+          autoProcess: {
+            equals: 'key',
+          },
+        },
         select: {
           // @ts-expect-error payload types
           id: true,

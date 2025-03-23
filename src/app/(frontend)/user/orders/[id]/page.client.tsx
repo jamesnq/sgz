@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 import { Routes } from '@/utilities/routes'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
+import { workingTime } from '@/utilities/constants-react'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
@@ -91,10 +92,16 @@ const PageClient = ({ order }: { order: Order }) => {
         </Link>
       </div>
       <div className="flex max-md:flex-col gap-4 text-[14px]">
-        <div className="flex-1 flex flex-col gap-4">
+        <div className=" flex-1 flex flex-col gap-4">
           <OrderCard order={order}></OrderCard>
         </div>
         <div className="flex-[2] flex flex-col gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-highlight">{workingTime}</div>
+            </CardContent>
+          </Card>
+
           {hasText(order.message) && (
             <Card>
               <CardHeader className="font-bold pb-0">Lời nhắn</CardHeader>
