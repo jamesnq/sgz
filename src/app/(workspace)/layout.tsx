@@ -3,11 +3,19 @@ import React from 'react'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 
-import '../(frontend)/globals.css'
+import { userHasRole } from '@/access/hasRoles'
 import { Header } from '@/collections/Globals/Header/Component'
 import { AdminBar } from '@/components/AdminBar'
+import { getServerSession } from '@/hooks/getServerSession'
+import { Routes } from '@/utilities/routes'
+import { redirect } from 'next/navigation'
+import '../(frontend)/globals.css'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { user } = await getServerSession()
+  if (!userHasRole(user, ['admin', 'staff'])) {
+    return redirect(Routes.HOME)
+  }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

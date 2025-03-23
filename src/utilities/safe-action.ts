@@ -1,6 +1,5 @@
-import payloadConfig from '@payload-config'
+import { getServerSession } from '@/hooks/getServerSession'
 import { createSafeActionClient, DEFAULT_SERVER_ERROR_MESSAGE } from 'next-safe-action'
-import { getPayload } from 'payload'
 
 type ServerNotificationOptions = { type: 'toast' | 'dialog'; options?: Record<string, unknown> }
 
@@ -25,16 +24,12 @@ export const actionClient = createSafeActionClient({
 })
 
 export const authActionClient = actionClient.use(async ({ next }) => {
-  const { headers: nextHeaders } = await import('next/headers')
-  const headers = await nextHeaders()
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
+  const { user } = await getServerSession()
   if (!user) {
     throw new Error('Session is not valid!')
   }
   if (!user._verified) {
     throw new Error('User is not verified!')
   }
-
   return next({ ctx: { user } })
 })
