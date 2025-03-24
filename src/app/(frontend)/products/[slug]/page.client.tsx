@@ -41,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { env } from '@/config'
 import { useAuth } from '@/providers/Auth'
 import { workingTime } from '@/utilities/constants-react'
 import { formatPrice } from '@/utilities/formatPrice'
@@ -51,7 +52,7 @@ import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { env } from '@/config'
+import { parseAsInteger, useQueryState } from 'nuqs'
 
 type ProductPageContextType = {
   product: Product
@@ -86,9 +87,21 @@ function ProductPageProvider({
   children: React.ReactNode
   product: Product
 }) {
-  const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(
-    (product?.variants && product.variants[0]) as ProductVariant,
+  const [variantParam, setVariantParam] = useQueryState(
+    'variant',
+    parseAsInteger.withOptions({
+      shallow: true,
+    }),
   )
+  const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(() => {
+    if (variantParam && product?.variants) {
+      const matchingVariant = (product.variants as ProductVariant[]).find(
+        (v) => v.id === variantParam,
+      )
+      if (matchingVariant) return matchingVariant
+    }
+    return (product?.variants && product.variants[0]) as ProductVariant
+  })
 
   const [quantity, setQuantity] = React.useState(1)
 
@@ -156,6 +169,7 @@ function ProductPageProvider({
         calc,
         currentVariant,
         setCurrentVariant: (variant: ProductVariant) => {
+          setVariantParam(variant.id)
           setCurrentVariant(variant)
           setQuantity((prevQuantity) => Math.min(prevQuantity, variant.max))
           initShippingInfoFromForm(variant.form as Form)
