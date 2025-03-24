@@ -6,6 +6,8 @@ import { env } from '@/config'
 import { imageFallback } from './constants'
 import { getServerSideURL } from './getURL'
 import { mergeOpenGraph } from './mergeOpenGraph'
+import { formatPrice } from './formatPrice'
+import calculateDiscountPercentage from './calculateDiscountPercentage'
 
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   const serverUrl = getServerSideURL()
@@ -58,7 +60,21 @@ export const generateMeta = async (args: {
   const title =
     productVariant?.name || doc?.meta?.title || doc?.name + ' | ' + env.NEXT_PUBLIC_SITE_NAME
 
-  const desc = doc?.meta?.description || ''
+  const desc = productVariant
+    ? (() => {
+        const discountPercentage = calculateDiscountPercentage(
+          productVariant.originalPrice,
+          productVariant.price,
+        )
+        const priceInfo = `Giá: ${formatPrice(productVariant.price)}`
+        const discountInfo =
+          discountPercentage > 0
+            ? ` (Giá gốc: ${formatPrice(productVariant.originalPrice)}, Giảm ${Math.round(discountPercentage)}%)`
+            : ''
+        const description = doc?.meta?.description || ''
+        return `${priceInfo}${discountInfo}. ${description}`
+      })()
+    : doc?.meta?.description || ''
   return {
     description: desc,
     openGraph: mergeOpenGraph({
