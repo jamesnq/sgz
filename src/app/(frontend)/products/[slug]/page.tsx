@@ -118,12 +118,13 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
       const { docs: images } = await payload.find({
         collection: 'media',
         overrideAccess: true,
+        pagination: false,
         where: {
           id: {
             in: imageIds,
           },
         },
-        depth: 1,
+        depth: 0,
       })
       product.variants.forEach((variant) => {
         ;(variant as ProductVariant).image = images.find(

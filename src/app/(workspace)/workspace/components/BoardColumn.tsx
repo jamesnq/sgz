@@ -186,18 +186,18 @@ export const BoardColumn = memo(
 
     return (
       <Card
-        className={`w-56 p-2 shrink-0 transition-opacity duration-200
+        className={`w-56 p-2 shrink-0 transition-opacity duration-200 flex flex-col h-full
           ${dropOnly ? 'opacity-90' : ''}
           ${currentDragStatus && !isValidDropTarget ? 'opacity-50 cursor-not-allowed' : ''}
           ${active ? 'ring-2 ring-primary' : ''}`}
       >
-        <div className="mb-3 flex items-center justify-between">
+        <div className="sticky top-0 z-10 mb-3 flex items-center justify-between bg-card">
           <h3 className="text-lg font-bold">{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
         </div>
 
         {status === 'IN_QUEUE' && (
-          <div className="mb-2">
+          <div className="sticky top-12 z-10 mb-2 bg-card">
             <Button
               size="sm"
               variant="outline"
@@ -226,7 +226,7 @@ export const BoardColumn = memo(
           onDrop={handleDragEnd}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`h-full w-full transition-colors ${
+          className={`flex-1 overflow-y-auto pr-1 transition-colors ${
             active ? 'bg-secondary/50' : 'bg-secondary/0'
           }`}
         >
@@ -244,5 +244,4 @@ export const BoardColumn = memo(
     )
   },
 )
-
 BoardColumn.displayName = 'BoardColumn'

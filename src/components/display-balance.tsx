@@ -10,7 +10,9 @@ export function DisplayBalance() {
   if (!user) return <></>
   return (
     <div className="flex items-center gap-1">
-      <div className="text-xs">Số dư: {formatPrice(user.balance, 'VND')}</div>
+      <div className="inline-flex items-center px-1.5 py-0.5 text-xs rounded-full bg-primary/70 text-primary-foreground">
+        {formatPrice(user.balance, 'VND')}
+      </div>
       <RechargeDialog />
     </div>
   )

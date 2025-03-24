@@ -11,18 +11,18 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu'
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Form, FormSubmission, Order, ProductVariant, User } from '@/payload-types'
 import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
@@ -33,7 +33,7 @@ import { getOrderStatus } from '@/utilities/getOrderStatus'
 import { cn } from '@/utilities/ui'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { motion } from 'framer-motion'
-import { Bot, Pencil } from 'lucide-react'
+import { ArrowRightLeft, Bot, Pencil } from 'lucide-react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useDraggable } from '../DraggableContext'
@@ -155,163 +155,72 @@ export const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemPr
         // @ts-expect-error ignore
         onDragStart={(e) => !dropOnly && !isUpdating && handleDragStart(e, order)}
       >
-        {dropOnly ? (
-          <Card
-            onClick={handleClick}
-            className={cn(
-              'mb-2 text-xs relative transition-all',
-              !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
-              isUpdating && 'opacity-50 cursor-progress',
-              isOpen && 'ring-2 ring-highlight ring-offset-1',
-            )}
-          >
-            {isUpdating && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
-            )}
-            <CardHeader className="p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-base font-bold text-highlight">#{order.id}</span>
-                <div className="flex items-center gap-2">
-                  {order.status == 'IN_QUEUE' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={handleAutoProcess}
-                      disabled={isProcessing || isUpdating}
-                      title="Xử lý tự động"
-                    >
-                      {isProcessing ? (
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      ) : (
-                        <Bot></Bot>
-                      )}
-                    </Button>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {formatOrderDate(order.createdAt)}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <motion.div layout="position" className="flex flex-col gap-1">
-                {productName && <span className="text-xs line-clamp-2">{productName}</span>}
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{order.quantity}x</span>
-                  <span className="text-muted-foreground">
-                    {formatPrice(order.totalPrice || 0)}
-                  </span>
-                </div>
-
-                {orderedBy.email && (
-                  <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
-                )}
-                {handlers.length > 0 && (
-                  <>
-                    <span className="text-muted-foreground">Người xử lý:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {handlers.map((username, index) => (
-                        <span key={index} className="text-xs">
-                          {username}
-                        </span>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            </CardContent>
-          </Card>
-        ) : (
-          <ContextMenu>
-            <ContextMenuTrigger asChild>
-              <Card
-                onClick={handleClick}
-                className={cn(
-                  'mb-2 text-xs relative transition-all',
-                  !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
-                  isUpdating && 'opacity-50 cursor-progress',
-                  isOpen && 'ring-2 ring-highlight ring-offset-1',
-                )}
-              >
-                {isUpdating && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  </div>
-                )}
-                <CardHeader className="p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-bold text-highlight">#{order.id}</span>
-                    <div className="flex items-center gap-2">
-                      {order.status == 'IN_QUEUE' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={handleAutoProcess}
-                          disabled={isProcessing || isUpdating}
-                          title="Xử lý tự động"
-                        >
-                          {isProcessing ? (
-                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          ) : (
-                            <Bot></Bot>
-                          )}
-                        </Button>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {formatOrderDate(order.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3 pt-0">
-                  <motion.div layout="position" className="flex flex-col gap-1">
-                    {productName && <span className="text-xs line-clamp-2">{productName}</span>}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">{order.quantity}x</span>
-                      <span className="text-muted-foreground">
-                        {formatPrice(order.totalPrice || 0)}
-                      </span>
-                    </div>
-
-                    {orderedBy.email && (
-                      <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
+        <Card
+          onClick={handleClick}
+          className={cn(
+            'mb-2 text-xs relative transition-all',
+            !dropOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer opacity-75',
+            isUpdating && 'opacity-50 cursor-progress',
+            isOpen && 'ring-2 ring-highlight ring-offset-1',
+          )}
+        >
+          {isUpdating && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-50">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          )}
+          <CardHeader className="p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-base font-bold text-highlight">#{order.id}</span>
+              <div className="flex items-center gap-2">
+                {order.status == 'IN_QUEUE' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleAutoProcess}
+                    disabled={isProcessing || isUpdating}
+                    title="Xử lý tự động"
+                  >
+                    {isProcessing ? (
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    ) : (
+                      <Bot></Bot>
                     )}
-                    {handlers.length > 0 && (
-                      <>
-                        <span className="text-muted-foreground">Người xử lý:</span>
-                        <div className="flex flex-wrap gap-1">
-                          {handlers.map((username, index) => (
-                            <span key={index} className="text-xs">
-                              {username}
-                            </span>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </ContextMenuTrigger>
-            <ContextMenuContent>
-              {['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE', 'COMPLETED', 'REFUND'].map((status) => {
-                const targetStatus = status as Order['status']
-                // Only show status options that are allowed based on current order status
-                if (isTransitionAllowed(order.status, targetStatus)) {
-                  return (
-                    <ContextMenuItem key={status} onClick={() => handleStatusChange(targetStatus)}>
-                      {getOrderStatus(targetStatus)}
-                    </ContextMenuItem>
-                  )
-                }
-                return null
-              })}
-            </ContextMenuContent>
-          </ContextMenu>
-        )}
+                  </Button>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {formatOrderDate(order.createdAt)}
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <motion.div layout="position" className="flex flex-col gap-1">
+              {productName && <span className="text-xs line-clamp-2">{productName}</span>}
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{order.quantity}x</span>
+                <span className="text-muted-foreground">{formatPrice(order.totalPrice || 0)}</span>
+              </div>
+
+              {orderedBy.email && (
+                <span className="text-xs">Bởi: {formatEmailToUsername(orderedBy.email)}</span>
+              )}
+              {handlers.length > 0 && (
+                <>
+                  <span className="text-muted-foreground">Người xử lý:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {handlers.map((username, index) => (
+                      <span key={index} className="text-xs">
+                        {username}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </CardContent>
+        </Card>
       </motion.div>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent
@@ -320,27 +229,57 @@ export const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemPr
         >
           <SheetHeader>
             <SheetTitle>
-              <div className="items-center justify-between w-full">
+              <div className="flex items-center justify-between w-full">
                 <div className="flex space-x-2">
                   {getOrderStatus(order.status)} <div>-</div> <div>Đơn hàng #{order.id}</div>
                 </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogTitle></DialogTitle>
-                  <DialogDescription></DialogDescription>
-                  <DialogContent className="w-full max-w-4xl h-[80vh] p-0">
-                    <div className="flex-1 h-full">
-                      <iframe
-                        src={`/admin/collections/orders/${order.id}`}
-                        className="w-full h-full border-0"
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <div className="flex items-center gap-2">
+                  {!dropOnly && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <ArrowRightLeft className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE', 'COMPLETED', 'REFUND'].map(
+                          (status) => {
+                            const targetStatus = status as Order['status']
+                            // Only show status options that are allowed based on current order status
+                            if (isTransitionAllowed(order.status, targetStatus)) {
+                              return (
+                                <DropdownMenuItem
+                                  key={status}
+                                  onClick={() => handleStatusChange(targetStatus)}
+                                >
+                                  {getOrderStatus(targetStatus)}
+                                </DropdownMenuItem>
+                              )
+                            }
+                            return null
+                          },
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogTitle></DialogTitle>
+                    <DialogDescription></DialogDescription>
+                    <DialogContent className="w-full max-w-4xl h-[80vh] p-0">
+                      <div className="flex-1 h-full">
+                        <iframe
+                          src={`/admin/collections/orders/${order.id}`}
+                          className="w-full h-full border-0"
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </SheetTitle>
           </SheetHeader>
