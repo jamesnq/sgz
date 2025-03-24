@@ -33,6 +33,7 @@ declare global {
       NOVU_SECRET_KEY: string
       NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: string
       NEXT_PUBLIC_SITE_NAME: string
+      NEXT_PUBLIC_EMAIL_CONTACT: string
     }
   }
 }
