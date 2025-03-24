@@ -26,17 +26,31 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useAuth } from '@/providers/Auth'
+import { workingTime } from '@/utilities/constants-react'
 import { formatPrice } from '@/utilities/formatPrice'
 import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
 import { useActionWarper } from '@/utilities/useActionWarper'
-import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { Loader2, MinusIcon, PlusIcon, TriangleAlert } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
-import { workingTime } from '@/utilities/constants-react'
+import { hasText } from '@payloadcms/richtext-lexical/shared'
+import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 type ProductPageContextType = {
   product: Product
@@ -289,6 +303,142 @@ function ProductVariantCard({
   )
 }
 
+// Hook for filtering and sorting product variants
+function useProductVariantFilter(variants: ProductVariant[]) {
+  const [filteredVariants, setFilteredVariants] = useState<ProductVariant[]>(variants || [])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
+  // Get unique statuses for filter options
+  const statuses = useMemo(() => {
+    const statusSet = new Set<string>()
+    variants?.forEach((variant) => {
+      if (variant.status) statusSet.add(variant.status)
+    })
+    return Array.from(statusSet)
+  }, [variants])
+
+  // Filter and sort variants
+  useEffect(() => {
+    let result = [...(variants || [])]
+
+    // Apply search filter
+    if (searchTerm) {
+      result = result.filter((variant) =>
+        variant.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter((variant) => variant.status === statusFilter)
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return a.price - b.price
+      } else {
+        return b.price - a.price
+      }
+    })
+
+    setFilteredVariants(result)
+  }, [variants, searchTerm, statusFilter, sortOrder])
+
+  return {
+    filteredVariants,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    sortOrder,
+    setSortOrder,
+    statuses,
+  }
+}
+
+// Reusable filter controls component
+function ProductVariantFilterControls({
+  searchTerm,
+  setSearchTerm,
+  statusFilter,
+  setStatusFilter,
+  sortOrder,
+  setSortOrder,
+  statuses,
+  className,
+}: {
+  searchTerm: string
+  setSearchTerm: (value: string) => void
+  statusFilter: string
+  setStatusFilter: (value: string) => void
+  sortOrder: 'asc' | 'desc'
+  setSortOrder: (value: 'asc' | 'desc') => void
+  statuses: string[]
+  className?: string
+}) {
+  return (
+    <div className={cn('flex flex-col gap-4', className)}>
+      <div className="flex items-center justify-end">
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <ArrowUpDown className="h-4 w-4" />
+                {sortOrder === 'asc' ? 'Giá tăng dần' : 'Giá giảm dần'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup
+                value={sortOrder}
+                onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+              >
+                <DropdownMenuRadioItem value="asc">Giá tăng dần</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="desc">Giá giảm dần</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              {statuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  <div className="flex items-center gap-2">
+                    <DisplayProductStatus status={status} />
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Tìm kiếm sản phẩm..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+    </div>
+  )
+}
+
+// Reusable empty state component
+function NoProductVariantsFound() {
+  return (
+    <div className="py-4 text-center text-muted-foreground">Không tìm thấy sản phẩm phù hợp</div>
+  )
+}
+
 function ProductVariantsDrawer({
   productVariants,
   className,
@@ -296,6 +446,17 @@ function ProductVariantsDrawer({
   productVariants: ProductVariant[]
   className?: string
 }) {
+  const {
+    filteredVariants,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    sortOrder,
+    setSortOrder,
+    statuses,
+  } = useProductVariantFilter(productVariants)
+
   return (
     <Card className={cn('w-full p-6', className)}>
       <div className="justify-center">
@@ -305,13 +466,27 @@ function ProductVariantsDrawer({
           </DrawerTrigger>
           <DrawerContent className="max-h-[85%]">
             <DrawerHeader>
-              <DrawerTitle></DrawerTitle>
+              <DrawerTitle className="text-lg font-semibold">Sản phẩm</DrawerTitle>
               <DrawerDescription></DrawerDescription>
+              <ProductVariantFilterControls
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                statuses={statuses}
+                className="mt-2"
+              />
             </DrawerHeader>
-            <div className="no-scrollbar overflow-y-auto">
-              {productVariants.map((x) => (
-                <ProductVariantCard key={x.id} productVariant={x} className="h-16" />
-              ))}
+            <div className="no-scrollbar overflow-y-auto px-4">
+              {filteredVariants.length > 0 ? (
+                filteredVariants.map((x) => (
+                  <ProductVariantCard key={x.id} productVariant={x} className="h-16 mb-2" />
+                ))
+              ) : (
+                <NoProductVariantsFound />
+              )}
             </div>
             <DrawerFooter className="mt-6">
               <DrawerClose asChild>
@@ -325,23 +500,54 @@ function ProductVariantsDrawer({
   )
 }
 
-// Memoized form field component
-const MemoizedFormField = React.memo(
-  function FormField({ field, onChange }: { field: any; onChange: (value: string) => void }) {
-    const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+// Filter and sort component for product variants
+function FilterProductVariants({ variants }: { variants: ProductVariant[] }) {
+  const {
+    filteredVariants,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    sortOrder,
+    setSortOrder,
+    statuses,
+  } = useProductVariantFilter(variants)
 
-    if (!Field) return null
+  return (
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <ProductVariantFilterControls
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          statuses={statuses}
+        />
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-2">
+          {filteredVariants.length > 0 ? (
+            filteredVariants.map((variant) => (
+              <ProductVariantCard key={variant.id} productVariant={variant} />
+            ))
+          ) : (
+            <NoProductVariantsFound />
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
-    return <Field field={field} onChange={onChange} />
-  },
-  (prevProps, nextProps) => {
-    // Only re-render if the field itself changes
-    return (
-      prevProps.field.name === nextProps.field.name &&
-      prevProps.field.blockType === nextProps.field.blockType
-    )
-  },
-)
+function MemoizedFormField({ field, onChange }: { field: any; onChange: (value: string) => void }) {
+  const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+
+  if (!Field) return null
+
+  return <Field field={field} onChange={onChange} />
+}
 
 // Memoized ShippingForm component
 const MemoizedShippingForm = React.memo(function ShippingFormInner({ form }: { form: Form }) {
@@ -539,14 +745,8 @@ const MemoizedScreen = React.memo(function ScreenInner() {
               </CardContent>
             </Card>
           )}
-          <div className="max-md:hidden grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-2">
-            {product.variants &&
-              product.variants.map((variant) => (
-                <ProductVariantCard
-                  key={(variant as ProductVariant).id}
-                  productVariant={variant as ProductVariant}
-                />
-              ))}
+          <div className="max-md:hidden">
+            <FilterProductVariants variants={product.variants as ProductVariant[]} />
           </div>
           {hasText(description) && (
             <Card>
