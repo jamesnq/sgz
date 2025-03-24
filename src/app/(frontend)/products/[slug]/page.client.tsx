@@ -51,6 +51,7 @@ import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { env } from '@/config'
 
 type ProductPageContextType = {
   product: Product
@@ -308,7 +309,7 @@ function useProductVariantFilter(variants: ProductVariant[]) {
   const [filteredVariants, setFilteredVariants] = useState<ProductVariant[]>(variants || [])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('')
 
   // Get unique statuses for filter options
   const statuses = useMemo(() => {
@@ -335,14 +336,16 @@ function useProductVariantFilter(variants: ProductVariant[]) {
       result = result.filter((variant) => variant.status === statusFilter)
     }
 
-    // Apply sorting
-    result.sort((a, b) => {
-      if (sortOrder === 'asc') {
-        return a.price - b.price
-      } else {
-        return b.price - a.price
-      }
-    })
+    // Apply sorting only if a sort order is selected
+    if (sortOrder) {
+      result.sort((a, b) => {
+        if (sortOrder === 'asc') {
+          return a.price - b.price
+        } else {
+          return b.price - a.price
+        }
+      })
+    }
 
     setFilteredVariants(result)
   }, [variants, searchTerm, statusFilter, sortOrder])
@@ -374,8 +377,8 @@ function ProductVariantFilterControls({
   setSearchTerm: (value: string) => void
   statusFilter: string
   setStatusFilter: (value: string) => void
-  sortOrder: 'asc' | 'desc'
-  setSortOrder: (value: 'asc' | 'desc') => void
+  sortOrder: 'asc' | 'desc' | ''
+  setSortOrder: (value: 'asc' | 'desc' | '') => void
   statuses: string[]
   className?: string
 }) {
@@ -387,14 +390,19 @@ function ProductVariantFilterControls({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
                 <ArrowUpDown className="h-4 w-4" />
-                {sortOrder === 'asc' ? 'Giá tăng dần' : 'Giá giảm dần'}
+                {sortOrder === 'asc'
+                  ? 'Giá tăng dần'
+                  : sortOrder === 'desc'
+                    ? 'Giá giảm dần'
+                    : 'Sắp xếp giá'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuRadioGroup
                 value={sortOrder}
-                onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}
+                onValueChange={(value) => setSortOrder(value as 'asc' | 'desc' | '')}
               >
+                <DropdownMenuRadioItem value="">Mặc định</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="asc">Giá tăng dần</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="desc">Giá giảm dần</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
@@ -468,17 +476,17 @@ function ProductVariantsDrawer({
             <DrawerHeader>
               <DrawerTitle className="text-lg font-semibold">Sản phẩm</DrawerTitle>
               <DrawerDescription></DrawerDescription>
-              <ProductVariantFilterControls
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                statusFilter={statusFilter}
-                setStatusFilter={setStatusFilter}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                statuses={statuses}
-                className="mt-2"
-              />
             </DrawerHeader>
+            <ProductVariantFilterControls
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              statuses={statuses}
+              className="p-4 pt-0"
+            />
             <div className="no-scrollbar overflow-y-auto px-4">
               {filteredVariants.length > 0 ? (
                 filteredVariants.map((x) => (
@@ -771,10 +779,37 @@ const MemoizedScreen = React.memo(function ScreenInner() {
             productVariants={(product.variants as ProductVariant[]) || []}
           ></ProductVariantsDrawer>
           <div className={'space-y-2'}>
-            {currentVariant.form && (
+            {currentVariant.form && currentVariant.status !== 'STOPPED' && (
               <ShippingForm form={currentVariant.form as Form}></ShippingForm>
             )}
-            <Checkout></Checkout>
+
+            {currentVariant.status === 'STOPPED' ? (
+              <Card className="p-4">
+                <CardHeader className="font-bold pb-2">
+                  <div className="flex items-center gap-2">
+                    <span>Sản phẩm hết hàng</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Thông báo sản phẩm hiện đã hết hàng, mọi thông tin chi tiết vui lòng liên hệ qua
+                    các kênh cộng đồng của chúng tôi để kiểm tra giá và biết tình trạng hiện tại của
+                    sản phẩm.
+                  </p>
+                  <p className="mt-2 text-sm font-semibold">
+                    Email :{' '}
+                    <a
+                      href={`mailto:${env.NEXT_PUBLIC_EMAIL_CONTACT}`}
+                      className="text-primary hover:underline"
+                    >
+                      {env.NEXT_PUBLIC_EMAIL_CONTACT}
+                    </a>
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Checkout></Checkout>
+            )}
           </div>
         </div>
       </div>
