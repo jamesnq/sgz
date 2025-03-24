@@ -44,8 +44,6 @@ export const defaultMetadata = (): Metadata => {
 
 export const generateMeta = async (args: { doc: Partial<Product> | null }): Promise<Metadata> => {
   const { doc } = args
-  console.log('🚀 ~ generateMeta ~ doc:', doc)
-
   const ogImage = getImageURL(doc?.meta?.image || doc?.image)
 
   const title = doc?.meta?.title ? doc?.meta?.title : doc?.name + ' | ' + env.NEXT_PUBLIC_SITE_NAME
