@@ -1,7 +1,6 @@
 'use client'
 import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
 import { OrderShippingForm } from '@/components/OrderShippingForm'
-import { Shell } from '@/components/shell'
 import {
   Accordion,
   AccordionContent,
