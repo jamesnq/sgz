@@ -54,15 +54,16 @@ export default async function Page({ params: paramsPromise }: Args) {
   const product = await queryProductBySlug({ slug })
 
   if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
-
+  delete product.meta
   return <PageClient product={product} />
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
   const product = await queryProductBySlug({ slug })
-
-  return generateMeta({ doc: product })
+  const meta = await generateMeta({ doc: product })
+  console.log('🚀 ~ generateMetadata ~ meta:', meta)
+  return meta
 }
 
 const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
@@ -94,6 +95,7 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
         relatedProducts: true,
         status: true,
         sold: true,
+        meta: true,
       },
     })
     const product = result.docs?.[0] || null

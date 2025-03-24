@@ -13,7 +13,7 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   let url = serverUrl + '/logo.svg'
 
   if (image && typeof image === 'object' && 'url' in image) {
-    const ogUrl = image.sizes?.og?.url
+    const ogUrl = image.sizes?.og?.url || image.url
 
     url = ogUrl ? serverUrl + ogUrl : serverUrl + image.url
   }
@@ -36,7 +36,7 @@ export const defaultMetadata = (): Metadata => {
         },
       ],
       title,
-      url: '/',
+      url: serverUrl + '/',
     }),
     title,
   }
@@ -44,21 +44,16 @@ export const defaultMetadata = (): Metadata => {
 
 export const generateMeta = async (args: { doc: Partial<Product> | null }): Promise<Metadata> => {
   const { doc } = args
+  console.log('🚀 ~ generateMeta ~ doc:', doc)
 
-  if (!doc) {
-    return defaultMetadata()
-  }
+  const ogImage = getImageURL(doc?.meta?.image || doc?.image)
 
-  const ogImage = getImageURL(doc?.meta?.image)
-
-  const title = doc?.meta?.title
-    ? doc?.meta?.title + ' | ' + env.NEXT_PUBLIC_SITE_NAME
-    : env.NEXT_PUBLIC_SITE_NAME
-
+  const title = doc?.meta?.title ? doc?.meta?.title : doc?.name + ' | ' + env.NEXT_PUBLIC_SITE_NAME
+  const desc = doc?.meta?.description || ''
   return {
-    description: doc?.meta?.description,
+    description: desc,
     openGraph: mergeOpenGraph({
-      description: doc?.meta?.description || '',
+      description: desc,
       images: ogImage
         ? [
             {
