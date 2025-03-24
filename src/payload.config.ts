@@ -24,7 +24,6 @@ import { Users } from './collections/Users'
 import { env } from './config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
-
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
