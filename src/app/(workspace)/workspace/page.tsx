@@ -1,7 +1,6 @@
 'use client'
 import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
 import { OrderShippingForm } from '@/components/OrderShippingForm'
-import { Shell } from '@/components/shell'
 import {
   Accordion,
   AccordionContent,
@@ -32,7 +31,7 @@ import { formatEmailToUsername } from '@/utilities/formatEmailToUsername'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatTimeAgo } from '@/utilities/formatTimeAgo'
-import { getOrderStatus } from '@/utilities/getOrderStatus'
+import { getOrderStatus, orderStatusColors } from '@/utilities/getOrderStatus'
 import { cn } from '@/utilities/ui'
 import { motion } from 'framer-motion'
 import { Bot, Loader2, Pencil } from 'lucide-react'
@@ -78,7 +77,7 @@ const DraggableBoard = () => {
   }, [])
 
   return (
-    <div className="h-screen w-full" data-draggable-context>
+    <div className="w-full" data-draggable-context>
       <DraggableProvider>
         <Board setPendingDrop={setPendingDrop} />
         <Dialog open={!!pendingDrop} onOpenChange={() => setPendingDrop(null)}>
@@ -109,16 +108,16 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
   const { searchQuery, setSearchQuery, columnConfigs } = useDraggable()
 
   return (
-    <Shell>
-      <div className="flex flex-col h-full w-full gap-3">
-        <div className="w-full max-w-sm">
+    <div className="container">
+      <div className="flex flex-col w-full gap-3 overflow-x-auto">
+        <div className="w-full max-w-sm flex-shrink-0">
           <Input
             placeholder="Tìm kiếm theo ID hoặc Sản phẩm..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex h-full w-full gap-3">
+        <div className="flex h-[80vh] w-full gap-3 min-w-max">
           <BoardColumn
             title={getOrderStatus('IN_QUEUE')}
             column="IN_QUEUE"
@@ -151,7 +150,7 @@ const Board = memo(({ setPendingDrop }: { setPendingDrop: (drop: PendingDropType
           />
         </div>
       </div>
-    </Shell>
+    </div>
   )
 })
 Board.displayName = 'Board'
@@ -331,18 +330,18 @@ const BoardColumn = memo(
 
     return (
       <Card
-        className={`w-56 p-2 shrink-0 transition-opacity duration-200
+        className={`w-56 p-2 shrink-0 transition-opacity duration-200 flex flex-col h-full
           ${dropOnly ? 'opacity-90' : ''}
           ${currentDragStatus && !isValidDropTarget ? 'opacity-50 cursor-not-allowed' : ''}
           ${active ? 'ring-2 ring-primary' : ''}`}
       >
-        <div className="mb-3 flex items-center justify-between">
+        <div className="sticky top-0 z-10 mb-3 flex items-center justify-between bg-card">
           <h3 className="text-lg font-bold">{title}</h3>
           <span className="rounded text-sm text-muted-foreground">{orders.length}</span>
         </div>
 
         {status === 'IN_QUEUE' && (
-          <div className="mb-2">
+          <div className="sticky top-12 z-10 mb-2 bg-card">
             <Button
               size="sm"
               variant="outline"
@@ -371,7 +370,7 @@ const BoardColumn = memo(
           onDrop={handleDragEnd}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`h-full w-full transition-colors ${
+          className={`flex-1 overflow-y-auto pr-1 transition-colors ${
             active ? 'bg-secondary/50' : 'bg-secondary/0'
           }`}
         >
@@ -525,7 +524,12 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
             )}
             <CardHeader className="p-3">
               <div className="flex items-center justify-between">
-                <span className="text-base font-bold text-highlight">#{order.id}</span>
+                <span
+                  className="text-base font-bold"
+                  style={{ color: orderStatusColors[order.status] }}
+                >
+                  #{order.id}
+                </span>
                 <div className="flex items-center gap-2">
                   {order.status == 'IN_QUEUE' && (
                     <Button
@@ -596,7 +600,12 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
                 )}
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-bold text-highlight">#{order.id}</span>
+                    <span
+                      className="text-base font-bold"
+                      style={{ color: orderStatusColors[order.status] }}
+                    >
+                      #{order.id}
+                    </span>
                     <div className="flex items-center gap-2">
                       {order.status == 'IN_QUEUE' && (
                         <Button
@@ -650,7 +659,7 @@ const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemProps) =>
               </Card>
             </ContextMenuTrigger>
             <ContextMenuContent>
-              {['IN_QUEUE', 'IN_PROCESS', 'USER_UPDATE', 'COMPLETED', 'REFUND'].map((status) => {
+              {Object.keys(columnConfigs).map((status) => {
                 const targetStatus = status as Order['status']
                 // Only show status options that are allowed based on current order status
                 if (isTransitionAllowed(order.status, targetStatus)) {
