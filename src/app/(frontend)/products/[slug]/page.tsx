@@ -46,6 +46,7 @@ type Args = {
   params: Promise<{
     slug?: string
   }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
@@ -58,10 +59,14 @@ export default async function Page({ params: paramsPromise }: Args) {
   return <PageClient product={product} />
 }
 
-export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
+export async function generateMetadata({
+  params: paramsPromise,
+  searchParams,
+}: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
+  const { variant } = await searchParams
   const product = await queryProductBySlug({ slug })
-  const meta = await generateMeta({ doc: product })
+  const meta = await generateMeta({ doc: product, variant: Number(variant) })
   return meta
 }
 

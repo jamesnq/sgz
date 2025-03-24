@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
-import type { Media, Product, Config } from '../payload-types'
+import type { Config, Media, Product, ProductVariant } from '../payload-types'
 
-import { mergeOpenGraph } from './mergeOpenGraph'
-import { getServerSideURL } from './getURL'
 import { env } from '@/config'
 import { imageFallback } from './constants'
+import { getServerSideURL } from './getURL'
+import { mergeOpenGraph } from './mergeOpenGraph'
 
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   const serverUrl = getServerSideURL()
@@ -42,11 +42,22 @@ export const defaultMetadata = (): Metadata => {
   }
 }
 
-export const generateMeta = async (args: { doc: Partial<Product> | null }): Promise<Metadata> => {
-  const { doc } = args
-  const ogImage = getImageURL(doc?.meta?.image || doc?.image)
+export const generateMeta = async (args: {
+  doc: Partial<Product> | null
+  variant: number
+}): Promise<Metadata> => {
+  const { doc, variant } = args
+  const productVariant =
+    variant > 0
+      ? (doc?.variants?.find((v: any) => {
+          return v.id == variant
+        }) as ProductVariant)
+      : undefined
+  const ogImage = getImageURL(productVariant?.image || doc?.meta?.image || doc?.image)
 
-  const title = doc?.meta?.title ? doc?.meta?.title : doc?.name + ' | ' + env.NEXT_PUBLIC_SITE_NAME
+  const title =
+    productVariant?.name || doc?.meta?.title || doc?.name + ' | ' + env.NEXT_PUBLIC_SITE_NAME
+
   const desc = doc?.meta?.description || ''
   return {
     description: desc,
