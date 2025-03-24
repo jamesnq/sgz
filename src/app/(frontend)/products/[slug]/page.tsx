@@ -123,7 +123,8 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
             in: imageIds,
           },
         },
-        depth: 1,
+        limit: 0,
+        depth: 0,
       })
       product.variants.forEach((variant) => {
         ;(variant as ProductVariant).image = images.find(

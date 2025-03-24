@@ -17,6 +17,7 @@ const dirname = path.dirname(filename)
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  defaultSort: '-updatedAt',
   access: {
     create: hasRole(['admin', 'staff']),
     delete: hasRole(['admin', 'staff']),
