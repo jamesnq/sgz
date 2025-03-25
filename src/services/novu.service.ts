@@ -8,7 +8,7 @@ import { orderStatusColors } from '@/utilities/getOrderStatus'
 
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
-async function discordWebhook({
+export async function discordWebhook({
   subject,
   message,
   redirect,
@@ -224,7 +224,33 @@ export async function sendOrderUserUpdatedStaffNotification(
 }
 
 /**
- * Deletes all existing subscribers and creates new ones
+ * Sends a notification to staff when an order is automatically completed
+ * @param orderId - The order ID
+ * @param productVariantName - The name of the product variant
+ */
+export async function sendOrderCompletedNotification(
+  orderId: number | string,
+  productVariantName: string,
+): Promise<void> {
+  try {
+    const payload = {
+      subject: `Đơn hàng #${orderId} đã hoàn thành tự động`,
+      message: `Đơn hàng cho sản phẩm "${productVariantName}" đã được xử lý tự động và giao cho khách hàng.`,
+      redirect: Routes.order(orderId),
+      color: orderStatusColors.COMPLETED,
+    }
+
+    await discordWebhook({
+      ...payload,
+      channel: 'staff',
+    })
+  } catch (error) {
+    console.error('Error sending order completed notification:', error)
+  }
+}
+
+/**
+ * Resets all subscribers and creates new ones
  * @param subscriberIds - Array of subscriber IDs to create
  */
 export async function resetAndCreateSubscribers(subscriberIds: string[]): Promise<void> {

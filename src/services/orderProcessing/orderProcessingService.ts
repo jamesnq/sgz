@@ -5,6 +5,7 @@ import { BasePayload, getPayload } from 'payload'
 import { SteamWalletProcessor } from './processors/SteamWalletProcessor'
 import { BaseMetadataSchema, OrderProcessor, ProcessResult } from './types'
 import { Order, ProductVariant, Stock } from '@/payload-types'
+import { sendOrderCompletedNotification } from '@/services/novu.service'
 
 export class OrderProcessingService {
   private processors: Map<string, OrderProcessor> = new Map()
@@ -225,6 +226,8 @@ export class OrderProcessingService {
       user: env.AUTO_PROCESS_USER_ID,
       req: { transactionID },
     })
+
+    await sendOrderCompletedNotification(orderId, productVariant.name)
   }
 
   /**
