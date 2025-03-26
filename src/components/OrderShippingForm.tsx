@@ -57,8 +57,15 @@ export function OrderShippingForm({ order }: OrderShippingFormProps) {
       {form?.fields?.map((field, index) => {
         const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
         if (!Field) return null
+        const options = field.blockType == 'select' ? field.options : undefined
+        const value =
+          options && options?.length > 0
+            ? options.find(
+                (option) =>
+                  option.value === submissionData[field.name as keyof typeof submissionData],
+              )?.label
+            : submissionData[field.name as keyof typeof submissionData] || ''
 
-        const value = submissionData[field.name as keyof typeof submissionData] || ''
         const isCopied = copiedField === field.name
         const isProcessRequired = typeof value === 'object'
         const isHaveValue = value && !isProcessRequired
