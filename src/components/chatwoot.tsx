@@ -13,6 +13,7 @@ function chatwootSetUser(user: User | null) {
   window.$chatwoot.setUser(user?.email, {
     email: user?.email,
     name: user?.email.split('@')[0],
+    identifier_hash: user?.chatwootHash,
   })
 }
 export function ChatwootLoader() {

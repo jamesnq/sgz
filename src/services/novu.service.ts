@@ -14,12 +14,14 @@ export async function discordWebhook({
   redirect,
   color,
   channel,
+  mention = true,
 }: {
   subject: string
   message?: string
   redirect?: string
   color?: string | null
   channel?: 'staff' | 'admin'
+  mention?: boolean
 }) {
   if (!channel) {
     channel = 'admin'
@@ -32,7 +34,9 @@ export async function discordWebhook({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: `<@&${channel === 'staff' ? env.DISCORD_STAFF_ROLE_ID : env.DISCORD_ADMIN_ROLE_ID}>`,
+        content: mention
+          ? `<@&${channel === 'staff' ? env.DISCORD_STAFF_ROLE_ID : env.DISCORD_ADMIN_ROLE_ID}>`
+          : '',
         attachments: [],
         embeds: [
           {
@@ -235,9 +239,10 @@ export async function sendOrderCompletedNotification(
   try {
     const payload = {
       subject: `Đơn hàng #${orderId} đã hoàn thành tự động`,
-      message: `Đơn hàng cho sản phẩm "${productVariantName}" đã được xử lý tự động và giao cho khách hàng.`,
-      redirect: Routes.order(orderId),
+      message: `Đơn hàng cho sản phẩm "${productVariantName}" đã được xử lý tự động.`,
+      redirect: Routes.WORKSPACE,
       color: orderStatusColors.COMPLETED,
+      mention: false,
     }
 
     await discordWebhook({
