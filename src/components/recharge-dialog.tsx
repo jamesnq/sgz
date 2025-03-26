@@ -308,7 +308,7 @@ function RechargeCard() {
       <AccordionTrigger>Thẻ cào điện thoại</AccordionTrigger>
       <AccordionContent className="p-2">
         <div className="text-yellow-500">
-          Khuyến khích khách hàng nạp thông qua ngân hàng hoặc ví điện tử để tránh triết khấu từ nhà
+          Khuyến khích khách hàng nạp thông qua ngân hàng hoặc ví điện tử để tránh chiết khấu từ nhà
           mạng
         </div>
         {isLoading ? (
@@ -398,7 +398,7 @@ function RechargeCard() {
               {currentFeeInfo && (
                 <div className="text-sm space-y-2 p-3 bg-muted rounded-md">
                   <div className="flex justify-between">
-                    <span>Triết khấu từ nhà mạng:</span>
+                    <span>Chiết khấu từ nhà mạng:</span>
                     <span className="font-medium text-amber-600">{currentFeeInfo.fees}%</span>
                   </div>
 
