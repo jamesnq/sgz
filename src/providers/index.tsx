@@ -16,7 +16,7 @@ export const Providers: React.FC<{
     <PlausibleProvider
       selfHosted
       customDomain="https://plausible.subgamezone.com"
-      domain={process.env.NEXT_PUBLIC_SERVER_URL}
+      domain={'subgamezone.com'}
       enabled
       trackFileDownloads
       trackOutboundLinks
