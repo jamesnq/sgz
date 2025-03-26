@@ -205,7 +205,7 @@ export const Users: CollectionConfig = {
       },
       access: {
         create: noOne,
-        update: noOne,
+        update: hasRole(['admin']),
       },
     },
     {
