@@ -235,8 +235,8 @@ export async function sendOrderCompletedNotification(
   try {
     const payload = {
       subject: `Đơn hàng #${orderId} đã hoàn thành tự động`,
-      message: `Đơn hàng cho sản phẩm "${productVariantName}" đã được xử lý tự động và giao cho khách hàng.`,
-      redirect: Routes.order(orderId),
+      message: `Đơn hàng cho sản phẩm "${productVariantName}" đã được xử lý tự động.`,
+      redirect: Routes.WORKSPACE,
       color: orderStatusColors.COMPLETED,
     }
 
