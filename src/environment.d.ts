@@ -24,6 +24,8 @@ declare global {
       DOITHE_PARTNER_KEY: string
       NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: string
       NEXT_PUBLIC_CHATWOOT_BASE_URL: string
+      NEXT_PUBLIC_POSTHOG_KEY: string
+      NEXT_PUBLIC_POSTHOG_HOST: string
       CHATWOOT_HMAC_TOKEN: string
       DISCORD_ADMIN_WEBHOOK_URL: string
       DISCORD_STAFF_WEBHOOK_URL: string

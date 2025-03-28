@@ -43,6 +43,8 @@ export const env = createEnv({
     NEXT_PUBLIC_CHATWOOT_BASE_URL: z.string(),
     NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: z.string(),
     NEXT_PUBLIC_EMAIL_CONTACT: z.string(),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string(),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -59,6 +61,8 @@ export const env = createEnv({
     NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER,
     NEXT_PUBLIC_EMAIL_CONTACT: process.env.NEXT_PUBLIC_EMAIL_CONTACT,
     AUTO_PROCESS_USER_ID: Number(process.env.AUTO_PROCESS_USER_ID),
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   } /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
    * useful for Docker builds.

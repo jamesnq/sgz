@@ -2,28 +2,21 @@ import React from 'react'
 
 import { ChatwootLoader } from '@/components/chatwoot'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+
 import { AuthProvider } from './Auth'
 import { ClientProviders } from './client-providers'
 import { HeaderThemeProvider } from './HeaderTheme'
+import { PostHogProvider } from './PostHog/PostHogProvider'
 import { ReactQueryProvider } from './react-query-provider'
 import { ThemeProvider } from './Theme'
-import PlausibleProvider from 'next-plausible'
 
 export const Providers: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   return (
-    <PlausibleProvider
-      selfHosted
-      customDomain="https://plausible.subgamezone.com"
-      domain={'subgamezone.com'}
-      enabled
-      trackFileDownloads
-      trackOutboundLinks
-      taggedEvents
-    >
-      <ReactQueryProvider>
-        <AuthProvider>
+    <ReactQueryProvider>
+      <AuthProvider>
+        <PostHogProvider>
           <NuqsAdapter>
             <ThemeProvider>
               <HeaderThemeProvider>
@@ -32,8 +25,8 @@ export const Providers: React.FC<{
               </HeaderThemeProvider>
             </ThemeProvider>
           </NuqsAdapter>
-        </AuthProvider>
-      </ReactQueryProvider>
-    </PlausibleProvider>
+        </PostHogProvider>
+      </AuthProvider>
+    </ReactQueryProvider>
   )
 }
