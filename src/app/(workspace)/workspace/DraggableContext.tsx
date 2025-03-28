@@ -49,7 +49,7 @@ export const DEFAULT_QUERIES: OrderQuery[] = [
     where: {
       status: { in: ['REFUND', 'COMPLETED'] },
     },
-    limit: 10,
+    limit: 20,
   },
 ]
 
