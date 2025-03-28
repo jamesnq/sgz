@@ -41,8 +41,8 @@ export function ChatwootLoader() {
         locale: 'vi_VN',
         darkMode: theme,
         position: 'right',
-        type: 'standard',
-        launcherTitle: '',
+        type: 'expanded_bubble',
+        launcherTitle: 'Hỗ Trợ',
       }
 
       const script = document.createElement('script')
