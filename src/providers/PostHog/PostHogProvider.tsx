@@ -12,8 +12,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   useEffect(() => {
     if (!user || !user.email) return
-    console.log('🚀 ~ PostHogProvider ~ user:', user)
-    posthog.identify(user.id.toString(), { email: user.email })
+    posthog.identify(user.email, { email: user.email })
   }, [user, user?.email])
   useEffect(() => {
     posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
