@@ -16,6 +16,7 @@ import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 import { Routes } from '@/utilities/routes'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { workingTime } from '@/utilities/constants-react'
+import { useRouter } from 'next/navigation'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
@@ -78,6 +79,14 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
 const PageClient = ({ order }: { order: Order }) => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
+  const router = useRouter()
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      router.refresh()
+    }, 10000)
+
+    return () => clearInterval(intervalId)
+  }, [router])
 
   useEffect(() => {
     setHeaderTheme('dark')
