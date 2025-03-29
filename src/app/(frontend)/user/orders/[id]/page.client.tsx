@@ -105,11 +105,13 @@ const PageClient = ({ order }: { order: Order }) => {
           <OrderCard order={order}></OrderCard>
         </div>
         <div className="flex-[2] flex flex-col gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-highlight">{workingTime}</div>
-            </CardContent>
-          </Card>
+          {!['COMPLETED', 'REFUND'].includes(order.status) && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-highlight">{workingTime}</div>
+              </CardContent>
+            </Card>
+          )}
 
           {hasText(order.message) && (
             <Card>
