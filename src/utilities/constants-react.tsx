@@ -16,7 +16,7 @@ export const thankYouMessage = (
     <p className="font-semibold">
       Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của{' '}
       <span className="font-bold text-highlight">{env.NEXT_PUBLIC_SITE_NAME}</span>{' '}
-      <span className="text-red-500">❤</span>
+      <span className="text-red-500">{'<3'}</span>
     </p>
     <p className="text-sm mt-2">Chúng tôi luôn nỗ lực để mang đến trải nghiệm tốt nhất cho bạn.</p>
   </div>
