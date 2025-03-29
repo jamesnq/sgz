@@ -71,6 +71,11 @@ export const createSearchQuery = (searchTerm: string): OrderQuery[] => {
               like: searchTerm,
             },
           },
+          {
+            'orderedBy.email': {
+              like: searchTerm,
+            },
+          },
         ],
       },
     },
