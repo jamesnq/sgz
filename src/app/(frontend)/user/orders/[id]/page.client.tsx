@@ -81,11 +81,59 @@ const PageClient = ({ order }: { order: Order }) => {
   const { setHeaderTheme } = useHeaderTheme()
   const router = useRouter()
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      router.refresh()
-    }, 10000)
+    let intervalId: NodeJS.Timeout | null = null
 
-    return () => clearInterval(intervalId)
+    const startRefresh = () => {
+      if (!intervalId) {
+        intervalId = setInterval(() => {
+          router.refresh()
+        }, 10000) // 5 second interval for regular refreshes
+      }
+    }
+
+    const stopRefresh = () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+
+    // Only stop refreshing when the document is hidden (tab change, minimize)
+    // Not when the window loses focus
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopRefresh()
+      } else {
+        startRefresh()
+      }
+    }
+
+    // When window gets focus, refresh immediately and ensure interval is running
+    const handleFocus = () => {
+      router.refresh() // Immediate refresh when focusing
+      startRefresh()
+    }
+
+    // Don't stop refreshing on blur - continue in background
+    // Remove the blur event handler completely
+
+    // Start refresh if document is visible initially
+    if (!document.hidden) {
+      startRefresh()
+    }
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    // Removed the blur event listener
+
+    // Cleanup function
+    return () => {
+      stopRefresh()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+      // Removed the blur event listener cleanup
+    }
   }, [router])
 
   useEffect(() => {
