@@ -8,15 +8,15 @@ import { useEffect } from 'react'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { thankYouMessage, workingTime } from '@/utilities/constants-react'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
 import { getOrderStatus } from '@/utilities/getOrderStatus'
-import Link from 'next/link'
-import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 import { Routes } from '@/utilities/routes'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { workingTime } from '@/utilities/constants-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
 
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
@@ -105,11 +105,19 @@ const PageClient = ({ order }: { order: Order }) => {
           <OrderCard order={order}></OrderCard>
         </div>
         <div className="flex-[2] flex flex-col gap-4">
-          {!['COMPLETED', 'REFUND'].includes(order.status) && (
+          {!['COMPLETED', 'REFUND'].includes(order.status) ? (
             <Card>
               <CardContent className="p-4">
                 <div className="text-highlight">{workingTime}</div>
+                <div className="text-red-400">
+                  Nếu trong thời gian xử lý đơn hàng quá lâu hoặc có thắc mắc đừng ngại nhắn hỗ trợ
+                  nha thượng đế {'<3'}.
+                </div>
               </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-4">{thankYouMessage}</CardContent>
             </Card>
           )}
 

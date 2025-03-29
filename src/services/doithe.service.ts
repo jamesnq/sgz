@@ -482,7 +482,7 @@ export class DoiThe {
           await tx.insert(transactions).values({
             amount: amount.toString(),
             user: recharge.user as number,
-            description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT && 'phạt 50% sai mệnh giá'}`,
+            description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT ? 'phạt 50% sai mệnh giá' : ''}`,
             balance: user.balance,
           })
         })
