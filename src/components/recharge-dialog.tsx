@@ -37,6 +37,7 @@ import {
 import { formatPrice } from '@/utilities/formatPrice'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CirclePlus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
@@ -111,6 +112,7 @@ interface FeeData {
 }
 
 function RechargeCard() {
+  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feeData, setFeeData] = useState<FeeData[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -256,6 +258,7 @@ function RechargeCard() {
           // Only reset the card code and serial, keep telco and amount selections
           form.setValue('code', '', { shouldValidate: true, shouldDirty: true })
           form.setValue('serial', '', { shouldValidate: true, shouldDirty: true })
+          router.refresh()
         } else if (res.message) {
           toast.error(res.message || 'Có lỗi xảy ra khi nạp thẻ vui lòng kiểm tra lại')
         }
