@@ -141,6 +141,10 @@ html[data-theme='light'] {
   background-color: hsl(var(--primary)) !important;
 }
 
+#woot-widget--expanded__text {
+  color: hsl(var(--primary)) !important;
+}
+
 /* Hide Novu mark */
 div
   > div
