@@ -109,6 +109,10 @@ const PageClient = ({ order }: { order: Order }) => {
             <Card>
               <CardContent className="p-4">
                 <div className="text-highlight">{workingTime}</div>
+                <div className="text-red-400">
+                  Nếu trong thời gian xử lý đơn hàng quá lâu hoặc có thắc mắc đừng ngại nhắn hỗ trợ
+                  nha thượng đế {'<3'}.
+                </div>
               </CardContent>
             </Card>
           ) : (
