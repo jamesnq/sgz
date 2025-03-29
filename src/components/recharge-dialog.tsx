@@ -58,7 +58,7 @@ function RechargeBank() {
         toast.error('Không thể tạo liên kết thanh toán')
         return
       }
-      window.open(res.data?.checkoutUrl, '_blank')
+      window.open(res.data?.checkoutUrl)
       toast.success('Đã mở trang thanh toán')
     } catch {
       toast.error('Có lỗi xảy ra khi tạo liên kết thanh toán')
