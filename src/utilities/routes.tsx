@@ -24,6 +24,9 @@ export class Routes {
       icon: ArrowLeftRight,
     },
   ]
+  static adminProductVariant(id: string | number): string {
+    return `${Routes.ADMIN}/collections/product-variants/${id}`
+  }
   static product(slug: string): string {
     return `/products/${slug}`
   }

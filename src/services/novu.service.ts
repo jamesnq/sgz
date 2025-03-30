@@ -5,7 +5,8 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { Routes } from '@/utilities/routes'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { orderStatusColors } from '@/utilities/getOrderStatus'
-import { Order } from '@/payload-types'
+import { Order, ProductVariant } from '@/payload-types'
+import { after } from 'next/server'
 
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
@@ -127,21 +128,23 @@ export async function sendNewOrderNotification(
   subscriberId: string,
   createdAt: Date,
 ): Promise<void> {
-  try {
-    await novu.trigger({
-      workflowId: 'new-order',
-      to: {
-        subscriberId: subscriberId.toString(),
-      },
-      payload: {
-        subject: `Tạo đơn hàng mới thành công`,
-        message: `Đơn hàng #${orderId} được tạo thành công lúc ${formatOrderDate(createdAt)} ấn để xem chi tiết`,
-        redirect: Routes.order(orderId),
-      },
-    })
-  } catch (error) {
-    console.error('Error sending new order notification:', error)
-  }
+  after(async () => {
+    try {
+      await novu.trigger({
+        workflowId: 'new-order',
+        to: {
+          subscriberId: subscriberId.toString(),
+        },
+        payload: {
+          subject: `Tạo đơn hàng mới thành công`,
+          message: `Đơn hàng #${orderId} được tạo thành công lúc ${formatOrderDate(createdAt)} ấn để xem chi tiết`,
+          redirect: Routes.order(orderId),
+        },
+      })
+    } catch (error) {
+      console.error('Error sending new order notification:', error)
+    }
+  })
 }
 
 /**
@@ -149,28 +152,30 @@ export async function sendNewOrderNotification(
  * @param orderId - The order ID
  */
 export async function sendNewOrderStaffNotification(order: any): Promise<void> {
-  try {
-    const payload = {
-      subject: `Có đơn hàng mới #${order.id}`,
-      message: ``,
-      redirect: Routes.WORKSPACE,
+  after(async () => {
+    try {
+      const payload = {
+        subject: `Có đơn hàng mới #${order.id}`,
+        message: ``,
+        redirect: Routes.WORKSPACE,
+      }
+      await novu.trigger({
+        workflowId: 'new-order',
+        to: {
+          subscriberId: 'staff',
+        },
+        payload,
+      })
+      await discordWebhook({
+        ...payload,
+        message: `Đơn hàng #${order.id} **mới ${order.productVariant.name} x${order.quantity}**`,
+        color: orderStatusColors.IN_QUEUE,
+        channel: 'staff',
+      })
+    } catch (error) {
+      console.error('Error sending staff notification:', error)
     }
-    await novu.trigger({
-      workflowId: 'new-order',
-      to: {
-        subscriberId: 'staff',
-      },
-      payload,
-    })
-    await discordWebhook({
-      ...payload,
-      message: `Đơn hàng #${order.id} **mới ${order.productVariant.name} x${order.quantity}**`,
-      color: orderStatusColors.IN_QUEUE,
-      channel: 'staff',
-    })
-  } catch (error) {
-    console.error('Error sending staff notification:', error)
-  }
+  })
 }
 
 /**
@@ -206,27 +211,29 @@ export async function sendOrderUpdateRequiredNotification(
 export async function sendOrderUserUpdatedStaffNotification(
   orderId: number | string,
 ): Promise<void> {
-  const payload = {
-    subject: `Đơn hàng #${orderId} đang đợi xử lý`,
-    message: `Người dùng đã cập nhật đơn hàng #${orderId}`,
-    redirect: Routes.WORKSPACE,
-  }
-  try {
-    await novu.trigger({
-      workflowId: 'order-update',
-      to: {
-        subscriberId: 'staff',
-      },
-      payload,
-    })
-    await discordWebhook({
-      ...payload,
-      color: orderStatusColors.USER_UPDATE,
-      channel: 'staff',
-    })
-  } catch (error) {
-    console.error('Error sending staff notification:', error)
-  }
+  after(async () => {
+    const payload = {
+      subject: `Đơn hàng #${orderId} đang đợi xử lý`,
+      message: `Người dùng đã cập nhật đơn hàng #${orderId}`,
+      redirect: Routes.WORKSPACE,
+    }
+    try {
+      await novu.trigger({
+        workflowId: 'order-update',
+        to: {
+          subscriberId: 'staff',
+        },
+        payload,
+      })
+      await discordWebhook({
+        ...payload,
+        color: orderStatusColors.USER_UPDATE,
+        channel: 'staff',
+      })
+    } catch (error) {
+      console.error('Error sending staff notification:', error)
+    }
+  })
 }
 
 /**
@@ -235,27 +242,59 @@ export async function sendOrderUserUpdatedStaffNotification(
  * @param productVariantName - The name of the product variant
  */
 export async function sendOrderCompletedNotification(order: Order): Promise<void> {
-  try {
-    const productVariant = order.productVariant
-    if (typeof productVariant !== 'object') {
-      return
-    }
+  after(async () => {
+    try {
+      const productVariant = order.productVariant
+      if (typeof productVariant !== 'object') {
+        return
+      }
 
-    const payload = {
-      subject: `Đơn hàng #${order.id} đã hoàn thành tự động`,
-      message: `Đơn hàng cho sản phẩm "${productVariant.name}"  x${order.quantity} đã được xử lý tự động.`,
-      redirect: Routes.WORKSPACE,
-      color: orderStatusColors.COMPLETED,
-      mention: false,
-    }
+      const payload = {
+        subject: `Đơn hàng #${order.id} đã hoàn thành tự động`,
+        message: `Đơn hàng cho sản phẩm "${productVariant.name}"  x${order.quantity} đã được xử lý tự động.`,
+        redirect: Routes.WORKSPACE,
+        color: orderStatusColors.COMPLETED,
+        mention: false,
+      }
 
-    await discordWebhook({
-      ...payload,
-      channel: 'staff',
-    })
-  } catch (error) {
-    console.error('Error sending order completed notification:', error)
-  }
+      await discordWebhook({
+        ...payload,
+        channel: 'staff',
+      })
+    } catch (error) {
+      console.error('Error sending order completed notification:', error)
+    }
+  })
+}
+
+/**
+ * Sends a notification to admin channel when a product variant goes out of stock
+ * @param productVariant - The product variant that is out of stock
+ */
+export async function sendProductOutOfStockNotification(
+  productVariant: ProductVariant,
+): Promise<void> {
+  after(async () => {
+    try {
+      if (typeof productVariant !== 'object') {
+        return
+      }
+
+      const payload = {
+        subject: `Sản phẩm hết hàng`,
+        message: `Sản phẩm "${productVariant.name}" đã hết hàng.`,
+        redirect: Routes.adminProductVariant(productVariant.id),
+        color: '#FF0000', // Red color for warning
+      }
+
+      await discordWebhook({
+        ...payload,
+        channel: 'admin',
+      })
+    } catch (error) {
+      console.error('Error sending out of stock notification:', error)
+    }
+  })
 }
 
 /**
