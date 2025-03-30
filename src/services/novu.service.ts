@@ -148,10 +148,10 @@ export async function sendNewOrderNotification(
  * Sends a notification to staff about a new order
  * @param orderId - The order ID
  */
-export async function sendNewOrderStaffNotification(orderId: number | string): Promise<void> {
+export async function sendNewOrderStaffNotification(order: any): Promise<void> {
   try {
     const payload = {
-      subject: `Có đơn hàng mới #${orderId}`,
+      subject: `Có đơn hàng mới #${order.id}`,
       message: ``,
       redirect: Routes.WORKSPACE,
     }
@@ -164,6 +164,7 @@ export async function sendNewOrderStaffNotification(orderId: number | string): P
     })
     await discordWebhook({
       ...payload,
+      message: `Đơn hàng #${order.id} **mới ${order.productVariant.name} x${order.quantity}**`,
       color: orderStatusColors.IN_QUEUE,
       channel: 'staff',
     })

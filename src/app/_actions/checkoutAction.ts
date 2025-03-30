@@ -31,6 +31,7 @@ export const checkoutAction = authActionClient
         form: true,
         product: true,
         metadata: true,
+        name: true,
       },
     })
     if (!pv) {
@@ -91,8 +92,12 @@ export const checkoutAction = authActionClient
           subTotal: subTotal.toString(),
           totalPrice: totalPrice.toString(),
         })
-        .returning({ id: orders.id, orderedBy: orders.orderedBy, createdAt: orders.createdAt })
+        .returning({
+          id: orders.id,
+          quantity: orders.quantity,
+        })
       if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
+      ;(order as any).productVariant = pv
       await tx.insert(transactions).values({
         amount: (-totalPrice).toString(),
         user: user.id,
@@ -118,7 +123,7 @@ export const checkoutAction = authActionClient
     })
     const result = await autoProcessOrder(order.id)
     if (!result?.success) {
-      await sendNewOrderStaffNotification(order.id)
+      await sendNewOrderStaffNotification(order)
     }
 
     // if (
