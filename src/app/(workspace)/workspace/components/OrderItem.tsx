@@ -123,7 +123,10 @@ export const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemPr
       form: Form
     }
   }, [order.formSubmission])
-
+  const deliveryContent = useMemo(() => {
+    if (hasText(order.deliveryContent)) return order.deliveryContent
+    return (order.productVariant as ProductVariant).fixedStock
+  }, [order.deliveryContent, order.productVariant])
   const handleStatusChange = useCallback(
     (status: Order['status']) => {
       if (!dropOnly && !isUpdating) {
@@ -329,13 +332,13 @@ export const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemPr
                 </AccordionItem>
               )}
 
-              {hasText(order.deliveryContent) && (
+              {hasText(deliveryContent) && (
                 <AccordionItem value="delivery" className="border rounded-md">
                   <AccordionTrigger className="px-3">
                     <h4 className="text-lg font-bold">Thông tin hàng</h4>
                   </AccordionTrigger>
                   <AccordionContent className="px-3">
-                    <RichText data={order.deliveryContent as any} enableGutter={false} />
+                    <RichText data={deliveryContent as any} enableGutter={false} />
                   </AccordionContent>
                 </AccordionItem>
               )}
