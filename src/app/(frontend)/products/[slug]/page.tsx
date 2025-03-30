@@ -112,7 +112,7 @@ const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
       })
       // @ts-expect-error ignore
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .map(({ note, metadata, ...rest }: ProductVariant) => {
+      .map(({ note, metadata, fixedStock, ...rest }: ProductVariant) => {
         return rest
       })
     const imageIds = Array.from(

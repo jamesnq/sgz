@@ -3,7 +3,7 @@
 import { Shell } from '@/components/shell'
 import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
@@ -80,6 +80,13 @@ const PageClient = ({ order }: { order: Order }) => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
   const router = useRouter()
+
+  const deliveryContent = useMemo(() => {
+    if (hasText(order.deliveryContent)) return order.deliveryContent
+    return (order.productVariant as ProductVariant).fixedStock
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.deliveryContent, order.productVariant, order.updatedAt])
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null
 
@@ -87,7 +94,7 @@ const PageClient = ({ order }: { order: Order }) => {
       if (!intervalId) {
         intervalId = setInterval(() => {
           router.refresh()
-        }, 10000) // 5 second interval for regular refreshes
+        }, 10000)
       }
     }
 
@@ -177,13 +184,13 @@ const PageClient = ({ order }: { order: Order }) => {
               </CardContent>
             </Card>
           )}
-          {hasText(order.deliveryContent) && (
+          {hasText(deliveryContent) && (
             <Card>
               <CardHeader className="font-bold pb-0">Thông tin hàng</CardHeader>
               <CardContent className="pt-0">
                 <RichText
                   className="pt-0"
-                  data={order.deliveryContent as any}
+                  data={deliveryContent as any}
                   enableGutter={false}
                 ></RichText>
               </CardContent>

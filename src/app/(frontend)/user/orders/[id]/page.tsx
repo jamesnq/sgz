@@ -58,7 +58,7 @@ export default async function Page({ params: paramsPromise }: Args) {
     product = { slug, image } as Product
   }
 
-  const { name, image } = order.productVariant as ProductVariant
-  order.productVariant = { product, name, image } as ProductVariant
+  const { name, image, fixedStock } = order.productVariant as ProductVariant
+  order.productVariant = { product, name, image, fixedStock } as ProductVariant
   return <PageClient order={order} />
 }

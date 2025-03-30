@@ -367,6 +367,21 @@ export interface ProductVariant {
     };
     [k: string]: unknown;
   } | null;
+  fixedStock?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   autoProcess?: 'key' | null;
   metadata?:
     | {
@@ -869,6 +884,7 @@ export interface ProductVariantsSelect<T extends boolean = true> {
   max?: T;
   note?: T;
   description?: T;
+  fixedStock?: T;
   autoProcess?: T;
   metadata?: T;
   updatedAt?: T;

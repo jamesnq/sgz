@@ -332,6 +332,7 @@ export const product_variants = pgTable(
     max: numeric('max').notNull().default('1'),
     note: varchar('note'),
     description: jsonb('description'),
+    fixedStock: jsonb('fixed_stock'),
     autoProcess: enum_product_variants_auto_process('auto_process'),
     metadata: jsonb('metadata'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })

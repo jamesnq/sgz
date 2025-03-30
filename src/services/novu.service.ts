@@ -5,6 +5,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { Routes } from '@/utilities/routes'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { orderStatusColors } from '@/utilities/getOrderStatus'
+import { Order } from '@/payload-types'
 
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
@@ -232,14 +233,16 @@ export async function sendOrderUserUpdatedStaffNotification(
  * @param orderId - The order ID
  * @param productVariantName - The name of the product variant
  */
-export async function sendOrderCompletedNotification(
-  orderId: number | string,
-  productVariantName: string,
-): Promise<void> {
+export async function sendOrderCompletedNotification(order: Order): Promise<void> {
   try {
+    const productVariant = order.productVariant
+    if (typeof productVariant !== 'object') {
+      return
+    }
+
     const payload = {
-      subject: `Đơn hàng #${orderId} đã hoàn thành tự động`,
-      message: `Đơn hàng cho sản phẩm "${productVariantName}" đã được xử lý tự động.`,
+      subject: `Đơn hàng #${order.id} đã hoàn thành tự động`,
+      message: `Đơn hàng cho sản phẩm "${productVariant.name}"  x${order.quantity} đã được xử lý tự động.`,
       redirect: Routes.WORKSPACE,
       color: orderStatusColors.COMPLETED,
       mention: false,

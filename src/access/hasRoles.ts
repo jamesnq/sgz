@@ -1,5 +1,6 @@
 import type { AccessArgs } from 'payload'
 import type { User } from '../payload-types'
+import { env } from '@/config'
 
 export const hasRole =
   (roles: User['roles']) =>
@@ -7,12 +8,18 @@ export const hasRole =
     if (!req.user) {
       return false
     }
-    return req.user.roles.some((role) => roles.includes(role))
+    if (typeof req.user === 'object') {
+      return req.user.roles.some((role) => roles.includes(role))
+    }
+    return req.user === env.AUTO_PROCESS_USER_ID
   }
 
 export const userHasRole = (user: User | null, roles: User['roles']) => {
   if (!user) {
     return false
   }
-  return user.roles.some((role) => roles.includes(role))
+  if (typeof user === 'object') {
+    return user.roles.some((role) => roles.includes(role))
+  }
+  return user === env.AUTO_PROCESS_USER_ID
 }

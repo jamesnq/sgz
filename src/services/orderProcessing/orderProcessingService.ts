@@ -1,11 +1,12 @@
 import { env } from '@/config'
+import { Order, ProductVariant, Stock } from '@/payload-types'
+import { sendOrderCompletedNotification } from '@/services/novu.service'
 import { createRichTextWithTable } from '@/utilities/RichTextHelper'
 import payloadConfig from '@payload-config'
+import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { BasePayload, getPayload } from 'payload'
 import { SteamWalletProcessor } from './processors/SteamWalletProcessor'
 import { BaseMetadataSchema, OrderProcessor, ProcessResult } from './types'
-import { Order, ProductVariant, Stock } from '@/payload-types'
-import { sendOrderCompletedNotification } from '@/services/novu.service'
 
 export class OrderProcessingService {
   private processors: Map<string, OrderProcessor> = new Map()
@@ -58,7 +59,23 @@ export class OrderProcessingService {
           transactionID,
         }
       }
-
+      if (hasText(productVariant.fixedStock)) {
+        console.log('Processing fixed stock order')
+        await payload.update({
+          collection: 'orders',
+          id: orderId,
+          data: { status: 'COMPLETED' },
+          user: env.AUTO_PROCESS_USER_ID,
+          req: { transactionID },
+        })
+        await payload.db.commitTransaction(transactionID)
+        await sendOrderCompletedNotification(order)
+        return {
+          success: true,
+          message: 'Fixed stock processed successfully',
+          transactionID,
+        }
+      }
       // Process based on autoProcess setting
       if (productVariant.autoProcess) {
         const result = await this.handleAutoProcess(
@@ -227,7 +244,7 @@ export class OrderProcessingService {
       req: { transactionID },
     })
 
-    await sendOrderCompletedNotification(orderId, productVariant.name)
+    await sendOrderCompletedNotification(order)
   }
 
   /**

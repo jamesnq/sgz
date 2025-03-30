@@ -1,9 +1,10 @@
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
+import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
 import { revalidateProductPath } from '../Products/hooks/revalidateProduct'
-import { mediaGroup } from '@/utilities/constants'
+import { anyone } from '@/access/anyone'
 
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   doc,
@@ -165,6 +166,17 @@ export const ProductVariants: CollectionConfig = {
       label: 'Description',
     },
     {
+      name: 'fixedStock',
+      type: 'richText',
+      editor: defaultLexicalEditor,
+      label: 'Fixed Stock',
+      access: {
+        read: anyone, // handle in before read hook
+        update: hasRole(['admin']),
+        create: hasRole(['admin']),
+      },
+    },
+    {
       name: 'autoProcess',
       type: 'select',
       options: [
@@ -191,5 +203,33 @@ export const ProductVariants: CollectionConfig = {
   ],
   hooks: {
     afterChange: [revalidateProduct],
+    beforeRead: [
+      async ({ req: { user, payload }, doc }) => {
+        const hasRole = userHasRole(user, ['admin', 'staff'])
+        if (hasRole) return doc
+        if (doc.fixedStock) {
+          if (!user || typeof user !== 'object') {
+            delete doc.fixedStock
+            return doc
+          }
+          const paid = await payload.find({
+            collection: 'orders',
+            depth: 0,
+            limit: 1,
+            pagination: false,
+            select: {},
+            where: {
+              productVariant: { equals: doc.id },
+              orderedBy: { equals: user.id },
+            },
+          })
+          if (paid.docs.length <= 0) {
+            delete doc.fixedStock
+          }
+        }
+
+        return doc
+      },
+    ],
   },
 }
