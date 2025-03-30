@@ -3,7 +3,7 @@
 import { Shell } from '@/components/shell'
 import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
@@ -80,12 +80,67 @@ const PageClient = ({ order }: { order: Order }) => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
   const router = useRouter()
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      router.refresh()
-    }, 10000)
 
-    return () => clearInterval(intervalId)
+  const deliveryContent = useMemo(() => {
+    if (hasText(order.deliveryContent)) return order.deliveryContent
+    return (order.productVariant as ProductVariant).fixedStock
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.deliveryContent, order.productVariant, order.updatedAt])
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+
+    const startRefresh = () => {
+      if (!intervalId) {
+        intervalId = setInterval(() => {
+          router.refresh()
+        }, 10000)
+      }
+    }
+
+    const stopRefresh = () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+
+    // Only stop refreshing when the document is hidden (tab change, minimize)
+    // Not when the window loses focus
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopRefresh()
+      } else {
+        startRefresh()
+      }
+    }
+
+    // When window gets focus, refresh immediately and ensure interval is running
+    const handleFocus = () => {
+      router.refresh() // Immediate refresh when focusing
+      startRefresh()
+    }
+
+    // Don't stop refreshing on blur - continue in background
+    // Remove the blur event handler completely
+
+    // Start refresh if document is visible initially
+    if (!document.hidden) {
+      startRefresh()
+    }
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    // Removed the blur event listener
+
+    // Cleanup function
+    return () => {
+      stopRefresh()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+      // Removed the blur event listener cleanup
+    }
   }, [router])
 
   useEffect(() => {
@@ -129,13 +184,13 @@ const PageClient = ({ order }: { order: Order }) => {
               </CardContent>
             </Card>
           )}
-          {hasText(order.deliveryContent) && (
+          {hasText(deliveryContent) && (
             <Card>
               <CardHeader className="font-bold pb-0">Thông tin hàng</CardHeader>
               <CardContent className="pt-0">
                 <RichText
                   className="pt-0"
-                  data={order.deliveryContent as any}
+                  data={deliveryContent as any}
                   enableGutter={false}
                 ></RichText>
               </CardContent>
