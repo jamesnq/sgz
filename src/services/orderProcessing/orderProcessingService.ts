@@ -1,6 +1,9 @@
 import { env } from '@/config'
 import { Order, ProductVariant, Stock } from '@/payload-types'
-import { sendOrderCompletedNotification } from '@/services/novu.service'
+import {
+  sendOrderCompletedNotification,
+  sendProductOutOfStockNotification,
+} from '@/services/novu.service'
 import { createRichTextWithTable } from '@/utilities/RichTextHelper'
 import payloadConfig from '@payload-config'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
@@ -270,6 +273,9 @@ export class OrderProcessingService {
       })
     ).totalDocs
 
+    // Check if the product is going out of stock
+    const isGoingOutOfStock = remainingStocksCount === 0 && productVariant.status !== 'STOPPED'
+
     // Update product variant max quantity and status
     await payload.update({
       collection: 'product-variants',
@@ -282,6 +288,11 @@ export class OrderProcessingService {
       },
       req: { transactionID },
     })
+
+    // Send notification to admin channel if product is out of stock
+    if (isGoingOutOfStock) {
+      await sendProductOutOfStockNotification(productVariant)
+    }
   }
 
   /**
