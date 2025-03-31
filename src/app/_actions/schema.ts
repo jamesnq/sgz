@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const RechargePayosSchema = z.object({
-  amount: z.coerce.number().min(2000),
+  amount: z.coerce.number().min(2000, 'Số tiền nạp tối thiểu là 2000 VND'),
 })
 export const RechargeDoiTheSchema = z.object({
   telco: z.string(),
