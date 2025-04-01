@@ -36,7 +36,12 @@ export function OrderShippingForm({ order }: OrderShippingFormProps) {
       await payloadClient.updateById({
         collection: 'form-submissions',
         id: formSubmission.id,
-        data: { submissionData: { ...(submissionData as any), [fieldName]: {} } },
+        data: {
+          submissionData: {
+            ...(submissionData as any),
+            [fieldName]: typeof (submissionData as any)[fieldName] === 'object' ? '' : {},
+          },
+        },
       })
 
       if (order.status !== 'USER_UPDATE' && order.status !== 'REFUND') {

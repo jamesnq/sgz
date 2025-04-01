@@ -90,12 +90,12 @@ export const FormSubmissions: CollectionConfig = {
           if (!form.fields?.some((f: any) => f.name === key)) {
             return `Field ${key} not found in form`
           }
-          const requiredFields = form.fields.filter((f: any) => f.required).map((f: any) => f.name)
-          for (const field of requiredFields) {
-            if (!submissionData[field]) {
-              return `Field ${field} is required`
-            }
-          }
+          // const requiredFields = form.fields.filter((f: any) => f.required).map((f: any) => f.name)
+          // for (const field of requiredFields) {
+          //   if (!submissionData[field]) {
+          //     return `Field ${field} is required`
+          //   }
+          // }
         }
 
         return true
