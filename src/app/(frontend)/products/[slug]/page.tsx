@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 
 import { ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -70,97 +70,126 @@ export async function generateMetadata({
   return meta
 }
 
-const queryProductBySlug = cache(async ({ slug }: { slug: string }) => {
-  try {
-    // TODO optimize query using drizzle
-    const payload = await getPayload({ config: configPromise })
-    const result = await payload.find({
-      collection: 'products',
-      limit: 1,
-      depth: 1,
-      overrideAccess: true,
-      pagination: false,
-      where: {
-        slug: {
-          equals: slug,
-        },
-        status: {
-          not_equals: 'PRIVATE',
-        },
-      },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        description: true,
-        variants: true,
-        image: true,
-        categories: true,
-        relatedProducts: true,
-        status: true,
-        sold: true,
-        meta: true,
-      },
-    })
-    const product = result.docs?.[0] || null
-    if (!product || !product.variants?.length) {
-      return null
-    }
-    product.variants = product.variants
-      .filter((variant) => {
-        return (variant as ProductVariant).status !== 'PRIVATE'
-      })
-      // @ts-expect-error ignore
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .map(({ note, metadata, fixedStock, ...rest }: ProductVariant) => {
-        return rest
-      })
-    const imageIds = Array.from(
-      new Set(
-        product.variants?.map((variant) => (variant as ProductVariant).image).filter(Boolean) || [],
-      ),
-    )
-    if (imageIds.length) {
-      const { docs: images } = await payload.find({
-        collection: 'media',
-        overrideAccess: true,
-        pagination: false,
-        where: {
-          id: {
-            in: imageIds,
+const queryProductBySlug = async ({ slug }: { slug: string }) => {
+  const getCachedProductData = unstable_cache(
+    async () => {
+      try {
+        // TODO optimize query using drizzle
+        const payload = await getPayload({ config: configPromise })
+
+        // Fetch product data
+        const result = await payload.find({
+          collection: 'products',
+          limit: 1,
+          depth: 1,
+          overrideAccess: true,
+          pagination: false,
+          where: {
+            slug: {
+              equals: slug,
+            },
+            status: {
+              not_equals: 'PRIVATE',
+            },
           },
-        },
-        depth: 0,
-      })
-      product.variants.forEach((variant) => {
-        ;(variant as ProductVariant).image = images.find(
-          (image) => image.id === (variant as ProductVariant).image,
-        )
-      })
-    }
-    const formIds = Array.from(
-      new Set(
-        product.variants?.map((variant) => (variant as ProductVariant).form).filter(Boolean) || [],
-      ),
-    )
-    if (formIds.length) {
-      const { docs: forms } = await payload.find({
-        collection: 'forms',
-        overrideAccess: true,
-        where: {
-          id: {
-            in: formIds,
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            description: true,
+            variants: true,
+            image: true,
+            categories: true,
+            relatedProducts: true,
+            status: true,
+            sold: true,
+            meta: true,
           },
-        },
-        depth: 1,
-      })
-      product.variants.forEach((variant) => {
-        ;(variant as ProductVariant).form = forms.find(
-          (form) => form.id === (variant as ProductVariant).form,
+        })
+
+        const product = result.docs?.[0] || null
+        if (!product || !product.variants?.length) {
+          return null
+        }
+
+        product.variants = product.variants
+          .filter((variant) => {
+            return (variant as ProductVariant).status !== 'PRIVATE'
+          })
+          // @ts-expect-error ignore
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .map(({ note, metadata, fixedStock, ...rest }: ProductVariant) => {
+            return rest
+          })
+
+        // Collect all image IDs from variants
+        const imageIds = Array.from(
+          new Set(
+            product.variants?.map((variant) => (variant as ProductVariant).image).filter(Boolean) ||
+              [],
+          ),
         )
-      })
-    }
-    return product
-  } catch {}
-  return null
-})
+
+        // Fetch images if needed
+        if (imageIds.length) {
+          const { docs: images } = await payload.find({
+            collection: 'media',
+            overrideAccess: true,
+            pagination: false,
+            where: {
+              id: {
+                in: imageIds,
+              },
+            },
+            depth: 0,
+          })
+
+          product.variants.forEach((variant) => {
+            ;(variant as ProductVariant).image = images.find(
+              (image) => image.id === (variant as ProductVariant).image,
+            )
+          })
+        }
+
+        // Collect all form IDs from variants
+        const formIds = Array.from(
+          new Set(
+            product.variants?.map((variant) => (variant as ProductVariant).form).filter(Boolean) ||
+              [],
+          ),
+        )
+
+        // Fetch forms if needed
+        if (formIds.length) {
+          const { docs: forms } = await payload.find({
+            collection: 'forms',
+            overrideAccess: true,
+            where: {
+              id: {
+                in: formIds,
+              },
+            },
+            depth: 1,
+          })
+
+          product.variants.forEach((variant) => {
+            ;(variant as ProductVariant).form = forms.find(
+              (form) => form.id === (variant as ProductVariant).form,
+            )
+          })
+        }
+
+        return product
+      } catch {
+        return null
+      }
+    },
+    [`product-detail-${slug}`], // Cache key based on slug
+    {
+      tags: [`products-${slug}`, 'product-detail'],
+      revalidate: 3600, // Cache for 1 hour (matching page revalidate)
+    },
+  )
+
+  return getCachedProductData()
+}

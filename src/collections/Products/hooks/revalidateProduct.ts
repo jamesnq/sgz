@@ -38,6 +38,7 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   revalidatePath(oldPath)
   revalidateProductsPage()
   revalidateTag('products-sitemap')
+
   return doc
 }
 
