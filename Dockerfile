@@ -1,6 +1,3 @@
-# To use this Dockerfile, you have to set `output: 'standalone'` in your next.config.js file.
-# From https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
-
 FROM node:22.12.0-alpine AS base
 
 # Install dependencies only when needed
@@ -8,6 +5,17 @@ FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
+# ADDED CODE 1 START
+# Set up pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+# Update Corepack to the version with the fix and enable PNPM
+RUN npm install -g corepack@0.31.0 && \
+    corepack enable && \
+    corepack prepare pnpm@9.15.4 --activate
+# ADDED CODE 1 END
 
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
@@ -29,6 +37,17 @@ COPY . .
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
+
+# ADDED CODE 2 START
+# Set up pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+# Update Corepack to the version with the fix and enable PNPM
+RUN npm install -g corepack@0.31.0 && \
+    corepack enable && \
+    corepack prepare pnpm@9.15.4 --activate
+# ADDED CODE 2 END
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \

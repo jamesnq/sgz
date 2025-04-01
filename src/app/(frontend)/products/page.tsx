@@ -9,6 +9,7 @@ import { Search } from 'lucide-react'
 import { getPayload } from 'payload'
 import { Suspense } from 'react'
 import PageClient from './page.client'
+import { unstable_cache } from 'next/cache'
 
 export const revalidate = 3600
 
@@ -103,6 +104,7 @@ async function ProductsData({
 }) {
   // Await the searchParams promise
   const resolvedParams = await searchParams
+
   const name = resolvedParams.name || ''
   const page = resolvedParams.page || '1'
   const categoriesParam = resolvedParams.categories || ''
@@ -114,13 +116,6 @@ async function ProductsData({
   const limit = 12
 
   const payload = await getPayload({ config: configPromise })
-
-  // Fetch all categories for the filter UI
-  const categoriesData = await payload.find({
-    collection: 'categories',
-    limit: 100,
-    sort: 'title',
-  })
 
   const where: any = {
     status: {
@@ -141,25 +136,50 @@ async function ProductsData({
     }
   }
 
-  const productsData = await payload.find({
-    collection: 'products',
-    limit,
-    page: currentPage,
-    where,
-    depth: 1,
-    overrideAccess: true,
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      description: true,
-      image: true,
-      categories: true,
-      status: true,
-      sold: true,
+  // Combined cache function for both categories and products
+  const getCachedData = unstable_cache(
+    async () => {
+      // Fetch both categories and products concurrently
+      const [categoriesData, productsData] = await Promise.all([
+        payload.find({
+          collection: 'categories',
+          limit: 0,
+          pagination: false,
+          overrideAccess: true,
+          sort: 'title',
+        }),
+        payload.find({
+          collection: 'products',
+          limit,
+          page: currentPage,
+          where,
+          depth: 1,
+          overrideAccess: true,
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            description: true,
+            image: true,
+            categories: true,
+            status: true,
+            sold: true,
+          },
+          sort: ['-sold'],
+        }),
+      ])
+
+      return { categoriesData, productsData }
     },
-    sort: ['-sold'],
-  })
+    [`search-${name}-${currentPage}-${categoriesParam}`], // Include all query parameters in the cache key
+    {
+      tags: ['search'],
+      revalidate: 3600, // Cache for 1 hour (matching page revalidate)
+    },
+  )
+
+  // Get both data sets from the combined cache
+  const { categoriesData, productsData } = await getCachedData()
 
   return (
     <PageClient
