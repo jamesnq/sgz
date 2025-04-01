@@ -1,6 +1,6 @@
 'use client'
 import { autoProcessOrderAction } from '@/app/_actions/autoProcessOrderAction'
-import { OrderShippingForm } from '@/components/OrderShippingForm'
+import { OrderShippingForm } from '@/app/(workspace)/workspace/components/OrderShippingForm'
 import RichText from '@/components/RichText'
 import {
   Accordion,
