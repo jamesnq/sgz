@@ -23,6 +23,12 @@ const nextConfig = {
   reactStrictMode: true,
   redirects,
   output: 'standalone',
+  logging: {
+    fetches: {
+      fullUrl: true,
+      hmrRefreshes: true,
+    },
+  },
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })
