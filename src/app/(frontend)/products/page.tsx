@@ -115,8 +115,6 @@ async function ProductsData({
   const currentPage = parseInt(page, 10) || 1
   const limit = 12
 
-  const payload = await getPayload({ config: configPromise })
-
   const where: any = {
     status: {
       not_equals: 'PRIVATE',
@@ -139,6 +137,8 @@ async function ProductsData({
   // Combined cache function for both categories and products
   const getCachedData = unstable_cache(
     async () => {
+      const payload = await getPayload({ config: configPromise })
+
       // Fetch both categories and products concurrently
       const [categoriesData, productsData] = await Promise.all([
         payload.find({
@@ -173,7 +173,7 @@ async function ProductsData({
     },
     [`search-${name}-${currentPage}-${categoriesParam}`], // Include all query parameters in the cache key
     {
-      tags: ['search'],
+      tags: ['search', 'categories', 'products'],
       revalidate: 3600, // Cache for 1 hour (matching page revalidate)
     },
   )
