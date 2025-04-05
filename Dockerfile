@@ -1,4 +1,5 @@
 FROM node:22.12.0-alpine AS base
+RUN nslookup registry.npmjs.org
 
 # Ensure required system dependencies are available
 RUN apk add --no-cache libc6-compat curl ca-certificates
