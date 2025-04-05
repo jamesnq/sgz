@@ -7,9 +7,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
-    restart: always
     networks:
       - dokploy-network
+    restart: always
 networks:
   dokploy-network:
     external: true
