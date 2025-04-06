@@ -1,0 +1,21 @@
+[phases.setup]
+nixPkgs = ["nodejs_22", "corepack", "libc6-compat"]
+cmds = ["corepack enable pnpm"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["pnpm run build"]
+
+[start]
+cmd = "node .next/standalone/server.js"
+env = { NODE_ENV = "production", PORT = "3000", HOSTNAME = "0.0.0.0" }
+
+[variables]
+PORT = "3000"
+
+[cachedPaths]
+paths = ["node_modules", "~/.pnpm-store"]
