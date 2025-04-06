@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_22", "corepack", "libc6-compat"]
+nixPkgs = ["nodejs_22", "corepack"]
 cmds = ["corepack enable pnpm"]
 
 [phases.install]
@@ -12,7 +12,11 @@ cmds = ["pnpm run build"]
 
 [start]
 cmd = "node .next/standalone/server.js"
-env = { NODE_ENV = "production", PORT = "3000", HOSTNAME = "0.0.0.0" }
+
+[start.env]
+NODE_ENV = "production"
+PORT = "3000"
+HOSTNAME = "0.0.0.0"
 
 [variables]
 PORT = "3000"
