@@ -38,5 +38,8 @@
     }
   },
   "svg.preview.background": "dark-transparent",
-  "cSpell.words": ["DOITHE", "Novu"]
+  "cSpell.words": ["DOITHE", "Novu"],
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  }
 }

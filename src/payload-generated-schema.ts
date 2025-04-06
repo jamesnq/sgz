@@ -1317,7 +1317,7 @@ type DatabaseSchema = {
   relations_header: typeof relations_header
   relations_footer: typeof relations_footer
 }
-
+// @ts-expect-error
 declare module '@payloadcms/db-postgres/types' {
   export interface GeneratedDatabaseSchema {
     schema: DatabaseSchema
