@@ -6,8 +6,18 @@ cmds = ["pnpm install --frozen-lockfile"]
 dependsOn = ["install"]
 cmds = ["pnpm run build"]
 
+[phases.prepare-output]
+dependsOn = ["build"]
+cmds = [
+    "mkdir -p .next/static",
+    "mkdir -p public",
+    "cp -r .next/standalone/* ./",
+    "cp -r .next/static ./.next/static || true",
+    "cp -r public ./public || true",
+]
+
 [start]
-cmd = "node .next/standalone/server.js"
+cmd = "node server.js"
 
 [start.env]
 NODE_ENV = "production"
