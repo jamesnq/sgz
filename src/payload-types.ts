@@ -405,8 +405,10 @@ export interface Product {
   image: number | Media;
   status: 'PRIVATE' | 'PUBLIC' | 'STOPPED';
   sold: number;
-  note?: string | null;
   variants?: (number | ProductVariant)[] | null;
+  minPrice: number;
+  maxPrice: number;
+  note?: string | null;
   description?: {
     root: {
       type: string;
@@ -849,8 +851,10 @@ export interface ProductsSelect<T extends boolean = true> {
   image?: T;
   status?: T;
   sold?: T;
-  note?: T;
   variants?: T;
+  minPrice?: T;
+  maxPrice?: T;
+  note?: T;
   description?: T;
   relatedProducts?: T;
   categories?: T;

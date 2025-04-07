@@ -164,6 +164,8 @@ async function ProductsData({
             categories: true,
             status: true,
             sold: true,
+            minPrice: true,
+            maxPrice: true,
           },
           sort: ['-sold'],
         }),

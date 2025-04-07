@@ -2,11 +2,37 @@ import { CollectionBeforeDeleteHook, Payload, type CollectionAfterChangeHook } f
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 
+import { products } from '@/payload-generated-schema'
 import { Routes } from '@/utilities/routes'
+
+import { eq } from '@payloadcms/db-postgres/drizzle'
 import type { Product } from '../../../payload-types'
 export const revalidateProductsPage = () => {
   revalidatePath(Routes.PRODUCTS)
 }
+
+export const updateProductPriceRange = async (
+  payload: Payload,
+  productId: number,
+  prices: number[],
+) => {
+  if (!productId || !prices || !prices.length) return
+
+  const minPrice = Math.min(...prices)
+  const maxPrice = Math.max(...prices)
+  if (prices.length > 0) {
+    // use drizzle to avoid update loop
+    const db = payload.db.drizzle
+    await db
+      .update(products)
+      .set({
+        minPrice: minPrice.toString(),
+        maxPrice: maxPrice.toString(),
+      })
+      .where(eq(products.id, productId))
+  }
+}
+
 export const revalidateProductPath = async (payload: Payload, productId: number) => {
   const product = await payload.findByID({
     collection: 'products',

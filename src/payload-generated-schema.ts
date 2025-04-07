@@ -236,6 +236,8 @@ export const products = pgTable(
       }),
     status: enum_products_status('status').notNull(),
     sold: numeric('sold').notNull().default('0'),
+    minPrice: numeric('min_price').notNull().default('0'),
+    maxPrice: numeric('max_price').notNull().default('0'),
     note: varchar('note'),
     description: jsonb('description'),
     meta_title: varchar('meta_title'),
@@ -1317,7 +1319,7 @@ type DatabaseSchema = {
   relations_header: typeof relations_header
   relations_footer: typeof relations_footer
 }
-// @ts-expect-error
+
 declare module '@payloadcms/db-postgres/types' {
   export interface GeneratedDatabaseSchema {
     schema: DatabaseSchema

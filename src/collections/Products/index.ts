@@ -1,7 +1,13 @@
-import type { CollectionConfig } from 'payload'
+import type {
+  CollectionAfterChangeHook,
+  CollectionBeforeChangeHook,
+  CollectionConfig,
+} from 'payload'
 
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { slugField } from '@/fields/slug'
+import { Product } from '@/payload-types'
+import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import {
   MetaDescriptionField,
@@ -11,7 +17,6 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
-import { mediaGroup } from '@/utilities/constants'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -31,7 +36,31 @@ export const Products: CollectionConfig = {
     group: mediaGroup,
   },
   hooks: {
-    afterChange: [revalidateProduct],
+    beforeChange: [
+      async ({ data, req: { payload } }) => {
+        // update product price range
+        if (typeof data === 'number' || !data.variants || !data.variants.length) return
+        let prices: number[] = []
+        if (typeof data.variants[0] === 'number') {
+          const { docs: variants } = await payload.find({
+            collection: 'product-variants',
+            where: { id: { in: data.variants }, status: { not_equals: 'PRIVATE' } },
+            overrideAccess: true,
+            depth: 0,
+            select: { price: true },
+          })
+          prices = variants.map((v) => v.price)
+        } else {
+          prices = data.variants.map((v: any) => v.price)
+        }
+        const minPrice = Math.min(...prices)
+        const maxPrice = Math.max(...prices)
+        data.minPrice = minPrice
+        data.maxPrice = maxPrice
+        return data
+      },
+    ] as CollectionBeforeChangeHook<Product>[],
+    afterChange: [revalidateProduct] as CollectionAfterChangeHook<Product>[],
     beforeDelete: [revalidateDelete],
   },
   fields: [
@@ -47,42 +76,39 @@ export const Products: CollectionConfig = {
       required: true,
     },
     {
-      name: 'status',
-      type: 'select',
-      // defaultValue: 'STOPPED',
-      options: [
+      type: 'row',
+      fields: [
         {
-          label: 'Private',
-          value: 'PRIVATE',
+          name: 'status',
+          type: 'select',
+          // defaultValue: 'STOPPED',
+          options: [
+            {
+              label: 'Private',
+              value: 'PRIVATE',
+            },
+            {
+              label: 'Public',
+              value: 'PUBLIC',
+            },
+            {
+              label: 'Stopped',
+              value: 'STOPPED',
+            },
+          ],
+          required: true,
         },
         {
-          label: 'Public',
-          value: 'PUBLIC',
-        },
-        {
-          label: 'Stopped',
-          value: 'STOPPED',
+          name: 'sold',
+          type: 'number',
+          defaultValue: 0,
+          required: true,
+          access: {
+            read: hasRole(['admin']),
+            update: hasRole(['admin']),
+          },
         },
       ],
-      required: true,
-    },
-    {
-      name: 'sold',
-      type: 'number',
-      defaultValue: 0,
-      required: true,
-      access: {
-        read: hasRole(['admin']),
-        update: hasRole(['admin']),
-      },
-    },
-    {
-      name: 'note',
-      type: 'textarea',
-      access: {
-        read: hasRole(['admin', 'staff']),
-        update: hasRole(['admin', 'staff']),
-      },
     },
     {
       name: 'variants',
@@ -91,6 +117,39 @@ export const Products: CollectionConfig = {
       hasMany: true,
       unique: true,
       // admin: { defaultColumns: ['name', 'updatedAt'] },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'minPrice',
+          type: 'number',
+          defaultValue: 0,
+          required: true,
+          access: {
+            read: hasRole(['admin']),
+            update: hasRole(['admin']),
+          },
+        },
+        {
+          name: 'maxPrice',
+          type: 'number',
+          defaultValue: 0,
+          required: true,
+          access: {
+            read: hasRole(['admin']),
+            update: hasRole(['admin']),
+          },
+        },
+      ],
+    },
+    {
+      name: 'note',
+      type: 'textarea',
+      access: {
+        read: hasRole(['admin', 'staff']),
+        update: hasRole(['admin', 'staff']),
+      },
     },
     {
       type: 'tabs',

@@ -1,10 +1,10 @@
+import { anyone } from '@/access/anyone'
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
 import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
-import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
-import { revalidateProductPath } from '../Products/hooks/revalidateProduct'
-import { anyone } from '@/access/anyone'
+import { type CollectionAfterChangeHook, type CollectionConfig } from 'payload'
+import { revalidateProductPath, updateProductPriceRange } from '../Products/hooks/revalidateProduct'
 
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   doc,
@@ -13,6 +13,39 @@ const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
   await revalidateProductPath(payload, productId)
 }
+
+// export const updateProductPriceRange = async (
+//   payload: Payload,
+//   productId: number,
+//   productVariant?: ProductVariant,
+// ) => {
+//   const product = await payload.findByID({
+//     collection: 'products',
+//     id: productId,
+//     overrideAccess: true,
+//     depth: 1,
+//     select: { variants: true, minPrice: true, maxPrice: true },
+//   })
+//   if (!product || !product.variants) return
+//   if (productVariant) {
+//     product.variants = product.variants.filter((v: any) => v.id !== productVariant.id)
+//     product.variants.push(productVariant)
+//   }
+//   const prices = product.variants.map((v: any) => v.price).filter((p) => typeof p === 'number')
+//   const minPrice = Math.min(...prices)
+//   const maxPrice = Math.max(...prices)
+//   if (prices.length > 0 && (product.minPrice !== minPrice || product.maxPrice !== maxPrice)) {
+//     // use drizzle to avoid update loop
+//     const db = payload.db.drizzle
+//     await db
+//       .update(products)
+//       .set({
+//         minPrice: minPrice.toString(),
+//         maxPrice: maxPrice.toString(),
+//       })
+//       .where(eq(products.id, productId))
+//   }
+// }
 
 export const ProductVariants: CollectionConfig = {
   slug: 'product-variants',
@@ -30,6 +63,63 @@ export const ProductVariants: CollectionConfig = {
     defaultColumns: ['name', 'product', 'sold', 'updatedAt'],
     useAsTitle: 'name',
     group: mediaGroup,
+  },
+  hooks: {
+    afterChange: [
+      async ({ previousDoc, doc, req: { payload } }) => {
+        // update product price range
+        if (previousDoc.price == doc.price) {
+          console.log('Price not changed, skipping')
+          return
+        }
+        const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
+        const product = await payload.findByID({
+          collection: 'products',
+          id: productId,
+          overrideAccess: true,
+          depth: 1,
+          select: { variants: true },
+        })
+        if (!product || !product.variants || !product.variants.length) return
+        product.variants = product.variants.filter((v: any) => v.id !== doc.id)
+        product.variants.push(doc)
+        product.variants = product.variants.filter((v: any) => v.status !== 'PRIVATE')
+        await updateProductPriceRange(
+          payload,
+          productId,
+          product.variants.map((v: any) => v.price),
+        )
+      },
+      revalidateProduct,
+    ] as CollectionAfterChangeHook<ProductVariant>[],
+    beforeRead: [
+      async ({ req: { user, payload }, doc }) => {
+        const hasRole = userHasRole(user, ['admin', 'staff'])
+        if (hasRole) return doc
+        if (doc.fixedStock) {
+          if (!user || typeof user !== 'object') {
+            delete doc.fixedStock
+            return doc
+          }
+          const paid = await payload.find({
+            collection: 'orders',
+            depth: 0,
+            limit: 1,
+            pagination: false,
+            select: {},
+            where: {
+              productVariant: { equals: doc.id },
+              orderedBy: { equals: user.id },
+            },
+          })
+          if (paid.docs.length <= 0) {
+            delete doc.fixedStock
+          }
+        }
+
+        return doc
+      },
+    ],
   },
   fields: [
     {
@@ -201,35 +291,4 @@ export const ProductVariants: CollectionConfig = {
       },
     },
   ],
-  hooks: {
-    afterChange: [revalidateProduct],
-    beforeRead: [
-      async ({ req: { user, payload }, doc }) => {
-        const hasRole = userHasRole(user, ['admin', 'staff'])
-        if (hasRole) return doc
-        if (doc.fixedStock) {
-          if (!user || typeof user !== 'object') {
-            delete doc.fixedStock
-            return doc
-          }
-          const paid = await payload.find({
-            collection: 'orders',
-            depth: 0,
-            limit: 1,
-            pagination: false,
-            select: {},
-            where: {
-              productVariant: { equals: doc.id },
-              orderedBy: { equals: user.id },
-            },
-          })
-          if (paid.docs.length <= 0) {
-            delete doc.fixedStock
-          }
-        }
-
-        return doc
-      },
-    ],
-  },
 }
