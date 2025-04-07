@@ -47,7 +47,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             </div>
             <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
               <div>
-                <div className="truncate h-auto overflow-hidden text-[14px] font-[400] leading-[17px]">
+                <div className="truncate h-auto overflow-hidden text-[14px] font-bold leading-[17px]">
                   {product.name}
                 </div>{' '}
                 {hasText(product.description) && (
@@ -59,9 +59,11 @@ const ProductCard = ({ product }: { product: Product }) => {
                 )}
               </div>
               <div className="flex w-full items-center justify-between">
-                <div className="mt-2 flex">
+                <div className="flex">
                   <span className="leading-[13px] text-muted-foreground">
-                    {formatPrice(product.minPrice)} ~ {formatPrice(product.maxPrice)}
+                    {product.minPrice === product.maxPrice
+                      ? formatPrice(product.minPrice)
+                      : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
                   </span>
                 </div>
                 {product.sold > 0 && (
