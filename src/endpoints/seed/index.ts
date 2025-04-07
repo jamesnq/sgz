@@ -121,7 +121,7 @@ export const seed = async ({
         overrideAccess: true,
         where: {
           email: {
-            equals: 'test@example.com',
+            equals: 'nhonhoem0123@gmail.com',
           },
         },
       })
@@ -131,7 +131,7 @@ export const seed = async ({
         collection: 'users',
         overrideAccess: true,
         data: {
-          email: 'test@example.com',
+          email: 'nhonhoem0123@gmail.com',
           password: '123123',
           roles: ['user'],
           _verified: true,

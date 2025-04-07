@@ -18,20 +18,22 @@ import {
   PaginationItem,
   PaginationLink,
 } from '@/components/ui/pagination'
+import { env } from '@/config'
 import { cn } from '@/lib/utils'
-import { Product, Category } from '@/payload-types'
+import { Category, Product } from '@/payload-types'
+import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
+import { Routes } from '@/utilities/routes'
+import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Loader2, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
-import { env } from '@/config'
-import { hasText } from '@payloadcms/richtext-lexical/shared'
 
 const ProductCard = ({ product }: { product: Product }) => {
   return (
     <Link
       className="relative block h-full w-full cursor-pointer overflow-hidden transition-all duration-300 hover:border-secondary"
-      href={`/products/${product.slug}`}
+      href={product.slug ? Routes.product(product.slug) : '#'}
     >
       <Card className="w-full h-[131px] overflow-hidden !p-0">
         <div className="w-full">
@@ -47,10 +49,7 @@ const ProductCard = ({ product }: { product: Product }) => {
               <div>
                 <div className="truncate h-auto overflow-hidden text-[14px] font-[400] leading-[17px]">
                   {product.name}
-                </div>
-                <div className="peer mt-2 flex items-end">
-                  {/* <span className="leading-[13px] text-muted-foreground">24,500đ ~ 2,376,000đ</span> */}
-                </div>
+                </div>{' '}
                 {hasText(product.description) && (
                   <RichText
                     className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"
@@ -59,13 +58,18 @@ const ProductCard = ({ product }: { product: Product }) => {
                   />
                 )}
               </div>
-              {product.sold > 0 && (
-                <div className="flex w-full items-center justify-end">
+              <div className="flex w-full items-center justify-between">
+                <div className="mt-2 flex">
+                  <span className="leading-[13px] text-muted-foreground">
+                    {formatPrice(product.minPrice)} ~ {formatPrice(product.maxPrice)}
+                  </span>
+                </div>
+                {product.sold > 0 && (
                   <span className="text-[12px] leading-none text-muted-foreground">
                     Đã bán {formatSold(product.sold)}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
