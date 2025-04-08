@@ -288,7 +288,7 @@ export class DoiThe {
     try {
       const url = `${this.apiUrl}/getfee?partner_id=${this.partnerId}`
 
-      const response = await fetch(url)
+      const response = await fetch(url, { next: { revalidate: 60 } })
       const data = await response.json()
 
       return {

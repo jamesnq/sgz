@@ -37,7 +37,6 @@ import {
 
 import { formatPrice } from '@/utilities/formatPrice'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CirclePlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -504,7 +503,7 @@ function RechargeCard() {
   )
 }
 
-function Recharges() {
+export function Recharges() {
   return (
     <Accordion type="single" collapsible defaultValue="item-1" className="w-full space-y-2">
       <RechargeBank />
@@ -513,23 +512,17 @@ function Recharges() {
   )
 }
 
-export function RechargeDialog() {
+export function RechargeDialog({ trigger }: { trigger?: React.ReactNode }) {
   return (
-    <>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="rounded-full" variant="ghost" size={'xs'}>
-            <CirclePlus className="text-highlight" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Nạp tiền</DialogTitle>
-            <DialogDescription>Chọn phương thức nạp tiền của bạn.</DialogDescription>
-          </DialogHeader>
-          <Recharges />
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Nạp tiền</DialogTitle>
+          <DialogDescription>Chọn phương thức nạp tiền của bạn.</DialogDescription>
+        </DialogHeader>
+        <Recharges />
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -28,7 +28,11 @@ export function ThemeToggle() {
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
-            {theme === 'dark' ? <MoonIcon /> : <SunIcon />}
+            {theme === 'dark' ? (
+              <MoonIcon className="text-highlight" />
+            ) : (
+              <SunIcon className="text-highlight" />
+            )}
             <span className="sr-only">Switch Theme</span>
           </Button>
         </TooltipTrigger>
