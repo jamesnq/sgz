@@ -113,7 +113,7 @@ async function ProductsData({
   const selectedCategoryIds = categoriesParam ? categoriesParam.split(',') : []
 
   const currentPage = parseInt(page, 10) || 1
-  const limit = 12
+  const limit = 8
 
   const where: any = {
     status: {
