@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -52,54 +53,91 @@ function RechargeBank() {
     },
   })
 
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+
   async function onSubmit(values: z.infer<typeof RechargePayosSchema>) {
     try {
+      setIsLoading(true)
       const res = await rechargePayosAction(values)
       if (!res?.data) {
         toast.error('Không thể tạo liên kết thanh toán')
         return
       }
-      window.open(res.data?.checkoutUrl)
+      window.location.replace(res.data?.checkoutUrl)
+      setPaymentUrl(res.data?.checkoutUrl)
       toast.success('Đã mở trang thanh toán')
+      setShowPaymentDialog(true)
     } catch {
       toast.error('Có lỗi xảy ra khi tạo liên kết thanh toán')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleManualRedirect = () => {
+    if (paymentUrl) {
+      window.location.replace(paymentUrl)
+      setShowPaymentDialog(false)
     }
   }
 
   return (
-    <AccordionItem className="border rounded-lg p-2" value="item-1">
-      <AccordionTrigger>Ngân hàng hoặc ví điện tử</AccordionTrigger>
-      <AccordionContent className="p-2">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex space-x-1 items-center">
-                      <Input
-                        className="w-[250px]"
-                        type="number"
-                        {...field}
-                        placeholder="Nhập số tiền muốn nạp"
-                      />
-                      <span className="ml-2">VND</span>
-                    </div>
-                  </FormControl>
+    <>
+      <AccordionItem className="border rounded-lg p-2" value="item-1">
+        <AccordionTrigger>Ngân hàng hoặc ví điện tử</AccordionTrigger>
+        <AccordionContent className="p-2">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex space-x-1 items-center">
+                        <Input
+                          className="w-[250px]"
+                          type="number"
+                          {...field}
+                          placeholder="Nhập số tiền muốn nạp"
+                        />
+                        <span className="ml-2">VND</span>
+                      </div>
+                    </FormControl>
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button className="w-32" type="submit">
-              Nạp tiền
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button className="w-32" type="submit" disabled={isLoading}>
+                {isLoading ? 'Đang xử lý...' : 'Nạp tiền'}
+              </Button>
+            </form>
+          </Form>
+        </AccordionContent>
+      </AccordionItem>
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Thanh toán</DialogTitle>
+            <DialogDescription>
+              Nhấn nút bên dưới để chuyển đến trang thanh toán nếu không được tự động chuyển hướng
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center mt-4">
+            <Button
+              type="button"
+              className="w-full bg-primary text-white hover:bg-primary/90"
+              onClick={handleManualRedirect}
+            >
+              Mở trang thanh toán
             </Button>
-          </form>
-        </Form>
-      </AccordionContent>
-    </AccordionItem>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
