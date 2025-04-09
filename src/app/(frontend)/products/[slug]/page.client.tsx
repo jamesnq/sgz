@@ -765,8 +765,9 @@ function ProductRelated({ className }: { className?: string }) {
     if (typeof product.relatedProducts[0] !== 'object') return []
     return product.relatedProducts as Product[]
   }, [product])
+  if (relatedProducts.length <= 0) return null
   return (
-    <Card className={cn(relatedProducts.length <= 0 ? 'hidden' : 'block', className)}>
+    <Card className={cn(className)}>
       <CardHeader className="font-bold pb-2">Sản phẩm liên quan</CardHeader>
       <CardContent>
         {relatedProducts.map((relatedProduct) => (
