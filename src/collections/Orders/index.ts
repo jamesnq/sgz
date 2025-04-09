@@ -41,7 +41,9 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
   const user = req.user
   if (!user) throw new ConflictsError('Not authenticated')
   const userId = typeof user === 'object' ? user.id : user
-  if (!(data.handlers as number[]).includes(userId)) {
+  const orderedById = typeof data.orderedBy === 'object' ? data.orderedBy.id : data.orderedBy
+
+  if (userId != orderedById && !(data.handlers as number[]).includes(userId)) {
     ;(data.handlers as number[]).push(userId)
   }
   return data
