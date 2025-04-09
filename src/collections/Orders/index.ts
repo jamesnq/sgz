@@ -8,7 +8,7 @@ import {
 } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
-import { hasRole } from '@/access/hasRoles'
+import { hasRole, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
@@ -43,10 +43,9 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
   const user = req.user
   if (!user) throw new ConflictsError('Not authenticated')
   const userId = typeof user === 'object' ? user.id : user
-  const orderedById = typeof data.orderedBy === 'object' ? data.orderedBy.id : data.orderedBy
 
-  if (userId != orderedById && !(data.handlers as number[]).includes(userId)) {
-    ;(data.handlers as number[]).push(userId)
+  if (userHasRole(user, ['admin', 'staff']) && !(data.handlers as number[]).includes(userId)) {
+    data.handlers = Array.from(new Set([...(data.handlers as number[]), userId]))
   }
   return data
 }

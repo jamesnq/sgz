@@ -63,7 +63,6 @@ export class OrderProcessingService {
         }
       }
       if (hasText(productVariant.fixedStock)) {
-        console.log('Processing fixed stock order')
         await payload.update({
           collection: 'orders',
           id: orderId,
@@ -71,6 +70,7 @@ export class OrderProcessingService {
           user: env.AUTO_PROCESS_USER_ID,
           req: { transactionID },
         })
+
         await payload.db.commitTransaction(transactionID)
         await sendOrderCompletedNotification(order)
         return {
