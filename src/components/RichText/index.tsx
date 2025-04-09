@@ -110,7 +110,7 @@ export default function RichText(props: Props) {
       </div>
     )
   }
-  console.log('RichText props:', props.data)
+
   return (
     <RichTextWithoutBlocks
       converters={jsxConverters as any}
