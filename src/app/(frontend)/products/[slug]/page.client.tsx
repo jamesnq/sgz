@@ -666,6 +666,16 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
 
   return (
     <Card className={cn('p-6', className)}>
+      <div className="flex w-full text-sm items-center justify-between">
+        <span>Giá gốc</span>
+        <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
+      </div>
+      {calc.totalDiscountPrice ? (
+        <div className="flex w-full text-sm items-center justify-between">
+          <span>Giá giảm</span>
+          <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
+        </div>
+      ) : null}
       {currentVariant.max > 1 && (
         <div className="flex justify-between">
           <span>Số lượng</span>
@@ -706,14 +716,6 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
         </div>
       )}
 
-      <div className="flex w-full text-sm items-center justify-between">
-        <span>Giá gốc</span>
-        <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
-      </div>
-      <div className="flex w-full text-sm items-center justify-between">
-        <span>Giá giảm</span>
-        <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
-      </div>
       <hr className="my-4 border-t border-border" />
       <div className="space-y-4">
         <div className="flex w-full items-center justify-between">
@@ -733,7 +735,10 @@ function Checkout({ className }: { className?: string }) {
 
 function ProductCard({ product }: { product: Product }) {
   return (
-    <Link href={Routes.product(product.slug!)} className="flex items-center">
+    <Link
+      href={Routes.product(product.slug!)}
+      className="flex items-center border border-transparent hover:border-primary rounded-md transition-all duration-200"
+    >
       <div className="relative h-[64px] w-[48px] overflow-hidden rounded-md">
         <Media
           resource={product.image}
@@ -769,7 +774,7 @@ function ProductRelated({ className }: { className?: string }) {
   return (
     <Card className={cn(className)}>
       <CardHeader className="font-bold pb-2">Sản phẩm liên quan</CardHeader>
-      <CardContent>
+      <CardContent className="gap-2">
         {relatedProducts.map((relatedProduct) => (
           <ProductCard key={relatedProduct.id} product={relatedProduct} />
         ))}
