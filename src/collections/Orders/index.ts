@@ -15,11 +15,11 @@ import { Order } from '@/payload-types'
 import {
   sendOrderUpdateRequiredNotification,
   sendOrderUserUpdatedStaffNotification,
+  sendOrderCompletedStaffNotification,
 } from '@/services/novu.service'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
-import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 import { managerGroup } from '@/utilities/constants'
 
@@ -58,18 +58,18 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   const userId = typeof user === 'object' ? user.id : user
   if (previousDoc.status != doc.status) {
     if (doc.status === 'USER_UPDATE') {
-      after(async () => {
-        await sendOrderUpdateRequiredNotification(doc.id, doc.orderedBy.toString())
-      })
+      await sendOrderUpdateRequiredNotification(doc.id, doc.orderedBy.toString())
     }
     if (
       previousDoc.status === 'USER_UPDATE' &&
       doc.status != 'USER_UPDATE' &&
       userId == doc.orderedBy
     ) {
-      after(async () => {
-        await sendOrderUserUpdatedStaffNotification(doc.id)
-      })
+      await sendOrderUserUpdatedStaffNotification(doc.id)
+    }
+    // Send notification to Discord staff when order is completed
+    if (doc.status === 'COMPLETED' && previousDoc.status !== 'COMPLETED') {
+      await sendOrderCompletedStaffNotification(doc)
     }
   }
 }

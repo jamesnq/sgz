@@ -6,10 +6,9 @@ import { Header } from '@/collections/Globals/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-
+import { AdminBar } from '@/components/AdminBar'
 import { getServerSideURL } from '@/utilities/getURL'
 import './globals.css'
-import { AdminBar } from '@/components/AdminBar'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (

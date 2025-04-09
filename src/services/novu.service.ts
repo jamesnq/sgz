@@ -1,11 +1,11 @@
 import { env } from '@/config'
-import { Novu } from '@novu/api'
-import CryptoJS from 'crypto-js'
-import { getServerSideURL } from '@/utilities/getURL'
-import { Routes } from '@/utilities/routes'
+import { Order, ProductVariant } from '@/payload-types'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { orderStatusColors } from '@/utilities/getOrderStatus'
-import { Order, ProductVariant } from '@/payload-types'
+import { getServerSideURL } from '@/utilities/getURL'
+import { Routes } from '@/utilities/routes'
+import { Novu } from '@novu/api'
+import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 
 // Novu channels for staff notifications
@@ -188,16 +188,18 @@ export async function sendOrderUpdateRequiredNotification(
   subscriberId: string,
 ): Promise<void> {
   try {
-    await novu.trigger({
-      workflowId: 'order-update',
-      to: {
-        subscriberId: subscriberId.toString(),
-      },
-      payload: {
-        message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
-        subject: `Yêu cầu hành động với đơn hàng #${orderId}`,
-        redirect: Routes.order(orderId),
-      },
+    after(async () => {
+      await novu.trigger({
+        workflowId: 'order-update',
+        to: {
+          subscriberId: subscriberId.toString(),
+        },
+        payload: {
+          message: 'Vui lòng bổ sung thông tin cho đơn hàng để tiếp tục',
+          subject: `Yêu cầu hành động với đơn hàng #${orderId}`,
+          redirect: Routes.order(orderId),
+        },
+      })
     })
   } catch (error) {
     console.error('Error sending order update notification:', error)
@@ -232,6 +234,38 @@ export async function sendOrderUserUpdatedStaffNotification(
       })
     } catch (error) {
       console.error('Error sending staff notification:', error)
+    }
+  })
+}
+
+/**
+ * Sends a notification to staff when an order is completed
+ * @param order - The completed order
+ */
+export async function sendOrderCompletedStaffNotification(order: Order): Promise<void> {
+  console.log('🚀 ~ sendOrderCompletedStaffNotification ~ order:', order)
+  after(async () => {
+    const payload = {
+      subject: `Đơn hàng #${order.id} đã hoàn thành`,
+      message: ``,
+      redirect: Routes.WORKSPACE,
+    }
+    try {
+      // await novu.trigger({
+      //   workflowId: 'order-update',
+      //   to: {
+      //     subscriberId: 'staff',
+      //   },
+      //   payload,
+      // })
+      await discordWebhook({
+        ...payload,
+        color: orderStatusColors.COMPLETED,
+        channel: 'staff',
+        mention: false,
+      })
+    } catch (error) {
+      console.error('Error sending order completed notification:', error)
     }
   })
 }
