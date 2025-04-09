@@ -737,7 +737,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={Routes.product(product.slug!)}
-      className="flex items-center border border-transparent hover:border-primary rounded-md transition-all duration-200"
+      className="flex p-1 items-center border border-transparent hover:border-primary rounded-md transition-all duration-200"
     >
       <div className="relative h-[64px] w-[48px] overflow-hidden rounded-md">
         <Media
@@ -774,7 +774,7 @@ function ProductRelated({ className }: { className?: string }) {
   return (
     <Card className={cn(className)}>
       <CardHeader className="font-bold pb-2">Sản phẩm liên quan</CardHeader>
-      <CardContent className="gap-2">
+      <CardContent className="gap-1">
         {relatedProducts.map((relatedProduct) => (
           <ProductCard key={relatedProduct.id} product={relatedProduct} />
         ))}
