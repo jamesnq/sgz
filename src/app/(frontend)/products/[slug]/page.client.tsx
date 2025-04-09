@@ -854,8 +854,8 @@ const MemoizedScreen = React.memo(function ScreenInner() {
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
                     Thông báo sản phẩm hiện đã hết hàng, mọi thông tin chi tiết vui lòng liên hệ qua
-                    các kênh cộng đồng của chúng tôi để kiểm tra giá và biết tình trạng hiện tại của
-                    sản phẩm.
+                    chat hỗ trợ hoặc các kênh cộng đồng của chúng tôi để kiểm tra giá và biết tình
+                    trạng hiện tại của sản phẩm.
                   </p>
                   <p className="mt-2 text-sm font-semibold">
                     Email :{' '}
