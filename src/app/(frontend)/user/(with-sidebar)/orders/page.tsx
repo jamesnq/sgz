@@ -147,8 +147,8 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
     })
   }
   res.docs = res.docs.map((order: any) => {
-    const { name, image, product, ..._rest } = order.productVariant as ProductVariant
-    order.productVariant = { name, image, product }
+    const { id, name, image, product, ..._rest } = order.productVariant as ProductVariant
+    order.productVariant = { id, name, image, product }
     return order
   })
   return <PageClient data={res} />

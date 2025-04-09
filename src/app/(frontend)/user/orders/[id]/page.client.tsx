@@ -30,9 +30,7 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
             <Media resource={image}></Media>
           </div>
           <div className="size-full flex-1">
-            <Link
-              href={product?.slug ? `/products/${product?.slug}?variant_id=${variant.id}` : '/'}
-            >
+            <Link href={product?.slug ? Routes.product(product?.slug, variant?.id) : '#'}>
               {variant.name || product?.name || 'Không xác định'}
             </Link>
             <div className="flex items-center gap-1">

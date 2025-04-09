@@ -27,8 +27,8 @@ export class Routes {
   static adminProductVariant(id: string | number): string {
     return `${Routes.ADMIN}/collections/product-variants/${id}`
   }
-  static product(slug: string): string {
-    return `/products/${slug}`
+  static product(slug: string, variant?: string | number): string {
+    return `/products/${slug}${variant ? `?variant=${variant}` : ''}`
   }
 
   static order(id: string | number): string {

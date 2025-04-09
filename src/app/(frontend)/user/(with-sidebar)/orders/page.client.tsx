@@ -24,7 +24,7 @@ function OrderCard({ o }: { o: Order }) {
   const image = o.productVariant.image || o.productVariant?.product?.image
   const variant = o.productVariant as ProductVariant
   const product = variant.product as Product
-  const productUrl = product?.slug ? Routes.product(product?.slug as string) : '/'
+  const productUrl = product?.slug ? Routes.product(product?.slug as string, variant?.id) : '#'
   const orderUrl = Routes.order(o.id)
   return (
     <Card key={o.id}>
