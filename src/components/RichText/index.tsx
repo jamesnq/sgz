@@ -21,9 +21,9 @@ import type {
   TableBlock as TableBlockProps,
 } from '@/payload-types'
 
+import { InlineDialog } from '@/blocks/InlineDialog/Component'
 import { TableBlock } from '@/blocks/TableBlock/Component'
 import { cn } from '@/utilities/ui'
-import { InlineDialog } from '@/blocks/InlineDialog/Component'
 
 type NodeTypes =
   | DefaultNodeTypes
@@ -75,10 +75,42 @@ type Props = {
   enableGutter?: boolean
   overrideClassName?: boolean
   enableProse?: boolean
+  textOnly?: boolean
 } & React.HTMLAttributes<HTMLDivElement>
 
 export default function RichText(props: Props) {
-  const { className, enableProse = true, enableGutter = true, overrideClassName, ...rest } = props
+  const {
+    className,
+    enableProse = true,
+    enableGutter = true,
+    overrideClassName,
+    textOnly,
+    ...rest
+  } = props
+  if (textOnly) {
+    const text = rest.data.root.children
+      .map((child) => {
+        if (child.type !== 'paragraph') return ''
+        // @ts-expect-error ts mismatch
+        return child.children.map((text) => text.text).join('')
+      })
+      .join('')
+    return (
+      <div
+        className={cn(
+          !overrideClassName && {
+            'container ': enableGutter,
+            'max-w-none': !enableGutter,
+            'mx-auto prose md:prose-md dark:prose-invert ': enableProse,
+          },
+          className,
+        )}
+      >
+        {text}
+      </div>
+    )
+  }
+  console.log('RichText props:', props.data)
   return (
     <RichTextWithoutBlocks
       converters={jsxConverters as any}
