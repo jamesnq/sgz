@@ -677,7 +677,7 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
         </div>
       ) : null}
       {currentVariant.max > 1 && (
-        <div className="flex justify-between">
+        <div className="flex justify-between mt-2">
           <span>Số lượng</span>
           <div className="flex">
             <Button
@@ -689,18 +689,20 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
               className="size-8 shrink-0 rounded-r-none"
               onClick={() => decQuantity()}
             >
-              <MinusIcon className="size-3" aria-hidden="true" />
+              <MinusIcon className="size-3 text-highlight" aria-hidden="true" />
             </Button>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              className="h-8 w-16 rounded-none border-x-0"
-              value={editingQuantity != undefined ? editingQuantity : quantity}
-              onFocus={() => setEditingQuantity(quantity)}
-              onChange={handleQuantityChange}
-              onBlur={handleQuantityBlur}
-            />
+            <div className="flex items-center justify-center h-8 w-16 rounded-none border-y border-x-0">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                className="w-full text-center bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                value={editingQuantity !== undefined ? editingQuantity : quantity}
+                onFocus={() => setEditingQuantity(quantity)}
+                onChange={handleQuantityChange}
+                onBlur={handleQuantityBlur}
+              />
+            </div>
             <Button
               id={`increment-quantity`}
               disabled={quantity >= currentVariant.max}
@@ -710,7 +712,7 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
               className="size-8 shrink-0 rounded-l-none"
               onClick={() => incQuantity()}
             >
-              <PlusIcon className="size-3" aria-hidden="true" />
+              <PlusIcon className="size-3 text-highlight" aria-hidden="true" />
             </Button>
           </div>
         </div>

@@ -11,13 +11,7 @@ import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-} from '@/components/ui/pagination'
+import { CustomPagination } from '@/components/ui/custom-pagination'
 import { env } from '@/config'
 import { cn } from '@/lib/utils'
 import { Category, Product } from '@/payload-types'
@@ -25,7 +19,7 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { Routes } from '@/utilities/routes'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { Loader2, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
 
@@ -349,105 +343,13 @@ const PageClient = ({
                 ))}
               </div>
 
-              {data.totalPages > 1 && (
-                <div className="flex justify-center mt-8">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <Link href={getPaginationUrl(1)} passHref>
-                          <PaginationLink
-                            isActive={currentPage === 1}
-                            onClick={(e) => {
-                              if (currentPage !== 1 && !isPending) {
-                                e.preventDefault()
-                                handlePageChange(1)
-                              }
-                            }}
-                            aria-disabled={isPending}
-                          >
-                            1
-                          </PaginationLink>
-                        </Link>
-                      </PaginationItem>
-
-                      {currentPage > 3 && <PaginationEllipsis />}
-
-                      {currentPage > 2 && (
-                        <PaginationItem>
-                          <Link href={getPaginationUrl(currentPage - 1)} passHref>
-                            <PaginationLink
-                              onClick={(e) => {
-                                if (!isPending) {
-                                  e.preventDefault()
-                                  handlePageChange(currentPage - 1)
-                                }
-                              }}
-                              aria-disabled={isPending}
-                            >
-                              {currentPage - 1}
-                            </PaginationLink>
-                          </Link>
-                        </PaginationItem>
-                      )}
-
-                      {currentPage !== 1 && currentPage !== data.totalPages && (
-                        <PaginationItem>
-                          <Link href={getPaginationUrl(currentPage)} passHref>
-                            <PaginationLink isActive>{currentPage}</PaginationLink>
-                          </Link>
-                        </PaginationItem>
-                      )}
-
-                      {currentPage < data.totalPages - 1 && (
-                        <PaginationItem>
-                          <Link href={getPaginationUrl(currentPage + 1)} passHref>
-                            <PaginationLink
-                              onClick={(e) => {
-                                if (!isPending) {
-                                  e.preventDefault()
-                                  handlePageChange(currentPage + 1)
-                                }
-                              }}
-                              aria-disabled={isPending}
-                            >
-                              {currentPage + 1}
-                            </PaginationLink>
-                          </Link>
-                        </PaginationItem>
-                      )}
-
-                      {currentPage < data.totalPages - 2 && <PaginationEllipsis />}
-
-                      {data.totalPages > 1 && (
-                        <PaginationItem>
-                          <Link href={getPaginationUrl(data.totalPages)} passHref>
-                            <PaginationLink
-                              isActive={currentPage === data.totalPages}
-                              onClick={(e) => {
-                                if (currentPage !== data.totalPages && !isPending) {
-                                  e.preventDefault()
-                                  handlePageChange(data.totalPages)
-                                }
-                              }}
-                              aria-disabled={isPending}
-                            >
-                              {data.totalPages}
-                            </PaginationLink>
-                          </Link>
-                        </PaginationItem>
-                      )}
-
-                      {isPending && (
-                        <PaginationItem>
-                          <div className="flex items-center justify-center ml-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        </PaginationItem>
-                      )}
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
+              <CustomPagination
+                currentPage={currentPage}
+                totalPages={data.totalPages}
+                isPending={isPending}
+                handlePageChange={handlePageChange}
+                getPaginationUrl={getPaginationUrl}
+              />
             </>
           ) : (
             <div className="text-center py-12">

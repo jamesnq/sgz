@@ -1,12 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import {
-  OrderCardSkeleton,
-  PageHeaderSkeleton,
-  PageSkeleton,
-  PaginationSkeleton,
-} from '@/components/skeletons'
+import { OrderCardSkeleton, PageHeaderSkeleton, PageSkeleton } from '@/components/skeletons'
 import { CardContent } from '@/components/ui/card'
 import { ProductVariant } from '@/payload-types'
 import { headers } from 'next/headers'
@@ -37,7 +32,7 @@ function OrdersPageSkeleton() {
             ))}
         </div>
       </CardContent>
-      <PaginationSkeleton />
+      {/* <PaginationSkeleton /> */}
     </PageSkeleton>
   )
 }

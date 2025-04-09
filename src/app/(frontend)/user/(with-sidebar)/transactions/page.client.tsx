@@ -1,5 +1,4 @@
 'use client'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,11 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { CustomPagination } from '@/components/ui/custom-pagination'
 import { Transaction } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatPrice } from '@/utilities/formatPrice'
 import { useDebounce } from '@/utilities/useDebounce'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
@@ -100,6 +100,22 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
     }
   }, [debouncedSearch, page, router, search])
 
+  // Helper function to create pagination URLs
+  const getPaginationUrl = (pageNum: number) => {
+    const params = new URLSearchParams({
+      q: debouncedSearch,
+      page: pageNum.toString(),
+    }).toString()
+    return `/user/transactions${params ? `?${params}` : ''}`
+  }
+
+  // Handle page change
+  const handlePageChange = (pageNum: number) => {
+    startTransition(() => {
+      setPage(pageNum)
+    })
+  }
+
   return (
     <Card className="max-md:border-0">
       <CardHeader className="max-md:p-1">
@@ -165,41 +181,15 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
         )}
       </CardContent>
       <CardFooter>
-        <div className="flex justify-end w-full">
+        <div className="flex justify-center w-full">
           {data.totalPages > 0 && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant={'ghost'}
-                size={'icon'}
-                onClick={() => data.prevPage && setPage(data.prevPage)}
-                disabled={!data.hasPrevPage || isPending}
-              >
-                <ChevronLeft />
-              </Button>
-              {data.totalPages &&
-                Array(data.totalPages)
-                  .fill(0)
-                  .map((_, i) => i + 1)
-                  .map((p) => (
-                    <Button
-                      key={p}
-                      variant={p === page ? 'default' : 'outline'}
-                      size={'icon'}
-                      onClick={() => setPage(p)}
-                      disabled={isPending}
-                    >
-                      {p}
-                    </Button>
-                  ))}
-              <Button
-                variant={'ghost'}
-                size={'icon'}
-                onClick={() => data.nextPage && setPage(data.nextPage)}
-                disabled={!data.hasNextPage || isPending}
-              >
-                <ChevronRight />
-              </Button>
-            </div>
+            <CustomPagination
+              currentPage={page}
+              totalPages={data.totalPages}
+              isPending={isPending}
+              handlePageChange={handlePageChange}
+              getPaginationUrl={getPaginationUrl}
+            />
           )}
         </div>
       </CardFooter>

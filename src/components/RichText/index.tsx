@@ -94,7 +94,7 @@ export default function RichText(props: Props) {
         // @ts-expect-error ts mismatch
         return child.children.map((text) => text.text).join('')
       })
-      .join('')
+      .join('\n')
     return (
       <div
         className={cn(

@@ -4,7 +4,6 @@ import { getPayload } from 'payload'
 import {
   PageHeaderSkeleton,
   PageSkeleton,
-  PaginationSkeleton,
   TransactionRowSkeleton,
   TransactionTableHeaderSkeleton,
 } from '@/components/skeletons'
@@ -39,7 +38,7 @@ function TransactionsTableSkeleton() {
           </div>
         </div>
       </CardContent>
-      <PaginationSkeleton />
+      {/* <PaginationSkeleton /> */}
     </PageSkeleton>
   )
 }
