@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 import { unstable_cache } from 'next/cache'
+import { getPayload } from 'payload'
 
-import { ProductVariant } from '@/payload-types'
+import { Product, ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import Notification from '../../notification'
 import PageClient from './page.client'
@@ -124,10 +124,14 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
 
         // Collect all image IDs from variants
         const imageIds = Array.from(
-          new Set(
-            product.variants?.map((variant) => (variant as ProductVariant).image).filter(Boolean) ||
-              [],
-          ),
+          new Set([
+            ...(product.variants
+              ?.map((variant) => (variant as ProductVariant).image)
+              .filter(Boolean) || []),
+            ...(product.relatedProducts
+              ?.map((relatedProduct) => (relatedProduct as Product).image)
+              .filter(Boolean) || []),
+          ]),
         )
 
         // Fetch images if needed
@@ -149,6 +153,14 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
               (image) => image.id === (variant as ProductVariant).image,
             )
           })
+          if (product.relatedProducts) {
+            product.relatedProducts.forEach((relatedProduct) => {
+              // @ts-expect-error ignore
+              relatedProduct.image = images.find(
+                (image) => image.id === (relatedProduct as Product).image,
+              )
+            })
+          }
         }
 
         // Collect all form IDs from variants

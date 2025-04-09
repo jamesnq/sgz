@@ -43,17 +43,19 @@ import {
 } from '@/components/ui/select'
 import { env } from '@/config'
 import { useAuth } from '@/providers/Auth'
+import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 import { workingTime } from '@/utilities/constants-react'
 import { formatPrice } from '@/utilities/formatPrice'
+import { formatSold } from '@/utilities/formatSold'
 import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, useQueryState } from 'nuqs'
-import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 
 type ProductPageContextType = {
   product: Product
@@ -729,6 +731,52 @@ function Checkout({ className }: { className?: string }) {
   return <MemoizedCheckout className={className} />
 }
 
+function ProductCard({ product }: { product: Product }) {
+  return (
+    <Link href={Routes.product(product.slug!)} className="flex items-center">
+      <div className="relative h-[64px] w-[48px] overflow-hidden rounded-md">
+        <Media
+          resource={product.image}
+          imgClassName="absolute duration-300 h-[64px] w-[48px] ease-in-out scale-100 group-hover:scale-110 object-cover"
+        />
+      </div>
+      <div className="flex flex-1 items-start gap-2 p-2">
+        <div className="flex h-full flex-col justify-between">
+          <div className="font-bold text-sm">{product.name}</div>
+          <div className="text-xs text-muted-foreground">
+            {product.minPrice === product.maxPrice
+              ? formatPrice(product.minPrice)
+              : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
+          </div>
+          {product.sold > 0 && (
+            <div className="text-xs text-muted-foreground">Đã bán {formatSold(product.sold)}</div>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function ProductRelated({ className }: { className?: string }) {
+  const product = useProductPageContext((state) => state.product)
+  const relatedProducts = useMemo(() => {
+    if (!product.relatedProducts) return []
+    if (product.relatedProducts.length === 0) return []
+    if (typeof product.relatedProducts[0] !== 'object') return []
+    return product.relatedProducts as Product[]
+  }, [product])
+  return (
+    <Card className={cn(relatedProducts.length <= 0 ? 'hidden' : 'block', className)}>
+      <CardHeader className="font-bold pb-2">Sản phẩm liên quan</CardHeader>
+      <CardContent>
+        {relatedProducts.map((relatedProduct) => (
+          <ProductCard key={relatedProduct.id} product={relatedProduct} />
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
   const product = useProductPageContext((state) => state.product)
@@ -778,6 +826,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
               </CardContent>
             </Card>
           )}
+          <ProductRelated className="md:hidden" />
         </div>
         <div className="flex-1 max-md:order-1">
           <ProductVariantsDrawer
@@ -816,6 +865,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
             ) : (
               <Checkout></Checkout>
             )}
+            <ProductRelated className="hidden md:block" />
           </div>
         </div>
       </div>
