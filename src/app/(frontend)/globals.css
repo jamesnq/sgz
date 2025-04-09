@@ -132,6 +132,12 @@ html[data-theme='light'] {
   outline: 1px solid hsl(var(--primary)) !important;
   outline-offset: 1px;
 }
+
+#woot-widget-bubble-icon {
+  width: clamp(12px, 2vw, 20px) !important;
+  height: clamp(12px, 2vw, 20px) !important;
+}
+
 #woot-widget-bubble-icon > path {
   fill: hsl(var(--primary)) !important;
 }
@@ -143,6 +149,13 @@ html[data-theme='light'] {
 
 #woot-widget--expanded__text {
   color: hsl(var(--primary)) !important;
+}
+
+#woot-widget--expanded__text {
+  font-size: clamp(12px, 2vw, 15px) !important;
+}
+#cw-bubble-holder > button.woot-widget-bubble.woot-elements--right.woot-widget--expanded {
+  height: clamp(28px, 2vw, 48px) !important;
 }
 
 /* Hide Novu mark */

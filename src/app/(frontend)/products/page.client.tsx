@@ -314,7 +314,7 @@ const PageClient = ({
   }
 
   return (
-    <Shell>
+    <Shell className="mb-10">
       <div className="grid container items-center pb-4 max-w-6xl gap-0">
         <div className="flex max-w-[61.25rem] flex-col md:py-6 md:pb-4 lg:py-12 lg:pb-10 mx-auto items-center gap-2 text-center">
           <div className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
