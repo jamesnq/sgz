@@ -13,15 +13,15 @@ import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
 import {
+  sendOrderCompletedStaffNotification,
   sendOrderUpdateRequiredNotification,
   sendOrderUserUpdatedStaffNotification,
-  sendOrderCompletedStaffNotification,
 } from '@/services/novu.service'
+import { managerGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
-import { managerGroup } from '@/utilities/constants'
 
 class ConflictsError extends APIError {
   constructor(message: string) {
@@ -68,7 +68,12 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
       await sendOrderUserUpdatedStaffNotification(doc.id)
     }
     // Send notification to Discord staff when order is completed
-    if (doc.status === 'COMPLETED' && previousDoc.status !== 'COMPLETED') {
+    if (
+      doc.status === 'COMPLETED' &&
+      previousDoc.status !== 'COMPLETED' &&
+      // handle duplicate with auto completed
+      previousDoc.status !== 'IN_QUEUE'
+    ) {
       await sendOrderCompletedStaffNotification(doc)
     }
   }
