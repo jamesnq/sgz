@@ -1,10 +1,13 @@
 import { env } from '@/config'
 import { transactions, users } from '@/payload-generated-schema'
+import { formatPrice } from '@/utilities/formatPrice'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import PayOS from '@payos/node'
 import { CheckoutResponseDataType } from '@payos/node/lib/type'
+import { after } from 'next/server'
 import { getPayload } from 'payload'
+import { discordWebhook } from './novu.service'
 
 import { z } from 'zod'
 
@@ -99,12 +102,12 @@ export class PaymentService {
       depth: 0,
     })
 
-    await payload.db.drizzle.transaction(async (tx) => {
+    const { user } = await payload.db.drizzle.transaction(async (tx) => {
       const [user] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${paymentData.amount}` })
         .where(eq(users.id, recharge.user as number))
-        .returning({ balance: users.balance })
+        .returning({ balance: users.balance, email: users.email })
       if (!user || user.balance === null) throw new Error('User not found')
 
       const _transaction = await tx.insert(transactions).values({
@@ -112,6 +115,15 @@ export class PaymentService {
         user: recharge.user as number,
         description: `Nạp tiền qua ngân hàng mã nạp #${recharge.orderCode}`,
         balance: user.balance,
+      })
+      return { user }
+    })
+    after(async () => {
+      await discordWebhook({
+        subject: `Nạp Tiền Qua Ngân Hàng`,
+        message: `${user.email} \nSố tiền: **${formatPrice(paymentData.amount)}** \nMã nạp: **#${recharge.orderCode}**`,
+        color: '#00FF00',
+        channel: 'activities',
       })
     })
 

@@ -4,6 +4,9 @@ import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import CryptoJS from 'crypto-js'
 import { getPayload } from 'payload'
+import { after } from 'next/server'
+import { discordWebhook } from './novu.service'
+import { formatPrice } from '@/utilities/formatPrice'
 
 /**
  * Enum for telco providers
@@ -484,6 +487,17 @@ export class DoiThe {
             user: recharge.user as number,
             description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT ? 'phạt 50% sai mệnh giá' : ''}`,
             balance: user.balance,
+          })
+        })
+
+        after(async () => {
+          await discordWebhook({
+            subject: `Nạp Thẻ ${callbackData.telco}`,
+            message: `Người dùng: ID ${recharge.user} \nSố tiền: **${formatPrice(amount)}** \nSerial: **${callbackData.serial}** ${
+              callbackData.status == CardStatus.WRONG_AMOUNT ? '\n**Phạt 50% sai mệnh giá**' : ''
+            }`,
+            color: '#00FF00',
+            channel: 'activities',
           })
         })
       }

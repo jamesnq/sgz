@@ -13,14 +13,16 @@ import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
 import {
+  discordWebhook,
   sendOrderCompletedStaffNotification,
   sendOrderUpdateRequiredNotification,
   sendOrderUserUpdatedStaffNotification,
 } from '@/services/novu.service'
 import { managerGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
-import { sql } from '@payloadcms/db-postgres'
-import { eq } from '@payloadcms/db-postgres/drizzle'
+import { formatPrice } from '@/utilities/formatPrice'
+import { eq, sql } from '@payloadcms/db-postgres/drizzle'
+import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 class ConflictsError extends APIError {
@@ -96,12 +98,12 @@ const refundHook: FieldHook<Order> = async ({
     if (!orderBy) throw new ConflictsError('Không tìm thấy người dùng')
     if (!data.totalPrice) throw new ConflictsError('Không tìm thấy giá trị đơn hàng')
 
-    await payload.db.drizzle.transaction(async (tx) => {
+    const { newUser } = await payload.db.drizzle.transaction(async (tx) => {
       const [newUser] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
         .where(eq(users.id, orderBy as number))
-        .returning({ balance: users.balance })
+        .returning({ balance: users.balance, email: users.email })
       if (!newUser || !newUser.balance) throw new ConflictsError('Không tìm thấy người dùng')
 
       await tx.insert(transactions).values({
@@ -110,7 +112,15 @@ const refundHook: FieldHook<Order> = async ({
         description: `Hoàn trả đơn hàng #${data.id}`,
         balance: newUser.balance,
       })
-      // TODO notify refund
+      return { newUser }
+    })
+    after(async () => {
+      await discordWebhook({
+        subject: `Hoàn Trả Đơn Hàng`,
+        message: `${newUser.email} \nĐơn hàng: **#${data.id}** \nSố tiền: **${formatPrice(data.totalPrice as number)}**`,
+        color: '#FF0000',
+        channel: 'activities',
+      })
     })
   }
 

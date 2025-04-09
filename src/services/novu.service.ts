@@ -7,7 +7,11 @@ import { Routes } from '@/utilities/routes'
 import { Novu } from '@novu/api'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
-
+const webhookChannels = {
+  admin: { webhook: env.DISCORD_ADMIN_WEBHOOK_URL, mentions: [env.DISCORD_ADMIN_ROLE_ID] },
+  staff: { webhook: env.DISCORD_STAFF_WEBHOOK_URL, mentions: [env.DISCORD_STAFF_ROLE_ID] },
+  activities: { webhook: env.DISCORD_ACTIVITIES_WEBHOOK_URL, mentions: [] },
+} as const
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
 export async function discordWebhook({
@@ -16,29 +20,27 @@ export async function discordWebhook({
   redirect,
   color,
   channel,
-  mention = true,
+  mention: isMention = true,
 }: {
   subject: string
   message?: string
   redirect?: string
   color?: string | null
-  channel?: 'staff' | 'admin'
+  channel?: keyof typeof webhookChannels
   mention?: boolean
 }) {
   if (!channel) {
     channel = 'admin'
   }
-  return fetch(
-    channel === 'staff' ? env.DISCORD_STAFF_WEBHOOK_URL : env.DISCORD_ADMIN_WEBHOOK_URL,
-    {
+  try {
+    const channelConfig = webhookChannels[channel]
+    return fetch(channelConfig.webhook, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: mention
-          ? `<@&${channel === 'staff' ? env.DISCORD_STAFF_ROLE_ID : env.DISCORD_ADMIN_ROLE_ID}>`
-          : '',
+        content: isMention ? channelConfig.mentions.map((id) => `<@&${id}>`).join(' ') : '',
         attachments: [],
         embeds: [
           {
@@ -53,8 +55,8 @@ export async function discordWebhook({
           },
         ],
       }),
-    },
-  )
+    })
+  } catch {}
 }
 // Initialize Novu client
 export const novu = new Novu({ secretKey: env.NOVU_SECRET_KEY })

@@ -29,6 +29,7 @@ declare global {
       CHATWOOT_HMAC_TOKEN: string
       DISCORD_ADMIN_WEBHOOK_URL: string
       DISCORD_STAFF_WEBHOOK_URL: string
+      DISCORD_ACTIVITIES_WEBHOOK_URL: string
       DISCORD_ADMIN_ROLE_ID: string
       DISCORD_STAFF_ROLE_ID: string
       SKIP_ENV_VALIDATION: string | undefined

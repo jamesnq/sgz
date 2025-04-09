@@ -1,9 +1,10 @@
 'use server'
 import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
-import { sendNewOrderStaffNotification } from '@/services/novu.service'
+import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
+import { formatPrice } from '@/utilities/formatPrice'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
@@ -119,6 +120,12 @@ export const checkoutAction = authActionClient
           .set({ sold: sql`${product_variants.sold} + ${quantity}` })
           .where(eq(product_variants.id, pv.id)),
         // sendNewOrderNotification(order.id, order.orderedBy.toString(), new Date(order.createdAt)),
+        discordWebhook({
+          subject: `Thanh Toán Đơn Hàng`,
+          message: `Người dùng: ${user.email} \nĐơn hàng: **#${order.id}** \nSản phẩm: **${pv.name}** x${quantity} \nSố tiền: **${formatPrice(totalPrice)}**`,
+          color: '#00FF00',
+          channel: 'activities',
+        }),
       ])
     })
     const result = await autoProcessOrder(order.id)
