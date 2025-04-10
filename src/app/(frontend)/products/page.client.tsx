@@ -14,6 +14,7 @@ import { CustomPagination } from '@/components/ui/custom-pagination'
 import { Input } from '@/components/ui/input'
 import { env } from '@/config'
 import { cn } from '@/lib/utils'
+import { getProductCardStyles } from '@/lib/product-card-styles'
 import { Category, Product } from '@/payload-types'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
@@ -25,32 +26,42 @@ import { PaginatedDocs } from 'payload'
 import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 
 const ProductCard = ({ product }: { product: Product }) => {
+  const styles = getProductCardStyles()
+
   return (
-    <div className="relative h-full w-full group pt-1 pb-2 px-0.5">
+    <div className={styles.wrapper}>
       <Link
-        className="block h-full w-full cursor-pointer transition-all duration-300"
+        className={cn('block h-full w-full cursor-pointer', styles.link)}
         href={product.slug ? Routes.product(product.slug) : '#'}
       >
-        <Card className="w-full h-[131px] overflow-hidden !p-0 transition-all duration-300 hover:shadow-md border border-transparent group-hover:border-secondary/20 group-hover:-translate-y-1 transform-gpu">
+        <Card className={cn('w-full h-[131px] !p-0', styles.card)}>
           <div className="w-full">
             <div className="text-[14px] flex items-start p-0">
-              <div className="relative h-[131px] w-[98px] overflow-hidden flex items-center justify-center">
+              <div
+                className={cn(
+                  'h-[131px] w-[98px] flex items-center justify-center',
+                  styles.mediaContainer,
+                )}
+              >
                 <Media
                   resource={product.image}
-                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                  className={cn('w-full h-full', styles.media)}
                   imgClassName="absolute inset-0 h-[131px] w-[98px] object-center object-contain"
                 />
               </div>
               <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
                 <div>
                   <div className="flex items-center gap-1 justify-between">
-                    <p className="line-clamp-1 h-auto text-[14px] font-bold leading-[17px] transition-colors duration-300 group-hover:text-primary">
+                    <p
+                      className={cn(
+                        'line-clamp-1 h-auto text-[14px] font-bold leading-[17px]',
+                        styles.name,
+                      )}
+                    >
                       {product.name}
                     </p>
                     {product.maxDiscount > 0 && (
-                      <Badge className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                        -{product.maxDiscount.toFixed(0)}%
-                      </Badge>
+                      <Badge className={styles.badge}>-{product.maxDiscount.toFixed(0)}%</Badge>
                     )}
                   </div>
                   {hasText(product.description) && (
@@ -64,7 +75,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 </div>
                 <div className="flex w-full items-center justify-between">
                   <div className="flex">
-                    <span className="leading-[13px] text-muted-foreground transition-colors duration-300 group-hover:text-primary/80">
+                    <span className={cn('leading-[13px] text-muted-foreground', styles.price)}>
                       {product.minPrice === product.maxPrice
                         ? formatPrice(product.minPrice)
                         : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
@@ -111,14 +122,14 @@ const Sidebar = ({
   )
 
   return (
-    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-6 mb-8 lg:mb-0">
+    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0">
       <div className="sticky top-24">
         <div className="relative mb-6">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Tìm kiếm sản phẩm..."
-            className="pl-8"
+            className="pl-8 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu border-border hover:border"
             value={searchTerm}
             onChange={handleSearchChange}
           />
@@ -144,18 +155,18 @@ const Sidebar = ({
               <Input
                 type="search"
                 placeholder="Tìm kiếm danh mục..."
-                className="pl-8"
+                className="pl-8 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu border-border hover:border"
                 value={categorySearchTerm}
                 onChange={(e) => setCategorySearchTerm(e.target.value)}
               />
             </div>
 
             {selectedCategoryIds.length > 0 && (
-              <div className="mb-3">
-                <p className="text-xs text-muted-foreground mb-2">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">
                   Đã chọn {selectedCategoryIds.length} danh mục
                 </p>
-                <div className="flex flex-wrap gap-1 mb-3">
+                <div className="flex flex-wrap gap-1 mb-1">
                   {selectedCategoryIds.map((id) => {
                     const category = categories.find((c) => c.id.toString() === id)
                     if (!category) return null
@@ -164,7 +175,7 @@ const Sidebar = ({
                       <Badge
                         key={`selected-${id}`}
                         variant="default"
-                        className="pr-1 flex items-center gap-1"
+                        className="pr-1 flex items-center gap-1 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu"
                       >
                         {category.title}
                         <button
@@ -181,8 +192,8 @@ const Sidebar = ({
               </div>
             )}
 
-            <div className="max-h-[300px] overflow-y-auto pr-2">
-              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
+            <div className="mt-2 max-h-[300px] overflow-y-auto pr-2">
+              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2 mt-2">
                 {filteredCategories.length > 0 ? (
                   filteredCategories.map((category) => {
                     const isSelected = selectedCategoryIds.includes(category.id.toString())
@@ -191,9 +202,8 @@ const Sidebar = ({
                         key={category.id}
                         variant={isSelected ? 'default' : 'outline'}
                         className={cn(
-                          'cursor-pointer transition-colors lg:w-full lg:justify-start',
-                          isPending && 'opacity-70 pointer-events-none',
-                          !isSelected && 'hover:bg-secondary/80',
+                          'cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu',
+                          isSelected && 'bg-primary text-primary-foreground',
                         )}
                         onClick={() => handleCategoryToggle(category.id.toString())}
                       >
@@ -328,7 +338,8 @@ const PageClient = ({
           <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
             Dịch vụ{' '}
             <AnimatedWordCycle
-              words={['nạp game', 'nạp ứng dụng', 'cung cấp tài khoản']}
+              className="text-highlight"
+              words={['nạp ứng dụng', 'nạp game', 'cung cấp tài khoản']}
               interval={3000}
             />{' '}
             giá rẻ
@@ -352,7 +363,7 @@ const PageClient = ({
         <div className="flex-1">
           {data.docs.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
                 {data.docs.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

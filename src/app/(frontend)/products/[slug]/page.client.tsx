@@ -49,6 +49,7 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
+import { getProductCardStyles } from '@/lib/product-card-styles'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
@@ -232,40 +233,40 @@ const MemoizedProductVariantCard = React.memo(
     setCurrentVariant: (variant: ProductVariant) => void
     productImage: any
   }) {
+    const styles = getProductCardStyles()
     const discountPercentage = useMemo(
       () => calculateDiscountPercentage(productVariant.originalPrice, productVariant.price),
       [productVariant.originalPrice, productVariant.price],
     )
 
     return (
-      <div className="relative h-full w-full group pt-1 pb-2 px-0.5">
+      <div className={styles.wrapper}>
         <Card
           onClick={() => {
             setCurrentVariant(productVariant)
           }}
           className={cn(
-            'flex transition-all h-[96px] duration-300 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent hover:shadow-md group-hover:-translate-y-1 transform-gpu',
+            'flex h-[96px] text-sm cursor-pointer',
+            styles.card,
             className,
             currentVariantId &&
               currentVariantId === productVariant.id &&
-              'bg-secondary border-primary',
+              'bg-secondary border-primary ',
           )}
         >
-          <div className="relative h-[96px] w-[72px] overflow-hidden">
+          <div className={cn('h-[96px] w-[72px]', styles.mediaContainer)}>
             <Media
               resource={productVariant.image || productImage}
-              imgClassName="absolute duration-300 h-[96px] w-[72px] ease-in-out object-cover transition-transform group-hover:scale-110"
+              imgClassName={cn('absolute h-[96px] w-[72px] ease-in-out object-cover', styles.media)}
             />
           </div>
           <div className="flex flex-[3] items-start gap-2 p-4">
             <div className="flex h-full flex-1 flex-col justify-between">
-              <div className="transition-colors duration-300 group-hover:text-primary">
-                {productVariant.name}
-              </div>
+              <div className={styles.name}>{productVariant.name}</div>
               <DisplayProductStatus status={productVariant.status} />
             </div>
             <div className="flex flex-col items-end gap-1">
-              <div className="font-bold transition-colors duration-300 group-hover:text-primary/80">
+              <div className={cn('font-bold', styles.price)}>
                 {formatPrice(productVariant.price, 'VND')}
               </div>
               {discountPercentage > 0 && (
@@ -273,9 +274,7 @@ const MemoizedProductVariantCard = React.memo(
                   <div className="text-gray-500 line-through">
                     {formatPrice(productVariant.originalPrice, 'VND')}
                   </div>
-                  <Badge className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                    -{discountPercentage.toFixed(0)}%
-                  </Badge>
+                  <Badge className={styles.badge}>-{discountPercentage.toFixed(0)}%</Badge>
                 </>
               )}
             </div>
@@ -503,7 +502,7 @@ function ProductVariantsDrawer({
               statuses={statuses}
               className="p-4 pt-0"
             />
-            <div className="no-scrollbar overflow-y-auto px-4">
+            <div className="no-scrollbar overflow-y-auto px-4 pt-1">
               {filteredVariants.length > 0 ? (
                 filteredVariants.map((x) => (
                   <ProductVariantCard key={x.id} productVariant={x} className="h-16 mb-2" />
@@ -551,7 +550,7 @@ function FilterProductVariants({ variants }: { variants: ProductVariant[] }) {
         />
       </CardHeader>
       <CardContent>
-        <div className="grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-2">
+        <div className="grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-x-1 gap-y-2">
           {filteredVariants.length > 0 ? (
             filteredVariants.map((variant) => (
               <ProductVariantCard key={variant.id} productVariant={variant} />
@@ -744,32 +743,32 @@ function Checkout({ className }: { className?: string }) {
 }
 
 function ProductCard({ product }: { product: Product }) {
+  const styles = getProductCardStyles()
+
   return (
-    <div className="relative h-full w-full group pt-1 pb-2 px-0.5 flex flex-col">
+    <div className={styles.wrapper}>
       <Link
         href={Routes.product(product.slug!)}
-        className="flex p-1 items-center border border-transparent hover:border-primary rounded-md transition-all duration-300"
+        className={cn('flex p-1 items-center rounded-md', styles.link)}
       >
-        <Card className="flex w-full items-center border border-transparent transition-all duration-300 hover:shadow-md group-hover:-translate-y-1 transform-gpu">
-          <div className="relative h-[64px] w-[48px] overflow-hidden rounded-md">
+        <Card className={cn('flex w-full items-center', styles.card)}>
+          <div className={cn('h-[64px] w-[48px] rounded-md', styles.mediaContainer)}>
             <Media
               resource={product.image}
-              imgClassName="absolute duration-300 h-[64px] w-[48px] ease-in-out object-cover transition-transform group-hover:scale-110"
+              imgClassName={cn('absolute h-[64px] w-[48px] ease-in-out object-cover', styles.media)}
             />
           </div>
           <div className="flex flex-1 items-start gap-2 p-2">
             <div className="flex h-full flex-col justify-between">
-              <div className="font-bold text-sm transition-colors duration-300 group-hover:text-primary">
-                {product.name}
-              </div>
+              <div className={cn('font-bold text-sm', styles.name)}>{product.name}</div>
               <div className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground transition-colors duration-300 group-hover:text-primary/80">
+                <div className={cn('text-xs text-muted-foreground', styles.price)}>
                   {product.minPrice === product.maxPrice
                     ? formatPrice(product.minPrice)
                     : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
                 </div>
                 {product.maxDiscount > 0 && (
-                  <Badge className="text-xs px-1 py-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                  <Badge className={cn('text-xs px-1 py-0', styles.badge)}>
                     -{product.maxDiscount.toFixed(0)}%
                   </Badge>
                 )}
@@ -799,7 +798,7 @@ function ProductRelated({ className }: { className?: string }) {
   return (
     <Card className={cn(className)}>
       <CardHeader className="font-bold pb-2">Sản phẩm liên quan</CardHeader>
-      <CardContent className="gap-1">
+      <CardContent>
         {relatedProducts.map((relatedProduct) => (
           <ProductCard key={relatedProduct.id} product={relatedProduct} />
         ))}
