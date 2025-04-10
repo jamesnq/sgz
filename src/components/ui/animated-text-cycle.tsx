@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 interface AnimatedWordCycleProps {
   words: string[]
@@ -24,7 +24,7 @@ export default function AnimatedWordCycle({
       const elements = measureRef.current.children
       if (elements.length > currentIndex) {
         // Add a small buffer (10px) to prevent text wrapping
-        // @ts-expect-error
+        // @ts-expect-error ignore
         const newWidth = elements[currentIndex].getBoundingClientRect().width
         setWidth(`${newWidth}px`)
       }
@@ -66,6 +66,9 @@ export default function AnimatedWordCycle({
     },
   }
 
+  // Memoize the current word to prevent unnecessary re-renders and animations
+  const currentWord = useMemo(() => words[currentIndex] || '', [words, currentIndex])
+
   return (
     <>
       {/* Hidden measurement div with all words rendered */}
@@ -97,7 +100,8 @@ export default function AnimatedWordCycle({
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
-            key={currentIndex}
+            // Use the word content as key to prevent animation when identical words appear
+            key={currentWord}
             className={`inline-block font-bold ${className}`}
             variants={containerVariants}
             initial="hidden"
@@ -105,7 +109,7 @@ export default function AnimatedWordCycle({
             exit="exit"
             style={{ whiteSpace: 'nowrap' }}
           >
-            {words[currentIndex]}
+            {currentWord}
           </motion.span>
         </AnimatePresence>
       </motion.span>

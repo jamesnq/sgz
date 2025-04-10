@@ -8,13 +8,14 @@ import { useCallback, useEffect, useState, useTransition } from 'react'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
+import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { CustomPagination } from '@/components/ui/custom-pagination'
 import { Input } from '@/components/ui/input'
 import { env } from '@/config'
-import { cn } from '@/lib/utils'
 import { getProductCardStyles } from '@/lib/product-card-styles'
+import { cn } from '@/lib/utils'
 import { Category, Product } from '@/payload-types'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
@@ -23,7 +24,6 @@ import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
-import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 
 const ProductCard = ({ product }: { product: Product }) => {
   const styles = getProductCardStyles()
@@ -104,7 +104,6 @@ const Sidebar = ({
   selectedCategoryIds,
   handleCategoryToggle,
   handleClearCategories,
-  isPending,
 }: {
   searchTerm: string
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -175,16 +174,10 @@ const Sidebar = ({
                       <Badge
                         key={`selected-${id}`}
                         variant="default"
-                        className="pr-1 flex items-center gap-1 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu"
+                        className="cursor-pointer flex items-center gap-1 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu"
+                        onClick={() => handleCategoryToggle(id)}
                       >
                         {category.title}
-                        <button
-                          className="hover:bg-primary-foreground/20 rounded-full p-0.5"
-                          onClick={() => handleCategoryToggle(id)}
-                          disabled={isPending}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
                       </Badge>
                     )
                   })}
@@ -339,7 +332,12 @@ const PageClient = ({
             Dịch vụ{' '}
             <AnimatedWordCycle
               className="text-highlight"
-              words={['nạp ứng dụng', 'nạp game', 'cung cấp tài khoản']}
+              words={['nạp', 'nạp', '']}
+              interval={3000}
+            />{' '}
+            <AnimatedWordCycle
+              className="text-highlight"
+              words={['ứng dụng', 'game', 'cung cấp tài khoản']}
               interval={3000}
             />{' '}
             giá rẻ
