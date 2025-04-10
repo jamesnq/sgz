@@ -137,6 +137,7 @@ export const Products: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           required: true,
+          admin: { readOnly: true },
           access: {
             read: hasRole(['admin']),
             update: hasRole(['admin']),
@@ -147,6 +148,7 @@ export const Products: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           required: true,
+          admin: { readOnly: true },
           access: {
             read: hasRole(['admin']),
             update: hasRole(['admin']),
@@ -157,6 +159,7 @@ export const Products: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           required: true,
+          admin: { readOnly: true },
           access: {
             read: hasRole(['admin']),
             update: hasRole(['admin']),
