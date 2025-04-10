@@ -22,6 +22,7 @@ import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
+import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 
 const ProductCard = ({ product }: { product: Product }) => {
   return (
@@ -319,7 +320,12 @@ const PageClient = ({
             {env.NEXT_PUBLIC_SITE_NAME}
           </div>
           <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
-            Cung cấp dịch vụ nạp game và ứng dụng giá rẻ
+            Dịch vụ{' '}
+            <AnimatedWordCycle
+              words={['nạp game', 'nạp ứng dụng', 'cung cấp tài khoản']}
+              interval={3000}
+            />{' '}
+            giá rẻ
           </h1>
         </div>
       </div>

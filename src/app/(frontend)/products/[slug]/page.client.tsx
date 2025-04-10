@@ -750,10 +750,15 @@ function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-1 items-start gap-2 p-2">
         <div className="flex h-full flex-col justify-between">
           <div className="font-bold text-sm">{product.name}</div>
-          <div className="text-xs text-muted-foreground">
-            {product.minPrice === product.maxPrice
-              ? formatPrice(product.minPrice)
-              : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
+          <div className="flex items-center gap-2">
+            <div className="text-xs text-muted-foreground">
+              {product.minPrice === product.maxPrice
+                ? formatPrice(product.minPrice)
+                : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
+            </div>
+            {product.maxDiscount > 0 && (
+              <Badge className="text-xs px-1 py-0">-{product.maxDiscount.toFixed(0)}%</Badge>
+            )}
           </div>
           {product.sold > 0 && (
             <div className="text-xs text-muted-foreground">Đã bán {formatSold(product.sold)}</div>
