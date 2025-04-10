@@ -54,12 +54,12 @@ export const Products: CollectionConfig = {
 
           prices = variants.map((v) => v.price)
           discounts = variants
-            .filter((v) => v.status === 'STOPPED')
+            .filter((v) => v.status !== 'STOPPED')
             .map((v) => calculateDiscountPercentage(v.originalPrice, v.price))
         } else {
           prices = data.variants.map((v: any) => v.price)
           discounts = data.variants
-            .filter((v: any) => v.status === 'STOPPED')
+            .filter((v: any) => v.status !== 'STOPPED')
             .map((v: any) => calculateDiscountPercentage(v.originalPrice, v.price))
         }
         const minPrice = Math.min(...prices)
