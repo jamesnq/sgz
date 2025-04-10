@@ -238,42 +238,50 @@ const MemoizedProductVariantCard = React.memo(
     )
 
     return (
-      <Card
-        onClick={() => {
-          setCurrentVariant(productVariant)
-        }}
-        className={cn(
-          'flex transition-all h-[96px] duration-200 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent',
-          className,
-          currentVariantId &&
-            currentVariantId === productVariant.id &&
-            'bg-secondary border-primary',
-        )}
-      >
-        <div className="relative h-[96px] w-[72px] overflow-hidden">
-          <Media
-            resource={productVariant.image || productImage}
-            imgClassName="absolute duration-300 h-[96px] w-[72px] ease-in-out scale-100 group-hover:scale-110"
-          />
-        </div>
-        <div className="flex flex-[3] items-start gap-2 p-4">
-          <div className="flex h-full flex-1 flex-col justify-between">
-            <div className="">{productVariant.name}</div>
-            <DisplayProductStatus status={productVariant.status} />
+      <div className="relative h-full w-full group pt-1 pb-2 px-0.5">
+        <Card
+          onClick={() => {
+            setCurrentVariant(productVariant)
+          }}
+          className={cn(
+            'flex transition-all h-[96px] duration-300 overflow-hidden text-sm cursor-pointer hover:border-primary border-transparent hover:shadow-md group-hover:-translate-y-1 transform-gpu',
+            className,
+            currentVariantId &&
+              currentVariantId === productVariant.id &&
+              'bg-secondary border-primary',
+          )}
+        >
+          <div className="relative h-[96px] w-[72px] overflow-hidden">
+            <Media
+              resource={productVariant.image || productImage}
+              imgClassName="absolute duration-300 h-[96px] w-[72px] ease-in-out object-cover transition-transform group-hover:scale-110"
+            />
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <div className="font-bold">{formatPrice(productVariant.price, 'VND')}</div>
-            {discountPercentage > 0 && (
-              <>
-                <div className="text-gray-500 line-through">
-                  {formatPrice(productVariant.originalPrice, 'VND')}
-                </div>
-                <Badge>-{discountPercentage.toFixed(0)}%</Badge>
-              </>
-            )}
+          <div className="flex flex-[3] items-start gap-2 p-4">
+            <div className="flex h-full flex-1 flex-col justify-between">
+              <div className="transition-colors duration-300 group-hover:text-primary">
+                {productVariant.name}
+              </div>
+              <DisplayProductStatus status={productVariant.status} />
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="font-bold transition-colors duration-300 group-hover:text-primary/80">
+                {formatPrice(productVariant.price, 'VND')}
+              </div>
+              {discountPercentage > 0 && (
+                <>
+                  <div className="text-gray-500 line-through">
+                    {formatPrice(productVariant.originalPrice, 'VND')}
+                  </div>
+                  <Badge className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                    -{discountPercentage.toFixed(0)}%
+                  </Badge>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     )
   },
   (prevProps, nextProps) => {
@@ -737,35 +745,45 @@ function Checkout({ className }: { className?: string }) {
 
 function ProductCard({ product }: { product: Product }) {
   return (
-    <Link
-      href={Routes.product(product.slug!)}
-      className="flex p-1 items-center border border-transparent hover:border-primary rounded-md transition-all duration-200"
-    >
-      <div className="relative h-[64px] w-[48px] overflow-hidden rounded-md">
-        <Media
-          resource={product.image}
-          imgClassName="absolute duration-300 h-[64px] w-[48px] ease-in-out scale-100 group-hover:scale-110 object-cover"
-        />
-      </div>
-      <div className="flex flex-1 items-start gap-2 p-2">
-        <div className="flex h-full flex-col justify-between">
-          <div className="font-bold text-sm">{product.name}</div>
-          <div className="flex items-center gap-2">
-            <div className="text-xs text-muted-foreground">
-              {product.minPrice === product.maxPrice
-                ? formatPrice(product.minPrice)
-                : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
-            </div>
-            {product.maxDiscount > 0 && (
-              <Badge className="text-xs px-1 py-0">-{product.maxDiscount.toFixed(0)}%</Badge>
-            )}
+    <div className="relative h-full w-full group pt-1 pb-2 px-0.5 flex flex-col">
+      <Link
+        href={Routes.product(product.slug!)}
+        className="flex p-1 items-center border border-transparent hover:border-primary rounded-md transition-all duration-300"
+      >
+        <Card className="flex w-full items-center border border-transparent transition-all duration-300 hover:shadow-md group-hover:-translate-y-1 transform-gpu">
+          <div className="relative h-[64px] w-[48px] overflow-hidden rounded-md">
+            <Media
+              resource={product.image}
+              imgClassName="absolute duration-300 h-[64px] w-[48px] ease-in-out object-cover transition-transform group-hover:scale-110"
+            />
           </div>
-          {product.sold > 0 && (
-            <div className="text-xs text-muted-foreground">Đã bán {formatSold(product.sold)}</div>
-          )}
-        </div>
-      </div>
-    </Link>
+          <div className="flex flex-1 items-start gap-2 p-2">
+            <div className="flex h-full flex-col justify-between">
+              <div className="font-bold text-sm transition-colors duration-300 group-hover:text-primary">
+                {product.name}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-muted-foreground transition-colors duration-300 group-hover:text-primary/80">
+                  {product.minPrice === product.maxPrice
+                    ? formatPrice(product.minPrice)
+                    : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
+                </div>
+                {product.maxDiscount > 0 && (
+                  <Badge className="text-xs px-1 py-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                    -{product.maxDiscount.toFixed(0)}%
+                  </Badge>
+                )}
+              </div>
+              {product.sold > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  Đã bán {formatSold(product.sold)}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      </Link>
+    </div>
   )
 }
 
