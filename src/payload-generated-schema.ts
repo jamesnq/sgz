@@ -238,6 +238,7 @@ export const products = pgTable(
     sold: numeric('sold').notNull().default('0'),
     minPrice: numeric('min_price').notNull().default('0'),
     maxPrice: numeric('max_price').notNull().default('0'),
+    maxDiscount: numeric('max_discount').notNull().default('0'),
     note: varchar('note'),
     description: jsonb('description'),
     meta_title: varchar('meta_title'),

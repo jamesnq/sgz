@@ -6,10 +6,10 @@ import { env } from '@/config'
 import { defaultMetadata } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
 import { Search } from 'lucide-react'
+import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 import { Suspense } from 'react'
 import PageClient from './page.client'
-import { unstable_cache } from 'next/cache'
 
 export const revalidate = 3600
 
@@ -96,14 +96,13 @@ function ProductsLoading() {
   )
 }
 
-// Component to fetch and display products data
-async function ProductsData({
-  searchParams,
-}: {
-  searchParams: Promise<{ name?: string; page?: string; categories?: string }>
-}) {
+export async function generateMetadata() {
+  return defaultMetadata()
+}
+
+export default async function Page({ searchParams: searchParamsPromise }: Args) {
   // Await the searchParams promise
-  const resolvedParams = await searchParams
+  const resolvedParams = await searchParamsPromise
 
   const name = resolvedParams.name || ''
   const page = resolvedParams.page || '1'
@@ -166,6 +165,7 @@ async function ProductsData({
             sold: true,
             minPrice: true,
             maxPrice: true,
+            maxDiscount: true,
           },
           sort: ['-sold'],
         }),
@@ -184,23 +184,13 @@ async function ProductsData({
   const { categoriesData, productsData } = await getCachedData()
 
   return (
-    <PageClient
-      data={productsData}
-      searchQuery={name}
-      categories={categoriesData.docs}
-      selectedCategoryIds={selectedCategoryIds}
-    />
-  )
-}
-
-export async function generateMetadata() {
-  return defaultMetadata()
-}
-
-export default function Page({ searchParams: searchParamsPromise }: Args) {
-  return (
     <Suspense fallback={<ProductsLoading />}>
-      <ProductsData searchParams={searchParamsPromise} />
+      <PageClient
+        data={productsData}
+        searchQuery={name}
+        categories={categoriesData.docs}
+        selectedCategoryIds={selectedCategoryIds}
+      />
     </Suspense>
   )
 }

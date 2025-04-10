@@ -10,8 +10,8 @@ import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { CustomPagination } from '@/components/ui/custom-pagination'
+import { Input } from '@/components/ui/input'
 import { env } from '@/config'
 import { cn } from '@/lib/utils'
 import { Category, Product } from '@/payload-types'
@@ -41,9 +41,12 @@ const ProductCard = ({ product }: { product: Product }) => {
             </div>
             <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
               <div>
-                <div className="truncate h-auto overflow-hidden text-[14px] font-bold leading-[17px]">
-                  {product.name}
-                </div>{' '}
+                <div className="flex items-center gap-1 justify-between">
+                  <p className="line-clamp-1 h-auto text-[14px] font-bold leading-[17px]">
+                    {product.name}
+                  </p>
+                  {product.maxDiscount > 0 && <Badge>-{product.maxDiscount.toFixed(0)}%</Badge>}
+                </div>
                 {hasText(product.description) && (
                   <RichText
                     className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"

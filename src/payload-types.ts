@@ -408,6 +408,7 @@ export interface Product {
   variants?: (number | ProductVariant)[] | null;
   minPrice: number;
   maxPrice: number;
+  maxDiscount: number;
   note?: string | null;
   description?: {
     root: {
@@ -854,6 +855,7 @@ export interface ProductsSelect<T extends boolean = true> {
   variants?: T;
   minPrice?: T;
   maxPrice?: T;
+  maxDiscount?: T;
   note?: T;
   description?: T;
   relatedProducts?: T;

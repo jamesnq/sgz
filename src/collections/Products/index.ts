@@ -17,6 +17,7 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
+import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -41,22 +42,32 @@ export const Products: CollectionConfig = {
         // update product price range
         if (typeof data === 'number' || !data.variants || !data.variants.length) return
         let prices: number[] = []
+        let discounts: number[] = []
         if (typeof data.variants[0] === 'number') {
           const { docs: variants } = await payload.find({
             collection: 'product-variants',
             where: { id: { in: data.variants }, status: { not_equals: 'PRIVATE' } },
             overrideAccess: true,
             depth: 0,
-            select: { price: true },
+            select: { price: true, originalPrice: true, status: true },
           })
+
           prices = variants.map((v) => v.price)
+          discounts = variants
+            .filter((v) => v.status === 'STOPPED')
+            .map((v) => calculateDiscountPercentage(v.originalPrice, v.price))
         } else {
           prices = data.variants.map((v: any) => v.price)
+          discounts = data.variants
+            .filter((v: any) => v.status === 'STOPPED')
+            .map((v: any) => calculateDiscountPercentage(v.originalPrice, v.price))
         }
         const minPrice = Math.min(...prices)
         const maxPrice = Math.max(...prices)
+        const maxDiscount = Math.max(...discounts)
         data.minPrice = minPrice
         data.maxPrice = maxPrice
+        data.maxDiscount = maxDiscount
         return data
       },
     ] as CollectionBeforeChangeHook<Product>[],
@@ -133,6 +144,16 @@ export const Products: CollectionConfig = {
         },
         {
           name: 'maxPrice',
+          type: 'number',
+          defaultValue: 0,
+          required: true,
+          access: {
+            read: hasRole(['admin']),
+            update: hasRole(['admin']),
+          },
+        },
+        {
+          name: 'maxDiscount',
           type: 'number',
           defaultValue: 0,
           required: true,

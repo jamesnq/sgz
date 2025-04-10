@@ -8,6 +8,8 @@ import { Product, ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import Notification from '../../notification'
 import PageClient from './page.client'
+import { Suspense } from 'react'
+import { Spinner } from '@/components/ui/spinner'
 
 export const revalidate = 3600
 
@@ -56,7 +58,17 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
   delete product.meta
-  return <PageClient product={product} />
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center mt-16 mb-mt-16">
+          <Spinner className="text-highlight" size={100} variant="ring" />
+        </div>
+      }
+    >
+      <PageClient product={product} />
+    </Suspense>
+  )
 }
 
 export async function generateMetadata({
