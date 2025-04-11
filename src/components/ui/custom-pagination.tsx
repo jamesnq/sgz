@@ -68,24 +68,29 @@ export function CustomPagination({
         <PaginationContent className="gap-2 items-center">
           {/* Previous page button */}
           <PaginationItem>
-            <Link href={getPaginationUrl(Math.max(1, visualCurrentPage - 1))} passHref>
+            {visualCurrentPage > 1 && !isPending ? (
+              <Link href={getPaginationUrl(visualCurrentPage - 1)} passHref>
+                <PaginationLink
+                  className={cn(commonLinkClasses, 'outline outline-1 outline-muted')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handlePageClick(visualCurrentPage - 1)
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </PaginationLink>
+              </Link>
+            ) : (
               <PaginationLink
                 className={cn(
                   commonLinkClasses,
-                  'outline outline-1 outline-muted',
-                  visualCurrentPage === 1 && 'opacity-50 pointer-events-none',
+                  'outline outline-1 outline-muted opacity-50 cursor-not-allowed',
                 )}
-                onClick={(e) => {
-                  if (visualCurrentPage > 1 && !isPending) {
-                    e.preventDefault()
-                    handlePageClick(visualCurrentPage - 1)
-                  }
-                }}
-                aria-disabled={visualCurrentPage === 1 || isPending}
+                disabled={true}
               >
                 <ChevronLeft className="h-4 w-4" />
               </PaginationLink>
-            </Link>
+            )}
           </PaginationItem>
 
           <PaginationItem>
@@ -211,24 +216,29 @@ export function CustomPagination({
 
           {/* Next page button */}
           <PaginationItem>
-            <Link href={getPaginationUrl(Math.min(totalPages, visualCurrentPage + 1))} passHref>
+            {visualCurrentPage < totalPages && !isPending ? (
+              <Link href={getPaginationUrl(visualCurrentPage + 1)} passHref>
+                <PaginationLink
+                  className={cn(commonLinkClasses, 'outline outline-1 outline-muted')}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handlePageClick(visualCurrentPage + 1)
+                  }}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </PaginationLink>
+              </Link>
+            ) : (
               <PaginationLink
                 className={cn(
                   commonLinkClasses,
-                  'outline outline-1 outline-muted',
-                  visualCurrentPage === totalPages && 'opacity-50 pointer-events-none',
+                  'outline outline-1 outline-muted opacity-50 cursor-not-allowed',
                 )}
-                onClick={(e) => {
-                  if (visualCurrentPage < totalPages && !isPending) {
-                    e.preventDefault()
-                    handlePageClick(visualCurrentPage + 1)
-                  }
-                }}
-                aria-disabled={visualCurrentPage === totalPages || isPending}
+                disabled={true}
               >
                 <ChevronRight className="h-4 w-4" />
               </PaginationLink>
-            </Link>
+            )}
           </PaginationItem>
         </PaginationContent>
       </Pagination>

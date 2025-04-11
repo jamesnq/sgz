@@ -38,7 +38,7 @@ function ProductsLoading() {
             Dịch vụ{' '}
             <AnimatedWordCycle
               className="text-highlight"
-              words={['nạp', 'nạp', '']}
+              words={['nạp', 'nạp', '', '']}
               interval={3000}
             />{' '}
             <AnimatedWordCycle
