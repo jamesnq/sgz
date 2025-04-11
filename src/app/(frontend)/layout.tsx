@@ -3,11 +3,12 @@ import type { Metadata } from 'next'
 import React from 'react'
 
 import { Header } from '@/collections/Globals/Header/Component'
+import { AdminBar } from '@/components/AdminBar'
+import Footer from '@/components/footer'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { AdminBar } from '@/components/AdminBar'
 import { getServerSideURL } from '@/utilities/getURL'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import './globals.css'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AdminBar />
           <Header />
           {children}
+          <Footer />
         </Providers>
       </body>
     </html>

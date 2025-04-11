@@ -126,7 +126,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     >
       <div className="container flex justify-between">
         <div className="flex items-center gap-1">
-          <Link href="/" className="flex items-center">
+          <Link href={Routes.HOME} className="flex items-center">
             <Logo loading="eager" priority="high" className="invert dark:invert-0" />
           </Link>
           <ThemeToggle />
