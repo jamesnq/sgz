@@ -871,11 +871,14 @@ const MemoizedScreen = React.memo(function ScreenInner() {
           )}
           <ProductRelated className="md:hidden" />
         </div>
-        <div className="flex-1 max-md:order-1">
-          <ProductVariantsDrawer
-            className="md:hidden mb-2"
-            productVariants={(product.variants as ProductVariant[]) || []}
-          ></ProductVariantsDrawer>
+        <div className="flex-1 max-md:order-1 pt-2">
+          {product.variants && product.variants?.length > 1 && (
+            <ProductVariantsDrawer
+              className="md:hidden mb-2"
+              productVariants={(product.variants as ProductVariant[]) || []}
+            ></ProductVariantsDrawer>
+          )}
+
           <div className={'space-y-2'}>
             {currentVariant.form && currentVariant.status !== 'STOPPED' && (
               <ShippingForm form={currentVariant.form as Form}></ShippingForm>
