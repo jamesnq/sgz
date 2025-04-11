@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
 import { Handshake, LucideIcon, Scale } from 'lucide-react'
 import * as React from 'react'
+import { Shell } from './shell'
 
 const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg role="img" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -52,7 +53,7 @@ const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
   ({ className, brand, columns, copyright, ...props }, ref) => {
     return (
       <div ref={ref} className={cn(className)} {...props}>
-        <div className="max-w-screen-xl mx-auto px-4 lg:px-8">
+        <div className="w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <a href="#" className="text-xl font-semibold">
@@ -115,7 +116,7 @@ export const infoLinks = [
 export default function Footer() {
   return (
     <FooterComponent
-      className="pt-24"
+      className="mt-32 container"
       brand={{
         name: env.NEXT_PUBLIC_SITE_NAME,
         description: SITE_DESCRIPTION,
