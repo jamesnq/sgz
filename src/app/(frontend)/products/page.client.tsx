@@ -337,7 +337,7 @@ const PageClient = ({
             />{' '}
             <AnimatedWordCycle
               className="text-highlight"
-              words={['ứng dụng', 'game', 'cung cấp tài khoản']}
+              words={['ứng dụng', 'game', 'tài khoản', 'phần mềm']}
               interval={3000}
             />{' '}
             giá rẻ
