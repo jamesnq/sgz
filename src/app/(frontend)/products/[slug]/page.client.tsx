@@ -97,24 +97,35 @@ function ProductPageProvider({
       shallow: true,
     }),
   )
+
+  // Keep track of the previous form ID to prevent unnecessary re-renders
+  const previousFormIdRef = React.useRef<string | null>(null)
+
   const [currentVariant, setCurrentVariant] = React.useState<ProductVariant>(() => {
     if (variantParam && product?.variants) {
       const matchingVariant = (product.variants as ProductVariant[]).find(
         (v) => v.id === variantParam,
       )
-      if (matchingVariant) return matchingVariant
+      if (matchingVariant) {
+        // Initialize the previous form ID ref
+        previousFormIdRef.current = matchingVariant.form ? String(matchingVariant.form) : null
+        return matchingVariant
+      }
     }
-    return (
+    const initialVariant =
       (product?.variants as ProductVariant[])?.find((v) => v.status !== 'STOPPED') ||
       ((product?.variants && product.variants[0]) as ProductVariant)
-    )
+
+    // Initialize the previous form ID ref
+    previousFormIdRef.current = initialVariant.form ? String(initialVariant.form) : null
+    return initialVariant
   })
 
   const [quantity, setQuantity] = React.useState(1)
 
+  // Memoize the shipping info initialization function to prevent unnecessary recalculations
   const getInitShippingInfo = React.useCallback(
-    (shippingInfo: { [key: string]: any }) => {
-      const form = currentVariant.form as Form
+    (shippingInfo: { [key: string]: any }, form: Form | null) => {
       if (!form || !form.fields) return {}
       const initShippingInfo = form.fields.reduce(
         (acc, field: any) => {
@@ -125,19 +136,21 @@ function ProductPageProvider({
       )
       return initShippingInfo
     },
-    [currentVariant.form],
+    [],
   )
 
-  const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>(
-    getInitShippingInfo({}),
+  const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>(() =>
+    getInitShippingInfo({}, currentVariant.form as Form),
   )
 
+  // Memoize form validation to prevent unnecessary recalculations
   const isFormValid = useMemo(() => {
     const form = currentVariant.form as Form
     if (!form || !form.fields) return true
     return validateRequiredFields(form.fields, shippingInfo)
   }, [currentVariant.form, shippingInfo])
 
+  // Memoize price calculations to prevent unnecessary recalculations
   const calc = useMemo(() => {
     const totalOriginalPrice =
       Math.max(currentVariant.originalPrice, currentVariant.price) * quantity
@@ -150,25 +163,41 @@ function ProductPageProvider({
     }
   }, [currentVariant.originalPrice, currentVariant.price, quantity])
 
-  const initShippingInfoFromForm = React.useCallback(
-    (form: Form) => {
-      if (!form) return
-      const initShippingInfo = form.fields?.reduce(
-        (acc, field: any) => {
-          acc[field.name] = shippingInfo[field.name] || field.defaultValue
-          return acc
-        },
-        {} as { [key: string]: any },
-      )
-      setShippingInfo(initShippingInfo || {})
-    },
-    [shippingInfo],
-  )
+  // Batch state updates in a single function to prevent multiple re-renders
+  const handleVariantChange = React.useCallback(
+    (variant: ProductVariant) => {
+      // Check if the form ID is the same to prevent unnecessary re-renders
+      const newFormId = variant.form ? String(variant.form) : null
+      const isSameForm = newFormId === previousFormIdRef.current
 
-  React.useEffect(() => {
-    setShippingInfo(getInitShippingInfo(shippingInfo))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+      // Update the URL parameter
+      setVariantParam(variant.id)
+
+      // Update the current variant
+      setCurrentVariant(variant)
+
+      // Update quantity based on variant limits
+      setQuantity((prevQuantity) => {
+        if (prevQuantity === 0) return Math.min(variant.min, variant.max)
+        return Math.min(prevQuantity, variant.max)
+      })
+
+      // Only update shipping info if the form has changed
+      if (!isSameForm) {
+        const form = variant.form as Form
+        if (form) {
+          const newShippingInfo = getInitShippingInfo({}, form)
+          setShippingInfo(newShippingInfo)
+        } else {
+          setShippingInfo({})
+        }
+
+        // Update the previous form ID reference
+        previousFormIdRef.current = newFormId
+      }
+    },
+    [getInitShippingInfo, setVariantParam],
+  )
 
   return (
     <ProductPageContext.Provider
@@ -176,15 +205,7 @@ function ProductPageProvider({
         product,
         calc,
         currentVariant,
-        setCurrentVariant: (variant: ProductVariant) => {
-          setVariantParam(variant.id)
-          setCurrentVariant(variant)
-          setQuantity((prevQuantity) => {
-            if (prevQuantity == 0) return Math.min(variant.min, variant.max)
-            return Math.min(prevQuantity, variant.max)
-          })
-          initShippingInfoFromForm(variant.form as Form)
-        },
+        setCurrentVariant: handleVariantChange,
         quantity,
         setQuantity,
         incQuantity(by = 1) {
@@ -586,37 +607,47 @@ function MemoizedFormField({ field, onChange }: { field: any; onChange: (value: 
 }
 
 // Memoized ShippingForm component
-const MemoizedShippingForm = React.memo(function ShippingFormInner({ form }: { form: Form }) {
-  const setShippingInfo = useProductPageContext((state) => state.setShippingInfo)
+const MemoizedShippingForm = React.memo(
+  function ShippingFormInner({ form }: { form: Form }) {
+    const setShippingInfo = useProductPageContext((state) => state.setShippingInfo)
 
-  // Create a stable callback factory that returns a callback for each field
-  const createFieldChangeHandler = React.useCallback(
-    (fieldName: string) => (value: string) => {
-      setShippingInfo(fieldName, value)
-    },
-    [setShippingInfo],
-  )
+    // Create a stable callback factory that returns a callback for each field
+    const createFieldChangeHandler = React.useCallback(
+      (fieldName: string) => (value: string) => {
+        setShippingInfo(fieldName, value)
+      },
+      [setShippingInfo],
+    )
 
-  return (
-    <Card className="w-full overflow-hidden">
-      <CardHeader>Thông tin đơn hàng</CardHeader>
-      <CardContent>
-        <div>
-          {form.fields?.map((field: any, index: number) => {
-            const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
-            if (!Field) return null
+    return (
+      <Card className="w-full overflow-hidden">
+        <CardHeader>Thông tin đơn hàng</CardHeader>
+        <CardContent>
+          <div>
+            {form.fields?.map((field: any, index: number) => {
+              const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+              if (!Field) return null
 
-            return (
-              <div className="mb-4 last:mb-0" key={index}>
-                <MemoizedFormField field={field} onChange={createFieldChangeHandler(field.name)} />
-              </div>
-            )
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  )
-})
+              return (
+                <div className="mb-4 last:mb-0" key={index}>
+                  <MemoizedFormField
+                    field={field}
+                    onChange={createFieldChangeHandler(field.name)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  },
+  // Custom comparison function to prevent re-renders when form ID is the same
+  (prevProps, nextProps) => {
+    // Only re-render if the form ID changes
+    return prevProps.form?.id === nextProps.form?.id
+  },
+)
 
 function ShippingForm({ form }: { form: Form }) {
   return <MemoizedShippingForm form={form} />
@@ -655,101 +686,109 @@ function CheckoutButton() {
 }
 
 // Memoized checkout component
-const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { className?: string }) {
-  const user = useAuth().user
-  const currentVariant = useProductPageContext((state) => state.currentVariant)
-  const quantity = useProductPageContext((state) => state.quantity)
-  const incQuantity = useProductPageContext((state) => state.incQuantity)
-  const decQuantity = useProductPageContext((state) => state.decQuantity)
-  const setQuantity = useProductPageContext((state) => state.setQuantity)
-  const calc = useProductPageContext((state) => state.calc)
-  const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
+const MemoizedCheckout = React.memo(
+  function CheckoutInner({ className }: { className?: string }) {
+    const user = useAuth().user
+    const currentVariant = useProductPageContext((state) => state.currentVariant)
+    const quantity = useProductPageContext((state) => state.quantity)
+    const incQuantity = useProductPageContext((state) => state.incQuantity)
+    const decQuantity = useProductPageContext((state) => state.decQuantity)
+    const setQuantity = useProductPageContext((state) => state.setQuantity)
+    const calc = useProductPageContext((state) => state.calc)
+    const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
 
-  const handleQuantityChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10)
-    if (!isNaN(value)) {
-      setEditingQuantity(value)
-    }
-  }, [])
+    const handleQuantityChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(e.target.value, 10)
+      if (!isNaN(value)) {
+        setEditingQuantity(value)
+      }
+    }, [])
 
-  const handleQuantityBlur = React.useCallback(
-    (e: React.FocusEvent<HTMLInputElement>) => {
-      const parsedValue = Math.min(
-        Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
-        currentVariant.max,
-      )
-      setQuantity(parsedValue)
-      setEditingQuantity(undefined)
-    },
-    [currentVariant.max, currentVariant.min, setQuantity],
-  )
+    const handleQuantityBlur = React.useCallback(
+      (e: React.FocusEvent<HTMLInputElement>) => {
+        const parsedValue = Math.min(
+          Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
+          currentVariant.max,
+        )
+        setQuantity(parsedValue)
+        setEditingQuantity(undefined)
+      },
+      [currentVariant.max, currentVariant.min, setQuantity],
+    )
 
-  return (
-    <Card className={cn('p-6', className)}>
-      <div className="flex w-full text-sm items-center justify-between">
-        <span>Giá gốc</span>
-        <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
-      </div>
-      {calc.totalDiscountPrice > 0 ? (
+    return (
+      <Card className={cn('p-6', className)}>
         <div className="flex w-full text-sm items-center justify-between">
-          <span>Giá giảm</span>
-          <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
+          <span>Giá gốc</span>
+          <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
         </div>
-      ) : null}
-      {currentVariant.max > 1 && (
-        <div className="flex justify-between mt-2">
-          <span>Số lượng</span>
-          <div className="flex">
-            <Button
-              id={`decrement-quantity`}
-              disabled={quantity <= currentVariant.min}
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-8 shrink-0 rounded-r-none"
-              onClick={() => decQuantity()}
-            >
-              <MinusIcon className="size-3 text-highlight" aria-hidden="true" />
-            </Button>
-            <div className="flex items-center justify-center h-8 w-16 rounded-none border-y border-x-0">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                className="w-full text-center bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                value={editingQuantity !== undefined ? editingQuantity : quantity}
-                onFocus={() => setEditingQuantity(quantity)}
-                onChange={handleQuantityChange}
-                onBlur={handleQuantityBlur}
-              />
-            </div>
-            <Button
-              id={`increment-quantity`}
-              disabled={quantity >= currentVariant.max}
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-8 shrink-0 rounded-l-none"
-              onClick={() => incQuantity()}
-            >
-              <PlusIcon className="size-3 text-highlight" aria-hidden="true" />
-            </Button>
+        {calc.totalDiscountPrice > 0 ? (
+          <div className="flex w-full text-sm items-center justify-between">
+            <span>Giá giảm</span>
+            <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
           </div>
-        </div>
-      )}
+        ) : null}
+        {currentVariant.max > 1 && (
+          <div className="flex justify-between mt-2">
+            <span>Số lượng</span>
+            <div className="flex">
+              <Button
+                id={`decrement-quantity`}
+                disabled={quantity <= currentVariant.min}
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-8 shrink-0 rounded-r-none"
+                onClick={() => decQuantity()}
+              >
+                <MinusIcon className="size-3 text-highlight" aria-hidden="true" />
+              </Button>
+              <div className="flex items-center justify-center h-8 w-16 rounded-none border-y border-x-0">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  className="w-full text-center bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  value={editingQuantity !== undefined ? editingQuantity : quantity}
+                  onFocus={() => setEditingQuantity(quantity)}
+                  onChange={handleQuantityChange}
+                  onBlur={handleQuantityBlur}
+                />
+              </div>
+              <Button
+                id={`increment-quantity`}
+                disabled={quantity >= currentVariant.max}
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-8 shrink-0 rounded-l-none"
+                onClick={() => incQuantity()}
+              >
+                <PlusIcon className="size-3 text-highlight" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        )}
 
-      <hr className="my-4 border-t border-border" />
-      <div className="space-y-4">
-        <div className="flex w-full items-center justify-between">
-          <span className="font-bold">Tổng tiền</span>
-          <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
+        <hr className="my-4 border-t border-border" />
+        <div className="space-y-4">
+          <div className="flex w-full items-center justify-between">
+            <span className="font-bold">Tổng tiền</span>
+            <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
+          </div>
+          {currentVariant.status === 'ORDER' && workingTime}
+          {user ? <CheckoutButton /> : <AuthDialog className="w-full" />}
         </div>
-        {currentVariant.status === 'ORDER' && workingTime}
-        {user ? <CheckoutButton /> : <AuthDialog className="w-full" />}
-      </div>
-    </Card>
-  )
-})
+      </Card>
+    )
+  },
+  // Custom comparison function to prevent re-renders when form ID is the same
+  (_prevProps, _nextProps) => {
+    // We don't actually use props here since we're getting data from context
+    // But we can still prevent unnecessary re-renders
+    return true
+  },
+)
 
 function Checkout({ className }: { className?: string }) {
   return <MemoizedCheckout className={className} />
@@ -820,97 +859,147 @@ function ProductRelated({ className }: { className?: string }) {
   )
 }
 
+// Important Notice Component
+const ImportantNotice = React.memo(function ImportantNotice() {
+  const important = useProductPageContext((state) => state.currentVariant.important)
+
+  if (!hasText(important)) return null
+
+  return (
+    <Card>
+      <CardHeader className="font-bold px-4 pb-1">
+        <div className="flex gap-2">
+          <TriangleAlert></TriangleAlert>
+          <span>Thông báo quan trọng</span>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4">
+        <RichText className="text-sm" data={important as any} overrideClassName></RichText>
+      </CardContent>
+    </Card>
+  )
+})
+
+// Product Description Component
+const ProductDescription = React.memo(function ProductDescription() {
+  const productDescription = useProductPageContext((state) => state.product.description)
+  const variantDescription = useProductPageContext((state) => state.currentVariant.description)
+
+  const description = useMemo(() => {
+    return hasText(variantDescription) ? variantDescription : productDescription
+  }, [variantDescription, productDescription])
+
+  if (!hasText(description)) return null
+
+  return (
+    <Card>
+      <CardHeader className="font-bold px-4 pb-1">
+        <div className="flex gap-2">
+          <span>Mô tả</span>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4">
+        <RichText className="text-sm" data={description as any} enableGutter={false}></RichText>
+      </CardContent>
+    </Card>
+  )
+})
+
+// Product Variants Filter Component for Desktop
+const DesktopVariantsFilter = React.memo(function DesktopVariantsFilter() {
+  const variants = useProductPageContext((state) => state.product.variants) as ProductVariant[]
+
+  return (
+    <div className="max-md:hidden">
+      <FilterProductVariants variants={variants} />
+    </div>
+  )
+})
+
+// Mobile Variants Drawer Component
+const MobileVariantsDrawer = React.memo(function MobileVariantsDrawer() {
+  const variants = useProductPageContext((state) => state.product.variants) as ProductVariant[]
+
+  if (!variants || variants.length <= 1) return null
+
+  return <ProductVariantsDrawer className="md:hidden mb-2" productVariants={variants || []} />
+})
+
+// Product Form Component
+const ProductForm = React.memo(
+  function ProductForm() {
+    const form = useProductPageContext((state) => state.currentVariant.form) as Form
+    const status = useProductPageContext((state) => state.currentVariant.status)
+
+    if (!form || status === 'STOPPED') return null
+
+    return <ShippingForm form={form} />
+  },
+  // Custom comparison function to prevent re-renders when form ID is the same
+  (_prevProps, _nextProps) => {
+    // We don't actually use props here since we're getting data from context
+    // But we can still prevent unnecessary re-renders
+    return true
+  },
+)
+
+// Out of Stock Component
+const OutOfStockNotice = React.memo(function OutOfStockNotice() {
+  const status = useProductPageContext((state) => state.currentVariant.status)
+
+  if (status !== 'STOPPED') return null
+
+  return (
+    <Card className="p-4">
+      <CardHeader className="font-bold pb-2">
+        <div className="flex items-center gap-2">
+          <span>Sản phẩm hết hàng</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Thông báo sản phẩm hiện đã hết hàng, mọi thông tin chi tiết vui lòng liên hệ qua chat hỗ
+          trợ hoặc các kênh cộng đồng của chúng tôi để kiểm tra giá và biết tình trạng hiện tại của
+          sản phẩm.
+        </p>
+        <p className="mt-2 text-sm font-semibold">
+          Email :{' '}
+          <a
+            href={`mailto:${env.NEXT_PUBLIC_EMAIL_CONTACT}`}
+            className="text-primary hover:underline"
+          >
+            {env.NEXT_PUBLIC_EMAIL_CONTACT}
+          </a>
+        </p>
+      </CardContent>
+    </Card>
+  )
+})
+
+// Checkout or Out of Stock Component
+const CheckoutOrOutOfStock = React.memo(function CheckoutOrOutOfStock() {
+  const status = useProductPageContext((state) => state.currentVariant.status)
+
+  return status === 'STOPPED' ? <OutOfStockNotice /> : <Checkout />
+})
+
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
-  const product = useProductPageContext((state) => state.product)
-  const currentVariant = useProductPageContext((state) => state.currentVariant)
-  const description = useMemo(() => {
-    return hasText(currentVariant.description) ? currentVariant.description : product.description
-  }, [currentVariant.description, product.description])
-
   return (
     <Shell>
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
         <div className="flex-[2] flex-col space-y-2 max-md:order-2">
-          {hasText(currentVariant?.important) && (
-            <Card>
-              <CardHeader className="font-bold px-4 pb-1">
-                <div className="flex gap-2">
-                  <TriangleAlert></TriangleAlert>
-                  <span>Thông báo quan trọng</span>
-                </div>
-              </CardHeader>
-              <CardContent className="px-4">
-                <RichText
-                  className="text-sm"
-                  data={currentVariant.important as any}
-                  overrideClassName
-                ></RichText>
-              </CardContent>
-            </Card>
-          )}
-          <div className="max-md:hidden">
-            <FilterProductVariants variants={product.variants as ProductVariant[]} />
-          </div>
-          {hasText(description) && (
-            <Card>
-              <CardHeader className="font-bold px-4 pb-1">
-                <div className="flex gap-2">
-                  <span>Mô tả</span>
-                </div>
-              </CardHeader>
-              <CardContent className="px-4">
-                <RichText
-                  className="text-sm"
-                  data={description as any}
-                  enableGutter={false}
-                ></RichText>
-              </CardContent>
-            </Card>
-          )}
+          <ImportantNotice />
+          <DesktopVariantsFilter />
+          <ProductDescription />
           <ProductRelated className="md:hidden" />
         </div>
         <div className="flex-1 max-md:order-1 max-md:mt-3">
-          {product.variants && product.variants?.length > 1 && (
-            <ProductVariantsDrawer
-              className="md:hidden mb-2"
-              productVariants={(product.variants as ProductVariant[]) || []}
-            ></ProductVariantsDrawer>
-          )}
-
+          <MobileVariantsDrawer />
           <div className={'space-y-2'}>
-            {currentVariant.form && currentVariant.status !== 'STOPPED' && (
-              <ShippingForm form={currentVariant.form as Form}></ShippingForm>
-            )}
-
-            {currentVariant.status === 'STOPPED' ? (
-              <Card className="p-4">
-                <CardHeader className="font-bold pb-2">
-                  <div className="flex items-center gap-2">
-                    <span>Sản phẩm hết hàng</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Thông báo sản phẩm hiện đã hết hàng, mọi thông tin chi tiết vui lòng liên hệ qua
-                    chat hỗ trợ hoặc các kênh cộng đồng của chúng tôi để kiểm tra giá và biết tình
-                    trạng hiện tại của sản phẩm.
-                  </p>
-                  <p className="mt-2 text-sm font-semibold">
-                    Email :{' '}
-                    <a
-                      href={`mailto:${env.NEXT_PUBLIC_EMAIL_CONTACT}`}
-                      className="text-primary hover:underline"
-                    >
-                      {env.NEXT_PUBLIC_EMAIL_CONTACT}
-                    </a>
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Checkout></Checkout>
-            )}
+            <ProductForm />
+            <CheckoutOrOutOfStock />
             <ProductRelated className="hidden md:block" />
           </div>
         </div>
