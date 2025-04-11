@@ -104,7 +104,10 @@ function ProductPageProvider({
       )
       if (matchingVariant) return matchingVariant
     }
-    return (product?.variants && product.variants[0]) as ProductVariant
+    return (
+      (product?.variants as ProductVariant[])?.find((v) => v.status !== 'STOPPED') ||
+      ((product?.variants && product.variants[0]) as ProductVariant)
+    )
   })
 
   const [quantity, setQuantity] = React.useState(1)
@@ -480,12 +483,18 @@ function ProductVariantsDrawer({
     statuses,
   } = useProductVariantFilter(productVariants)
 
+  const canBuyVariants = useMemo(
+    () => productVariants.filter((variant) => variant.status !== 'STOPPED'),
+    [productVariants],
+  )
   return (
     <Card className={cn('w-full p-6', className)}>
       <div className="justify-center">
         <Drawer>
           <DrawerTrigger asChild className="w-full flex items-center justify-center">
-            <Button className="w-full font-bold">Chọn sản phẩm</Button>
+            <Button className="w-full font-bold">
+              Chọn sản {canBuyVariants.length > 0 ? canBuyVariants.length : ''} phẩm khác
+            </Button>
           </DrawerTrigger>
           <DrawerContent className="max-h-[85%]">
             <DrawerHeader>
