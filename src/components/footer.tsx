@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
 import { Handshake, LucideIcon, Scale } from 'lucide-react'
 import * as React from 'react'
-import { Shell } from './shell'
 
 const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg role="img" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
