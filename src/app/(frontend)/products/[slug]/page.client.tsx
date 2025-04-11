@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { env } from '@/config'
+import { getProductCardStyles } from '@/lib/product-card-styles'
 import { useAuth } from '@/providers/Auth'
 import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 import { workingTime } from '@/utilities/constants-react'
@@ -49,7 +50,6 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
-import { getProductCardStyles } from '@/lib/product-card-styles'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
@@ -139,7 +139,8 @@ function ProductPageProvider({
   }, [currentVariant.form, shippingInfo])
 
   const calc = useMemo(() => {
-    const totalOriginalPrice = currentVariant.originalPrice * quantity
+    const totalOriginalPrice =
+      Math.max(currentVariant.originalPrice, currentVariant.price) * quantity
     const totalPrice = currentVariant.price * quantity
     const totalDiscountPrice = totalOriginalPrice - totalPrice
     return {
@@ -178,7 +179,10 @@ function ProductPageProvider({
         setCurrentVariant: (variant: ProductVariant) => {
           setVariantParam(variant.id)
           setCurrentVariant(variant)
-          setQuantity((prevQuantity) => Math.min(prevQuantity, variant.max))
+          setQuantity((prevQuantity) => {
+            if (prevQuantity == 0) return Math.min(variant.min, variant.max)
+            return Math.min(prevQuantity, variant.max)
+          })
           initShippingInfoFromForm(variant.form as Form)
         },
         quantity,
@@ -686,7 +690,7 @@ const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { clas
         <span>Giá gốc</span>
         <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
       </div>
-      {calc.totalDiscountPrice ? (
+      {calc.totalDiscountPrice > 0 ? (
         <div className="flex w-full text-sm items-center justify-between">
           <span>Giá giảm</span>
           <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
