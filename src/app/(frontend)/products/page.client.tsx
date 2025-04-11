@@ -333,12 +333,10 @@ const PageClient = ({
               Dịch vụ{' '}
               <AnimatedWordCycle
                 className="text-highlight"
-                words={['nạp', 'nạp', '', '']}
-                interval={3000}
-              />{' '}
-              <AnimatedWordCycle
-                className="text-highlight"
-                words={['ứng dụng', 'game', 'tài khoản', 'phần mềm']}
+                words={[
+                  ['nạp', 'nạp', '', ''],
+                  ['ứng dụng', 'game', 'tài khoản', 'phần mềm']
+                ]}
                 interval={3000}
               />{' '}
               giá rẻ
