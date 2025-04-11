@@ -497,7 +497,7 @@ function ProductVariantsDrawer({
         <Drawer>
           <DrawerTrigger asChild className="w-full flex items-center justify-center">
             <Button className="w-full font-bold">
-              Chọn sản {canBuyVariants.length > 0 ? canBuyVariants.length : ''} phẩm khác
+              Chọn {canBuyVariants.length > 0 ? canBuyVariants.length : ''} sản phẩm khác
             </Button>
           </DrawerTrigger>
           <DrawerContent className="max-h-[85%]">
@@ -871,7 +871,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
           )}
           <ProductRelated className="md:hidden" />
         </div>
-        <div className="flex-1 max-md:order-1 pt-2">
+        <div className="flex-1 max-md:order-1 max-md:mt-3">
           {product.variants && product.variants?.length > 1 && (
             <ProductVariantsDrawer
               className="md:hidden mb-2"
