@@ -279,7 +279,8 @@ const MemoizedProductVariantCard = React.memo(
             className,
             currentVariantId &&
               currentVariantId === productVariant.id &&
-              'bg-secondary border-primary ',
+              'bg-secondary border-primary',
+            'max-md:text-xs',
           )}
         >
           <div className={cn('h-[96px] w-[72px]', styles.mediaContainer)}>
@@ -288,9 +289,11 @@ const MemoizedProductVariantCard = React.memo(
               imgClassName={cn('absolute h-[96px] w-[72px] ease-in-out object-cover', styles.media)}
             />
           </div>
-          <div className="flex flex-[3] items-start gap-2 p-4">
+          <div className="flex flex-[3] items-start gap-1 p-1">
             <div className="flex h-full flex-1 flex-col justify-between">
-              <div className={styles.name}>{productVariant.name}</div>
+              <div className={styles.name + ' max-md:line-clamp-2 line-clamp-3'}>
+                {productVariant.name}
+              </div>
               <DisplayProductStatus status={productVariant.status} />
             </div>
             <div className="flex flex-col items-end gap-1">
@@ -302,7 +305,9 @@ const MemoizedProductVariantCard = React.memo(
                   <div className="text-gray-500 line-through">
                     {formatPrice(productVariant.originalPrice, 'VND')}
                   </div>
-                  <Badge className={styles.badge}>-{discountPercentage.toFixed(0)}%</Badge>
+                  <Badge className={cn(styles.badge, 'text-xs px-1 py-0')}>
+                    -{discountPercentage.toFixed(0)}%
+                  </Badge>
                 </>
               )}
             </div>
