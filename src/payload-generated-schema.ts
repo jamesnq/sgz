@@ -47,6 +47,7 @@ export const enum_recharges_status = pgEnum('enum_recharges_status', [
   'REFUND',
 ])
 export const enum_recharges_gateway = pgEnum('enum_recharges_gateway', ['PAYOS', 'DOITHE'])
+export const enum_suppliers_status = pgEnum('enum_suppliers_status', ['ACTIVE', 'INACTIVE'])
 
 export const media = pgTable(
   'media',
@@ -354,6 +355,50 @@ export const product_variants = pgTable(
   }),
 )
 
+export const product_variant_supplies = pgTable(
+  'product_variant_supplies',
+  {
+    id: serial('id').primaryKey(),
+    productVariant: integer('product_variant_id')
+      .notNull()
+      .references(() => product_variants.id, {
+        onDelete: 'set null',
+      }),
+    supplier: integer('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, {
+        onDelete: 'set null',
+      }),
+    costPrice: numeric('cost_price').notNull().default('0'),
+    isPreferred: boolean('is_preferred').default(false),
+    note: varchar('note'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    product_variant_supplies_product_variant_idx: index(
+      'product_variant_supplies_product_variant_idx',
+    ).on(columns.productVariant),
+    product_variant_supplies_supplier_idx: index('product_variant_supplies_supplier_idx').on(
+      columns.supplier,
+    ),
+    product_variant_supplies_updated_at_idx: index('product_variant_supplies_updated_at_idx').on(
+      columns.updatedAt,
+    ),
+    product_variant_supplies_created_at_idx: index('product_variant_supplies_created_at_idx').on(
+      columns.createdAt,
+    ),
+    productVariant_supplier_idx: uniqueIndex('productVariant_supplier_idx').on(
+      columns.productVariant,
+      columns.supplier,
+    ),
+  }),
+)
+
 export const orders = pgTable(
   'orders',
   {
@@ -379,6 +424,10 @@ export const orders = pgTable(
     totalDiscount: numeric('total_discount').notNull(),
     totalPrice: numeric('total_price').notNull(),
     quantity: numeric('quantity').notNull(),
+    supplier: integer('supplier_id').references(() => suppliers.id, {
+      onDelete: 'set null',
+    }),
+    profit: numeric('profit'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -390,6 +439,7 @@ export const orders = pgTable(
     orders_ordered_by_idx: index('orders_ordered_by_idx').on(columns.orderedBy),
     orders_product_variant_idx: index('orders_product_variant_idx').on(columns.productVariant),
     orders_form_submission_idx: index('orders_form_submission_idx').on(columns.formSubmission),
+    orders_supplier_idx: index('orders_supplier_idx').on(columns.supplier),
     orders_updated_at_idx: index('orders_updated_at_idx').on(columns.updatedAt),
     orders_created_at_idx: index('orders_created_at_idx').on(columns.createdAt),
   }),
@@ -696,6 +746,55 @@ export const novu_channels = pgTable(
   }),
 )
 
+export const suppliers = pgTable(
+  'suppliers',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name').notNull(),
+    status: enum_suppliers_status('status').notNull().default('ACTIVE'),
+    notes: varchar('notes'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    suppliers_updated_at_idx: index('suppliers_updated_at_idx').on(columns.updatedAt),
+    suppliers_created_at_idx: index('suppliers_created_at_idx').on(columns.createdAt),
+  }),
+)
+
+export const suppliers_rels = pgTable(
+  'suppliers_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    'product-variant-suppliesID': integer('product_variant_supplies_id'),
+  },
+  (columns) => ({
+    order: index('suppliers_rels_order_idx').on(columns.order),
+    parentIdx: index('suppliers_rels_parent_idx').on(columns.parent),
+    pathIdx: index('suppliers_rels_path_idx').on(columns.path),
+    suppliers_rels_product_variant_supplies_id_idx: uniqueIndex(
+      'suppliers_rels_product_variant_supplies_id_idx',
+    ).on(columns['product-variant-suppliesID'], columns.path),
+    parentFk: foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [suppliers.id],
+      name: 'suppliers_rels_parent_fk',
+    }).onDelete('cascade'),
+    'product-variant-suppliesIdFk': foreignKey({
+      columns: [columns['product-variant-suppliesID']],
+      foreignColumns: [product_variant_supplies.id],
+      name: 'suppliers_rels_product_variant_supplies_fk',
+    }).onDelete('cascade'),
+  }),
+)
+
 export const payload_locked_documents = pgTable(
   'payload_locked_documents',
   {
@@ -735,11 +834,13 @@ export const payload_locked_documents_rels = pgTable(
     transactionsID: integer('transactions_id'),
     productsID: integer('products_id'),
     'product-variantsID': integer('product_variants_id'),
+    'product-variant-suppliesID': integer('product_variant_supplies_id'),
     ordersID: integer('orders_id'),
     rechargesID: integer('recharges_id'),
     formsID: integer('forms_id'),
     'form-submissionsID': integer('form_submissions_id'),
     'novu-channelsID': integer('novu_channels_id'),
+    suppliersID: integer('suppliers_id'),
   },
   (columns) => ({
     order: index('payload_locked_documents_rels_order_idx').on(columns.order),
@@ -766,6 +867,9 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_product_variants_id_idx: index(
       'payload_locked_documents_rels_product_variants_id_idx',
     ).on(columns['product-variantsID']),
+    payload_locked_documents_rels_product_variant_supplies_id_idx: index(
+      'payload_locked_documents_rels_product_variant_supplies_id_idx',
+    ).on(columns['product-variant-suppliesID']),
     payload_locked_documents_rels_orders_id_idx: index(
       'payload_locked_documents_rels_orders_id_idx',
     ).on(columns.ordersID),
@@ -781,6 +885,9 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_novu_channels_id_idx: index(
       'payload_locked_documents_rels_novu_channels_id_idx',
     ).on(columns['novu-channelsID']),
+    payload_locked_documents_rels_suppliers_id_idx: index(
+      'payload_locked_documents_rels_suppliers_id_idx',
+    ).on(columns.suppliersID),
     parentFk: foreignKey({
       columns: [columns['parent']],
       foreignColumns: [payload_locked_documents.id],
@@ -821,6 +928,11 @@ export const payload_locked_documents_rels = pgTable(
       foreignColumns: [product_variants.id],
       name: 'payload_locked_documents_rels_product_variants_fk',
     }).onDelete('cascade'),
+    'product-variant-suppliesIdFk': foreignKey({
+      columns: [columns['product-variant-suppliesID']],
+      foreignColumns: [product_variant_supplies.id],
+      name: 'payload_locked_documents_rels_product_variant_supplies_fk',
+    }).onDelete('cascade'),
     ordersIdFk: foreignKey({
       columns: [columns['ordersID']],
       foreignColumns: [orders.id],
@@ -845,6 +957,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['novu-channelsID']],
       foreignColumns: [novu_channels.id],
       name: 'payload_locked_documents_rels_novu_channels_fk',
+    }).onDelete('cascade'),
+    suppliersIdFk: foreignKey({
+      columns: [columns['suppliersID']],
+      foreignColumns: [suppliers.id],
+      name: 'payload_locked_documents_rels_suppliers_fk',
     }).onDelete('cascade'),
   }),
 )
@@ -1024,6 +1141,21 @@ export const relations_product_variants = relations(product_variants, ({ one }) 
     relationName: 'form',
   }),
 }))
+export const relations_product_variant_supplies = relations(
+  product_variant_supplies,
+  ({ one }) => ({
+    productVariant: one(product_variants, {
+      fields: [product_variant_supplies.productVariant],
+      references: [product_variants.id],
+      relationName: 'productVariant',
+    }),
+    supplier: one(suppliers, {
+      fields: [product_variant_supplies.supplier],
+      references: [suppliers.id],
+      relationName: 'supplier',
+    }),
+  }),
+)
 export const relations_orders_rels = relations(orders_rels, ({ one }) => ({
   parent: one(orders, {
     fields: [orders_rels.parent],
@@ -1051,6 +1183,11 @@ export const relations_orders = relations(orders, ({ one, many }) => ({
     fields: [orders.formSubmission],
     references: [form_submissions.id],
     relationName: 'formSubmission',
+  }),
+  supplier: one(suppliers, {
+    fields: [orders.supplier],
+    references: [suppliers.id],
+    relationName: 'supplier',
   }),
   _rels: many(orders_rels, {
     relationName: '_rels',
@@ -1151,6 +1288,23 @@ export const relations_form_submissions = relations(form_submissions, ({ one }) 
   }),
 }))
 export const relations_novu_channels = relations(novu_channels, () => ({}))
+export const relations_suppliers_rels = relations(suppliers_rels, ({ one }) => ({
+  parent: one(suppliers, {
+    fields: [suppliers_rels.parent],
+    references: [suppliers.id],
+    relationName: '_rels',
+  }),
+  'product-variant-suppliesID': one(product_variant_supplies, {
+    fields: [suppliers_rels['product-variant-suppliesID']],
+    references: [product_variant_supplies.id],
+    relationName: 'product-variant-supplies',
+  }),
+}))
+export const relations_suppliers = relations(suppliers, ({ many }) => ({
+  _rels: many(suppliers_rels, {
+    relationName: '_rels',
+  }),
+}))
 export const relations_payload_locked_documents_rels = relations(
   payload_locked_documents_rels,
   ({ one }) => ({
@@ -1194,6 +1348,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [product_variants.id],
       relationName: 'product-variants',
     }),
+    'product-variant-suppliesID': one(product_variant_supplies, {
+      fields: [payload_locked_documents_rels['product-variant-suppliesID']],
+      references: [product_variant_supplies.id],
+      relationName: 'product-variant-supplies',
+    }),
     ordersID: one(orders, {
       fields: [payload_locked_documents_rels.ordersID],
       references: [orders.id],
@@ -1218,6 +1377,11 @@ export const relations_payload_locked_documents_rels = relations(
       fields: [payload_locked_documents_rels['novu-channelsID']],
       references: [novu_channels.id],
       relationName: 'novu-channels',
+    }),
+    suppliersID: one(suppliers, {
+      fields: [payload_locked_documents_rels.suppliersID],
+      references: [suppliers.id],
+      relationName: 'suppliers',
     }),
   }),
 )
@@ -1261,6 +1425,7 @@ type DatabaseSchema = {
   enum_orders_status: typeof enum_orders_status
   enum_recharges_status: typeof enum_recharges_status
   enum_recharges_gateway: typeof enum_recharges_gateway
+  enum_suppliers_status: typeof enum_suppliers_status
   media: typeof media
   categories: typeof categories
   users_roles: typeof users_roles
@@ -1270,6 +1435,7 @@ type DatabaseSchema = {
   products: typeof products
   products_rels: typeof products_rels
   product_variants: typeof product_variants
+  product_variant_supplies: typeof product_variant_supplies
   orders: typeof orders
   orders_rels: typeof orders_rels
   recharges: typeof recharges
@@ -1283,6 +1449,8 @@ type DatabaseSchema = {
   forms: typeof forms
   form_submissions: typeof form_submissions
   novu_channels: typeof novu_channels
+  suppliers: typeof suppliers
+  suppliers_rels: typeof suppliers_rels
   payload_locked_documents: typeof payload_locked_documents
   payload_locked_documents_rels: typeof payload_locked_documents_rels
   payload_preferences: typeof payload_preferences
@@ -1299,6 +1467,7 @@ type DatabaseSchema = {
   relations_products_rels: typeof relations_products_rels
   relations_products: typeof relations_products
   relations_product_variants: typeof relations_product_variants
+  relations_product_variant_supplies: typeof relations_product_variant_supplies
   relations_orders_rels: typeof relations_orders_rels
   relations_orders: typeof relations_orders
   relations_recharges: typeof relations_recharges
@@ -1312,6 +1481,8 @@ type DatabaseSchema = {
   relations_forms: typeof relations_forms
   relations_form_submissions: typeof relations_form_submissions
   relations_novu_channels: typeof relations_novu_channels
+  relations_suppliers_rels: typeof relations_suppliers_rels
+  relations_suppliers: typeof relations_suppliers
   relations_payload_locked_documents_rels: typeof relations_payload_locked_documents_rels
   relations_payload_locked_documents: typeof relations_payload_locked_documents
   relations_payload_preferences_rels: typeof relations_payload_preferences_rels
@@ -1320,7 +1491,7 @@ type DatabaseSchema = {
   relations_header: typeof relations_header
   relations_footer: typeof relations_footer
 }
-// @ts-expect-error
+
 declare module '@payloadcms/db-postgres/types' {
   export interface GeneratedDatabaseSchema {
     schema: DatabaseSchema

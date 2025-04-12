@@ -312,6 +312,26 @@ export const Orders: CollectionConfig = {
         readOnly: true,
       },
     },
+    {
+      name: 'supplier',
+      type: 'relationship',
+      relationTo: 'suppliers',
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'profit',
+      type: 'number',
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+      admin: {
+        readOnly: true,
+      },
+    },
   ],
   timestamps: true,
 }

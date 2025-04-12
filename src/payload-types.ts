@@ -74,11 +74,13 @@ export interface Config {
     transactions: Transaction;
     products: Product;
     'product-variants': ProductVariant;
+    'product-variant-supplies': ProductVariantSupply;
     orders: Order;
     recharges: Recharge;
     forms: Form;
     'form-submissions': FormSubmission;
     'novu-channels': NovuChannel;
+    suppliers: Supplier;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -92,11 +94,13 @@ export interface Config {
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     'product-variants': ProductVariantsSelect<false> | ProductVariantsSelect<true>;
+    'product-variant-supplies': ProductVariantSuppliesSelect<false> | ProductVariantSuppliesSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     recharges: RechargesSelect<false> | RechargesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'novu-channels': NovuChannelsSelect<false> | NovuChannelsSelect<true>;
+    suppliers: SuppliersSelect<false> | SuppliersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -317,6 +321,8 @@ export interface Order {
   totalDiscount: number;
   totalPrice: number;
   quantity: number;
+  supplier?: (number | null) | Supplier;
+  profit?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -601,6 +607,51 @@ export interface FormSubmission {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "suppliers".
+ */
+export interface Supplier {
+  id: number;
+  name: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  variantSupplies?: (number | ProductVariantSupply)[] | null;
+  /**
+   * Internal notes about this supplier
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-variant-supplies".
+ */
+export interface ProductVariantSupply {
+  id: number;
+  /**
+   * The product variant being supplied
+   */
+  productVariant: number | ProductVariant;
+  /**
+   * The supplier providing this product variant
+   */
+  supplier: number | Supplier;
+  /**
+   * Cost price per unit from this supplier
+   */
+  costPrice: number;
+  /**
+   * Mark this as the preferred supply source for this product variant
+   */
+  isPreferred?: boolean | null;
+  /**
+   * Notes about supply conditions, delivery time, etc.
+   */
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "transactions".
  */
 export interface Transaction {
@@ -682,6 +733,10 @@ export interface PayloadLockedDocument {
         value: number | ProductVariant;
       } | null)
     | ({
+        relationTo: 'product-variant-supplies';
+        value: number | ProductVariantSupply;
+      } | null)
+    | ({
         relationTo: 'orders';
         value: number | Order;
       } | null)
@@ -700,6 +755,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'novu-channels';
         value: number | NovuChannel;
+      } | null)
+    | ({
+        relationTo: 'suppliers';
+        value: number | Supplier;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -898,6 +957,19 @@ export interface ProductVariantsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-variant-supplies_select".
+ */
+export interface ProductVariantSuppliesSelect<T extends boolean = true> {
+  productVariant?: T;
+  supplier?: T;
+  costPrice?: T;
+  isPreferred?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
@@ -913,6 +985,8 @@ export interface OrdersSelect<T extends boolean = true> {
   totalDiscount?: T;
   totalPrice?: T;
   quantity?: T;
+  supplier?: T;
+  profit?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1036,6 +1110,18 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
 export interface NovuChannelsSelect<T extends boolean = true> {
   subscriberId?: T;
   hash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "suppliers_select".
+ */
+export interface SuppliersSelect<T extends boolean = true> {
+  name?: T;
+  status?: T;
+  variantSupplies?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
