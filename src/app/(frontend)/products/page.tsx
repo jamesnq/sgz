@@ -173,7 +173,6 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 
   // Get both data sets from the combined cache
   const { categoriesData, productsData } = await getCachedData()
-
   return (
     <Suspense fallback={<ProductsLoading />}>
       <PageClient

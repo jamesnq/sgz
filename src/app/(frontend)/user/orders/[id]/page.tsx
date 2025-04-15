@@ -1,10 +1,11 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { headers } from 'next/headers'
-import PageClient from './page.client'
-import { notFound } from 'next/navigation'
 import { Product, ProductVariant } from '@/payload-types'
+import { pick } from '@/utilities/pick'
+import { headers } from 'next/headers'
+import { notFound } from 'next/navigation'
+import PageClient from './page.client'
 
 type Args = {
   params: Promise<{
@@ -20,6 +21,7 @@ export default async function Page({ params: paramsPromise }: Args) {
   const { user } = await payload.auth({
     headers: headersData,
   })
+
   // TODO optimize using drizzle
   const { docs } = await payload.find({
     collection: 'orders',
@@ -54,11 +56,15 @@ export default async function Page({ params: paramsPromise }: Args) {
   // Filter fields
   let product = (order.productVariant as ProductVariant).product as Product
   if (typeof product == 'object') {
-    const { slug, image } = product
-    product = { slug, image } as Product
+    product = pick(product, ['slug', 'image']) as Product
   }
 
-  const { id: variantId, name, image, fixedStock } = order.productVariant as ProductVariant
-  order.productVariant = { id: variantId, product, name, image, fixedStock } as ProductVariant
+  order.productVariant = pick(order.productVariant as ProductVariant, [
+    'id',
+    'product',
+    'name',
+    'image',
+    'fixedStock',
+  ]) as ProductVariant
   return <PageClient order={order} />
 }

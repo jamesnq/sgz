@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import { OrderCardSkeleton, PageHeaderSkeleton, PageSkeleton } from '@/components/skeletons'
 import { CardContent } from '@/components/ui/card'
 import { ProductVariant } from '@/payload-types'
+import { pick } from '@/utilities/pick'
 import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import { z } from 'zod'
@@ -118,6 +119,12 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       const product = products.find(
         (product) => product.id === (order.productVariant as ProductVariant).product,
       )
+      order.productVariant = pick(order.productVariant as ProductVariant, [
+        'id',
+        'product',
+        'name',
+        'image',
+      ]) as ProductVariant
       return {
         ...order,
         productVariant: {
@@ -146,11 +153,8 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       return order
     })
   }
-  res.docs = res.docs.map((order: any) => {
-    const { id, name, image, product, ..._rest } = order.productVariant as ProductVariant
-    order.productVariant = { id, name, image, product }
-    return order
-  })
+
+  console.log('🚀 ~ OrdersPage ~ res:', res)
   return <PageClient data={res} />
 }
 

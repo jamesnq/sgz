@@ -4,12 +4,13 @@ import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 
+import { Spinner } from '@/components/ui/spinner'
 import { Product, ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
+import { pick } from '@/utilities/pick'
+import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
-import { Suspense } from 'react'
-import { Spinner } from '@/components/ui/spinner'
 
 export const revalidate = 3600
 
@@ -55,7 +56,6 @@ export default async function Page({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
 
   const product = await queryProductBySlug({ slug })
-
   if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
   delete product.meta
   return (
@@ -124,14 +124,27 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
           return null
         }
 
-        product.variants = product.variants
+        ;(product.variants as any) = product.variants
           .filter((variant) => {
             return (variant as ProductVariant).status !== 'PRIVATE'
           })
           // @ts-expect-error ignore
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          .map(({ note, metadata, fixedStock, ...rest }: ProductVariant) => {
-            return rest
+          .map((pv: ProductVariant) => {
+            return pick(pv, [
+              'id',
+              'name',
+              'price',
+              'originalPrice',
+              'image',
+              'status',
+              'min',
+              'max',
+              'important',
+              'description',
+              'form',
+              'product',
+            ])
           })
 
         // Collect all image IDs from variants
