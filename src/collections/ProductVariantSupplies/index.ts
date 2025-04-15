@@ -12,9 +12,10 @@ export const ProductVariantSupplies: CollectionConfig = {
     read: hasRole(['admin']),
     update: hasRole(['admin']),
   },
+  disableDuplicate: true,
   admin: {
     useAsTitle: 'productVariant',
-    defaultColumns: ['productVariant', 'supplier', 'costPrice', 'updatedAt'],
+    defaultColumns: ['productVariant', 'supplier', 'cost', 'purchase', 'updatedAt'],
     group: managerGroup,
   },
   fields: [
@@ -37,7 +38,7 @@ export const ProductVariantSupplies: CollectionConfig = {
       },
     },
     {
-      name: 'costPrice',
+      name: 'cost',
       type: 'number',
       defaultValue: 0,
       required: true,
@@ -46,11 +47,18 @@ export const ProductVariantSupplies: CollectionConfig = {
       },
     },
     {
-      name: 'isPreferred',
+      name: 'prepaid',
       type: 'checkbox',
       defaultValue: false,
+      required: true,
+    },
+    {
+      name: 'purchase',
+      type: 'number',
+      defaultValue: 0,
+      required: true,
       admin: {
-        description: 'Mark this as the preferred supply source for this product variant',
+        description: 'Number of units purchased from this supplier',
       },
     },
     {

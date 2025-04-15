@@ -17,7 +17,7 @@ import { hasText } from '@payloadcms/richtext-lexical/shared'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
-
+// TODO tell user focus when order status is in progress
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
   const product = (variant.product as Product) || null

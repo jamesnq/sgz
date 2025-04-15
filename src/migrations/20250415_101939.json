@@ -1,5 +1,5 @@
 {
-  "id": "41850fee-897d-437b-89d5-456f688cdb03",
+  "id": "5ce5eddc-1383-4ee2-b8c8-ab0bc42ed9ab",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1367,6 +1367,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "default_supplier_id": {
+          "name": "default_supplier_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "auto_process": {
           "name": "auto_process",
           "type": "enum_product_variants_auto_process",
@@ -1431,6 +1437,21 @@
           "columns": [
             {
               "expression": "form_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "product_variants_default_supplier_idx": {
+          "name": "product_variants_default_supplier_idx",
+          "columns": [
+            {
+              "expression": "default_supplier_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1511,6 +1532,19 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
+        },
+        "product_variants_default_supplier_id_suppliers_id_fk": {
+          "name": "product_variants_default_supplier_id_suppliers_id_fk",
+          "tableFrom": "product_variants",
+          "tableTo": "suppliers",
+          "columnsFrom": [
+            "default_supplier_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1541,19 +1575,26 @@
           "primaryKey": false,
           "notNull": true
         },
-        "cost_price": {
-          "name": "cost_price",
+        "cost": {
+          "name": "cost",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "is_preferred": {
-          "name": "is_preferred",
+        "prepaid": {
+          "name": "prepaid",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": false
+        },
+        "purchase": {
+          "name": "purchase",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "note": {
           "name": "note",
@@ -1777,8 +1818,20 @@
           "primaryKey": false,
           "notNull": false
         },
-        "profit": {
-          "name": "profit",
+        "supplier_paid": {
+          "name": "supplier_paid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cost": {
+          "name": "cost",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revenue": {
+          "name": "revenue",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false
@@ -2203,6 +2256,27 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "orderCode_gateway_idx": {
+          "name": "orderCode_gateway_idx",
+          "columns": [
+            {
+              "expression": "order_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "gateway",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3490,143 +3564,6 @@
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.suppliers_rels": {
-      "name": "suppliers_rels",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "order": {
-          "name": "order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "parent_id": {
-          "name": "parent_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "path": {
-          "name": "path",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "product_variant_supplies_id": {
-          "name": "product_variant_supplies_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "suppliers_rels_order_idx": {
-          "name": "suppliers_rels_order_idx",
-          "columns": [
-            {
-              "expression": "order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "suppliers_rels_parent_idx": {
-          "name": "suppliers_rels_parent_idx",
-          "columns": [
-            {
-              "expression": "parent_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "suppliers_rels_path_idx": {
-          "name": "suppliers_rels_path_idx",
-          "columns": [
-            {
-              "expression": "path",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "suppliers_rels_product_variant_supplies_id_idx": {
-          "name": "suppliers_rels_product_variant_supplies_id_idx",
-          "columns": [
-            {
-              "expression": "product_variant_supplies_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "path",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "suppliers_rels_parent_fk": {
-          "name": "suppliers_rels_parent_fk",
-          "tableFrom": "suppliers_rels",
-          "tableTo": "suppliers",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "suppliers_rels_product_variant_supplies_fk": {
-          "name": "suppliers_rels_product_variant_supplies_fk",
-          "tableFrom": "suppliers_rels",
-          "tableTo": "product_variant_supplies",
-          "columnsFrom": [
-            "product_variant_supplies_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

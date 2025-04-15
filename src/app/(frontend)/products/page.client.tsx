@@ -338,7 +338,6 @@ const PageClient = ({
           isPending={isPending}
         />
 
-        {/* Main content area */}
         <div className="flex-1">
           {data.docs.length > 0 ? (
             <>

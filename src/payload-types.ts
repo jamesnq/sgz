@@ -85,7 +85,11 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    suppliers: {
+      variantSupplies: 'product-variant-supplies';
+    };
+  };
   collectionsSelect: {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
@@ -322,7 +326,9 @@ export interface Order {
   totalPrice: number;
   quantity: number;
   supplier?: (number | null) | Supplier;
-  profit?: number | null;
+  supplierPaid?: boolean | null;
+  cost?: number | null;
+  revenue?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -388,6 +394,7 @@ export interface ProductVariant {
     };
     [k: string]: unknown;
   } | null;
+  defaultSupplier?: (number | null) | Supplier;
   autoProcess?: 'key' | null;
   metadata?:
     | {
@@ -587,33 +594,17 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "form-submissions".
- */
-export interface FormSubmission {
-  id: number;
-  user: number | User;
-  form: number | Form;
-  submissionData:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "suppliers".
  */
 export interface Supplier {
   id: number;
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
-  variantSupplies?: (number | ProductVariantSupply)[] | null;
+  variantSupplies?: {
+    docs?: (number | ProductVariantSupply)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   /**
    * Internal notes about this supplier
    */
@@ -638,15 +629,36 @@ export interface ProductVariantSupply {
   /**
    * Cost price per unit from this supplier
    */
-  costPrice: number;
+  cost: number;
+  prepaid: boolean;
   /**
-   * Mark this as the preferred supply source for this product variant
+   * Number of units purchased from this supplier
    */
-  isPreferred?: boolean | null;
+  purchase: number;
   /**
    * Notes about supply conditions, delivery time, etc.
    */
   note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions".
+ */
+export interface FormSubmission {
+  id: number;
+  user: number | User;
+  form: number | Form;
+  submissionData:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -950,6 +962,7 @@ export interface ProductVariantsSelect<T extends boolean = true> {
   note?: T;
   description?: T;
   fixedStock?: T;
+  defaultSupplier?: T;
   autoProcess?: T;
   metadata?: T;
   updatedAt?: T;
@@ -962,8 +975,9 @@ export interface ProductVariantsSelect<T extends boolean = true> {
 export interface ProductVariantSuppliesSelect<T extends boolean = true> {
   productVariant?: T;
   supplier?: T;
-  costPrice?: T;
-  isPreferred?: T;
+  cost?: T;
+  prepaid?: T;
+  purchase?: T;
   note?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -986,7 +1000,9 @@ export interface OrdersSelect<T extends boolean = true> {
   totalPrice?: T;
   quantity?: T;
   supplier?: T;
-  profit?: T;
+  supplierPaid?: T;
+  cost?: T;
+  revenue?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -30,6 +30,7 @@ class ConflictsError extends APIError {
     super(message, 400, undefined, true)
   }
 }
+
 const orderByOrAdmin: Access = ({ req }) => {
   // allow read to admin and staff or orderedBy
   if (hasRole(['admin', 'staff'])({ req })) return true
@@ -38,10 +39,8 @@ const orderByOrAdmin: Access = ({ req }) => {
 
 // hooks
 const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, operation }) => {
-  if (operation !== 'update' || !data) return
-
   const user = req.user
-  if (!user) throw new ConflictsError('Not authenticated')
+  if (operation !== 'update' || !data || !user) return data
   const userId = typeof user === 'object' ? user.id : user
 
   if (userHasRole(user, ['admin', 'staff']) && !(data.handlers as number[]).includes(userId)) {
@@ -49,6 +48,7 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
   }
   return data
 }
+
 const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   previousDoc,
   doc,
@@ -89,7 +89,7 @@ const refundHook: FieldHook<Order> = async ({
   operation,
   req: { payload },
 }) => {
-  if (operation !== 'update' || !previousValue || !data) return data
+  if (operation !== 'update' || !previousValue || !data || previousValue === value) return value
   if (previousValue === 'REFUND' && value !== 'REFUND')
     throw new ConflictsError('Không thể cập nhật trạng thái đơn hàng đã hoàn trả')
   if (previousValue !== 'REFUND' && value === 'REFUND') {
@@ -137,8 +137,42 @@ export const Orders: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   hooks: {
-    beforeChange: [trackHandlersHook],
-    afterChange: [notificationUpdateHook],
+    beforeChange: [
+      trackHandlersHook,
+      async ({ data, originalDoc, req: { payload } }) => {
+        if (!data) return data
+        if (originalDoc?.supplier != data.supplier) {
+          if (data.supplier) {
+            const supplierId = typeof data.supplier === 'object' ? data.supplier.id : data.supplier
+            const productVariantId =
+              typeof data.productVariant === 'object' ? data.productVariant.id : data.productVariant
+            const { docs: variantSupplies } = await payload.find({
+              collection: 'product-variant-supplies',
+              where: {
+                supplier: { equals: supplierId },
+                productVariant: { equals: productVariantId },
+              },
+              depth: 0,
+              pagination: false,
+              overrideAccess: true,
+            })
+            const variantSupply = variantSupplies[0]
+            if (!variantSupply) throw new ConflictsError('Product not found from the supplier')
+            if (data.supplierPaid === null) {
+              data.supplierPaid = variantSupply.prepaid
+            }
+            data.cost = variantSupply.cost * Number(data.quantity)
+            data.revenue = Number(data.totalPrice) - data.cost
+            return data
+          }
+          data.revenue = 0
+          data.cost = 0
+        }
+
+        return data
+      },
+    ] as CollectionBeforeChangeHook<Order>[],
+    afterChange: [notificationUpdateHook] as CollectionAfterChangeHook<Order>[],
   },
   admin: {
     defaultColumns: [
@@ -322,14 +356,27 @@ export const Orders: CollectionConfig = {
       },
     },
     {
-      name: 'profit',
+      name: 'supplierPaid',
+      type: 'checkbox',
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'cost',
       type: 'number',
       access: {
         create: hasRole(['admin']),
         update: hasRole(['admin']),
       },
-      admin: {
-        readOnly: true,
+    },
+    {
+      name: 'revenue',
+      type: 'number',
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
       },
     },
   ],

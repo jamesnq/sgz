@@ -267,6 +267,16 @@ export const ProductVariants: CollectionConfig = {
       },
     },
     {
+      name: 'defaultSupplier',
+      type: 'relationship',
+      relationTo: 'suppliers',
+      access: {
+        read: hasRole(['admin']),
+        update: hasRole(['admin']),
+        create: hasRole(['admin']),
+      },
+    },
+    {
       name: 'autoProcess',
       type: 'select',
       options: [

@@ -40,10 +40,12 @@ export const Suppliers: CollectionConfig = {
     },
     {
       name: 'variantSupplies',
-      type: 'relationship',
-      relationTo: 'product-variant-supplies',
-      hasMany: true,
-      unique: true,
+      type: 'join',
+      collection: 'product-variant-supplies',
+      on: 'supplier',
+      admin: {
+        defaultColumns: ['productVariant', 'supplier', 'cost', 'purchase', 'updatedAt'],
+      },
     },
     {
       name: 'notes',
