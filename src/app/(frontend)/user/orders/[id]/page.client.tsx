@@ -11,13 +11,13 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { thankYouMessage, workingTime } from '@/utilities/constants-react'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { formatPrice } from '@/utilities/formatPrice'
-import { getOrderStatus } from '@/utilities/getOrderStatus'
+import { getOrderStatus, orderStatusColors } from '@/utilities/getOrderStatus'
 import { Routes } from '@/utilities/routes'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { UpdateOrderShippingForm } from './components/UpdateOrderShippingForm'
-// TODO tell user focus when order status is in progress
+
 export function OrderCard({ order, className }: { order: Order; className?: string }) {
   const variant = order.productVariant as ProductVariant
   const product = (variant.product as Product) || null
@@ -153,12 +153,33 @@ const PageClient = ({ order }: { order: Order }) => {
           Quay lại
         </Link>
       </div>
-      <div className="flex max-md:flex-col gap-4 text-[14px]">
-        <div className=" flex-1 flex flex-col gap-4">
+      <div className="flex max-md:flex-col gap-2 text-[14px]">
+        <div className=" flex-1 flex flex-col gap-2">
           <OrderCard order={order}></OrderCard>
         </div>
-        <div className="flex-[2] flex flex-col gap-4">
-          {!['COMPLETED', 'REFUND'].includes(order.status) ? (
+        <div className="flex-[2] flex flex-col gap-2">
+          {order.status === 'USER_UPDATE' && (
+            <Card>
+              <CardContent className="p-4">
+                <div style={{ color: orderStatusColors.USER_UPDATE }}>
+                  Đơn hàng của bạn đang được xử lý, vui lòng{' '}
+                  <span className="font-bold underline">điền thêm thông tin theo yêu cầu</span> để
+                  tiếp tục
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {order.status === 'IN_PROCESS' && (
+            <Card>
+              <CardContent className="p-4">
+                <div style={{ color: orderStatusColors.IN_PROCESS }}>
+                  Đơn hàng của bạn đang được nhân viên xử lý, vui lòng chú ý và điền các thông tin
+                  được yêu cầu <span className="font-bold underline">nếu có</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {!['COMPLETED', 'REFUND', 'IN_PROGRESS'].includes(order.status) ? (
             <Card>
               <CardContent className="p-4">
                 <div className="text-highlight">{workingTime}</div>

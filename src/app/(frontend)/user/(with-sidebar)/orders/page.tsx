@@ -153,8 +153,6 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       return order
     })
   }
-
-  console.log('🚀 ~ OrdersPage ~ res:', res)
   return <PageClient data={res} />
 }
 
