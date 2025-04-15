@@ -20,15 +20,18 @@ export async function discordWebhook({
   redirect,
   color,
   channel,
-  mention: isMention = true,
+  isMention = true,
 }: {
   subject: string
   message?: string
   redirect?: string
   color?: string | null
   channel?: keyof typeof webhookChannels
-  mention?: boolean
+  isMention?: boolean
 }) {
+  if (process.env.NODE_ENV === 'development') {
+    isMention = false
+  }
   if (!channel) {
     channel = 'admin'
   }
@@ -264,7 +267,7 @@ export async function sendOrderCompletedStaffNotification(order: Order): Promise
         ...payload,
         color: orderStatusColors.COMPLETED,
         channel: 'staff',
-        mention: false,
+        isMention: false,
       })
     } catch (error) {
       console.error('Error sending order completed notification:', error)

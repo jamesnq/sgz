@@ -8,12 +8,10 @@ import { useCallback, useEffect, useState, useTransition } from 'react'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
-import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { CustomPagination } from '@/components/ui/custom-pagination'
 import { Input } from '@/components/ui/input'
-import { env } from '@/config'
 import { getProductCardStyles } from '@/lib/product-card-styles'
 import { cn } from '@/lib/utils'
 import { Category, Product } from '@/payload-types'
@@ -24,6 +22,7 @@ import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedDocs } from 'payload'
+import { ProductPageHeader } from './components/ProductPageHeader'
 
 const ProductCard = ({ product }: { product: Product }) => {
   const styles = getProductCardStyles()
@@ -104,6 +103,8 @@ const Sidebar = ({
   selectedCategoryIds,
   handleCategoryToggle,
   handleClearCategories,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isPending,
 }: {
   searchTerm: string
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -323,27 +324,7 @@ const PageClient = ({
 
   return (
     <Shell>
-      <div className="grid container items-center pb-4 max-w-6xl gap-0">
-        <div className="grid container items-center pb-4 max-w-6xl gap-0">
-          <div className="flex max-w-[61.25rem] flex-col md:py-6 md:pb-4 lg:py-12 lg:pb-10 mx-auto items-center gap-2 text-center">
-            <div className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up wave-text">
-              {env.NEXT_PUBLIC_SITE_NAME}
-            </div>
-            <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up">
-              Dịch vụ{' '}
-              <AnimatedWordCycle
-                className="text-highlight"
-                words={[
-                  ['nạp', 'nạp', '', ''],
-                  ['ứng dụng', 'game', 'tài khoản', 'phần mềm']
-                ]}
-                interval={3000}
-              />{' '}
-              giá rẻ
-            </h1>
-          </div>
-        </div>
-      </div>
+      <ProductPageHeader />
 
       <div className="flex flex-col lg:flex-row lg:gap-6">
         {/* Sidebar for search and filters */}
@@ -357,7 +338,6 @@ const PageClient = ({
           isPending={isPending}
         />
 
-        {/* Main content area */}
         <div className="flex-1">
           {data.docs.length > 0 ? (
             <>

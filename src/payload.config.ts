@@ -15,8 +15,10 @@ import { Header } from './collections/Globals/Header/config'
 import { Media } from './collections/Media'
 import { NovuChannels } from './collections/NovuChannels/config'
 import { Orders } from './collections/Orders'
+import { ProductVariantSupplies } from './collections/ProductVariantSupplies'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
+import { Suppliers } from './collections/Suppliers'
 import { Recharges } from './collections/Recharges'
 import { Stocks } from './collections/Stocks'
 import { Transactions } from './collections/Transactions'
@@ -84,11 +86,13 @@ export default buildConfig({
     Transactions,
     Products,
     ProductVariants,
+    ProductVariantSupplies,
     Orders,
     Recharges,
     Forms,
     FormSubmissions,
     NovuChannels,
+    Suppliers,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

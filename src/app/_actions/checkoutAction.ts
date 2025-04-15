@@ -1,10 +1,11 @@
 'use server'
+import { env } from '@/config'
 import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
 import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
-import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import { formatPrice } from '@/utilities/formatPrice'
+import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
@@ -26,13 +27,13 @@ export const checkoutAction = authActionClient
         price: true,
         originalPrice: true,
         status: true,
-        sku: true,
         min: true,
         max: true,
         form: true,
         product: true,
         metadata: true,
         name: true,
+        defaultSupplier: true,
       },
     })
     if (!pv) {
@@ -70,6 +71,7 @@ export const checkoutAction = authActionClient
     } catch {
       throw new ServerNotification('Vui lòng điển đầy đủ thông tin giao hàng')
     }
+
     const db = payload.db.drizzle
     const order = await db.transaction(async (tx) => {
       const [newUser] = await tx
@@ -107,10 +109,24 @@ export const checkoutAction = authActionClient
       })
       return order
     })
-    after(async () => {
-      // update product and product_variant sold
 
+    after(async () => {
       await Promise.all([
+        // update supplier
+        (async () => {
+          const defaultSupplierId =
+            pv.defaultSupplier && typeof pv.defaultSupplier === 'object'
+              ? pv.defaultSupplier.id
+              : pv.defaultSupplier
+          await payload.update({
+            collection: 'orders',
+            where: { id: { equals: order.id } },
+            data: { supplier: defaultSupplierId },
+            user: env.AUTO_PROCESS_USER_ID,
+            limit: 1,
+          })
+        })(),
+        // update product and product_variant sold
         db
           .update(products)
           .set({ sold: sql`${products.sold} + ${quantity}` })
