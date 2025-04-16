@@ -1,10 +1,10 @@
 'use client'
 import { Media } from '@/components/Media'
+import { OrderCardSkeleton } from '@/components/skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { CustomPagination } from '@/components/ui/custom-pagination'
+import { Input } from '@/components/ui/input'
 import { Order, Product, ProductVariant } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
@@ -17,7 +17,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs'
 import { PaginatedDocs } from 'payload'
-import { useEffect, useTransition } from 'react'
+import { useEffect, useTransition, useState } from 'react'
 
 function OrderCard({ o }: { o: Order }) {
   // @ts-expect-error ignore
@@ -85,42 +85,25 @@ function OrderCard({ o }: { o: Order }) {
   )
 }
 
-function OrderCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader className="p-4">
-        <div className="flex justify-between">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-32" />
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="flex items-start max-md:flex-col md:items-center gap-4">
-          <div className="flex items-start gap-2">
-            <Skeleton className="w-[64px] h-[85px] rounded-lg" />
-            <div className="flex-1">
-              <Skeleton className="h-5 w-48 mb-2" />
-              <Skeleton className="h-5 w-32 mb-2" />
-              <Skeleton className="h-5 w-24" />
-            </div>
-          </div>
-          <div className="text-center max-md:hidden md:flex-1">
-            <Skeleton className="h-5 w-20 mx-auto mb-1" />
-            <Skeleton className="h-5 w-10 mx-auto" />
-          </div>
-          <div className="flex flex-wrap gap-[8px] max-lg:w-full lg:flex-col">
-            <Skeleton className="h-9 w-28" />
-            <Skeleton className="h-9 w-28" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 function Orders({ data }: { data: PaginatedDocs<Order> }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-
+  const [stableLoading, setStableLoading] = useState(false)
+  
+  // Debounce the loading state to prevent UI flickering
+  useEffect(() => {
+    if (isPending) {
+      // Set loading immediately when transition starts
+      setStableLoading(true)
+    } else {
+      // Delay turning off loading state to prevent flickering
+      const timer = setTimeout(() => {
+        setStableLoading(false)
+      }, 300) // 300ms delay before showing content
+      return () => clearTimeout(timer)
+    }
+  }, [isPending])
+  
   const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
   const debouncedSearch = useDebounce(search, 500)
   const [status, setStatus] = useQueryState(
@@ -207,7 +190,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
         </div>{' '}
       </CardHeader>
       <CardContent className="max-lg:p-1">
-        {isPending ? (
+        {stableLoading ? (
           <div className="flex flex-col text-sm gap-2">
             {Array(5)
               .fill(0)

@@ -121,7 +121,7 @@ export class PaymentService {
     after(async () => {
       await discordWebhook({
         subject: `Nạp Tiền Qua Ngân Hàng`,
-        message: `${user.email} \nSố tiền: **${formatPrice(paymentData.amount)}** \nMã nạp: **#${recharge.orderCode}**`,
+        message: `Người dùng: ${user.email} \nSố tiền: **${formatPrice(paymentData.amount)}** \nMã nạp: **#${recharge.orderCode}**`,
         color: '#00FF00',
         channel: 'activities',
       })

@@ -293,7 +293,7 @@ export async function sendOrderCompletedNotification(order: Order): Promise<void
         message: `Đơn hàng cho sản phẩm "${productVariant.name}"  x${order.quantity} đã được xử lý tự động.`,
         redirect: Routes.WORKSPACE,
         color: orderStatusColors.COMPLETED,
-        mention: false,
+        isMention: false,
       }
 
       await discordWebhook({

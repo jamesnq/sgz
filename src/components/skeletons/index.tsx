@@ -60,18 +60,22 @@ export function OrderCardSkeleton() {
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="flex items-start gap-4">
-          <Skeleton className="w-[64px] h-[85px] rounded-lg" />
-          <div className="flex-1">
-            <Skeleton className="h-5 w-48 mb-2" />
-            <Skeleton className="h-5 w-32 mb-2" />
-            <Skeleton className="h-5 w-24" />
-          </div>
-          <div className="flex-1 flex justify-end">
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-9 w-28" />
-              <Skeleton className="h-9 w-28" />
+        <div className="flex items-start max-md:flex-col md:items-center gap-4">
+          <div className="flex items-start gap-2">
+            <Skeleton className="w-[64px] h-[85px] rounded-lg" />
+            <div className="flex-1">
+              <Skeleton className="h-5 w-48 mb-2" />
+              <Skeleton className="h-5 w-32 mb-2" />
+              <Skeleton className="h-5 w-24" />
             </div>
+          </div>
+          <div className="text-center max-md:hidden md:flex-1">
+            <Skeleton className="h-5 w-20 mx-auto mb-1" />
+            <Skeleton className="h-5 w-10 mx-auto" />
+          </div>
+          <div className="flex flex-wrap gap-[8px] max-lg:w-full lg:flex-col">
+            <Skeleton className="h-9 w-28" />
+            <Skeleton className="h-9 w-28" />
           </div>
         </div>
       </CardContent>
