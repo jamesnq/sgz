@@ -89,7 +89,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [stableLoading, setStableLoading] = useState(false)
-  
+
   // Debounce the loading state to prevent UI flickering
   useEffect(() => {
     if (isPending) {
@@ -103,7 +103,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
       return () => clearTimeout(timer)
     }
   }, [isPending])
-  
+
   const [search, setSearch] = useQueryState('q', parseAsString.withDefault(''))
   const debouncedSearch = useDebounce(search, 500)
   const [status, setStatus] = useQueryState(

@@ -1,5 +1,4 @@
 import {
-  APIError,
   CollectionAfterChangeHook,
   CollectionBeforeChangeHook,
   FieldHook,
@@ -18,18 +17,13 @@ import {
   sendOrderUpdateRequiredNotification,
   sendOrderUserUpdatedStaffNotification,
 } from '@/services/novu.service'
+import ConflictsError from '@/utilities/ConflictsError'
 import { managerGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { formatPrice } from '@/utilities/formatPrice'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import { after } from 'next/server'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
-
-class ConflictsError extends APIError {
-  constructor(message: string) {
-    super(message, 400, undefined, true)
-  }
-}
 
 const orderByOrAdmin: Access = ({ req }) => {
   // allow read to admin and staff or orderedBy

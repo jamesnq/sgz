@@ -3,7 +3,7 @@ import { hasRole, userHasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
 import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
-import { type CollectionAfterChangeHook, type CollectionConfig } from 'payload'
+import { FieldHook, type CollectionAfterChangeHook, type CollectionConfig } from 'payload'
 import { revalidateProductPath, updateProductPriceRange } from '../Products/hooks/revalidateProduct'
 
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
@@ -270,6 +270,30 @@ export const ProductVariants: CollectionConfig = {
       name: 'defaultSupplier',
       type: 'relationship',
       relationTo: 'suppliers',
+      hooks: {
+        beforeChange: [
+          async ({ value, data, req: { payload } }) => {
+            if (!data) return value
+            if (!value) return value
+            const supplies = await payload.find({
+              collection: 'product-variant-supplies',
+              depth: 0,
+              limit: 1,
+              pagination: false,
+              select: {},
+              where: {
+                supplier: { equals: value },
+                productVariant: { equals: data.id },
+              },
+            })
+
+            if (supplies.docs.length <= 0) {
+              return 'Supplier not support this product variant'
+            }
+            return value
+          },
+        ] as FieldHook<ProductVariant>[],
+      },
       access: {
         read: hasRole(['admin']),
         update: hasRole(['admin']),
