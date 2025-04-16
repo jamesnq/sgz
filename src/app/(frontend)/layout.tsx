@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+
 import React from 'react'
 
 import { Header } from '@/collections/Globals/Header/Component'
@@ -5,7 +7,8 @@ import { AdminBar } from '@/components/AdminBar'
 import Footer from '@/components/footer'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
-import { defaultMetadata } from '@/utilities/generateMeta'
+import { getServerSideURL } from '@/utilities/getURL'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import './globals.css'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -30,4 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   )
 }
 
-export const metadata = defaultMetadata()
+export const metadata: Metadata = {
+  metadataBase: new URL(getServerSideURL()),
+  openGraph: mergeOpenGraph(),
+}

@@ -47,7 +47,7 @@ export const defaultMetadata = (): Metadata => {
       title,
       description,
       images: [{ url: defaultImage }],
-      url: serverUrl + '/',
+      url: serverUrl,
     }),
   }
 }
