@@ -8,10 +8,8 @@ const defaultOpenGraph: Metadata['openGraph'] = {
   description: `${env.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
   images: [
     {
-      url: getServerSideURL(),
+      url: `${getServerSideURL()}${defaultLogo}`,
       secureUrl: `${getServerSideURL()}${defaultLogo}`,
-      width: 1200,
-      height: 630,
     },
   ],
   siteName: env.NEXT_PUBLIC_SITE_NAME,

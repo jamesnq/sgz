@@ -5,9 +5,10 @@ import React from 'react'
 import { Header } from '@/collections/Globals/Header/Component'
 import { AdminBar } from '@/components/AdminBar'
 import Footer from '@/components/footer'
+import { env } from '@/config'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
-import { getServerSideURL } from '@/utilities/getURL'
+import { SITE_DESCRIPTION } from '@/utilities/constants'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import './globals.css'
 
@@ -34,6 +35,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getServerSideURL()),
+  // metadataBase: new URL(getServerSideURL()),
+  title: env.NEXT_PUBLIC_SITE_NAME,
+  description: `${env.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-32x32.png',
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: mergeOpenGraph(),
 }
