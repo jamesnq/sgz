@@ -272,9 +272,10 @@ export const ProductVariants: CollectionConfig = {
       relationTo: 'suppliers',
       hooks: {
         beforeChange: [
-          async ({ value, data, req: { payload } }) => {
+          async ({ previousValue, value, data, req: { payload } }) => {
             if (!data) return value
             if (!value) return value
+            if (value === previousValue) return value
             const supplies = await payload.find({
               collection: 'product-variant-supplies',
               depth: 0,
