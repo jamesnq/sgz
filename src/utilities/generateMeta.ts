@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import type { Config, Media, Product, ProductVariant } from '../payload-types'
 
 import { env } from '@/config'
-import { imageFallback } from './constants'
+import calculateDiscountPercentage from './calculateDiscountPercentage'
+import { defaultLogo, imageFallback } from './constants'
+import { formatPrice } from './formatPrice'
 import { getServerSideURL } from './getURL'
 import { mergeOpenGraph } from './mergeOpenGraph'
-import { formatPrice } from './formatPrice'
-import calculateDiscountPercentage from './calculateDiscountPercentage'
 
 /**
  * Extracts a valid image URL from a Media object or returns a fallback URL
@@ -15,7 +15,7 @@ import calculateDiscountPercentage from './calculateDiscountPercentage'
  */
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null): string => {
   const serverUrl = getServerSideURL()
-  const fallbackUrl = serverUrl + '/logo.svg'
+  const fallbackUrl = serverUrl + defaultLogo
 
   if (!image) {
     return fallbackUrl

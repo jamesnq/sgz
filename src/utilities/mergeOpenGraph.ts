@@ -1,14 +1,14 @@
+import { env } from '@/config'
+import { defaultLogo, SITE_DESCRIPTION } from '@/utilities/constants'
 import type { Metadata } from 'next'
 import { getServerSideURL } from './getURL'
-import { env } from '@/config'
-import { SITE_DESCRIPTION } from '@/utilities/constants'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
   description: `${env.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
   images: [
     {
-      url: `${getServerSideURL()}/logo.svg`,
+      url: `${getServerSideURL()}${defaultLogo}`,
     },
   ],
   siteName: env.NEXT_PUBLIC_SITE_NAME,

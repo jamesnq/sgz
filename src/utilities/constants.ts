@@ -1,6 +1,7 @@
 export const novuChannels = ['admin', 'staff']
 
-export const imageFallback = '/logo.svg'
+export const defaultLogo = '/android-chrome-512x512.png'
+export const imageFallback = defaultLogo
 export const mediaGroup = 'Media'
 export const managerGroup = 'Manager'
 export const STOCK_SEPARATOR = '\n'
