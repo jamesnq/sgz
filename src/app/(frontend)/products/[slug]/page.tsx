@@ -129,7 +129,6 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
             return (variant as ProductVariant).status !== 'PRIVATE'
           })
           // @ts-expect-error ignore
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .map((pv: ProductVariant) => {
             return pick(pv, [
               'id',
