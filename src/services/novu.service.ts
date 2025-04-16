@@ -164,13 +164,13 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
         message: ``,
         redirect: Routes.WORKSPACE,
       }
-      await novu.trigger({
-        workflowId: 'new-order',
-        to: {
-          subscriberId: 'staff',
-        },
-        payload,
-      })
+      // await novu.trigger({
+      //   workflowId: 'new-order',
+      //   to: {
+      //     subscriberId: 'staff',
+      //   },
+      //   payload,
+      // })
       await discordWebhook({
         ...payload,
         message: `Đơn hàng #${order.id} **mới ${order.productVariant.name} x${order.quantity}**`,
@@ -225,13 +225,13 @@ export async function sendOrderUserUpdatedStaffNotification(
       redirect: Routes.WORKSPACE,
     }
     try {
-      await novu.trigger({
-        workflowId: 'order-update',
-        to: {
-          subscriberId: 'staff',
-        },
-        payload,
-      })
+      // await novu.trigger({
+      //   workflowId: 'order-update',
+      //   to: {
+      //     subscriberId: 'staff',
+      //   },
+      //   payload,
+      // })
       await discordWebhook({
         ...payload,
         color: orderStatusColors.USER_UPDATE,
