@@ -2,6 +2,7 @@
 
 import { useDraggable } from '@/app/(workspace)/workspace/DraggableContext'
 import { fields } from '@/blocks/Form/fields'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Form, FormSubmission, Order } from '@/payload-types'
 import payloadClient from '@/utilities/payloadClient'
 import { cn } from '@/utilities/ui'
@@ -58,84 +59,93 @@ export function OrderShippingForm({ order }: OrderShippingFormProps) {
   })
 
   return (
-    <div className="grid grid-cols-2 gap-2 mt-1">
-      {form?.fields?.map((field, index) => {
-        const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
-        if (!Field) return null
-        const options = field.blockType == 'select' ? field.options : undefined
-        const value =
-          options && options?.length > 0
-            ? options.find(
-                (option) =>
-                  option.value === submissionData[field.name as keyof typeof submissionData],
-              )?.label
-            : submissionData[field.name as keyof typeof submissionData] || ''
+    <TooltipProvider>
+      <div className="grid grid-cols-2 gap-2 mt-1">
+        {form?.fields?.map((field, index) => {
+          const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+          if (!Field) return null
+          const options = field.blockType == 'select' ? field.options : undefined
+          const value =
+            options && options?.length > 0
+              ? options.find(
+                  (option) =>
+                    option.value === submissionData[field.name as keyof typeof submissionData],
+                )?.label
+              : submissionData[field.name as keyof typeof submissionData] || ''
 
-        const isCopied = copiedField === field.name
-        const isProcessRequired = typeof value === 'object'
-        const isHaveValue = value && !isProcessRequired
-        const isUpdating = updatingField === field.name
+          const isCopied = copiedField === field.name
+          const isProcessRequired = typeof value === 'object'
+          const isHaveValue = value && !isProcessRequired
+          const isUpdating = updatingField === field.name
 
-        return (
-          <div key={index} className="w-full flex">
-            <div
-              onClick={() => isHaveValue && handleCopy(value, field.name)}
-              className={cn(
-                'w-[90%] relative rounded-md border px-2 py-1.5 transition-all',
-                !value && 'border-dashed opacity-70',
-                value && 'cursor-pointer hover:bg-muted/50 active:bg-muted',
-                isCopied && 'ring-1 ring-green-500',
-              )}
-            >
-              <div className="flex items-center gap-0.5 text-xs font-medium text-muted-foreground">
-                {field.label}
-                {field.required && <span className="text-destructive">*</span>}
-              </div>
-              <div className="flex items-center justify-between gap-1">
-                <div className="truncate text-sm">
-                  {isHaveValue ? (
-                    value
-                  ) : (
-                    <span className="text-muted-foreground italic">Chưa có</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  {isHaveValue && (
-                    <div
-                      className={cn(
-                        'flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground transition-colors',
-                        isCopied && 'text-green-500',
-                      )}
-                    >
-                      {isCopied ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        value && <Copy className="h-3 w-3" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            {order.status !== 'REFUND' && (
-              <button
+          return (
+            <div key={index} className="w-full flex">
+              <div
+                onClick={() => isHaveValue && handleCopy(value, field.name)}
                 className={cn(
-                  'w-[10%] flex border shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-highlight',
-                  isProcessRequired && 'text-highlight',
+                  'w-[90%] relative rounded-md border px-2 py-1.5 transition-all',
+                  !value && 'border-dashed opacity-70',
+                  value && 'cursor-pointer hover:bg-muted/50 active:bg-muted',
+                  isCopied && 'ring-1 ring-green-500',
                 )}
-                onClick={() => updateNeedProcessRequiredMutation({ fieldName: field.name })}
-                disabled={isPending && isUpdating}
               >
-                {isUpdating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="flex items-center gap-0.5 text-xs font-medium text-muted-foreground">
+                  {field.label}
+                  {field.required && <span className="text-destructive">*</span>}
+                </div>
+                {isHaveValue ? (
+                  <div className="flex items-center justify-between gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="truncate text-sm">{value}</div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[300px] break-words">
+                        {value}
+                      </TooltipContent>
+                    </Tooltip>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={cn(
+                          'flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground transition-colors',
+                          isCopied && 'text-green-500',
+                        )}
+                      >
+                        {isCopied ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          value && <Copy className="h-3 w-3" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <UserPen className="h-5 w-5" />
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="truncate text-sm">
+                      <span className="text-muted-foreground italic">Chưa có</span>
+                    </div>
+                  </div>
                 )}
-              </button>
-            )}
-          </div>
-        )
-      })}
-    </div>
+              </div>
+              {order.status !== 'REFUND' && (
+                <button
+                  className={cn(
+                    'w-[10%] flex border shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-highlight',
+                    isProcessRequired && 'text-highlight',
+                  )}
+                  onClick={() => updateNeedProcessRequiredMutation({ fieldName: field.name })}
+                  disabled={isPending && isUpdating}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserPen className="h-5 w-5" />
+                  )}
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </TooltipProvider>
   )
 }
