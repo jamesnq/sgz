@@ -1,7 +1,19 @@
 import { env } from '@/config'
+import { Metadata } from 'next'
 
 const siteName = env.NEXT_PUBLIC_SITE_NAME
 const domain = typeof window !== 'undefined' ? window.location.hostname : siteName
+
+const metaText = 'Điều khoản'
+export const metadata: Metadata = {
+  title: metaText,
+  description: metaText,
+  openGraph: {
+    title: metaText,
+    description: metaText,
+  },
+}
+
 export default async function TermsPage() {
   return (
     <div className="text-xs">

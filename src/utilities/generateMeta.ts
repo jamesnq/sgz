@@ -103,8 +103,7 @@ export const generateMeta = async ({ doc, variant }: GenerateMetaArgs): Promise<
   const ogImage = getImageURL(productVariant?.image || doc.meta?.image || doc.image)
 
   // Determine the title
-  const title =
-    productVariant?.name || doc.meta?.title || `${doc.name || ''} | ${env.NEXT_PUBLIC_SITE_NAME}`
+  const title = `${productVariant?.name || doc.meta?.title || doc.name || ''} | ${env.NEXT_PUBLIC_SITE_NAME}`
 
   // Generate description based on whether we have a variant or not
   const description = productVariant
