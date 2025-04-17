@@ -10,7 +10,23 @@ module.exports = {
   changefreq: 'daily',
   priority: 0.7,
   sitemapSize: 5000,
-  exclude: ['/admin*', '/auth*', '/api*', '/server-sitemap.xml', '/404', '/500', '/dev/test*'],
+  autoLastmod: true,
+  generateIndexSitemap: true,
+  exclude: [
+    '/admin*', 
+    '/auth*', 
+    '/api*', 
+    '/server-sitemap.xml', 
+    '/404', 
+    '/500', 
+    '/dev/test*',
+    '/cart*',
+    '/checkout*',
+    '/success*',
+    '/cancel*',
+    '/account/orders*',
+    '/account/settings*',
+  ],
   robotsTxtOptions: {
     policies: [
       {
@@ -20,15 +36,24 @@ module.exports = {
       {
         userAgent: '*',
         disallow: [
-          '/admin',
-          '/admin/*',
-          '/auth',
-          '/auth/*',
-          '/api',
-          '/api/*',
-          '/dev/test',
+          '/admin', 
+          '/admin/*', 
+          '/auth', 
+          '/auth/*', 
+          '/api', 
+          '/api/*', 
+          '/dev/test', 
           '/dev/test/*',
+          '/cart',
+          '/checkout',
+          '/account/orders',
+          '/account/settings',
+          '/*?*', // Prevent duplicate content with query parameters
         ],
+      },
+      {
+        userAgent: 'Googlebot-Image',
+        allow: '/',
       },
     ],
     additionalSitemaps: [`${SITE_URL}/server-sitemap.xml`],
@@ -36,7 +61,17 @@ module.exports = {
   transform: async (config, path) => {
     // Custom transform function to exclude dynamic paths or customize priority
     // Exclude any paths that should not be in the sitemap
-    if (path.includes('/_') || path.includes('/api/') || path.startsWith('/dev/test')) {
+    if (
+      path.includes('/_') || 
+      path.includes('/api/') || 
+      path.startsWith('/dev/test') ||
+      path.includes('/cart') ||
+      path.includes('/checkout') ||
+      path.includes('/success') ||
+      path.includes('/cancel') ||
+      path.includes('/account/orders') ||
+      path.includes('/account/settings')
+    ) {
       return null
     }
 
@@ -56,6 +91,16 @@ module.exports = {
         loc: path,
         changefreq: 'daily',
         priority: 0.8,
+        lastmod: new Date().toISOString(),
+      }
+    }
+
+    // Set priority for category pages
+    if (path.startsWith('/categories/')) {
+      return {
+        loc: path,
+        changefreq: 'weekly',
+        priority: 0.7,
         lastmod: new Date().toISOString(),
       }
     }
