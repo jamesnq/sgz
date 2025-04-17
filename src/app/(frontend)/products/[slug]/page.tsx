@@ -11,6 +11,7 @@ import { pick } from '@/utilities/pick'
 import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
+import { ProductStructuredData } from '@/components/SEO/ProductStructuredData'
 
 export const revalidate = 3600
 
@@ -57,17 +58,24 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   const product = await queryProductBySlug({ slug })
   if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
+  
+  // Create a copy of the product with meta data for structured data
+  const productWithMeta = { ...product }
   delete product.meta
+  
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center mt-16 mb-mt-16">
-          <Spinner className="text-highlight" size={100} variant="ring" />
-        </div>
-      }
-    >
-      <PageClient product={product} />
-    </Suspense>
+    <>
+      <ProductStructuredData product={productWithMeta} />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center mt-16 mb-mt-16">
+            <Spinner className="text-highlight" size={100} variant="ring" />
+          </div>
+        }
+      >
+        <PageClient product={product} />
+      </Suspense>
+    </>
   )
 }
 
@@ -77,6 +85,7 @@ export async function generateMetadata({
 }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
   const { variant } = await searchParams
+  
   const product = await queryProductBySlug({ slug })
   const meta = await generateMeta({ doc: product, variant: Number(variant) })
   return meta
