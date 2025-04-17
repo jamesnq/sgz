@@ -1,6 +1,8 @@
+import type { Product } from '@/payload-types'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import type { Product } from '@/payload-types'
+
+export const revalidate = 86000
 
 interface SitemapEntry {
   url: string
