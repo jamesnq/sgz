@@ -74,7 +74,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 </div>
                 <div className="flex w-full items-center justify-between">
                   <div className="flex">
-                    <span className={cn('leading-[13px] text-muted-foreground', styles.price)}>
+                    <span className={cn('text-xs text-muted-foreground', styles.price)}>
                       {product.minPrice === product.maxPrice
                         ? formatPrice(product.minPrice)
                         : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}

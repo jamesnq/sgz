@@ -103,7 +103,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
   const selectedCategoryIds = categoriesParam ? categoriesParam.split(',') : []
 
   const currentPage = parseInt(page, 10) || 1
-  const limit = 8
+  const limit = 12
 
   const where: any = {
     status: {
