@@ -87,7 +87,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e: any) {
       if (e.message.includes('email or password'))
         throw new Error('Tài khoản mật khẩu không hợp lệ hoặc chưa được đăng ký')
-      throw new Error('Có lỗi xảy ra trong quá trình đăng nhập')
+      else if (e.message.includes('verify your email'))
+        throw new Error(
+          'Tài khoản chưa được xác thực, vui lòng kiểm tra email của bạn để xác thực tài khoản. Nếu không thấy hãy thử tìm trong thư rác, spam',
+        )
     }
   }, [])
 

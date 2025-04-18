@@ -100,7 +100,7 @@ export default function AuthDialog({ className }: { className?: string }) {
         password: registerData.password,
       })
       setSuccess(
-        'Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản. Nếu không thấy hãy thử tìm trong thư rác, spam',
+        'Vui lòng kiểm tra email của bạn để xác thực tài khoản. Nếu không thấy hãy thử tìm trong thư rác, spam',
       )
       setRegisterData({
         email: '',
