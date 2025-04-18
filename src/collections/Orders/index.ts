@@ -43,6 +43,44 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, opera
   return data
 }
 
+const calculateAnalysisHook: CollectionBeforeChangeHook<Order> = async ({
+  data,
+  originalDoc,
+  req: { payload },
+}) => {
+  if (!data) return data
+  if (!data.supplier) {
+    data.revenue = data.totalPrice
+    data.cost = 0
+    return data
+  }
+  if (originalDoc?.supplier != data.supplier && data.supplier) {
+    const supplierId = typeof data.supplier === 'object' ? data.supplier.id : data.supplier
+    const productVariantId =
+      typeof data.productVariant === 'object' ? data.productVariant.id : data.productVariant
+    const { docs: variantSupplies } = await payload.find({
+      collection: 'product-variant-supplies',
+      where: {
+        supplier: { equals: supplierId },
+        productVariant: { equals: productVariantId },
+      },
+      depth: 0,
+      pagination: false,
+      overrideAccess: true,
+    })
+    const variantSupply = variantSupplies[0]
+    if (!variantSupply) throw new ConflictsError('Product not found from the supplier')
+    if (data.supplierPaid === null) {
+      data.supplierPaid = variantSupply.prepaid
+    }
+    data.cost = variantSupply.cost * Number(data.quantity)
+    data.revenue = Number(data.totalPrice) - data.cost
+    return data
+  }
+
+  return data
+}
+
 const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   previousDoc,
   doc,
@@ -131,41 +169,7 @@ export const Orders: CollectionConfig = {
     delete: hasRole(['admin']),
   },
   hooks: {
-    beforeChange: [
-      trackHandlersHook,
-      async ({ data, originalDoc, req: { payload } }) => {
-        if (!data) return data
-        if (originalDoc?.supplier != data.supplier) {
-          if (data.supplier) {
-            const supplierId = typeof data.supplier === 'object' ? data.supplier.id : data.supplier
-            const productVariantId =
-              typeof data.productVariant === 'object' ? data.productVariant.id : data.productVariant
-            const { docs: variantSupplies } = await payload.find({
-              collection: 'product-variant-supplies',
-              where: {
-                supplier: { equals: supplierId },
-                productVariant: { equals: productVariantId },
-              },
-              depth: 0,
-              pagination: false,
-              overrideAccess: true,
-            })
-            const variantSupply = variantSupplies[0]
-            if (!variantSupply) throw new ConflictsError('Product not found from the supplier')
-            if (data.supplierPaid === null) {
-              data.supplierPaid = variantSupply.prepaid
-            }
-            data.cost = variantSupply.cost * Number(data.quantity)
-            data.revenue = Number(data.totalPrice) - data.cost
-            return data
-          }
-          data.revenue = 0
-          data.cost = 0
-        }
-
-        return data
-      },
-    ] as CollectionBeforeChangeHook<Order>[],
+    beforeChange: [trackHandlersHook, calculateAnalysisHook] as CollectionBeforeChangeHook<Order>[],
     afterChange: [notificationUpdateHook] as CollectionAfterChangeHook<Order>[],
   },
   admin: {

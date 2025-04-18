@@ -69,7 +69,6 @@ export const ProductVariants: CollectionConfig = {
       async ({ previousDoc, doc, req: { payload } }) => {
         // update product price range
         if (previousDoc.price == doc.price) {
-          console.log('Price not changed, skipping')
           return
         }
         const productId = typeof doc.product === 'number' ? doc.product : doc.product.id

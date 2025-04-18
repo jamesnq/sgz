@@ -248,7 +248,6 @@ export async function sendOrderUserUpdatedStaffNotification(
  * @param order - The completed order
  */
 export async function sendOrderCompletedStaffNotification(order: Order): Promise<void> {
-  console.log('🚀 ~ sendOrderCompletedStaffNotification ~ order:', order)
   after(async () => {
     const payload = {
       subject: `Đơn hàng #${order.id} đã hoàn thành`,
