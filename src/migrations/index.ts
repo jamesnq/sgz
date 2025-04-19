@@ -1,11 +1,12 @@
-import * as migration_20250312_121853 from './20250312_121853'
-import * as migration_20250314_140230 from './20250314_140230'
-import * as migration_20250318_095854 from './20250318_095854'
-import * as migration_20250321_094323 from './20250321_094323'
-import * as migration_20250330_034707 from './20250330_034707'
-import * as migration_20250407_053645 from './20250407_053645'
-import * as migration_20250410_045337 from './20250410_045337'
-import * as migration_20250415_101939 from './20250415_101939'
+import * as migration_20250312_121853 from './20250312_121853';
+import * as migration_20250314_140230 from './20250314_140230';
+import * as migration_20250318_095854 from './20250318_095854';
+import * as migration_20250321_094323 from './20250321_094323';
+import * as migration_20250330_034707 from './20250330_034707';
+import * as migration_20250407_053645 from './20250407_053645';
+import * as migration_20250410_045337 from './20250410_045337';
+import * as migration_20250415_101939 from './20250415_101939';
+import * as migration_20250419_161826 from './20250419_161826';
 
 export const migrations = [
   {
@@ -48,4 +49,9 @@ export const migrations = [
     down: migration_20250415_101939.down,
     name: '20250415_101939',
   },
-]
+  {
+    up: migration_20250419_161826.up,
+    down: migration_20250419_161826.down,
+    name: '20250419_161826'
+  },
+];

@@ -115,6 +115,54 @@ export const categories = pgTable(
   }),
 )
 
+export const category_groups = pgTable(
+  'category_groups',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title').notNull(),
+    icon: varchar('icon').notNull().default('box'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    category_groups_updated_at_idx: index('category_groups_updated_at_idx').on(columns.updatedAt),
+    category_groups_created_at_idx: index('category_groups_created_at_idx').on(columns.createdAt),
+  }),
+)
+
+export const category_groups_rels = pgTable(
+  'category_groups_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    categoriesID: integer('categories_id'),
+  },
+  (columns) => ({
+    order: index('category_groups_rels_order_idx').on(columns.order),
+    parentIdx: index('category_groups_rels_parent_idx').on(columns.parent),
+    pathIdx: index('category_groups_rels_path_idx').on(columns.path),
+    category_groups_rels_categories_id_idx: uniqueIndex(
+      'category_groups_rels_categories_id_idx',
+    ).on(columns.categoriesID, columns.path),
+    parentFk: foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [category_groups.id],
+      name: 'category_groups_rels_parent_fk',
+    }).onDelete('cascade'),
+    categoriesIdFk: foreignKey({
+      columns: [columns['categoriesID']],
+      foreignColumns: [categories.id],
+      name: 'category_groups_rels_categories_fk',
+    }).onDelete('cascade'),
+  }),
+)
+
 export const users_roles = pgTable(
   'users_roles',
   {
@@ -813,6 +861,7 @@ export const payload_locked_documents_rels = pgTable(
     path: varchar('path').notNull(),
     mediaID: integer('media_id'),
     categoriesID: integer('categories_id'),
+    'category-groupsID': integer('category_groups_id'),
     usersID: integer('users_id'),
     stocksID: integer('stocks_id'),
     transactionsID: integer('transactions_id'),
@@ -836,6 +885,9 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_categories_id_idx: index(
       'payload_locked_documents_rels_categories_id_idx',
     ).on(columns.categoriesID),
+    payload_locked_documents_rels_category_groups_id_idx: index(
+      'payload_locked_documents_rels_category_groups_id_idx',
+    ).on(columns['category-groupsID']),
     payload_locked_documents_rels_users_id_idx: index(
       'payload_locked_documents_rels_users_id_idx',
     ).on(columns.usersID),
@@ -886,6 +938,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['categoriesID']],
       foreignColumns: [categories.id],
       name: 'payload_locked_documents_rels_categories_fk',
+    }).onDelete('cascade'),
+    'category-groupsIdFk': foreignKey({
+      columns: [columns['category-groupsID']],
+      foreignColumns: [category_groups.id],
+      name: 'payload_locked_documents_rels_category_groups_fk',
     }).onDelete('cascade'),
     usersIdFk: foreignKey({
       columns: [columns['usersID']],
@@ -1040,6 +1097,23 @@ export const footer = pgTable('footer', {
 
 export const relations_media = relations(media, () => ({}))
 export const relations_categories = relations(categories, () => ({}))
+export const relations_category_groups_rels = relations(category_groups_rels, ({ one }) => ({
+  parent: one(category_groups, {
+    fields: [category_groups_rels.parent],
+    references: [category_groups.id],
+    relationName: '_rels',
+  }),
+  categoriesID: one(categories, {
+    fields: [category_groups_rels.categoriesID],
+    references: [categories.id],
+    relationName: 'categories',
+  }),
+}))
+export const relations_category_groups = relations(category_groups, ({ many }) => ({
+  _rels: many(category_groups_rels, {
+    relationName: '_rels',
+  }),
+}))
 export const relations_users_roles = relations(users_roles, ({ one }) => ({
   parent: one(users, {
     fields: [users_roles.parent],
@@ -1296,6 +1370,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [categories.id],
       relationName: 'categories',
     }),
+    'category-groupsID': one(category_groups, {
+      fields: [payload_locked_documents_rels['category-groupsID']],
+      references: [category_groups.id],
+      relationName: 'category-groups',
+    }),
     usersID: one(users, {
       fields: [payload_locked_documents_rels.usersID],
       references: [users.id],
@@ -1401,6 +1480,8 @@ type DatabaseSchema = {
   enum_suppliers_status: typeof enum_suppliers_status
   media: typeof media
   categories: typeof categories
+  category_groups: typeof category_groups
+  category_groups_rels: typeof category_groups_rels
   users_roles: typeof users_roles
   users: typeof users
   stocks: typeof stocks
@@ -1432,6 +1513,8 @@ type DatabaseSchema = {
   footer: typeof footer
   relations_media: typeof relations_media
   relations_categories: typeof relations_categories
+  relations_category_groups_rels: typeof relations_category_groups_rels
+  relations_category_groups: typeof relations_category_groups
   relations_users_roles: typeof relations_users_roles
   relations_users: typeof relations_users
   relations_stocks: typeof relations_stocks

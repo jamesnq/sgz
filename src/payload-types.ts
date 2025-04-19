@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     media: Media;
     categories: Category;
+    'category-groups': CategoryGroup;
     users: User;
     stocks: Stock;
     transactions: Transaction;
@@ -93,6 +94,7 @@ export interface Config {
   collectionsSelect: {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    'category-groups': CategoryGroupsSelect<false> | CategoryGroupsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     stocks: StocksSelect<false> | StocksSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
@@ -207,6 +209,21 @@ export interface Media {
 export interface Category {
   id: number;
   title: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "category-groups".
+ */
+export interface CategoryGroup {
+  id: number;
+  title: string;
+  /**
+   * https://lucide.dev/icons/
+   */
+  icon: string;
+  categories?: (number | Category)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -725,6 +742,10 @@ export interface PayloadLockedDocument {
         value: number | Category;
       } | null)
     | ({
+        relationTo: 'category-groups';
+        value: number | CategoryGroup;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -864,6 +885,17 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "category-groups_select".
+ */
+export interface CategoryGroupsSelect<T extends boolean = true> {
+  title?: T;
+  icon?: T;
+  categories?: T;
   updatedAt?: T;
   createdAt?: T;
 }
