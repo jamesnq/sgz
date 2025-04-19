@@ -10,7 +10,7 @@ const commandTemp =
  * @param outputPath - Optional path to save the translated content
  * @returns The translated PowerShell script content
  */
-export function translatePowerShellScript(inputContent: string) {
+function translatePowerShellScript(inputContent: string) {
   // Translation mapping from Chinese to Vietnamese
   const translations: Record<string, string> = {
     '激活进程准备中，请稍候...': `Đang chuẩn bị quá trình kích hoạt...
