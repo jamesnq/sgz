@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 
 import { defaultLexical } from '@/fields/defaultLexical'
 import { Categories } from './collections/Categories'
+import { CategoryGroups } from './collections/CategoryGroups'
 import { Forms } from './collections/Forms'
 import { FormSubmissions } from './collections/FormSubmission'
 import { Footer } from './collections/Globals/Footer/config'
@@ -15,12 +16,12 @@ import { Header } from './collections/Globals/Header/config'
 import { Media } from './collections/Media'
 import { NovuChannels } from './collections/NovuChannels/config'
 import { Orders } from './collections/Orders'
-import { ProductVariantSupplies } from './collections/ProductVariantSupplies'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
-import { Suppliers } from './collections/Suppliers'
+import { ProductVariantSupplies } from './collections/ProductVariantSupplies'
 import { Recharges } from './collections/Recharges'
 import { Stocks } from './collections/Stocks'
+import { Suppliers } from './collections/Suppliers'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
 import { env } from './config'
@@ -38,7 +39,7 @@ export default buildConfig({
       beforeLogin: ['@/components/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
-      beforeDashboard: ['@/components/BeforeDashboard'],
+      // beforeDashboard: ['@/components/BeforeDashboard'],
       // providers: ['@/providers/payload-providers#PayloadProviders'],
     },
     importMap: {
@@ -81,6 +82,7 @@ export default buildConfig({
   collections: [
     Media,
     Categories,
+    CategoryGroups,
     Users,
     Stocks,
     Transactions,
