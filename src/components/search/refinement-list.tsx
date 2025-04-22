@@ -99,7 +99,6 @@ export const RefinementList = (
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="mb-0.5"
                   >
                     <Badge
                       variant="default"
@@ -120,7 +119,6 @@ export const RefinementList = (
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="mb-0.5"
                   >
                     <Badge
                       variant="outline"

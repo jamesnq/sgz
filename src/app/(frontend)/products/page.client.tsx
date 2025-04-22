@@ -6,7 +6,9 @@ import { SearchBox } from '@/components/search/searchbox'
 import { SortByHorizontal } from '@/components/search/sort-by'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { getProductCardStyles } from '@/lib/product-card-styles'
 import { cn } from '@/lib/utils'
 import { Product } from '@/payload-types'
@@ -16,6 +18,7 @@ import { formatSold } from '@/utilities/formatSold'
 import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
+import { FilterIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Configure, InstantSearch, useInfiniteHits } from 'react-instantsearch'
@@ -42,7 +45,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 <Media
                   resource={product.image}
                   className={cn('w-full h-full', styles.media)}
-                  imgClassName="absolute inset-0 h-[131px] w-[98px] object-center object-contain"
+                  imgClassName="absolute inset-0 h-[131px] w-[98px] object-cover"
                 />
               </div>
               <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
@@ -129,11 +132,69 @@ const ProductHits = () => {
 
 function Sidebar() {
   return (
-    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0">
-      <RefinementList attribute="categories" title="Danh mục" />
+    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0 hidden lg:block">
+      <div className="sticky top-24">
+        <h2 className="text-lg font-medium mb-4">Danh mục</h2>
+        <RefinementList attribute="categories" />
+      </div>
     </div>
   )
 }
+
+// Mobile filter component
+function MobileFilters() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="lg:hidden flex items-center gap-2">
+          <FilterIcon className="h-4 w-4" />
+          <span>Bộ lọc</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[85vw] sm:w-[350px] pt-10">
+        <SheetHeader>
+          <SheetTitle>Bộ lọc sản phẩm</SheetTitle>
+        </SheetHeader>
+        <div className="mt-6 h-[calc(100vh-120px)] overflow-y-auto pb-20">
+          <RefinementList attribute="categories" />
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+// Mobile search component that's always fixed at the bottom on mobile screens
+function MobileSearchBar() {
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-2 z-10 bg-background shadow-md border-t border-border">
+      <div className="flex items-center gap-2">
+        <MobileFilters />
+        <div className="flex-1">
+          <SearchBox />
+        </div>
+      </div>
+      <div className="mt-2">
+        <SortByHorizontal
+          items={[
+            {
+              value: `${productIndex}`,
+              label: 'Liên quan',
+            },
+            {
+              value: `${productIndex}:sold:desc`,
+              label: 'Bán chạy',
+            },
+            {
+              value: `${productIndex}:maxDiscount:desc`,
+              label: 'Giảm giá sốc',
+            },
+          ]}
+        />
+      </div>
+    </div>
+  )
+}
+
 const PageClient = () => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
@@ -144,29 +205,34 @@ const PageClient = () => {
 
   return (
     <InstantSearch indexName={productIndex} searchClient={instantSearchClient.searchClient as any}>
-      <Configure hitsPerPage={8} />
+      <Configure analytics={false} hitsPerPage={8} />
       <Shell>
         <ProductPageHeader />
-        <div className="flex flex-col lg:flex-row lg:gap-6">
+
+        {/* Mobile search and filter bar */}
+        <MobileSearchBar />
+
+        <div className="flex flex-col lg:flex-row lg:gap-6 mt-4 mb-[120px] lg:mb-0">
           <Sidebar />
           <div className="flex-1 flex flex-col gap-2">
-            <SearchBox />
-            <SortByHorizontal
-              items={[
-                {
-                  value: `${productIndex}`,
-                  label: 'Liên quan',
-                },
-                {
-                  value: `${productIndex}:sold:desc`,
-                  label: 'Bán chạy',
-                },
-                {
-                  value: `${productIndex}:maxDiscount:desc`,
-                  label: 'Giảm giá sốc',
-                },
-              ]}
-            />
+            {/* Desktop search and sort */}
+            <div className="hidden lg:block">
+              <SearchBox />
+            </div>
+            <div className="hidden lg:block">
+              <SortByHorizontal
+                items={[
+                  {
+                    value: `${productIndex}:sold:desc`,
+                    label: 'Bán chạy',
+                  },
+                  {
+                    value: `${productIndex}:maxDiscount:desc`,
+                    label: 'Giảm giá sốc',
+                  },
+                ]}
+              />
+            </div>
             <ProductHits />
           </div>
         </div>

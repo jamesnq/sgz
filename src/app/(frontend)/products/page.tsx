@@ -4,22 +4,10 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { defaultMetadata } from '@/utilities/generateMeta'
 import { Search } from 'lucide-react'
-import { Suspense } from 'react'
 import { ProductPageHeader } from './components/ProductPageHeader'
 import PageClient from './page.client'
 
 export const revalidate = 3600
-
-// type Args = {
-//   params: Promise<{
-//     slug?: string
-//   }>
-//   searchParams: Promise<{
-//     name?: string
-//     page?: string
-//     categories?: string
-//   }>
-// }
 
 // Loading component that only shows skeletons for products
 function ProductsLoading() {
@@ -89,9 +77,5 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  return (
-    <Suspense fallback={<ProductsLoading />}>
-      <PageClient />
-    </Suspense>
-  )
+  return <PageClient />
 }

@@ -50,17 +50,20 @@ export function SortByHorizontal(props: UseSortByProps & { title?: string }) {
     <div className="flex items-center gap-2">
       {title && <span className="text-sm font-medium">{title}:</span>}
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <Button
-            key={option.value}
-            variant={option.value === currentRefinement ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => refine(option.value)}
-            className="font-medium"
-          >
-            {option.label}
-          </Button>
-        ))}
+        {options.map((option) => {
+          const active = option.value === currentRefinement
+          return (
+            <Button
+              key={option.value}
+              variant={active ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => refine(!active ? option.value : currentRefinement.split(':')[0] || '')}
+              className="font-medium"
+            >
+              {option.label}
+            </Button>
+          )
+        })}
       </div>
     </div>
   )
