@@ -61,6 +61,29 @@ export async function POST(): Promise<Response> {
     })
 
     await meiliSearchServer.index('products').deleteAllDocuments()
+    await meiliSearchServer
+      .index('products')
+      .updateFilterableAttributes([
+        'categories',
+        'minPrice',
+        'maxPrice',
+        'maxDiscount',
+        'status',
+      ] as (keyof Product)[])
+    await meiliSearchServer
+      .index('products')
+      .updateSortableAttributes([
+        'minPrice',
+        'maxPrice',
+        'maxDiscount',
+        'sold',
+        'status',
+      ] as (keyof Product)[])
+
+    await meiliSearchServer
+      .index('products')
+      .updateSearchableAttributes(['name', 'description', 'categories'] as (keyof Product)[])
+
     await productsToSearch(productsData.docs)
 
     return Response.json({ success: true })

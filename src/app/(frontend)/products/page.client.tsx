@@ -1,6 +1,9 @@
 'use client'
 
 import { Media } from '@/components/Media'
+import { RefinementList } from '@/components/search/refinement-list'
+import { SearchBox } from '@/components/search/searchbox'
+import { SortByHorizontal } from '@/components/search/sort-by'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -12,9 +15,10 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { Routes } from '@/utilities/routes'
+import { productIndex } from '@/utilities/searchIndexes'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Configure, InstantSearch, SearchBox, useInfiniteHits } from 'react-instantsearch'
+import { Configure, InstantSearch, useInfiniteHits } from 'react-instantsearch'
 import { useInView } from 'react-intersection-observer'
 import { ProductPageHeader } from './components/ProductPageHeader'
 
@@ -86,7 +90,7 @@ const ProductCard = ({ product }: { product: Product }) => {
 }
 
 const ProductHits = () => {
-  const { hits, showMore, isLastPage, results } = useInfiniteHits()
+  const { items, showMore, isLastPage, results } = useInfiniteHits()
   const [loadingMore, setLoadingMore] = useState(false)
   const { ref, inView } = useInView({
     threshold: 0,
@@ -111,7 +115,7 @@ const ProductHits = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
-      {hits.map((hit) => (
+      {items.map((hit) => (
         <ProductCard key={hit.id} product={hit as unknown as Product} />
       ))}
       {!isLastPage && (
@@ -123,6 +127,13 @@ const ProductHits = () => {
   )
 }
 
+function Sidebar() {
+  return (
+    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0">
+      <RefinementList attribute="categories" title="Danh mục" />
+    </div>
+  )
+}
 const PageClient = () => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
@@ -132,12 +143,33 @@ const PageClient = () => {
   }, [setHeaderTheme])
 
   return (
-    <InstantSearch indexName="products" searchClient={instantSearchClient.searchClient as any}>
-      <Configure analytics={false} hitsPerPage={8} />
+    <InstantSearch indexName={productIndex} searchClient={instantSearchClient.searchClient as any}>
+      <Configure hitsPerPage={8} />
       <Shell>
         <ProductPageHeader />
-        <SearchBox />
-        <ProductHits />
+        <div className="flex flex-col lg:flex-row lg:gap-6">
+          <Sidebar />
+          <div className="flex-1 flex flex-col gap-2">
+            <SearchBox />
+            <SortByHorizontal
+              items={[
+                {
+                  value: `${productIndex}`,
+                  label: 'Liên quan',
+                },
+                {
+                  value: `${productIndex}:sold:desc`,
+                  label: 'Bán chạy',
+                },
+                {
+                  value: `${productIndex}:maxDiscount:desc`,
+                  label: 'Giảm giá sốc',
+                },
+              ]}
+            />
+            <ProductHits />
+          </div>
+        </div>
       </Shell>
     </InstantSearch>
   )

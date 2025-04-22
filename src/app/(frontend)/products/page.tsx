@@ -10,16 +10,16 @@ import PageClient from './page.client'
 
 export const revalidate = 3600
 
-type Args = {
-  params: Promise<{
-    slug?: string
-  }>
-  searchParams: Promise<{
-    name?: string
-    page?: string
-    categories?: string
-  }>
-}
+// type Args = {
+//   params: Promise<{
+//     slug?: string
+//   }>
+//   searchParams: Promise<{
+//     name?: string
+//     page?: string
+//     categories?: string
+//   }>
+// }
 
 // Loading component that only shows skeletons for products
 function ProductsLoading() {
