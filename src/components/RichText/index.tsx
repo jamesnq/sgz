@@ -24,6 +24,7 @@ import type {
 import { InlineDialog } from '@/blocks/InlineDialog/Component'
 import { TableBlock } from '@/blocks/TableBlock/Component'
 import { cn } from '@/utilities/ui'
+import { textOnly } from './textOnly'
 
 type NodeTypes =
   | DefaultNodeTypes
@@ -84,17 +85,11 @@ export default function RichText(props: Props) {
     enableProse = true,
     enableGutter = true,
     overrideClassName,
-    textOnly,
+    textOnly: isTextOnly,
     ...rest
   } = props
-  if (textOnly) {
-    const text = rest.data.root.children
-      .map((child) => {
-        if (child.type !== 'paragraph') return ''
-        // @ts-expect-error ts mismatch
-        return child.children.map((text) => text.text).join('')
-      })
-      .join('\n')
+  if (isTextOnly) {
+    const text = textOnly(rest.data)
     return (
       <div
         className={cn(

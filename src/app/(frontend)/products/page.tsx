@@ -88,39 +88,7 @@ export async function generateMetadata() {
   return defaultMetadata()
 }
 
-export default async function Page({ searchParams: searchParamsPromise }: Args) {
-  // Await the searchParams promise
-  const resolvedParams = await searchParamsPromise
-
-  const name = resolvedParams.name || ''
-  const page = resolvedParams.page || '1'
-  const categoriesParam = resolvedParams.categories || ''
-
-  // Parse the categories parameter (comma-separated list of IDs)
-  const selectedCategoryIds = categoriesParam ? categoriesParam.split(',') : []
-
-  const currentPage = parseInt(page, 10) || 1
-  const limit = 12
-
-  const where: any = {
-    status: {
-      not_equals: 'PRIVATE',
-    },
-  }
-
-  if (name) {
-    where.name = {
-      like: name,
-    }
-  }
-
-  // Add category filter if categories are selected
-  if (selectedCategoryIds.length > 0) {
-    where.categories = {
-      in: selectedCategoryIds,
-    }
-  }
-
+export default async function Page() {
   return (
     <Suspense fallback={<ProductsLoading />}>
       <PageClient />

@@ -1,4 +1,5 @@
 import { userHasRole } from '@/access/hasRoles'
+import { textOnly } from '@/components/RichText/textOnly'
 import { Product } from '@/payload-types'
 import { meiliSearchServer } from '@/utilities/meiliSearchServer'
 
@@ -12,6 +13,8 @@ async function productsToSearch(products: Product[]): Promise<Product[]> {
       if (typeof product === 'number' || product.status === 'PRIVATE') return
       // @ts-expect-error ignore
       product.categories = product.categories.map((c) => c.title)
+      // @ts-expect-error ignore
+      product.description = product.description && textOnly(product.description)
       return product
     })
     .filter(Boolean) as Product[]

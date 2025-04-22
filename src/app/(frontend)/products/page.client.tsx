@@ -1,7 +1,6 @@
 'use client'
 
 import { Media } from '@/components/Media'
-import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -13,7 +12,6 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { Routes } from '@/utilities/routes'
-import { hasText } from '@payloadcms/richtext-lexical/shared'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Configure, InstantSearch, SearchBox, useInfiniteHits } from 'react-instantsearch'
@@ -58,13 +56,10 @@ const ProductCard = ({ product }: { product: Product }) => {
                       <Badge className={styles.badge}>-{product.maxDiscount.toFixed(0)}%</Badge>
                     )}
                   </div>
-                  {hasText(product.description) && (
-                    <RichText
-                      className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"
-                      data={product.description as any}
-                      enableGutter={false}
-                      textOnly
-                    />
+                  {product.description && (
+                    <p className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden">
+                      {product.description as unknown as string}
+                    </p>
                   )}
                 </div>
                 <div className="flex w-full items-center justify-between">
@@ -138,7 +133,7 @@ const PageClient = () => {
 
   return (
     <InstantSearch indexName="products" searchClient={instantSearchClient.searchClient as any}>
-      <Configure analytics={false} hitsPerPage={6} />
+      <Configure analytics={false} hitsPerPage={8} />
       <Shell>
         <ProductPageHeader />
         <SearchBox />
