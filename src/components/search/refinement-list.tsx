@@ -2,11 +2,11 @@
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/utilities/ui'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { RefinementListProps } from 'react-instantsearch'
-import { useRefinementList } from 'react-instantsearch'
+import { useClearRefinements, useRefinementList } from 'react-instantsearch'
 
 export const RefinementList = (
   props: RefinementListProps & { title?: string; className?: string },
@@ -17,6 +17,11 @@ export const RefinementList = (
     searchForItems: _searchForItems,
     createURL: _createURL,
   } = useRefinementList(props)
+
+  const { refine: clearRefinements } = useClearRefinements({
+    includedAttributes: [props.attribute],
+  })
+
   const { title, className } = props
   const [searchTerm, setSearchTerm] = useState('')
   const [hasSelectedItems, setHasSelectedItems] = useState(false)
@@ -36,9 +41,7 @@ export const RefinementList = (
 
   // Handle clearing all selected items
   const handleClearAll = () => {
-    selectedItems.forEach((item) => {
-      refine(item.value)
-    })
+    clearRefinements()
   }
 
   // Handle item selection with animation
