@@ -5,6 +5,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { products } from '@/payload-generated-schema'
 import { Routes } from '@/utilities/routes'
 
+import { productsToSearch as updateSearchProducts } from '@/app/(frontend)/next/sync-search/route'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import type { Product } from '../../../payload-types'
 export const revalidateProductsPage = () => {
@@ -38,7 +39,7 @@ export const revalidateProductPath = async (payload: Payload, productId: number)
     collection: 'products',
     id: productId,
     overrideAccess: true,
-    select: { slug: true },
+    depth: 1,
   })
 
   if (!product || !product.slug) {
@@ -49,9 +50,10 @@ export const revalidateProductPath = async (payload: Payload, productId: number)
   const path = Routes.product(product.slug)
   payload.logger.info(`Revalidating product at path: ${path}`)
   revalidatePath(path)
+  await updateSearchProducts([product])
 }
 
-export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
+export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
   doc,
   previousDoc,
   req: { payload },
@@ -64,6 +66,10 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = ({
   revalidatePath(oldPath)
   revalidateProductsPage()
   revalidateTag('products-sitemap')
+
+  // for search engine
+
+  await updateSearchProducts([doc])
 
   return doc
 }

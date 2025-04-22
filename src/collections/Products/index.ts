@@ -72,6 +72,7 @@ export const Products: CollectionConfig = {
       },
     ] as CollectionBeforeChangeHook<Product>[],
     afterChange: [revalidateProduct] as CollectionAfterChangeHook<Product>[],
+
     beforeDelete: [revalidateDelete],
   },
   fields: [

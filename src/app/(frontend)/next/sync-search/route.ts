@@ -1,24 +1,58 @@
 import { userHasRole } from '@/access/hasRoles'
 import { textOnly } from '@/components/RichText/textOnly'
 import { Product } from '@/payload-types'
+import { getInstancePayload } from '@/utilities/getInstancePayload'
 import { meiliSearchServer } from '@/utilities/meiliSearchServer'
 
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 
-async function productsToSearch(products: Product[]): Promise<Product[]> {
-  const data = products
-    .map((product) => {
-      if (typeof product === 'number' || product.status === 'PRIVATE') return
-      // @ts-expect-error ignore
-      product.categories = product.categories.map((c) => c.title)
-      // @ts-expect-error ignore
-      product.description = product.description && textOnly(product.description)
-      return product
-    })
-    .filter(Boolean) as Product[]
-  await meiliSearchServer.index('products').updateDocuments(data)
+export async function productsToSearch(products: Product[]): Promise<Product[]> {
+  const payload = await getInstancePayload()
+
+  const data = (
+    await Promise.all(
+      products.map(async (product) => {
+        if (typeof product === 'number') return
+        if (product.status === 'PRIVATE') return product
+
+        if (typeof product.image == 'number') {
+          const [image, { docs: categories }] = await Promise.all([
+            payload.findByID({
+              collection: 'media',
+              id: product.image,
+              depth: 0,
+              overrideAccess: true,
+            }),
+            payload.find({
+              collection: 'categories',
+              where: { id: { in: product.categories } },
+              overrideAccess: true,
+              depth: 0,
+            }),
+          ])
+          product.image = image
+          product.categories = categories
+        }
+        // @ts-expect-error ignore
+        product.categories = product.categories.map((c) => c.title)
+        // @ts-expect-error ignore
+        product.description = product.description && textOnly(product.description)
+        return product
+      }),
+    )
+  ).filter(Boolean) as Product[]
+
+  const updateProducts = products.filter((product) => product.status != 'PRIVATE')
+  const deleteProducts = products.filter((product) => product.status == 'PUBLIC')
+  await Promise.all([
+    updateProducts.length > 0 &&
+      meiliSearchServer.index('products').updateDocuments(updateProducts),
+    deleteProducts.length > 0 &&
+      meiliSearchServer.index('products').deleteDocuments(deleteProducts.map((p) => p.id)),
+  ])
+
   return data
 }
 
