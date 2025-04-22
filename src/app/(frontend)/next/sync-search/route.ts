@@ -45,7 +45,7 @@ export async function productsToSearch(products: Product[]): Promise<Product[]> 
   ).filter(Boolean) as Product[]
 
   const updateProducts = products.filter((product) => product.status != 'PRIVATE')
-  const deleteProducts = products.filter((product) => product.status == 'PUBLIC')
+  const deleteProducts = products.filter((product) => product.status == 'PRIVATE')
   await Promise.all([
     updateProducts.length > 0 &&
       meiliSearchServer.index('products').updateDocuments(updateProducts),
