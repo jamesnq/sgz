@@ -14,7 +14,7 @@ export const ProductPageHeader = () => {
             className="text-highlight"
             words={[
               ['nạp', 'nạp', '', ''],
-              ['ứng dụng', 'game', 'tài khoản', 'phần mềm']
+              ['ứng dụng', 'game', 'tài khoản', 'phần mềm'],
             ]}
             interval={3000}
           />{' '}

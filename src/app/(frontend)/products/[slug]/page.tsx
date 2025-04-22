@@ -58,11 +58,11 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   const product = await queryProductBySlug({ slug })
   if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
-  
+
   // Create a copy of the product with meta data for structured data
   const productWithMeta = { ...product }
   delete product.meta
-  
+
   return (
     <>
       <ProductStructuredData product={productWithMeta} />
@@ -85,7 +85,7 @@ export async function generateMetadata({
 }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
   const { variant } = await searchParams
-  
+
   const product = await queryProductBySlug({ slug })
   const meta = await generateMeta({ doc: product, variant: Number(variant) })
   return meta

@@ -1,32 +1,27 @@
 'use client'
 
-import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { debounce } from 'lodash'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState, useTransition } from 'react'
-
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { CustomPagination } from '@/components/ui/custom-pagination'
-import { Input } from '@/components/ui/input'
 import { getProductCardStyles } from '@/lib/product-card-styles'
 import { cn } from '@/lib/utils'
-import { Category, Product } from '@/payload-types'
+import { Product } from '@/payload-types'
+import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
+import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { Routes } from '@/utilities/routes'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { Search, X } from 'lucide-react'
 import Link from 'next/link'
-import { PaginatedDocs } from 'payload'
+import { useEffect, useState } from 'react'
+import { Configure, InstantSearch, SearchBox, useInfiniteHits } from 'react-instantsearch'
+import { useInView } from 'react-intersection-observer'
 import { ProductPageHeader } from './components/ProductPageHeader'
 
 const ProductCard = ({ product }: { product: Product }) => {
   const styles = getProductCardStyles()
-
   return (
     <div className={styles.wrapper}>
       <Link
@@ -95,275 +90,61 @@ const ProductCard = ({ product }: { product: Product }) => {
   )
 }
 
-// Sidebar component for search and filters
-const Sidebar = ({
-  searchTerm,
-  handleSearchChange,
-  categories,
-  selectedCategoryIds,
-  handleCategoryToggle,
-  handleClearCategories,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isPending,
-}: {
-  searchTerm: string
-  handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  categories: Category[]
-  selectedCategoryIds: string[]
-  handleCategoryToggle: (categoryId: string) => void
-  handleClearCategories: () => void
-  isPending: boolean
-}) => {
-  const [categorySearchTerm, setCategorySearchTerm] = useState('')
+const ProductHits = () => {
+  const { hits, showMore, isLastPage, results } = useInfiniteHits()
+  const [loadingMore, setLoadingMore] = useState(false)
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '0px 0px 500px 0px', // Increased margin to trigger loading earlier
+    triggerOnce: false,
+  })
 
-  // Filter categories based on search term
-  const filteredCategories = categories.filter((category) =>
-    category.title.toLowerCase().includes(categorySearchTerm.toLowerCase()),
-  )
+  // Reset loading state when results change
+  useEffect(() => {
+    if (results && results.nbHits > 0) {
+      setLoadingMore(false)
+    }
+  }, [results])
+
+  // Handle loading more when scrolling
+  useEffect(() => {
+    if (inView && !isLastPage && !loadingMore) {
+      setLoadingMore(true)
+      showMore()
+    }
+  }, [inView, showMore, isLastPage, loadingMore])
 
   return (
-    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0">
-      <div className="sticky top-24">
-        <div className="relative mb-6">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Tìm kiếm sản phẩm..."
-            className="pl-8 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu border-border hover:border"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
+      {hits.map((hit) => (
+        <ProductCard key={hit.id} product={hit as unknown as Product} />
+      ))}
+      {!isLastPage && (
+        <div ref={ref} className="col-span-full flex justify-center py-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
         </div>
-
-        {categories.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium">Danh mục</h2>
-              {selectedCategoryIds.length > 0 && (
-                <button
-                  onClick={handleClearCategories}
-                  className="text-xs text-muted-foreground hover:text-primary flex items-center"
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-
-            <div className="relative mb-4">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Tìm kiếm danh mục..."
-                className="pl-8 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu border-border hover:border"
-                value={categorySearchTerm}
-                onChange={(e) => setCategorySearchTerm(e.target.value)}
-              />
-            </div>
-
-            {selectedCategoryIds.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">
-                  Đã chọn {selectedCategoryIds.length} danh mục
-                </p>
-                <div className="flex flex-wrap gap-1 mb-1">
-                  {selectedCategoryIds.map((id) => {
-                    const category = categories.find((c) => c.id.toString() === id)
-                    if (!category) return null
-
-                    return (
-                      <Badge
-                        key={`selected-${id}`}
-                        variant="default"
-                        className="cursor-pointer flex items-center gap-1 transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu"
-                        onClick={() => handleCategoryToggle(id)}
-                      >
-                        {category.title}
-                      </Badge>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="mt-2 max-h-[300px] overflow-y-auto pr-2">
-              <div className="flex flex-wrap gap-2 lg:flex-col lg:gap-2 mt-2">
-                {filteredCategories.length > 0 ? (
-                  filteredCategories.map((category) => {
-                    const isSelected = selectedCategoryIds.includes(category.id.toString())
-                    return (
-                      <Badge
-                        key={category.id}
-                        variant={isSelected ? 'default' : 'outline'}
-                        className={cn(
-                          'cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu',
-                          isSelected && 'bg-primary text-primary-foreground',
-                        )}
-                        onClick={() => handleCategoryToggle(category.id.toString())}
-                      >
-                        {category.title}
-                      </Badge>
-                    )
-                  })
-                ) : (
-                  <p className="text-sm text-muted-foreground">Không tìm thấy danh mục phù hợp</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
 
-const PageClient = ({
-  data,
-  searchQuery = '',
-  categories = [],
-  selectedCategoryIds = [],
-}: {
-  data: PaginatedDocs<Product>
-  searchQuery?: string
-  categories?: Category[]
-  selectedCategoryIds?: string[]
-}) => {
+const PageClient = () => {
   /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
-  const [searchTerm, setSearchTerm] = useState(searchQuery)
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const currentPage = data.page || 1
-  const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     setHeaderTheme('dark')
   }, [setHeaderTheme])
 
-  // Create a debounced search function
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      startTransition(() => {
-        const params = new URLSearchParams(searchParams.toString())
-
-        if (value) {
-          params.set('name', value)
-        } else {
-          params.delete('name')
-        }
-
-        params.set('page', '1')
-        router.push(`/products?${params.toString()}`)
-      })
-    }, 300),
-    [searchParams, router],
-  )
-
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchTerm(value)
-    debouncedSearch(value)
-  }
-
-  // Handle category filter change
-  const handleCategoryToggle = (categoryId: string) => {
-    if (isPending) return
-
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      let newSelectedCategories = [...selectedCategoryIds]
-
-      if (newSelectedCategories.includes(categoryId)) {
-        // Remove category if already selected
-        newSelectedCategories = newSelectedCategories.filter((id) => id !== categoryId)
-      } else {
-        // Add category if not selected
-        newSelectedCategories.push(categoryId)
-      }
-
-      if (newSelectedCategories.length > 0) {
-        params.set('categories', newSelectedCategories.join(','))
-      } else {
-        params.delete('categories')
-      }
-
-      params.set('page', '1')
-      router.push(`/products?${params.toString()}`)
-    })
-  }
-
-  // Clear all selected categories
-  const handleClearCategories = () => {
-    if (isPending) return
-
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      params.delete('categories')
-      params.set('page', '1')
-      router.push(`/products?${params.toString()}`)
-    })
-  }
-
-  // Helper function to create pagination URLs
-  const getPaginationUrl = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('page', page.toString())
-    if (searchQuery) {
-      params.set('name', searchQuery)
-    }
-    return `/products?${params.toString()}`
-  }
-
-  const handlePageChange = (page: number) => {
-    startTransition(() => {
-      router.push(getPaginationUrl(page))
-    })
-  }
-
   return (
-    <Shell>
-      <ProductPageHeader />
-
-      <div className="flex flex-col lg:flex-row lg:gap-6">
-        {/* Sidebar for search and filters */}
-        <Sidebar
-          searchTerm={searchTerm}
-          handleSearchChange={handleSearchChange}
-          categories={categories}
-          selectedCategoryIds={selectedCategoryIds}
-          handleCategoryToggle={handleCategoryToggle}
-          handleClearCategories={handleClearCategories}
-          isPending={isPending}
-        />
-
-        <div className="flex-1">
-          {data.docs.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
-                {data.docs.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-
-              <CustomPagination
-                currentPage={currentPage}
-                totalPages={data.totalPages}
-                isPending={isPending}
-                handlePageChange={handlePageChange}
-                getPaginationUrl={getPaginationUrl}
-              />
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-medium mb-2">Không tìm thấy sản phẩm nào</h3>
-              <p className="text-muted-foreground">Vui lòng thử tìm kiếm với từ khóa khác</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </Shell>
+    <InstantSearch indexName="products" searchClient={instantSearchClient.searchClient as any}>
+      <Configure analytics={false} hitsPerPage={6} />
+      <Shell>
+        <ProductPageHeader />
+        <SearchBox />
+        <ProductHits />
+      </Shell>
+    </InstantSearch>
   )
 }
 

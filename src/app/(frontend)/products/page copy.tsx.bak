@@ -3,10 +3,13 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { defaultMetadata } from '@/utilities/generateMeta'
+import configPromise from '@payload-config'
 import { Search } from 'lucide-react'
+import { unstable_cache } from 'next/cache'
+import { getPayload } from 'payload'
 import { Suspense } from 'react'
-import { ProductPageHeader } from './components/ProductPageHeader'
 import PageClient from './page.client'
+import { ProductPageHeader } from './components/ProductPageHeader'
 
 export const revalidate = 3600
 
@@ -121,9 +124,63 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     }
   }
 
+  // Combined cache function for both categories and products
+  const getCachedData = unstable_cache(
+    async () => {
+      const payload = await getPayload({ config: configPromise })
+
+      // Fetch both categories and products concurrently
+      const [categoriesData, productsData] = await Promise.all([
+        payload.find({
+          collection: 'categories',
+          limit: 0,
+          pagination: false,
+          overrideAccess: true,
+          sort: 'title',
+        }),
+        payload.find({
+          collection: 'products',
+          limit,
+          page: currentPage,
+          where,
+          depth: 1,
+          overrideAccess: true,
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            description: true,
+            image: true,
+            categories: true,
+            status: true,
+            sold: true,
+            minPrice: true,
+            maxPrice: true,
+            maxDiscount: true,
+          },
+          sort: ['-sold'],
+        }),
+      ])
+
+      return { categoriesData, productsData }
+    },
+    [`search-${name}-${currentPage}-${categoriesParam}`], // Include all query parameters in the cache key
+    {
+      tags: ['search', 'categories', 'products'],
+      revalidate: 3600, // Cache for 1 hour (matching page revalidate)
+    },
+  )
+
+  // Get both data sets from the combined cache
+  const { categoriesData, productsData } = await getCachedData()
   return (
     <Suspense fallback={<ProductsLoading />}>
-      <PageClient />
+      <PageClient
+        data={productsData}
+        searchQuery={name}
+        categories={categoriesData.docs}
+        selectedCategoryIds={selectedCategoryIds}
+      />
     </Suspense>
   )
 }

@@ -7,6 +7,7 @@ import type {
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { slugField } from '@/fields/slug'
 import { Product } from '@/payload-types'
+import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import {
@@ -17,7 +18,6 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
-import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 
 export const Products: CollectionConfig = {
   slug: 'products',

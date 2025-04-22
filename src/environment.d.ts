@@ -37,6 +37,9 @@ declare global {
       NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: string
       NEXT_PUBLIC_SITE_NAME: string
       NEXT_PUBLIC_EMAIL_CONTACT: string
+      MEILI_HOST: string
+      MEILI_MASTER_KEY: string
+      NEXT_PUBLIC_MEILI_SEARCH_KEY: string
     }
   }
 }

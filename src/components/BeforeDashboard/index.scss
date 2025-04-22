@@ -18,6 +18,17 @@
     }
   }
 
+  &__button-container {
+    display: flex;
+    align-items: center;
+    gap: base(0.5);
+  }
+
+  &__divider {
+    margin: 0 base(0.5);
+    color: var(--theme-elevation-400);
+  }
+
   & a:hover {
     opacity: 0.85;
   }

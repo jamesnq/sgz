@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import { createEnv } from '@t3-oss/env-nextjs'
+import { z } from 'zod'
 
 export const env = createEnv({
   /*
@@ -15,7 +15,6 @@ export const env = createEnv({
     S3_BUCKET: z.string(),
     S3_REGION: z.string(),
     RESEND_API_KEY: z.string(),
-    // NEXT_PUBLIC_VERCEL_URL: z.string(),
     PAYOS_CLIENT_KEY: z.string(),
     PAYOS_API_KEY: z.string(),
     PAYOS_CHECKSUM_KEY: z.string(),
@@ -31,6 +30,8 @@ export const env = createEnv({
     DISCORD_ACTIVITIES_WEBHOOK_URL: z.string().url(),
     DISCORD_ADMIN_ROLE_ID: z.string(),
     DISCORD_STAFF_ROLE_ID: z.string(),
+    MEILI_HOST: z.string(),
+    MEILI_MASTER_KEY: z.string(),
   },
   /*
    * Environment variables available on the client (and server).
@@ -46,6 +47,7 @@ export const env = createEnv({
     NEXT_PUBLIC_EMAIL_CONTACT: z.string(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string(),
+    NEXT_PUBLIC_MEILI_SEARCH_KEY: z.string(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -64,6 +66,7 @@ export const env = createEnv({
     AUTO_PROCESS_USER_ID: Number(process.env.AUTO_PROCESS_USER_ID),
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_MEILI_SEARCH_KEY: process.env.NEXT_PUBLIC_MEILI_SEARCH_KEY,
   } /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
    * useful for Docker builds.
