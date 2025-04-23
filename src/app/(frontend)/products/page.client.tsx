@@ -344,7 +344,7 @@ const PageClient = () => {
         },
       }}
     >
-      <Configure analytics={false} hitsPerPage={8} />
+      <Configure analytics={false} hitsPerPage={12} />
       <Shell>
         <ProductPageHeader />
 
