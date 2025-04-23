@@ -21,7 +21,8 @@ import { productIndex } from '@/utilities/searchIndexes'
 import { FilterIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Configure, InstantSearch, useInfiniteHits } from 'react-instantsearch'
+import { Configure, useInfiniteHits, useRefinementList } from 'react-instantsearch'
+import { InstantSearchNext } from 'react-instantsearch-nextjs'
 import { useInView } from 'react-intersection-observer'
 import { ProductPageHeader } from './components/ProductPageHeader'
 
@@ -143,15 +144,24 @@ function Sidebar() {
 
 // Mobile filter component
 function MobileFilters() {
+  // Track selected refinements for the categories attribute
+  const { items } = useRefinementList({ attribute: 'categories' })
+  const selectedCategoriesCount = items.filter(item => item.isRefined).length
+  const hasSelectedCategories = selectedCategoriesCount > 0
+
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="lg:hidden flex items-center gap-2">
+        <Button 
+          variant={hasSelectedCategories ? "default" : "outline"} 
+          size="sm" 
+          className="lg:hidden flex items-center gap-2"
+        >
           <FilterIcon className="h-4 w-4" />
-          <span>Bộ lọc</span>
+          <span>Bộ lọc{hasSelectedCategories ? ` (${selectedCategoriesCount})` : ''}</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[85vw] sm:w-[350px] pt-10">
+      <SheetContent side="right" className="w-[85vw] sm:w-[350px] pt-10">
         <SheetHeader>
           <SheetTitle>Bộ lọc sản phẩm</SheetTitle>
         </SheetHeader>
@@ -166,7 +176,7 @@ function MobileFilters() {
 // Mobile search component that's always fixed at the bottom on mobile screens
 function MobileSearchBar() {
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-2 z-10 bg-background shadow-md border-t border-border">
+    <div className="container lg:hidden fixed bottom-0 left-0 right-0 p-2 z-10 bg-background shadow-md border rounded">
       <div className="flex items-center gap-2">
         <MobileFilters />
         <div className="flex-1">
@@ -176,10 +186,6 @@ function MobileSearchBar() {
       <div className="mt-2">
         <SortByHorizontal
           items={[
-            {
-              value: `${productIndex}`,
-              label: 'Liên quan',
-            },
             {
               value: `${productIndex}:sold:desc`,
               label: 'Bán chạy',
@@ -204,7 +210,11 @@ const PageClient = () => {
   }, [setHeaderTheme])
 
   return (
-    <InstantSearch indexName={productIndex} searchClient={instantSearchClient.searchClient as any}>
+    <InstantSearchNext
+      indexName={productIndex}
+      searchClient={instantSearchClient.searchClient as any}
+      future={{ preserveSharedStateOnUnmount: true }}
+    >
       <Configure analytics={false} hitsPerPage={8} />
       <Shell>
         <ProductPageHeader />
@@ -237,7 +247,7 @@ const PageClient = () => {
           </div>
         </div>
       </Shell>
-    </InstantSearch>
+    </InstantSearchNext>
   )
 }
 
