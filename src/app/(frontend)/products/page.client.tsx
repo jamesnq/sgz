@@ -20,7 +20,7 @@ import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
 import { FilterIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Configure, useInfiniteHits, useRefinementList } from 'react-instantsearch'
 import { InstantSearchNext } from 'react-instantsearch-nextjs'
 import { useInView } from 'react-intersection-observer'
@@ -338,6 +338,11 @@ const PageClient = () => {
       indexName={productIndex}
       searchClient={instantSearchClient.searchClient as any}
       future={{ preserveSharedStateOnUnmount: true }}
+      initialUiState={{
+        [productIndex]: {
+          sortBy: `${productIndex}:sold:desc`,
+        },
+      }}
     >
       <Configure analytics={false} hitsPerPage={8} />
       <Shell>
