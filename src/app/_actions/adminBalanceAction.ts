@@ -1,6 +1,6 @@
 'use server'
 import { userHasRole } from '@/access/hasRoles'
-import { env } from '@/config'
+import { config } from '@/config'
 import { transactions, users } from '@/payload-generated-schema'
 import { authActionClient } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
@@ -31,7 +31,7 @@ export const adminBalanceAction = authActionClient
       await db.insert(transactions).values({
         user: userId,
         amount: amount.toString(),
-        description: `${env.NEXT_PUBLIC_SITE_NAME} ${amount > 0 ? 'nạp' : 'trừ'} tiền ${note || ''}`,
+        description: `${config.NEXT_PUBLIC_SITE_NAME} ${amount > 0 ? 'nạp' : 'trừ'} tiền ${note || ''}`,
         balance: newUser.balance.toString(),
       })
       return { newUser }

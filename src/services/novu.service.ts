@@ -1,4 +1,4 @@
-import { env } from '@/config'
+import { config } from '@/config'
 import { Order, ProductVariant } from '@/payload-types'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { orderStatusColors } from '@/utilities/getOrderStatus'
@@ -8,9 +8,9 @@ import { Novu } from '@novu/api'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 const webhookChannels = {
-  admin: { webhook: env.DISCORD_ADMIN_WEBHOOK_URL, mentions: [env.DISCORD_ADMIN_ROLE_ID] },
-  staff: { webhook: env.DISCORD_STAFF_WEBHOOK_URL, mentions: [env.DISCORD_STAFF_ROLE_ID] },
-  activities: { webhook: env.DISCORD_ACTIVITIES_WEBHOOK_URL, mentions: [] },
+  admin: { webhook: config.DISCORD_ADMIN_WEBHOOK_URL, mentions: [config.DISCORD_ADMIN_ROLE_ID] },
+  staff: { webhook: config.DISCORD_STAFF_WEBHOOK_URL, mentions: [config.DISCORD_STAFF_ROLE_ID] },
+  activities: { webhook: config.DISCORD_ACTIVITIES_WEBHOOK_URL, mentions: [] },
 } as const
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
@@ -62,7 +62,7 @@ export async function discordWebhook({
   } catch {}
 }
 // Initialize Novu client
-export const novu = new Novu({ secretKey: env.NOVU_SECRET_KEY })
+export const novu = new Novu({ secretKey: config.NOVU_SECRET_KEY })
 
 /**
  * Creates a subscriber hash for Novu authentication
@@ -70,7 +70,7 @@ export const novu = new Novu({ secretKey: env.NOVU_SECRET_KEY })
  * @returns The hashed subscriber ID
  */
 export function createSubscriberHash(subscriberId: string): string {
-  return CryptoJS.HmacSHA256(subscriberId, env.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
+  return CryptoJS.HmacSHA256(subscriberId, config.NOVU_SECRET_KEY).toString(CryptoJS.enc.Hex)
 }
 
 /**
@@ -113,7 +113,7 @@ export async function sendWelcomeNotification(subscriberId: string): Promise<voi
         subscriberId: subscriberId,
       },
       payload: {
-        site: env.NEXT_PUBLIC_SITE_NAME,
+        site: config.NEXT_PUBLIC_SITE_NAME,
         host: getServerSideURL(),
       },
     })

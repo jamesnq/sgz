@@ -1,4 +1,4 @@
-import { env } from '@/config'
+import { config } from '@/config'
 import { transactions, users } from '@/payload-generated-schema'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
@@ -513,5 +513,5 @@ export class DoiThe {
   }
 }
 
-const doiThe = new DoiThe(env.DOITHE_PARTNER_ID, env.DOITHE_PARTNER_KEY)
+const doiThe = new DoiThe(config.DOITHE_PARTNER_ID, config.DOITHE_PARTNER_KEY)
 export default doiThe

@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { env } from '@/config'
+import { config } from '@/config'
 import { useAuth } from '@/providers/Auth'
 import payloadClient from '@/utilities/payloadClient'
 import { Inbox, NovuProvider, useNovu } from '@novu/react'
@@ -163,7 +163,7 @@ export default function NovuInbox() {
   return (
     <div className="flex items-center">
       <NovuProvider
-        applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
+        applicationIdentifier={config.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
         subscriberId={currentChannel.subscriberId}
         subscriberHash={currentChannel.hash}
       >
@@ -260,7 +260,7 @@ export default function NovuInbox() {
             )}
           </Button>
         )}
-        applicationIdentifier={env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
+        applicationIdentifier={config.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
         subscriberId={currentChannel.subscriberId}
         subscriberHash={currentChannel.hash}
         routerPush={(path: string) =>

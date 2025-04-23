@@ -41,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { env } from '@/config'
+import { config } from '@/config'
 import { getProductCardStyles } from '@/lib/product-card-styles'
 import { useAuth } from '@/providers/Auth'
 import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
@@ -970,10 +970,10 @@ const OutOfStockNotice = React.memo(function OutOfStockNotice() {
         <p className="mt-2 text-sm font-semibold">
           Email :{' '}
           <a
-            href={`mailto:${env.NEXT_PUBLIC_EMAIL_CONTACT}`}
+            href={`mailto:${config.NEXT_PUBLIC_EMAIL_CONTACT}`}
             className="text-primary hover:underline"
           >
-            {env.NEXT_PUBLIC_EMAIL_CONTACT}
+            {config.NEXT_PUBLIC_EMAIL_CONTACT}
           </a>
         </p>
       </CardContent>

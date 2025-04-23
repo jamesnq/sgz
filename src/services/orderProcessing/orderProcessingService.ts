@@ -1,4 +1,4 @@
-import { env } from '@/config'
+import { config } from '@/config'
 import { Order, ProductVariant, Stock } from '@/payload-types'
 import {
   sendOrderCompletedNotification,
@@ -67,7 +67,7 @@ export class OrderProcessingService {
           collection: 'orders',
           id: orderId,
           data: { status: 'COMPLETED' },
-          user: env.AUTO_PROCESS_USER_ID,
+          user: config.AUTO_PROCESS_USER_ID,
           req: { transactionID },
         })
 
@@ -123,7 +123,7 @@ export class OrderProcessingService {
     return await payload.findByID({
       collection: 'orders',
       id: orderId,
-      user: env.AUTO_PROCESS_USER_ID,
+      user: config.AUTO_PROCESS_USER_ID,
       depth: 1,
       req: { transactionID },
     })
@@ -243,7 +243,7 @@ export class OrderProcessingService {
       collection: 'orders',
       id: orderId,
       data: { deliveryContent, status: 'COMPLETED' },
-      user: env.AUTO_PROCESS_USER_ID,
+      user: config.AUTO_PROCESS_USER_ID,
       req: { transactionID },
     })
 
@@ -344,7 +344,7 @@ export class OrderProcessingService {
         collection: 'orders',
         id: orderId,
         data: processorResult.data,
-        user: env.AUTO_PROCESS_USER_ID,
+        user: config.AUTO_PROCESS_USER_ID,
         req: { transactionID },
       })
     }

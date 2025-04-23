@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import { env } from '@/config'
+import { config } from '@/config'
 import { User } from '@/payload-types'
 import { useTheme } from '@/providers/Theme'
 import { useAuth } from '@/providers/Auth'
@@ -23,7 +23,7 @@ export function ChatwootLoader() {
   useEffect(() => {
     if (user === undefined) return
 
-    const SCRIPT_URL = `${env.NEXT_PUBLIC_CHATWOOT_BASE_URL}/packs/js/sdk.js`
+    const SCRIPT_URL = `${config.NEXT_PUBLIC_CHATWOOT_BASE_URL}/packs/js/sdk.js`
     const onReady = (): void => {
       chatwootSetUser(user)
     }
@@ -55,8 +55,8 @@ export function ChatwootLoader() {
         if (window.chatwootSDK) {
           // @ts-expect-error ignore
           window.chatwootSDK.run({
-            websiteToken: env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN,
-            baseUrl: env.NEXT_PUBLIC_CHATWOOT_BASE_URL,
+            websiteToken: config.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN,
+            baseUrl: config.NEXT_PUBLIC_CHATWOOT_BASE_URL,
           })
         }
       }

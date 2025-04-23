@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import type { Config, Media, Product, ProductVariant } from '../payload-types'
 
-import { env } from '@/config'
+import { config } from '@/config'
 import calculateDiscountPercentage from './calculateDiscountPercentage'
 import { defaultLogo, imageFallback } from './constants'
 import { formatPrice } from './formatPrice'
@@ -37,7 +37,7 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null): stri
 export const defaultMetadata = (): Metadata => {
   const serverUrl = getServerSideURL()
   const defaultImage = serverUrl + imageFallback
-  const title = env.NEXT_PUBLIC_SITE_NAME
+  const title = config.NEXT_PUBLIC_SITE_NAME
   const description = 'Cung cấp dịch vụ nạp game và ứng dụng giá rẻ'
 
   return {
@@ -103,7 +103,7 @@ export const generateMeta = async ({ doc, variant }: GenerateMetaArgs): Promise<
   const ogImage = getImageURL(productVariant?.image || doc.meta?.image || doc.image)
 
   // Determine the title
-  const title = `${productVariant?.name || doc.meta?.title || doc.name || ''} | ${env.NEXT_PUBLIC_SITE_NAME}`
+  const title = `${productVariant?.name || doc.meta?.title || doc.name || ''} | ${config.NEXT_PUBLIC_SITE_NAME}`
 
   // Generate description based on whether we have a variant or not
   const description = productVariant
