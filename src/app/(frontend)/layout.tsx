@@ -5,7 +5,7 @@ import React from 'react'
 import { Header } from '@/collections/Globals/Header/Component'
 import { AdminBar } from '@/components/AdminBar'
 import Footer from '@/components/footer'
-import { env } from '@/config'
+import { config } from '@/config'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
@@ -36,9 +36,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 export const metadata: Metadata = {
   // metadataBase: new URL(getServerSideURL()),
   title: {
-    absolute: env.NEXT_PUBLIC_SITE_NAME,
+    absolute: config.NEXT_PUBLIC_SITE_NAME,
   },
-  description: `${env.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
+  description: `${config.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon-32x32.png',

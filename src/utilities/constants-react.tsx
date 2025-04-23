@@ -1,4 +1,4 @@
-import { env } from '@/config'
+import { config } from '@/config'
 
 export const workingTime = (
   <div className="text-highlight w-full">
@@ -15,7 +15,7 @@ export const thankYouMessage = (
   <div className="text-center">
     <p className="font-semibold">
       Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của{' '}
-      <span className="font-bold text-highlight">{env.NEXT_PUBLIC_SITE_NAME}</span>{' '}
+      <span className="font-bold text-highlight">{config.NEXT_PUBLIC_SITE_NAME}</span>{' '}
       <span className="text-red-500">{'<3'}</span>
     </p>
     <p className="text-sm mt-2">Chúng tôi luôn nỗ lực để mang đến trải nghiệm tốt nhất cho bạn.</p>

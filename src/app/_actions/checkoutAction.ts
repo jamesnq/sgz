@@ -1,5 +1,5 @@
 'use server'
-import { env } from '@/config'
+import { config } from '@/config'
 import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
 import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.service'
@@ -122,7 +122,7 @@ export const checkoutAction = authActionClient
             collection: 'orders',
             where: { id: { equals: order.id } },
             data: { supplier: defaultSupplierId },
-            user: env.AUTO_PROCESS_USER_ID,
+            user: config.AUTO_PROCESS_USER_ID,
             limit: 1,
           })
         })(),

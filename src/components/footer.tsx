@@ -1,6 +1,6 @@
 'use client'
 
-import { env } from '@/config'
+import { config } from '@/config'
 import { cn } from '@/lib/utils'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
 import { Handshake, LucideIcon, Scale } from 'lucide-react'
@@ -117,7 +117,7 @@ export default function Footer() {
     <FooterComponent
       className="mt-32 container"
       brand={{
-        name: env.NEXT_PUBLIC_SITE_NAME,
+        name: config.NEXT_PUBLIC_SITE_NAME,
         description: SITE_DESCRIPTION,
       }}
       columns={[
@@ -149,7 +149,7 @@ export default function Footer() {
           links: infoLinks,
         },
       ]}
-      copyright={`${env.NEXT_PUBLIC_SITE_NAME} © ${new Date().getFullYear()}`}
+      copyright={`${config.NEXT_PUBLIC_SITE_NAME} © ${new Date().getFullYear()}`}
     />
   )
 }

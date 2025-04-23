@@ -24,7 +24,7 @@ import { Stocks } from './collections/Stocks'
 import { Suppliers } from './collections/Suppliers'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
-import { env } from './config'
+import { config } from './config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
 const filename = fileURLToPath(import.meta.url)
@@ -124,7 +124,7 @@ export default buildConfig({
   },
   email: resendAdapter({
     defaultFromAddress: 'noreply@subgamezone.com',
-    defaultFromName: env.NEXT_PUBLIC_SITE_NAME,
-    apiKey: env.RESEND_API_KEY,
+    defaultFromName: config.NEXT_PUBLIC_SITE_NAME,
+    apiKey: config.RESEND_API_KEY,
   }),
 })

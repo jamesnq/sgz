@@ -1,4 +1,4 @@
-import { env } from '@/config'
+import { config } from '@/config'
 
 export const revalidate = 1800
 const commandTemp =
@@ -14,7 +14,7 @@ function translatePowerShellScript(inputContent: string) {
   // Translation mapping from Chinese to Vietnamese
   const translations: Record<string, string> = {
     '激活进程准备中，请稍候...': `Đang chuẩn bị quá trình kích hoạt...
-    Cảm ơn đã tin tưởng sử dụng dịch vụ của ${env.NEXT_PUBLIC_SITE_NAME}`,
+    Cảm ơn đã tin tưởng sử dụng dịch vụ của ${config.NEXT_PUBLIC_SITE_NAME}`,
     'Steam 可能没有正确安装，请重新安装 Steam 后再试':
       'Có thể Steam chưa được cài đặt đúng cách, vui lòng cài đặt lại Steam và thử lại',
     请使用管理员模式运行: 'Vui lòng chạy với quyền quản trị viên',

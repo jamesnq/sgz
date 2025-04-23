@@ -1,6 +1,6 @@
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
-import { env } from '@/config'
+import { config } from '@/config'
 import { User } from '@/payload-types'
 import {
   createNovuSubscriber,
@@ -16,7 +16,7 @@ import hasRoleOrSelf from './access/hasRoleOrSelf'
 import { managerGroup } from '@/utilities/constants'
 
 export function createChatwootHash(email: string) {
-  return CryptoJS.HmacSHA256(email, env.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
+  return CryptoJS.HmacSHA256(email, config.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
 }
 
 async function createNovuSubscriberAndSendWelcome({

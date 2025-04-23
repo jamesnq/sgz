@@ -1,7 +1,7 @@
-import { env } from '@/config'
+import { config } from '@/config'
 import { Metadata } from 'next'
 
-const siteName = env.NEXT_PUBLIC_SITE_NAME
+const siteName = config.NEXT_PUBLIC_SITE_NAME
 const domain = typeof window !== 'undefined' ? window.location.hostname : siteName
 
 const metaText = 'Điều khoản'
