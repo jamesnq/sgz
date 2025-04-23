@@ -97,6 +97,7 @@
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/eslint-plugin-query": "^5.73.3",
+    "@tanstack/react-virtual": "^3.13.6",
     "@types/crypto-js": "^4.2.2",
     "@types/escape-html": "^1.0.4",
     "@types/lodash": "^4.17.16",

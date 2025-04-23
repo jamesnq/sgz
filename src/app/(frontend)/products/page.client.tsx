@@ -20,7 +20,7 @@ import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
 import { FilterIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { Configure, useInfiniteHits, useRefinementList } from 'react-instantsearch'
 import { InstantSearchNext } from 'react-instantsearch-nextjs'
 import { useInView } from 'react-intersection-observer'
@@ -96,19 +96,88 @@ const ProductCard = ({ product }: { product: Product }) => {
 const ProductHits = () => {
   const { items, showMore, isLastPage, results } = useInfiniteHits()
   const [loadingMore, setLoadingMore] = useState(false)
-  const { ref, inView } = useInView({
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  // Determine number of columns based on screen width
+  const [columnCount, setColumnCount] = useState(1)
+  
+  useEffect(() => {
+    const updateColumnCount = () => {
+      setColumnCount(window.innerWidth >= 768 ? 2 : 1)
+    }
+    
+    updateColumnCount()
+    window.addEventListener('resize', updateColumnCount)
+    return () => window.removeEventListener('resize', updateColumnCount)
+  }, [])
+  
+  // Calculate row count based on items length and column count
+  const rowCount = Math.ceil(items.length / columnCount)
+  
+  // Intersection observer for infinite loading
+  const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
-    rootMargin: '0px 0px 500px 0px', // Increased margin to trigger loading earlier
+    rootMargin: '0px 0px 500px 0px',
     triggerOnce: false,
   })
-
+  
+  // State to track visible range
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 0 })
+  
+  // Update visible range on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return
+      
+      const rect = containerRef.current.getBoundingClientRect()
+      const windowHeight = window.innerHeight
+      
+      // If container is not in view at all, don't render any items
+      if (rect.bottom < 0 || rect.top > windowHeight) {
+        setVisibleRange({ start: 0, end: 0 })
+        return
+      }
+      
+      // Calculate which rows are visible based on scroll position
+      const containerTop = rect.top
+      const containerHeight = rect.height
+      const rowHeight = 140 // Same as row height
+      
+      // Calculate visible rows
+      const visibleTop = Math.max(0, -containerTop)
+      const visibleBottom = Math.min(containerHeight, windowHeight - containerTop)
+      
+      // Convert to row indices
+      const startRow = Math.floor(visibleTop / rowHeight)
+      const endRow = Math.min(rowCount - 1, Math.ceil(visibleBottom / rowHeight))
+      
+      // Add a small buffer (1 row) for smoother scrolling
+      const bufferStart = Math.max(0, startRow - 1)
+      const bufferEnd = Math.min(rowCount - 1, endRow + 1)
+      
+      setVisibleRange({ start: bufferStart, end: bufferEnd })
+    }
+    
+    // Initial calculation
+    handleScroll()
+    
+    // Add scroll listener
+    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('resize', handleScroll)
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [rowCount])
+  
   // Reset loading state when results change
   useEffect(() => {
     if (results && results.nbHits > 0) {
       setLoadingMore(false)
     }
   }, [results])
-
+  
   // Handle loading more when scrolling
   useEffect(() => {
     if (inView && !isLastPage && !loadingMore) {
@@ -116,14 +185,52 @@ const ProductHits = () => {
       showMore()
     }
   }, [inView, showMore, isLastPage, loadingMore])
-
+  
+  // Generate rows to render based on visible range
+  const rowsToRender = useMemo(() => {
+    const rows = []
+    
+    for (let rowIndex = visibleRange.start; rowIndex <= visibleRange.end; rowIndex++) {
+      rows.push(
+        <div
+          key={rowIndex}
+          className="grid grid-cols-1 md:grid-cols-2 gap-2 absolute left-0 right-0"
+          style={{
+            top: `${rowIndex * 140}px`, // rowIndex * rowHeight
+            height: '140px',
+          }}
+        >
+          {Array.from({ length: columnCount }).map((_, columnIndex) => {
+            const itemIndex = rowIndex * columnCount + columnIndex
+            if (itemIndex >= items.length) return null
+            
+            return (
+              <div key={`${rowIndex}-${columnIndex}`} className="w-full">
+                <ProductCard product={items[itemIndex] as unknown as Product} />
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+    
+    return rows
+  }, [visibleRange, items, columnCount])
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
-      {items.map((hit) => (
-        <ProductCard key={hit.id} product={hit as unknown as Product} />
-      ))}
+    <div className="mb-8 relative" ref={containerRef}>
+      <div
+        style={{
+          height: `${rowCount * 140}px`, // Total height based on number of rows
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowsToRender}
+      </div>
+      
       {!isLastPage && (
-        <div ref={ref} className="col-span-full flex justify-center py-4">
+        <div ref={loadMoreRef} className="flex justify-center py-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
         </div>
       )}
