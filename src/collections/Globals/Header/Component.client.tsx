@@ -30,6 +30,7 @@ import { useAuth } from '@/providers/Auth'
 import { ThemeToggle } from '@/providers/Theme/theme-toggle'
 import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
+import { ProductSearchTrigger } from '@/components/product-search'
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,
@@ -134,6 +135,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div className="flex items-center">
           <HeaderNav data={data} />
           <div className="flex items-center gap-1">
+            <ProductSearchTrigger />
             <DisplayBalance />
             <NovuInbox />
             <AuthDropdown />

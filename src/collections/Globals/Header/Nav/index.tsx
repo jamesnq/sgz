@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { ProductSearchTrigger } from '@/components/product-search'
 
 import type { Header as HeaderType } from '@/payload-types'
 
@@ -15,7 +14,6 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({}) => {
       {/* {navItems.map(({ link }, i) => {
         return <CMSLink key={i} {...link} appearance="link" />
       })} */}
-      <ProductSearchTrigger />
     </nav>
   )
 }

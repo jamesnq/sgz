@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { Media } from '@/components/Media'
 import { Product } from '@/payload-types'
 import { formatPrice } from '@/utilities/formatPrice'
@@ -19,11 +20,12 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent as BaseDialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Configure, InstantSearch, useInfiniteHits, useSearchBox } from 'react-instantsearch'
 import { Badge } from './ui/badge'
 import { VisuallyHidden } from '@/components/ui/visually-hidden'
 import { cn } from '@/utilities/ui'
+import { Button } from './ui/button'
 
 interface ProductSearchProps {
   open: boolean
@@ -141,10 +143,26 @@ function ProductSearchResults({ onClose }: { onClose: () => void }) {
   )
 }
 
+// Custom DialogContent that positions at the top
+const TopDialogContent = React.forwardRef<
+  React.ElementRef<typeof BaseDialogContent>,
+  React.ComponentPropsWithoutRef<typeof BaseDialogContent>
+>(({ className, ...props }, ref) => (
+  <BaseDialogContent
+    ref={ref}
+    className={cn(
+      "fixed left-[50%] top-[5%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-0 gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[5%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[5%] sm:rounded-lg",
+      className
+    )}
+    {...props}
+  />
+))
+TopDialogContent.displayName = "TopDialogContent"
+
 export function ProductSearch({ open, onOpenChange }: ProductSearchProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden p-0 max-w-lg">
+      <TopDialogContent className="overflow-hidden p-0 max-w-lg">
         <VisuallyHidden>
           <DialogTitle>Tìm kiếm sản phẩm</DialogTitle>
         </VisuallyHidden>
@@ -161,7 +179,7 @@ export function ProductSearch({ open, onOpenChange }: ProductSearchProps) {
           <Configure hitsPerPage={10} />
           <ProductSearchResults onClose={() => onOpenChange(false)} />
         </InstantSearch>
-      </DialogContent>
+      </TopDialogContent>
     </Dialog>
   )
 }
@@ -190,16 +208,24 @@ export function ProductSearchTrigger({
 
   return (
     <>
+      <Button
+        variant="ghost"
+        size={'xs'}
+        className={cn('lg:hidden rounded-full', className)}
+        onClick={() => setOpen(true)}
+      >
+        <Search className="text-highlight" />
+      </Button>
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          'mr-2 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3',
+          'hidden lg:inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-2',
           className,
         )}
       >
         {children || (
           <>
-            <Search className="mr-2 h-4 w-4" />
+            <Search className="text-highlight mr-2 h-4 w-4" />
             <span>Tìm kiếm...</span>
           </>
         )}
