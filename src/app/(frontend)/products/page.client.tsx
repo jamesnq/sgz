@@ -134,8 +134,25 @@ const ProductHits = () => {
 function Sidebar() {
   return (
     <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0 hidden lg:block">
-      <div className="sticky top-24">
-        <h2 className="text-lg font-medium mb-4">Danh mục</h2>
+      <div className="sticky top-24 flex flex-col gap-2">
+        {/* Desktop search and sort */}
+        <div className="hidden lg:block">
+          <SearchBox />
+        </div>
+        <div className="hidden lg:block mb-2">
+          <SortByHorizontal
+            items={[
+              {
+                value: `${productIndex}:sold:desc`,
+                label: 'Bán chạy',
+              },
+              {
+                value: `${productIndex}:maxDiscount:desc`,
+                label: 'Giảm giá sốc',
+              },
+            ]}
+          />
+        </div>
         <RefinementList attribute="categories" />
       </div>
     </div>
@@ -146,15 +163,15 @@ function Sidebar() {
 function MobileFilters() {
   // Track selected refinements for the categories attribute
   const { items } = useRefinementList({ attribute: 'categories' })
-  const selectedCategoriesCount = items.filter(item => item.isRefined).length
+  const selectedCategoriesCount = items.filter((item) => item.isRefined).length
   const hasSelectedCategories = selectedCategoriesCount > 0
 
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button 
-          variant={hasSelectedCategories ? "default" : "outline"} 
-          size="sm" 
+        <Button
+          variant={hasSelectedCategories ? 'default' : 'outline'}
+          size="sm"
           className="lg:hidden flex items-center gap-2"
         >
           <FilterIcon className="h-4 w-4" />
@@ -225,24 +242,6 @@ const PageClient = () => {
         <div className="flex flex-col lg:flex-row lg:gap-6 mt-4 mb-[120px] lg:mb-0">
           <Sidebar />
           <div className="flex-1 flex flex-col gap-2">
-            {/* Desktop search and sort */}
-            <div className="hidden lg:block">
-              <SearchBox />
-            </div>
-            <div className="hidden lg:block">
-              <SortByHorizontal
-                items={[
-                  {
-                    value: `${productIndex}:sold:desc`,
-                    label: 'Bán chạy',
-                  },
-                  {
-                    value: `${productIndex}:maxDiscount:desc`,
-                    label: 'Giảm giá sốc',
-                  },
-                ]}
-              />
-            </div>
             <ProductHits />
           </div>
         </div>

@@ -71,7 +71,7 @@ export const RefinementList = (
           </div>
         ) : null}
 
-        <div className="relative mb-4">
+        <div className="relative mb-2">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
