@@ -37,29 +37,45 @@ export async function discordWebhook({
   }
   try {
     const channelConfig = webhookChannels[channel]
-    return fetch(channelConfig.webhook, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: isMention ? channelConfig.mentions.map((id) => `<@&${id}>`).join(' ') : '',
-        attachments: [],
-        embeds: [
-          {
-            title: subject,
-            description: message,
-            url: redirect
-              ? redirect.startsWith('http://') || redirect.startsWith('https://')
-                ? redirect
-                : getServerSideURL() + redirect
-              : undefined,
-            color: color ? parseInt(color.replace('#', ''), 16) : undefined,
+    let attempts = 0
+    let lastError
+
+    while (attempts < 3) {
+      try {
+        return await fetch(channelConfig.webhook, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ],
-      }),
-    })
-  } catch {}
+          body: JSON.stringify({
+            content: isMention ? channelConfig.mentions.map((id) => `<@&${id}>`).join(' ') : '',
+            attachments: [],
+            embeds: [
+              {
+                title: subject,
+                description: message,
+                url: redirect
+                  ? redirect.startsWith('http://') || redirect.startsWith('https://')
+                    ? redirect
+                    : getServerSideURL() + redirect
+                  : undefined,
+                color: color ? parseInt(color.replace('#', ''), 16) : undefined,
+              },
+            ],
+          }),
+        })
+      } catch (error) {
+        lastError = error
+        attempts++
+        if (attempts >= 3) break
+        // Wait a short time before retrying
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+    }
+    console.error('Discord webhook failed after 3 attempts:', lastError)
+  } catch (error) {
+    console.error('Discord webhook error:', error)
+  }
 }
 // Initialize Novu client
 export const novu = new Novu({ secretKey: config.NOVU_SECRET_KEY })
