@@ -102,6 +102,7 @@ export const categories = pgTable(
   {
     id: serial('id').primaryKey(),
     title: varchar('title').notNull(),
+    icon: varchar('icon'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -1545,8 +1546,8 @@ type DatabaseSchema = {
   relations_header: typeof relations_header
   relations_footer: typeof relations_footer
 }
-// @ts-expect-error
-declare module '@payloadcms/db-postgres/types' {
+
+declare module '@payloadcms/db-postgres' {
   export interface GeneratedDatabaseSchema {
     schema: DatabaseSchema
   }
