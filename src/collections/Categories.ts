@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload'
 
 import { hasRole } from '@/access/hasRoles'
-import { anyone } from '../access/anyone'
 import { mediaGroup } from '@/utilities/constants'
+import { anyone } from '../access/anyone'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
@@ -22,6 +22,10 @@ export const Categories: CollectionConfig = {
       type: 'text',
       required: true,
       localized: true,
+    },
+    {
+      name: 'icon',
+      type: 'text',
     },
   ],
 }

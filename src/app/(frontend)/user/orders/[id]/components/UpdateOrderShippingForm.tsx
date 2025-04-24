@@ -26,7 +26,7 @@ export function UpdateOrderShippingForm({ disabled, order }: { order: Order; dis
 
   const { executeAsync, isExecuting } = useActionWarper(updateOrderAction)
   return (
-    <Card>
+    <Card id="update" style={{ scrollMarginTop: '100px' }}>
       <CardHeader className="font-bold">Thông tin cung cấp</CardHeader>
       <CardContent>
         <div>

@@ -625,7 +625,7 @@ const MemoizedShippingForm = React.memo(
     )
 
     return (
-      <Card className="w-full overflow-hidden">
+      <Card id="shipping-form" className="w-full overflow-hidden">
         <CardHeader>Thông tin đơn hàng</CardHeader>
         <CardContent>
           <div>
@@ -722,7 +722,7 @@ const MemoizedCheckout = React.memo(
     )
 
     return (
-      <Card className={cn('p-6', className)}>
+      <Card id="checkout" style={{ scrollMarginTop: '100px' }} className={cn('p-6', className)}>
         <div className="flex w-full text-sm items-center justify-between">
           <span>Giá gốc</span>
           <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
