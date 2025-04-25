@@ -40,6 +40,8 @@ declare global {
       NEXT_PUBLIC_MEILI_HOST: string
       MEILI_MASTER_KEY: string
       NEXT_PUBLIC_MEILI_SEARCH_KEY: string
+      GOOGLE_PROVIDER_CLIENT_ID: string
+      GOOGLE_PROVIDER_CLIENT_SECRET: string
     }
   }
 }

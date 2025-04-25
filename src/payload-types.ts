@@ -70,6 +70,7 @@ export interface Config {
     media: Media;
     categories: Category;
     'category-groups': CategoryGroup;
+    accounts: Account;
     users: User;
     stocks: Stock;
     transactions: Transaction;
@@ -95,6 +96,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     'category-groups': CategoryGroupsSelect<false> | CategoryGroupsSelect<true>;
+    accounts: AccountsSelect<false> | AccountsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     stocks: StocksSelect<false> | StocksSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
@@ -225,6 +227,45 @@ export interface CategoryGroup {
    */
   icon: string;
   categories?: (number | Category)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accounts".
+ */
+export interface Account {
+  id: number;
+  name?: string | null;
+  picture?: string | null;
+  user: number | User;
+  issuerName: string;
+  scope?: string | null;
+  sub: string;
+  passkey?: {
+    credentialId: string;
+    publicKey:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    counter: number;
+    transports:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    deviceType: string;
+    backedUp: boolean;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -747,6 +788,10 @@ export interface PayloadLockedDocument {
         value: number | CategoryGroup;
       } | null)
     | ({
+        relationTo: 'accounts';
+        value: number | Account;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -898,6 +943,30 @@ export interface CategoryGroupsSelect<T extends boolean = true> {
   title?: T;
   icon?: T;
   categories?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accounts_select".
+ */
+export interface AccountsSelect<T extends boolean = true> {
+  name?: T;
+  picture?: T;
+  user?: T;
+  issuerName?: T;
+  scope?: T;
+  sub?: T;
+  passkey?:
+    | T
+    | {
+        credentialId?: T;
+        publicKey?: T;
+        counter?: T;
+        transports?: T;
+        deviceType?: T;
+        backedUp?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

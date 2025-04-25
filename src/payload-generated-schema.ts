@@ -164,6 +164,40 @@ export const category_groups_rels = pgTable(
   }),
 )
 
+export const accounts = pgTable(
+  'accounts',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name'),
+    picture: varchar('picture'),
+    user: integer('user_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'set null',
+      }),
+    issuerName: varchar('issuer_name').notNull(),
+    scope: varchar('scope'),
+    sub: varchar('sub').notNull(),
+    passkey_credentialId: varchar('passkey_credential_id'),
+    passkey_publicKey: jsonb('passkey_public_key'),
+    passkey_counter: numeric('passkey_counter'),
+    passkey_transports: jsonb('passkey_transports'),
+    passkey_deviceType: varchar('passkey_device_type'),
+    passkey_backedUp: boolean('passkey_backed_up').default(false),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    accounts_user_idx: index('accounts_user_idx').on(columns.user),
+    accounts_updated_at_idx: index('accounts_updated_at_idx').on(columns.updatedAt),
+    accounts_created_at_idx: index('accounts_created_at_idx').on(columns.createdAt),
+  }),
+)
+
 export const users_roles = pgTable(
   'users_roles',
   {
@@ -863,6 +897,7 @@ export const payload_locked_documents_rels = pgTable(
     mediaID: integer('media_id'),
     categoriesID: integer('categories_id'),
     'category-groupsID': integer('category_groups_id'),
+    accountsID: integer('accounts_id'),
     usersID: integer('users_id'),
     stocksID: integer('stocks_id'),
     transactionsID: integer('transactions_id'),
@@ -889,6 +924,9 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_category_groups_id_idx: index(
       'payload_locked_documents_rels_category_groups_id_idx',
     ).on(columns['category-groupsID']),
+    payload_locked_documents_rels_accounts_id_idx: index(
+      'payload_locked_documents_rels_accounts_id_idx',
+    ).on(columns.accountsID),
     payload_locked_documents_rels_users_id_idx: index(
       'payload_locked_documents_rels_users_id_idx',
     ).on(columns.usersID),
@@ -944,6 +982,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['category-groupsID']],
       foreignColumns: [category_groups.id],
       name: 'payload_locked_documents_rels_category_groups_fk',
+    }).onDelete('cascade'),
+    accountsIdFk: foreignKey({
+      columns: [columns['accountsID']],
+      foreignColumns: [accounts.id],
+      name: 'payload_locked_documents_rels_accounts_fk',
     }).onDelete('cascade'),
     usersIdFk: foreignKey({
       columns: [columns['usersID']],
@@ -1113,6 +1156,13 @@ export const relations_category_groups_rels = relations(category_groups_rels, ({
 export const relations_category_groups = relations(category_groups, ({ many }) => ({
   _rels: many(category_groups_rels, {
     relationName: '_rels',
+  }),
+}))
+export const relations_accounts = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.user],
+    references: [users.id],
+    relationName: 'user',
   }),
 }))
 export const relations_users_roles = relations(users_roles, ({ one }) => ({
@@ -1376,6 +1426,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [category_groups.id],
       relationName: 'category-groups',
     }),
+    accountsID: one(accounts, {
+      fields: [payload_locked_documents_rels.accountsID],
+      references: [accounts.id],
+      relationName: 'accounts',
+    }),
     usersID: one(users, {
       fields: [payload_locked_documents_rels.usersID],
       references: [users.id],
@@ -1483,6 +1538,7 @@ type DatabaseSchema = {
   categories: typeof categories
   category_groups: typeof category_groups
   category_groups_rels: typeof category_groups_rels
+  accounts: typeof accounts
   users_roles: typeof users_roles
   users: typeof users
   stocks: typeof stocks
@@ -1516,6 +1572,7 @@ type DatabaseSchema = {
   relations_categories: typeof relations_categories
   relations_category_groups_rels: typeof relations_category_groups_rels
   relations_category_groups: typeof relations_category_groups
+  relations_accounts: typeof relations_accounts
   relations_users_roles: typeof relations_users_roles
   relations_users: typeof relations_users
   relations_stocks: typeof relations_stocks

@@ -7,6 +7,7 @@ import sharp from 'sharp' // sharp-import
 import { fileURLToPath } from 'url'
 
 import { defaultLexical } from '@/fields/defaultLexical'
+import { Accounts } from './collections/Accounts'
 import { Categories } from './collections/Categories'
 import { CategoryGroups } from './collections/CategoryGroups'
 import { Forms } from './collections/Forms'
@@ -27,6 +28,7 @@ import { Users } from './collections/Users'
 import { config } from './config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
+
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
@@ -41,6 +43,7 @@ export default buildConfig({
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
       beforeDashboard: ['@/components/BeforeDashboard'],
       // providers: ['@/providers/payload-providers#PayloadProviders'],
+      afterLogin: ['@/components/Auth#AuthComponent'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -83,6 +86,7 @@ export default buildConfig({
     Media,
     Categories,
     CategoryGroups,
+    Accounts,
     Users,
     Stocks,
     Transactions,
@@ -96,6 +100,7 @@ export default buildConfig({
     NovuChannels,
     Suppliers,
   ],
+  serverURL: getServerSideURL(),
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [
