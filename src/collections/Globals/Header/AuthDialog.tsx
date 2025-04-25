@@ -22,14 +22,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/providers/Auth'
-import { useRouter } from 'next/navigation'
 import { adminClient } from 'payload-auth-plugin/client'
 
 const { signin } = adminClient()
 
 export default function AuthDialog({ className }: { className?: string }) {
   const { login, create, forgotPassword } = useAuth()
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -130,12 +128,12 @@ export default function AuthDialog({ className }: { className?: string }) {
     setGoogleLoading(true)
 
     try {
-      const { message, isSuccess, isError } = await signin().oauth('google')
+      const { isSuccess, isError } = await signin().oauth('google')
       if (isError) {
-        setError(message || 'Đăng nhập bằng Google thất bại')
+        setError('Đăng nhập bằng Google thất bại')
       }
       if (isSuccess) {
-        router.push('/')
+        window.location.reload()
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập bằng Google thất bại')
