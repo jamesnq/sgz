@@ -4,6 +4,16 @@ import redirects from './redirects.js'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { webpack }) => {
+    // https://github.com/vercel/next.js/discussions/50177
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^pg-native$|^cloudflare:sockets$/,
+      }),
+    )
+
+    return config
+  },
   images: {
     remotePatterns: [
       {
