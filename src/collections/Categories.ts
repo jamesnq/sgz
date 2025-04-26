@@ -15,6 +15,7 @@ export const Categories: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     group: mediaGroup,
+    description: 'Categories of products',
   },
   fields: [
     {

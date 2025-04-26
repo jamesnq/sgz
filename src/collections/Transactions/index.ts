@@ -15,6 +15,7 @@ export const Transactions: CollectionConfig = {
   admin: {
     defaultColumns: ['user', 'amount', 'balance', 'description', 'createdAt'],
     useAsTitle: 'amount',
+    description: 'Transaction history',
     group: managerGroup,
   },
   fields: [

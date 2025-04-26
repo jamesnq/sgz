@@ -17,6 +17,7 @@ export const Recharges: CollectionConfig = {
     defaultColumns: ['orderCode', 'status', 'amount', 'updatedAt'],
     useAsTitle: 'status',
     group: managerGroup,
+    description: 'Recharge history',
   },
   fields: [
     {

@@ -15,12 +15,16 @@ export const CategoryGroups: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     group: mediaGroup,
+    description: 'Groups of product categories',
   },
   fields: [
     {
       name: 'title',
       type: 'text',
       required: true,
+      admin: {
+        description: 'Group name',
+      },
     },
     {
       name: 'icon',
@@ -28,7 +32,7 @@ export const CategoryGroups: CollectionConfig = {
       defaultValue: 'box',
       required: true,
       admin: {
-        description: 'https://lucide.dev/icons/',
+        description: 'Icon identifier from https://lucide.dev/icons/',
       },
     },
     {
@@ -37,6 +41,9 @@ export const CategoryGroups: CollectionConfig = {
       relationTo: 'categories',
       hasMany: true,
       unique: true,
+      admin: {
+        description: 'Categories in this group',
+      },
     },
   ],
 }

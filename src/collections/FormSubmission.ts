@@ -20,6 +20,7 @@ export const FormSubmissions: CollectionConfig = {
     useAsTitle: 'form',
     defaultColumns: ['id', 'form', 'user', 'createdAt'],
     group: managerGroup,
+    description: 'User submitted form data',
   },
   fields: [
     {
@@ -30,6 +31,7 @@ export const FormSubmissions: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
+        description: 'User who submitted the form',
       },
     },
     {
@@ -40,6 +42,7 @@ export const FormSubmissions: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
+        description: 'Form template used',
       },
       // @ts-expect-error ts missmatch
       validate: async (value, { req: { payload }, req }) => {
@@ -69,6 +72,9 @@ export const FormSubmissions: CollectionConfig = {
       name: 'submissionData',
       type: 'json',
       required: true,
+      admin: {
+        description: 'Form submission data',
+      },
       validate: async (_value, { data, req: { payload } }) => {
         /* Don't run in the client side */
         if (!payload) {

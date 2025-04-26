@@ -15,6 +15,7 @@ export const Stocks: CollectionConfig = {
     useAsTitle: 'productVariant',
     defaultColumns: ['productVariant', 'id', 'data', 'expiredAt', 'createdAt', 'order'],
     group: managerGroup,
+    description: 'Product stock inventory management',
   },
   fields: [
     // If order is not set, the stock is available
@@ -22,22 +23,34 @@ export const Stocks: CollectionConfig = {
       name: 'order',
       type: 'relationship',
       relationTo: 'orders',
+      admin: {
+        description: 'Associated order (if assigned)',
+      },
     },
     {
       name: 'productVariant',
       type: 'relationship',
       relationTo: 'product-variants',
       required: true,
+      admin: {
+        description: 'Related product variant',
+      },
     },
     {
       name: 'data',
       type: 'json',
       required: true,
+      admin: {
+        description: 'Stock item data (keys, codes, etc.)',
+      },
     },
     // TODO need to handle expiredAt
     {
       name: 'expiredAt',
       type: 'date',
+      admin: {
+        description: 'Expiration date of the stock item',
+      },
     },
   ],
 }

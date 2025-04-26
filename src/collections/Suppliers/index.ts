@@ -15,6 +15,7 @@ export const Suppliers: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'status', 'updatedAt'],
     group: managerGroup,
+    description: 'Suppliers of products',
   },
   fields: [
     {

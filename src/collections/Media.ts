@@ -27,16 +27,23 @@ export const Media: CollectionConfig = {
   admin: {
     group: mediaGroup,
     defaultColumns: ['filename', 'width', 'height', 'filesize'],
+    description: 'Media files management',
   },
   fields: [
     {
       name: 'alt',
       type: 'text',
       //required: true,
+      admin: {
+        description: 'Alternative text for accessibility',
+      },
     },
     {
       name: 'caption',
       type: 'richText',
+      admin: {
+        description: 'Caption text for the media',
+      },
       editor: lexicalEditor({
         features: ({ rootFeatures }) => {
           return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]
