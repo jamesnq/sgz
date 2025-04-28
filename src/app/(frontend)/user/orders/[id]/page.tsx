@@ -49,6 +49,9 @@ export default async function Page({ params: paramsPromise }: Args) {
       formSubmission: true,
       deliveryContent: true,
     },
+    req: {
+      transactionID: undefined,
+    },
   })
 
   if (!docs.length || !user || !docs[0]) notFound()

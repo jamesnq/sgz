@@ -93,6 +93,9 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       quantity: true,
       totalPrice: true,
     },
+    req: {
+      transactionID: undefined,
+    },
   })
 
   const productIds = Array.from(new Set(res.docs.map((order: any) => order.productVariant.product)))
@@ -111,6 +114,9 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
         name: true,
         slug: true,
         image: true,
+      },
+      req: {
+        transactionID: undefined,
       },
       pagination: false,
     })
@@ -146,6 +152,9 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       },
       overrideAccess: false,
       pagination: false,
+      req: {
+        transactionID: undefined,
+      },
     })
     res.docs = res.docs.map((order: any) => {
       const image = images.find((image) => image.id === order.productVariant.image)

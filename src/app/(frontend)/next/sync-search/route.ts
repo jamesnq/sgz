@@ -24,12 +24,18 @@ export async function productsToSearch(products: Product[]): Promise<Product[]> 
               id: product.image,
               depth: 0,
               overrideAccess: true,
+              req: {
+                transactionID: undefined,
+              },
             }),
             payload.find({
               collection: 'categories',
               where: { id: { in: product.categories } },
               overrideAccess: true,
               depth: 0,
+              req: {
+                transactionID: undefined,
+              },
             }),
           ])
           product.image = image

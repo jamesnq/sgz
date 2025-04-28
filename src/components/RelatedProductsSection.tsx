@@ -73,6 +73,9 @@ export const RelatedProductsSection = async ({
     where: whereClause,
     limit: maxDisplay, // Fetch a few more than we need in case some are filtered out
     depth: 1,
+    req: {
+      transactionID: undefined,
+    },
   })
 
   if (relatedProductsData.docs.length === 0) {

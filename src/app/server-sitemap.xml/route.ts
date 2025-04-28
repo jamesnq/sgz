@@ -26,6 +26,9 @@ export async function GET(): Promise<Response> {
     },
     depth: 1, // To get media relations
     limit: 1000,
+    req: {
+      transactionID: undefined,
+    },
   })
 
   const products = productsResponse.docs || []
@@ -78,25 +81,28 @@ export async function GET(): Promise<Response> {
     return entry
   })
 
-  // Fetch categories
-  const categoriesResponse = await payload.find({
-    collection: 'categories',
-    depth: 0,
-    limit: 500,
-  })
+  // // Fetch categories
+  // const categoriesResponse = await payload.find({
+  //   collection: 'categories',
+  //   depth: 0,
+  //   limit: 500,
+  //   req: {
+  //     transactionID: undefined,
+  //   },
+  // })
 
-  const categories = categoriesResponse.docs || []
+  // const categories = categoriesResponse.docs || []
 
-  // Create sitemap entries for categories
-  const categoryEntries = categories.map((category: any) => {
-    return {
-      url: `${siteUrl}/categories/${category.slug || ''}`,
-      lastModified: new Date(category.updatedAt || category.createdAt).toISOString(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-      images: [],
-    } as SitemapEntry
-  })
+  // // Create sitemap entries for categories
+  // const categoryEntries = categories.map((category: any) => {
+  //   return {
+  //     url: `${siteUrl}/categories/${category.slug || ''}`,
+  //     lastModified: new Date(category.updatedAt || category.createdAt).toISOString(),
+  //     changeFrequency: 'weekly',
+  //     priority: 0.7,
+  //     images: [],
+  //   } as SitemapEntry
+  // })
 
   // Add static pages with appropriate priorities
   const staticPages: SitemapEntry[] = [
@@ -138,7 +144,7 @@ export async function GET(): Promise<Response> {
   ]
 
   // Combine all entries
-  const entries = [...staticPages, ...productEntries, ...categoryEntries]
+  const entries = [...staticPages, ...productEntries]
 
   // Generate the XML with image support
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 
+import { ProductStructuredData } from '@/components/SEO/ProductStructuredData'
 import { Spinner } from '@/components/ui/spinner'
 import { Product, ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -11,7 +12,6 @@ import { pick } from '@/utilities/pick'
 import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
-import { ProductStructuredData } from '@/components/SEO/ProductStructuredData'
 
 export const revalidate = 3600
 
@@ -121,6 +121,9 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
             status: true,
             sold: true,
             meta: true,
+          },
+          req: {
+            transactionID: undefined,
           },
         })
 
