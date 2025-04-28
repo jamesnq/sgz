@@ -1,6 +1,7 @@
 import { SerializedEditorState, SerializedLexicalNode } from '@payloadcms/richtext-lexical/lexical'
 
-export function textOnly(data: SerializedEditorState<SerializedLexicalNode>) {
+export function textOnly(data: SerializedEditorState<SerializedLexicalNode> | null | undefined) {
+  if (!data) return ''
   return data.root.children
     .map((child) => {
       if (child.type !== 'paragraph') return ''

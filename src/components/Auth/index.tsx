@@ -10,7 +10,7 @@ export const AuthComponent = () => {
   const router = useRouter()
 
   const handleGoogleSignin = async () => {
-    const { data, message, isSuccess, isError } = await signin().oauth('google')
+    const { message, isSuccess, isError } = await signin().oauth('google')
     if (isError) {
       console.log(message)
     }

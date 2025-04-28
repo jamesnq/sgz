@@ -1,5 +1,6 @@
-import React from 'react'
 import { Product } from '@/payload-types'
+import React from 'react'
+import { textOnly } from '../RichText/textOnly'
 
 interface ProductStructuredDataProps {
   product: Product
@@ -23,7 +24,7 @@ export const ProductStructuredData: React.FC<ProductStructuredDataProps> = ({
     '@context': 'https://schema.org/',
     '@type': 'Product',
     name: product.name,
-    description: product.meta?.description || '',
+    description: textOnly(product.description),
     image: imageUrl,
     sku: product.id,
     mpn: product.id,
@@ -52,7 +53,6 @@ export const ProductStructuredData: React.FC<ProductStructuredDataProps> = ({
       reviewCount: '100',
     },
   }
-
   return (
     <script
       type="application/ld+json"

@@ -7,6 +7,7 @@ import { defaultLogo, imageFallback } from './constants'
 import { formatPrice } from './formatPrice'
 import { getServerSideURL } from './getURL'
 import { mergeOpenGraph } from './mergeOpenGraph'
+import { textOnly } from '@/components/RichText/textOnly'
 
 /**
  * Extracts a valid image URL from a Media object or returns a fallback URL
@@ -100,15 +101,15 @@ export const generateMeta = async ({ doc, variant }: GenerateMetaArgs): Promise<
     variant > 0 ? (doc.variants?.find((v: any) => v.id == variant) as ProductVariant) : undefined
 
   // Determine the appropriate image to use
-  const ogImage = getImageURL(productVariant?.image || doc.meta?.image || doc.image)
+  const ogImage = getImageURL(productVariant?.image || doc.image)
 
   // Determine the title
-  const title = `${productVariant?.name || doc.meta?.title || doc.name || ''} | ${config.NEXT_PUBLIC_SITE_NAME}`
+  const title = `${productVariant?.name || doc.name || ''} | ${config.NEXT_PUBLIC_SITE_NAME}`
 
   // Generate description based on whether we have a variant or not
   const description = productVariant
-    ? generateVariantDescription(productVariant, doc.meta?.description || '')
-    : doc.meta?.description || ''
+    ? generateVariantDescription(productVariant, textOnly(doc.description))
+    : textOnly(doc.description)
 
   // Generate the URL path
   const url = Array.isArray(doc.slug) ? doc.slug.join('/') : '/'

@@ -325,11 +325,6 @@ export const products = pgTable(
     maxDiscount: numeric('max_discount').notNull().default('0'),
     note: varchar('note'),
     description: jsonb('description'),
-    meta_title: varchar('meta_title'),
-    meta_image: integer('meta_image_id').references(() => media.id, {
-      onDelete: 'set null',
-    }),
-    meta_description: varchar('meta_description'),
     slug: varchar('slug'),
     slugLock: boolean('slug_lock').default(true),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
@@ -341,7 +336,6 @@ export const products = pgTable(
   },
   (columns) => ({
     products_image_idx: index('products_image_idx').on(columns.image),
-    products_meta_meta_image_idx: index('products_meta_meta_image_idx').on(columns.meta_image),
     products_slug_idx: index('products_slug_idx').on(columns.slug),
     products_updated_at_idx: index('products_updated_at_idx').on(columns.updatedAt),
     products_created_at_idx: index('products_created_at_idx').on(columns.createdAt),
@@ -1223,11 +1217,6 @@ export const relations_products = relations(products, ({ one, many }) => ({
     fields: [products.image],
     references: [media.id],
     relationName: 'image',
-  }),
-  meta_image: one(media, {
-    fields: [products.meta_image],
-    references: [media.id],
-    relationName: 'meta_image',
   }),
   _rels: many(products_rels, {
     relationName: '_rels',

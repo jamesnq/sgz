@@ -1,25 +1,12 @@
 import { Accounts } from '@/collections/Accounts'
 import { config } from '@/config'
-import { Product } from '@/payload-types'
-import { getServerSideURL } from '@/utilities/getURL'
 import { fieldsSelect } from '@payload-enchants/fields-select'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
-import { seoPlugin } from '@payloadcms/plugin-seo'
-import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
 import { adminAuthPlugin } from 'payload-auth-plugin'
-import { env } from 'process'
 import { GoogleAuthProvider } from 'payload-auth-plugin/providers'
-const generateTitle: GenerateTitle<Product> = ({ doc }) => {
-  return doc?.name ? `${doc.name} | ${env.NEXT_PUBLIC_SITE_NAME}` : env.NEXT_PUBLIC_SITE_NAME
-}
-
-const generateURL: GenerateURL<Product> = ({ doc }) => {
-  const url = getServerSideURL()
-
-  return doc?.slug ? `${url}/${doc.slug}` : url
-}
+import { env } from 'process'
 
 export const plugins: Plugin[] = [
   fieldsSelect(),
@@ -37,10 +24,6 @@ export const plugins: Plugin[] = [
       },
       region: env.S3_REGION,
     },
-  }),
-  seoPlugin({
-    generateTitle,
-    generateURL,
   }),
   payloadCloudPlugin(),
   adminAuthPlugin({

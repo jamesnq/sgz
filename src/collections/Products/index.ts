@@ -10,13 +10,6 @@ import { Product } from '@/payload-types'
 import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
-import {
-  MetaDescriptionField,
-  MetaImageField,
-  MetaTitleField,
-  OverviewField,
-  PreviewField,
-} from '@payloadcms/plugin-seo/fields'
 import { revalidateDelete, revalidateProduct } from './hooks/revalidateProduct'
 
 export const Products: CollectionConfig = {
@@ -177,77 +170,49 @@ export const Products: CollectionConfig = {
       },
     },
     {
-      type: 'tabs',
-      tabs: [
-        {
-          fields: [
-            {
-              name: 'description',
-              type: 'richText',
-              editor: defaultLexicalEditor,
-              label: false,
-            },
-          ],
-          label: 'Content',
-        },
-        {
-          fields: [
-            {
-              name: 'relatedProducts',
-              type: 'relationship',
-              admin: {
-                position: 'sidebar',
-              },
-              filterOptions: ({ id }) => {
-                return {
-                  id: {
-                    not_in: [id],
-                  },
-                }
-              },
-              hasMany: true,
-              relationTo: 'products',
-            },
-            {
-              name: 'categories',
-              type: 'relationship',
-              admin: {
-                position: 'sidebar',
-              },
-              hasMany: true,
-              relationTo: 'categories',
-            },
-          ],
-          label: 'Meta',
-        },
-        {
-          name: 'meta',
-          label: 'SEO',
-          fields: [
-            OverviewField({
-              titlePath: 'meta.title',
-              descriptionPath: 'meta.description',
-              imagePath: 'meta.image',
-            }),
-            MetaTitleField({
-              hasGenerateFn: true,
-            }),
-            MetaImageField({
-              relationTo: 'media',
-            }),
-
-            MetaDescriptionField({}),
-            PreviewField({
-              // if the `generateUrl` function is configured
-              hasGenerateFn: true,
-              // field paths to match the target field for data
-              titlePath: 'meta.title',
-              descriptionPath: 'meta.description',
-            }),
-          ],
-        },
-      ],
+      name: 'description',
+      type: 'richText',
+      editor: defaultLexicalEditor,
+      label: false,
     },
+    {
+      name: 'relatedProducts',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      filterOptions: ({ id }) => {
+        return {
+          id: {
+            not_in: [id],
+          },
+        }
+      },
+      hasMany: true,
+      relationTo: 'products',
+    },
+    {
+      name: 'categories',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      hasMany: true,
+      relationTo: 'categories',
+    },
+    // {
+    //   type: 'tabs',
+    //   tabs: [
+    //     {
+    //       fields: [],
+    //       label: 'Content',
+    //     },
+    //     {
+    //       fields: [],
+    //       label: 'Meta',
+    //     },
+    //   ],
+    // },
     ...slugField(),
   ],
 }

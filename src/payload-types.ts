@@ -152,12 +152,20 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Media files management
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: number;
+  /**
+   * Alternative text for accessibility
+   */
   alt?: string | null;
+  /**
+   * Caption text for the media
+   */
   caption?: {
     root: {
       type: string;
@@ -205,6 +213,8 @@ export interface Media {
   };
 }
 /**
+ * Categories of products
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
  */
@@ -216,21 +226,31 @@ export interface Category {
   createdAt: string;
 }
 /**
+ * Groups of product categories
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "category-groups".
  */
 export interface CategoryGroup {
   id: number;
+  /**
+   * Group name
+   */
   title: string;
   /**
-   * https://lucide.dev/icons/
+   * Icon identifier from https://lucide.dev/icons/
    */
   icon: string;
+  /**
+   * Categories in this group
+   */
   categories?: (number | Category)[] | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
+ * User account
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "accounts".
  */
@@ -295,13 +315,24 @@ export interface User {
   password?: string | null;
 }
 /**
+ * Product stock inventory management
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "stocks".
  */
 export interface Stock {
   id: number;
+  /**
+   * Associated order (if assigned)
+   */
   order?: (number | null) | Order;
+  /**
+   * Related product variant
+   */
   productVariant: number | ProductVariant;
+  /**
+   * Stock item data (keys, codes, etc.)
+   */
   data:
     | {
         [k: string]: unknown;
@@ -311,6 +342,9 @@ export interface Stock {
     | number
     | boolean
     | null;
+  /**
+   * Expiration date of the stock item
+   */
   expiredAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -499,14 +533,6 @@ export interface Product {
   } | null;
   relatedProducts?: (number | Product)[] | null;
   categories?: (number | Category)[] | null;
-  meta?: {
-    title?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (number | null) | Media;
-    description?: string | null;
-  };
   slug?: string | null;
   slugLock?: boolean | null;
   updatedAt: string;
@@ -652,6 +678,8 @@ export interface Form {
   createdAt: string;
 }
 /**
+ * Suppliers of products
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "suppliers".
  */
@@ -702,13 +730,24 @@ export interface ProductVariantSupply {
   createdAt: string;
 }
 /**
+ * User submitted form data
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
   id: number;
+  /**
+   * User who submitted the form
+   */
   user: number | User;
+  /**
+   * Form template used
+   */
   form: number | Form;
+  /**
+   * Form submission data
+   */
   submissionData:
     | {
         [k: string]: unknown;
@@ -722,6 +761,8 @@ export interface FormSubmission {
   createdAt: string;
 }
 /**
+ * Transaction history
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "transactions".
  */
@@ -735,6 +776,8 @@ export interface Transaction {
   createdAt: string;
 }
 /**
+ * Recharge history
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "recharges".
  */
@@ -1034,13 +1077,6 @@ export interface ProductsSelect<T extends boolean = true> {
   description?: T;
   relatedProducts?: T;
   categories?: T;
-  meta?:
-    | T
-    | {
-        title?: T;
-        image?: T;
-        description?: T;
-      };
   slug?: T;
   slugLock?: T;
   updatedAt?: T;
