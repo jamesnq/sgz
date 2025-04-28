@@ -40,29 +40,22 @@ export async function GET(): Promise<Response> {
       images: [],
     }
 
-    // Add image - prioritize meta image over product image
-    const hasMetaImage =
-      product.meta?.image &&
-      typeof product.meta.image === 'object' &&
-      'url' in product.meta.image &&
-      product.meta.image.url
-
     const hasProductImage =
       product.image &&
       typeof product.image === 'object' &&
       'url' in product.image &&
       product.image.url
 
-    if (hasMetaImage || hasProductImage) {
+    if (hasProductImage) {
       let imageUrl = ''
 
       if (
-        hasMetaImage &&
-        product.meta?.image &&
-        typeof product.meta.image === 'object' &&
-        'url' in product.meta.image
+        hasProductImage &&
+        product.image &&
+        typeof product.image === 'object' &&
+        'url' in product.image
       ) {
-        imageUrl = product.meta.image.url as string
+        imageUrl = product.image.url as string
       } else if (
         hasProductImage &&
         product.image &&
@@ -72,8 +65,8 @@ export async function GET(): Promise<Response> {
         imageUrl = product.image.url as string
       }
 
-      const title = product.meta?.title || product.name || 'Product Image'
-      const caption = product.meta?.description || ''
+      const title = product.name || 'Product Image'
+      const caption = ''
 
       entry.images.push({
         url: imageUrl,
