@@ -59,13 +59,9 @@ export default async function Page({ params: paramsPromise }: Args) {
   const product = await queryProductBySlug({ slug })
   if (!product) return <Notification message="Sản phẩm này đã tạm dừng hoặc chưa được mở bán" />
 
-  // Create a copy of the product with meta data for structured data
-  const productWithMeta = { ...product }
-  delete product.meta
-
   return (
     <>
-      <ProductStructuredData product={productWithMeta} />
+      <ProductStructuredData product={product} />
       <Suspense
         fallback={
           <div className="flex items-center justify-center mt-16 mb-mt-16">
