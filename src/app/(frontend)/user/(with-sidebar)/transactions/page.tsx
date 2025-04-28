@@ -69,6 +69,7 @@ async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }
     overrideAccess: true,
     page,
     sort: '-createdAt', // Sort by newest first
+    req: { transactionID: undefined },
   })
 
   return <PageClient data={res} />
