@@ -28,8 +28,8 @@ export const authActionClient = actionClient.use(async ({ next }) => {
   if (!user) {
     throw new Error('Session is not valid!')
   }
-  if (!user._verified) {
-    throw new Error('User is not verified!')
-  }
+  // if (!user._verified) {
+  //   throw new Error('User is not verified!')
+  // }
   return next({ ctx: { user } })
 })
