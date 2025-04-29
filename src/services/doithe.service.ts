@@ -1,12 +1,12 @@
 import { config } from '@/config'
 import { transactions, users } from '@/payload-generated-schema'
+import { formatPrice } from '@/utilities/formatPrice'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import CryptoJS from 'crypto-js'
-import { getPayload } from 'payload'
 import { after } from 'next/server'
+import { getPayload } from 'payload'
 import { discordWebhook } from './novu.service'
-import { formatPrice } from '@/utilities/formatPrice'
 
 /**
  * Enum for telco providers
@@ -470,12 +470,12 @@ export class DoiThe {
       // If the recharge is successful, update user balance and create transaction
       if (newStatus === 'SUCCESS') {
         const amount = callbackData.amount || callbackData.value || 0
-        await payload.db.drizzle.transaction(async (tx) => {
+        const user = await payload.db.drizzle.transaction(async (tx) => {
           const [user] = await tx
             .update(users)
             .set({ balance: sql`${users.balance} + ${amount}` })
             .where(eq(users.id, recharge.user as number))
-            .returning({ balance: users.balance })
+            .returning({ email: users.email, balance: users.balance })
 
           if (!user || user.balance === null) {
             console.error('User not found:', recharge.user)
@@ -488,12 +488,13 @@ export class DoiThe {
             description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT ? 'phạt 50% sai mệnh giá' : ''}`,
             balance: user.balance,
           })
+          return user
         })
 
         after(async () => {
           await discordWebhook({
             subject: `Nạp Thẻ ${callbackData.telco}`,
-            message: `Người dùng: ID ${recharge.user} \nSố tiền: **${formatPrice(amount)}** \nSerial: **${callbackData.serial}** ${
+            message: `Người dùng: ${user.email} \nSố tiền: **${formatPrice(amount)}** \nSerial: **${callbackData.serial}** ${
               callbackData.status == CardStatus.WRONG_AMOUNT ? '\n**Phạt 50% sai mệnh giá**' : ''
             }`,
             color: '#00FF00',
