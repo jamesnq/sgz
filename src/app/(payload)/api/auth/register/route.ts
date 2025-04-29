@@ -3,6 +3,10 @@ import { NextRequest } from 'next/server'
 import { getPayload } from 'payload'
 
 export async function POST(req: NextRequest) {
+  return new Response(JSON.stringify({ error: 'Tính năng đăng ký dừng hoạt động' }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' },
+  })
   const { email, password } = await req.json()
 
   if (!email || !password) {
