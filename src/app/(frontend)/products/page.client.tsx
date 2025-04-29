@@ -21,8 +21,7 @@ import { productIndex } from '@/utilities/searchIndexes'
 import { FilterIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Configure, useInfiniteHits, useRefinementList } from 'react-instantsearch'
-import { InstantSearchNext } from 'react-instantsearch-nextjs'
+import { Configure, InstantSearch, useInfiniteHits, useRefinementList } from 'react-instantsearch'
 import { useInView } from 'react-intersection-observer'
 import { ProductPageHeader } from './components/ProductPageHeader'
 
@@ -334,7 +333,7 @@ const PageClient = () => {
   }, [setHeaderTheme])
 
   return (
-    <InstantSearchNext
+    <InstantSearch
       indexName={productIndex}
       searchClient={instantSearchClient.searchClient as any}
       future={{ preserveSharedStateOnUnmount: true }}
@@ -358,7 +357,7 @@ const PageClient = () => {
           </div>
         </div>
       </Shell>
-    </InstantSearchNext>
+    </InstantSearch>
   )
 }
 
