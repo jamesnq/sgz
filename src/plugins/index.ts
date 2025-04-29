@@ -33,6 +33,14 @@ export const plugins: Plugin[] = [
         client_id: config.GOOGLE_PROVIDER_CLIENT_ID as string,
         client_secret: config.GOOGLE_PROVIDER_CLIENT_SECRET as string,
       }),
+      // DiscordAuthProvider({
+      //   client_id: config.DISCORD_PROVIDER_CLIENT_ID as string,
+      //   client_secret: config.DISCORD_PROVIDER_CLIENT_SECRET as string,
+      // }),
+      // FacebookAuthProvider({
+      //   client_id: config.FACEBOOK_PROVIDER_CLIENT_ID as string,
+      //   client_secret: config.FACEBOOK_PROVIDER_CLIENT_SECRET as string,
+      // }),
     ],
     allowSignUp: true,
     accountsCollectionSlug: Accounts.slug,

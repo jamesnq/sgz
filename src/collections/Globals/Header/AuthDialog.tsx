@@ -1,15 +1,7 @@
 'use client'
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -18,353 +10,61 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/providers/Auth'
 import { adminClient } from 'payload-auth-plugin/client'
 
 const { signin } = adminClient()
 
-function AuthDialogBak({ className }: { className?: string }) {
-  const { login, create, forgotPassword } = useAuth()
-  const [isLoading, setIsLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
-  const [error, setError] = useState<string>('')
-  const [success, setSuccess] = useState<string>('')
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: '',
-  })
-  const [registerData, setRegisterData] = useState({
-    email: '',
-    password: '',
-    passwordConfirm: '',
-  })
+type OAuthProvider = 'google' | 'discord' | 'facebook'
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-    setIsLoading(true)
-
-    try {
-      await login({
-        email: loginData.email,
-        password: loginData.password,
-      })
-      // window.location.reload()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-    setIsLoading(true)
-
-    try {
-      await forgotPassword({
-        email: forgotPasswordEmail,
-      })
-      setSuccess('Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn')
-      setForgotPasswordEmail('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể gửi email đặt lại mật khẩu')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-
-    if (registerData.password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự')
-      return
-    }
-
-    if (registerData.password !== registerData.passwordConfirm) {
-      setError('Mật khẩu xác nhận không khớp')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      await create({
-        email: registerData.email,
-        password: registerData.password,
-      })
-      setSuccess(
-        'Vui lòng kiểm tra email của bạn để xác thực tài khoản. Nếu không thấy hãy thử tìm trong thư rác, spam',
-      )
-      setRegisterData({
-        email: '',
-        password: '',
-        passwordConfirm: '',
-      })
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('Đăng ký thất bại')
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleGoogleSignin = async () => {
-    setError('')
-    setSuccess('')
-    setGoogleLoading(true)
-
-    try {
-      const { isSuccess, isError } = await signin().oauth('google')
-      if (isError) {
-        setError('Đăng nhập bằng Google thất bại')
-      }
-      if (isSuccess) {
-        window.location.reload()
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập bằng Google thất bại')
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button className={className}>Đăng nhập</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle></DialogTitle>
-          <DialogDescription></DialogDescription>
-        </DialogHeader>
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Đăng nhập</TabsTrigger>
-            <TabsTrigger value="register">Đăng ký</TabsTrigger>
-          </TabsList>
-          <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle>Đăng nhập</CardTitle>
-                <CardDescription>Đăng nhập vào tài khoản của bạn</CardDescription>
-              </CardHeader>
-              {!showForgotPassword ? (
-                <form onSubmit={handleLogin}>
-                  <CardContent className="space-y-3">
-                    {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="email@example.com"
-                        value={loginData.email}
-                        onChange={(e) =>
-                          setLoginData((prev) => ({ ...prev, email: e.target.value }))
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Mật khẩu</Label>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        value={loginData.password}
-                        onChange={(e) =>
-                          setLoginData((prev) => ({ ...prev, password: e.target.value }))
-                        }
-                        required
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex flex-col gap-2">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                    </Button>
-                    <div className="relative w-full flex items-center justify-center my-2">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Hoặc</span>
-                      </div>
-                    </div>
-                    <div className="text-yellow-400 text-sm">
-                      Tính năng đang bảo trì nếu khách hàng đã đăng nhập với google từ trước mà
-                      không đăng ký mật khẩu thì hãy ấn quên mật khẩu để đặt mật khẩu nhé
-                    </div>
-                    <Button
-                      className="w-full"
-                      type="button"
-                      variant="default"
-                      // onClick={handleGoogleSignin}
-                      // disabled={googleLoading}
-                      disabled
-                    >
-                      <svg
-                        className="stroke-foreground"
-                        role="img"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
-                      </svg>
-                      {googleLoading ? 'Đang đăng nhập...' : 'Đăng nhập với Google'}
-                    </Button>
-                    <Button
-                      variant="link"
-                      className="text-sm"
-                      type="button"
-                      onClick={() => setShowForgotPassword(true)}
-                    >
-                      Quên mật khẩu?
-                    </Button>
-                  </CardFooter>
-                </form>
-              ) : (
-                <form onSubmit={handleForgotPassword}>
-                  <CardContent className="space-y-3">
-                    {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
-                    {success && <div className="text-sm text-green-500 font-medium">{success}</div>}
-                    <div className="space-y-2">
-                      <Label htmlFor="forgot-password-email">Email</Label>
-                      <Input
-                        id="forgot-password-email"
-                        type="email"
-                        placeholder="email@example.com"
-                        value={forgotPasswordEmail}
-                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex flex-col gap-2">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading ? 'Đang gửi...' : 'Gửi yêu cầu đặt lại mật khẩu'}
-                    </Button>
-                    <Button
-                      variant="link"
-                      className="text-sm"
-                      type="button"
-                      onClick={() => {
-                        setShowForgotPassword(false)
-                        setError('')
-                        setSuccess('')
-                      }}
-                    >
-                      Quay lại đăng nhập
-                    </Button>
-                  </CardFooter>
-                </form>
-              )}
-            </Card>
-          </TabsContent>
-          <TabsContent value="register">
-            <Card>
-              <CardHeader>
-                <CardTitle>Đăng ký</CardTitle>
-                <CardDescription>Tạo tài khoản mới</CardDescription>
-              </CardHeader>
-              <form onSubmit={handleRegister}>
-                <CardContent className="space-y-3">
-                  {error && <div className="text-sm text-red-500 font-medium">{error}</div>}
-                  {success && <div className="text-sm text-green-500 font-medium">{success}</div>}
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="email@example.com"
-                      value={registerData.email}
-                      onChange={(e) =>
-                        setRegisterData((prev) => ({ ...prev, email: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">
-                      Mật khẩu <span className="text-sm text-gray-500">(ít nhất 6 ký tự)</span>
-                    </Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      minLength={6}
-                      value={registerData.password}
-                      onChange={(e) =>
-                        setRegisterData((prev) => ({ ...prev, password: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-confirm-password">Xác nhận mật khẩu</Label>
-                    <Input
-                      id="register-confirm-password"
-                      type="password"
-                      minLength={6}
-                      value={registerData.passwordConfirm}
-                      onChange={(e) =>
-                        setRegisterData((prev) => ({ ...prev, passwordConfirm: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" type="submit" disabled={isLoading}>
-                    {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
-  )
+interface OAuthButtonProps {
+  provider: OAuthProvider
+  loading: boolean
+  onClick: () => void
+  icon: React.ReactNode
 }
 
 export default function NewAuthDialog({ className }: { className?: string }) {
   const [open, setOpen] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+  const [loadingState, setLoadingState] = useState<Record<OAuthProvider, boolean>>({
+    google: false,
+    discord: false,
+    facebook: false,
+  })
   const [error, setError] = useState<string>('')
 
-  const handleGoogleSignin = async () => {
+  const handleOAuthSignin = async (provider: OAuthProvider) => {
     setError('')
-    setGoogleLoading(true)
+    setLoadingState((prev) => ({ ...prev, [provider]: true }))
 
     try {
-      const { isSuccess, isError } = await signin().oauth('google')
+      const { isSuccess, isError } = await signin().oauth(provider)
       if (isError) {
-        setError('Đăng nhập bằng Google thất bại')
+        setError(`Đăng nhập bằng ${provider.charAt(0).toUpperCase() + provider.slice(1)} thất bại`)
       }
       if (isSuccess) {
         window.location.reload()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập bằng Google thất bại')
+      setError(
+        err instanceof Error
+          ? err.message
+          : `Đăng nhập bằng ${provider.charAt(0).toUpperCase() + provider.slice(1)} thất bại`,
+      )
     } finally {
-      setGoogleLoading(false)
+      setLoadingState((prev) => ({ ...prev, [provider]: false }))
     }
   }
+
+  const OAuthButton = ({ provider, loading, onClick, icon }: OAuthButtonProps) => (
+    <Button
+      className="w-full flex items-center justify-center gap-2"
+      onClick={onClick}
+      disabled={loading}
+    >
+      <div className="w-5 h-5 flex items-center justify-center">{icon}</div>
+      {loading ? 'Đang đăng nhập...' : `${provider.charAt(0).toUpperCase() + provider.slice(1)}`}
+    </Button>
+  )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -380,26 +80,60 @@ export default function NewAuthDialog({ className }: { className?: string }) {
         </DialogHeader>
         <div className="flex flex-col space-y-4 py-4">
           {error && (
-            <div className="text-sm text-red-500 font-medium text-center px-4 py-2 bg-red-50 rounded-md">
+            <div className="text-sm text-red-500 font-medium text-center px-4 py-2 rounded-md">
               {error}
             </div>
           )}
-          <Button
-            className="w-full flex items-center justify-center gap-2"
-            onClick={handleGoogleSignin}
-            disabled={googleLoading}
-          >
-            <svg
-              className="h-5 w-5"
-              role="img"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
-            </svg>
-            {googleLoading ? 'Đang đăng nhập...' : 'Đăng nhập với Google'}
-          </Button>
+          <OAuthButton
+            provider="google"
+            loading={loadingState.google}
+            onClick={() => handleOAuthSignin('google')}
+            icon={
+              <svg
+                className="w-full h-full"
+                role="img"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+              </svg>
+            }
+          />
+          <OAuthButton
+            provider="discord"
+            loading={loadingState.discord}
+            onClick={() => handleOAuthSignin('discord')}
+            icon={
+              <svg
+                className="w-full h-full"
+                role="img"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <title>Discord</title>
+                <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
+              </svg>
+            }
+          />
+          {/* <OAuthButton
+            provider="facebook"
+            loading={loadingState.facebook}
+            onClick={() => handleOAuthSignin('facebook')}
+            icon={
+              <svg
+                className="w-full h-full"
+                role="img"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <title>Facebook</title>
+                <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z" />
+              </svg>
+            }
+          /> */}
         </div>
       </DialogContent>
     </Dialog>

@@ -33,6 +33,10 @@ export const config = createEnv({
     MEILI_MASTER_KEY: z.string(),
     GOOGLE_PROVIDER_CLIENT_ID: z.string(),
     GOOGLE_PROVIDER_CLIENT_SECRET: z.string(),
+    // DISCORD_PROVIDER_CLIENT_ID: z.string(),
+    // DISCORD_PROVIDER_CLIENT_SECRET: z.string(),
+    // FACEBOOK_PROVIDER_CLIENT_ID: z.string(),
+    // FACEBOOK_PROVIDER_CLIENT_SECRET: z.string(),
   },
   /*
    * Environment variables available on the client (and server).

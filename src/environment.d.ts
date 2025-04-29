@@ -42,6 +42,10 @@ declare global {
       NEXT_PUBLIC_MEILI_SEARCH_KEY: string
       GOOGLE_PROVIDER_CLIENT_ID: string
       GOOGLE_PROVIDER_CLIENT_SECRET: string
+      // DISCORD_PROVIDER_CLIENT_ID: string
+      // DISCORD_PROVIDER_CLIENT_SECRET: string
+      // FACEBOOK_PROVIDER_CLIENT_ID: string
+      // FACEBOOK_PROVIDER_CLIENT_SECRET: string
     }
   }
 }
