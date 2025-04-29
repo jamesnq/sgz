@@ -205,12 +205,17 @@ export default function AuthDialog({ className }: { className?: string }) {
                         <span className="bg-background px-2 text-muted-foreground">Hoặc</span>
                       </div>
                     </div>
+                    <div className="text-yellow-400 text-sm">
+                      Tính năng đang bảo trì nếu khách hàng đã đăng nhập với google từ trước mà
+                      không đăng ký mật khẩu thì hãy ấn quên mật khẩu để đặt mật khẩu nhé
+                    </div>
                     <Button
                       className="w-full"
                       type="button"
                       variant="default"
-                      onClick={handleGoogleSignin}
-                      disabled={googleLoading}
+                      // onClick={handleGoogleSignin}
+                      // disabled={googleLoading}
+                      disabled
                     >
                       <svg
                         className="stroke-foreground"

@@ -7,13 +7,14 @@ import {
   createSubscriberHash,
   sendWelcomeNotification,
 } from '@/services/novu.service'
+import { managerGroup } from '@/utilities/constants'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 import { BeforeReadHook } from 'node_modules/payload/dist/collections/config/types'
 import type { CollectionConfig } from 'payload'
+import { deleteLinkedAccounts } from 'payload-auth-plugin/collection/hooks'
 import requestIp from 'request-ip'
 import hasRoleOrSelf from './access/hasRoleOrSelf'
-import { managerGroup } from '@/utilities/constants'
 
 export function createChatwootHash(email: string) {
   return CryptoJS.HmacSHA256(email, config.CHATWOOT_HMAC_TOKEN).toString(CryptoJS.enc.Hex)
@@ -101,6 +102,7 @@ export const Users: CollectionConfig = {
         return { ...doc, ...userUpdate }
       },
     ] as BeforeReadHook<User>[],
+    afterDelete: [deleteLinkedAccounts('accounts')],
   },
   admin: {
     defaultColumns: ['email', 'balance', 'roles'],
@@ -252,9 +254,6 @@ export const Users: CollectionConfig = {
         update: hasRole(['admin']),
       },
     },
-    // { name: 'transactions', type: 'join', collection: 'transactions', on: 'user' },
-    // { name: 'orders', type: 'join', collection: 'orders', on: 'orderedBy' },
-    // { name: 'handle', type: 'join', collection: 'orders', on: 'handlers' },
   ],
   timestamps: true,
 }
