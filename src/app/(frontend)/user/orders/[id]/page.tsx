@@ -1,9 +1,6 @@
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-
 import { Product, ProductVariant } from '@/payload-types'
+import { getInstancePayloadAuth } from '@/utilities/getInstancePayload'
 import { pick } from '@/utilities/pick'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import PageClient from './page.client'
 
@@ -15,12 +12,11 @@ type Args = {
 
 export default async function Page({ params: paramsPromise }: Args) {
   const { id } = await paramsPromise
-  if (!id) notFound()
-  const payload = await getPayload({ config: configPromise })
-  const headersData = await headers()
-  const { user } = await payload.auth({
-    headers: headersData,
-  })
+  const idNum = Number(id)
+  if (isNaN(idNum)) {
+    return notFound()
+  }
+  const { user, payload } = await getInstancePayloadAuth()
 
   // TODO optimize using drizzle
   const { docs } = await payload.find({
@@ -32,7 +28,7 @@ export default async function Page({ params: paramsPromise }: Args) {
     pagination: false,
     where: {
       id: {
-        equals: Number(id),
+        equals: idNum,
       },
     },
     select: {
