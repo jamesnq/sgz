@@ -29,16 +29,18 @@ async function createNovuSubscriberAndSendWelcome({
   subscriberId: string
   data: { email: string }
 }) {
-  const result = await createNovuSubscriber({
-    subscriberId: subscriberId,
-    email: data.email,
-  })
+  try {
+    const result = await createNovuSubscriber({
+      subscriberId: subscriberId,
+      email: data.email,
+    })
+    after(async () => {
+      await sendWelcomeNotification(subscriberId)
+    })
+    return result
+  } catch {}
 
-  after(async () => {
-    await sendWelcomeNotification(subscriberId)
-  })
-
-  return result
+  return null
 }
 
 // Careful when add more roles that role can get system notification
