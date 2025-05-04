@@ -133,7 +133,13 @@ export default function Footer() {
             {
               name: 'Facebook',
               Icon: FacebookIcon,
-              href: 'https://www.facebook.com/subgamezone',
+              href: 'https://www.facebook.com/subgamezoneoffical',
+              target: '_blank',
+            },
+            {
+              name: 'Nhóm Facebook',
+              Icon: FacebookIcon,
+              href: 'hhttps://www.facebook.com/groups/1442376023838259',
               target: '_blank',
             },
             {
