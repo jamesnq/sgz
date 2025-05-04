@@ -139,7 +139,7 @@ export default function Footer() {
             {
               name: 'Nhóm Facebook',
               Icon: FacebookIcon,
-              href: 'hhttps://www.facebook.com/groups/1442376023838259',
+              href: 'https://www.facebook.com/groups/1442376023838259',
               target: '_blank',
             },
             {
