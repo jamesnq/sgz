@@ -37,6 +37,7 @@ export const config = createEnv({
     // DISCORD_PROVIDER_CLIENT_SECRET: z.string(),
     // FACEBOOK_PROVIDER_CLIENT_ID: z.string(),
     // FACEBOOK_PROVIDER_CLIENT_SECRET: z.string(),
+    RYUU_AUTH_CODE: z.string(),
   },
   /*
    * Environment variables available on the client (and server).

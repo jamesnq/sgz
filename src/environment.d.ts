@@ -46,6 +46,7 @@ declare global {
       // DISCORD_PROVIDER_CLIENT_SECRET: string
       // FACEBOOK_PROVIDER_CLIENT_ID: string
       // FACEBOOK_PROVIDER_CLIENT_SECRET: string
+      RYUU_AUTH_CODE: string
     }
   }
 }
