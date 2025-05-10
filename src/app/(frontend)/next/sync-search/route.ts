@@ -100,7 +100,6 @@ export async function POST(): Promise<Response> {
       },
     })
 
-    await meiliSearchServer.index('products').deleteAllDocuments()
     await meiliSearchServer
       .index('products')
       .updateFilterableAttributes([
@@ -110,6 +109,7 @@ export async function POST(): Promise<Response> {
         'maxDiscount',
         'status',
       ] as (keyof Product)[])
+    await meiliSearchServer.index('products').deleteAllDocuments()
     await meiliSearchServer
       .index('products')
       .updateSortableAttributes([
