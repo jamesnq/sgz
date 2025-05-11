@@ -123,6 +123,9 @@ export async function POST(): Promise<Response> {
     await meiliSearchServer
       .index('products')
       .updateSearchableAttributes(['name', 'description', 'categories'] as (keyof Product)[])
+    await meiliSearchServer
+      .index('products')
+      .updateSettings({ pagination: { maxTotalHits: 200000 } })
 
     await productsToSearch(productsData.docs)
 
