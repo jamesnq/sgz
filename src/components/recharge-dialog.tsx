@@ -48,7 +48,7 @@ function RechargeBank() {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
     resolver: zodResolver(RechargePayosSchema),
     defaultValues: {
-      amount: 0,
+      amount: undefined,
     },
   })
 
