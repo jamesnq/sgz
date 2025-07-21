@@ -47,10 +47,10 @@ export const revalidateProductPath = async (payload: Payload, productId: number)
     return
   }
 
+  await updateSearchProducts([product])
   const path = Routes.product(product.slug)
   payload.logger.info(`Revalidating product at path: ${path}`)
   revalidatePath(path)
-  await updateSearchProducts([product])
 }
 
 export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
@@ -59,17 +59,14 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
   req: { payload },
 }) => {
   if (!previousDoc.slug) return doc
+  await updateSearchProducts([doc])
   const oldPath = Routes.product(previousDoc.slug)
 
   payload.logger.info(`Revalidating old product at path: ${oldPath}`)
-
+  
   revalidatePath(oldPath)
   revalidateProductsPage()
   revalidateTag('products-sitemap')
-
-  // for search engine
-
-  await updateSearchProducts([doc])
 
   return doc
 }
