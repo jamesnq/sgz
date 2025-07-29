@@ -63,8 +63,6 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
   const oldPath = Routes.product(previousDoc.slug)
 
   payload.logger.info(`Revalidating old product at path: ${oldPath}`)
-  // for search engine
-  await updateSearchProducts([doc])
   revalidatePath(oldPath)
   revalidateProductsPage()
   revalidateTag('products-sitemap')
