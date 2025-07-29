@@ -68,7 +68,8 @@ export const checkoutAction = authActionClient
         })
         formSubmissionId = res.id
       }
-    } catch {
+    } catch (e) {
+      console.log(e)
       throw new ServerNotification('Vui lòng điển đầy đủ thông tin giao hàng')
     }
 
