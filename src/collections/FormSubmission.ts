@@ -92,17 +92,21 @@ export const FormSubmissions: CollectionConfig = {
         if (form.fields?.length === 0) {
           return 'Form has no fields'
         }
-        for (const [key] of Object.entries(submissionData)) {
-          if (!form.fields?.some((f: any) => f.name === key)) {
-            return `Field ${key} not found in form`
+
+        const formFieldNames = new Set(form.fields?.map((f: any) => f.name) || [])
+
+        for (const key of Object.keys(submissionData)) {
+          if (!formFieldNames.has(key)) {
+            delete submissionData[key]
           }
-          // const requiredFields = form.fields.filter((f: any) => f.required).map((f: any) => f.name)
-          // for (const field of requiredFields) {
-          //   if (!submissionData[field]) {
-          //     return `Field ${field} is required`
-          //   }
-          // }
         }
+
+        // const requiredFields = form.fields.filter((f: any) => f.required).map((f: any) => f.name)
+        // for (const field of requiredFields) {
+        //   if (!submissionData[field]) {
+        //     return `Field ${field} is required`
+        //   }
+        // }
 
         return true
       },
