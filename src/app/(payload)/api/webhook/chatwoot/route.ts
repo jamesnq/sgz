@@ -1,4 +1,4 @@
-import { discordWebhook } from '@/services/novu.service'
+// import { discordWebhook } from '@/services/novu.service'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
