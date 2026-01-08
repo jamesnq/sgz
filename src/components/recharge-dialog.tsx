@@ -68,7 +68,8 @@ function RechargeBank() {
       setPaymentUrl(res.data?.checkoutUrl)
       toast.success('Đã mở trang thanh toán')
       setShowPaymentDialog(true)
-    } catch {
+    } catch (error) {
+      console.error('Payment link error:', error)
       toast.error('Có lỗi xảy ra khi tạo liên kết thanh toán')
     } finally {
       setIsLoading(false)
