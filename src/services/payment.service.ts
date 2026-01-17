@@ -49,6 +49,7 @@ export class PaymentService {
         }
       } catch (error) {
         attempt++
+        console.error(`PayOS createPaymentLink attempt ${attempt} failed:`, error)
         if (attempt >= maxAttempts) {
           throw new Error(
             // @ts-expect-error tsmissmatch
