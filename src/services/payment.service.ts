@@ -29,27 +29,48 @@ export class PaymentService {
   }
 
   async createPaymentLink(data: z.infer<typeof CreatePaymentLinkSchema>) {
+    console.log('[PaymentService] Creating payment link with data:', data)
     const { amount, currency, userId } = CreatePaymentLinkSchema.parse(data)
+    console.log('[PaymentService] Parsed data:', { amount, currency, userId })
+
     let attempt = 0
     const maxAttempts = 3
     let result: CheckoutResponseDataType | undefined = undefined
     while (!result && attempt < maxAttempts) {
       try {
+        console.log(`[PaymentService] Attempt ${attempt + 1}/${maxAttempts}`)
         if (currency === 'VND') {
+          const orderCode = getRandomInt(1000, Number.MAX_SAFE_INTEGER)
+          console.log('[PaymentService] Generated orderCode:', orderCode)
+          console.log('[PaymentService] PayOS config:', {
+            cancelUrl: config.PAYOS_CANCEL_URL,
+            returnUrl: config.PAYOS_RETURN_URL,
+            hasClientKey: !!config.PAYOS_CLIENT_KEY,
+            hasApiKey: !!config.PAYOS_API_KEY,
+            hasChecksumKey: !!config.PAYOS_CHECKSUM_KEY,
+          })
+
           const r = await this.payos.createPaymentLink({
-            orderCode: getRandomInt(1000, Number.MAX_SAFE_INTEGER),
+            orderCode,
             amount,
             cancelUrl: config.PAYOS_CANCEL_URL,
             returnUrl: config.PAYOS_RETURN_URL,
             description: 'SGZ',
           })
+          console.log('[PaymentService] PayOS response:', r)
           result = r
         } else {
+          console.error('[PaymentService] Unsupported currency:', currency)
           return null
         }
       } catch (error) {
         attempt++
-        console.error(`PayOS createPaymentLink attempt ${attempt} failed:`, error)
+        console.error(`[PaymentService] Attempt ${attempt} failed:`, error)
+        console.error('[PaymentService] Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          error,
+        })
         if (attempt >= maxAttempts) {
           throw new Error(
             // @ts-expect-error tsmissmatch

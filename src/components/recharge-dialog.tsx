@@ -59,9 +59,17 @@ function RechargeBank() {
   async function onSubmit(values: z.infer<typeof RechargePayosSchema>) {
     try {
       setIsLoading(true)
+      console.log('[RechargeBank] Submitting:', values)
       const res = await rechargePayosAction(values)
+      console.log('[RechargeBank] Response:', res)
+
       if (!res?.data) {
-        toast.error('Không thể tạo liên kết thanh toán')
+        const errorMsg =
+          typeof res?.serverError === 'string'
+            ? res.serverError
+            : 'Không thể tạo liên kết thanh toán'
+        console.error('[RechargeBank] No data in response:', res)
+        toast.error(errorMsg)
         return
       }
       window.location.replace(res.data?.checkoutUrl)
@@ -69,8 +77,10 @@ function RechargeBank() {
       toast.success('Đã mở trang thanh toán')
       setShowPaymentDialog(true)
     } catch (error) {
-      console.error('Payment link error:', error)
-      toast.error('Có lỗi xảy ra khi tạo liên kết thanh toán')
+      console.error('[RechargeBank] Error:', error)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo liên kết thanh toán'
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
