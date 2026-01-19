@@ -8,15 +8,22 @@ import { CirclePlus } from 'lucide-react'
 
 export function DisplayBalance() {
   const { user } = useAuth()
-  if (!user) return <></>
+  if (!user) return null
 
   const balanceTrigger = (
-    <div className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
-      <div className="inline-flex items-center px-1.5 py-0.5 text-xs rounded-full bg-primary/70 text-primary-foreground">
+    <div className="cursor-pointer hover:opacity-80 transition-opacity">
+      <div className="inline-flex items-center justify-center px-4 py-1.5 text-xs rounded-md border border-primary/70 whitespace-nowrap min-w-[80px]">
         {formatPrice(user.balance, 'VND')}
       </div>
     </div>
   )
+
+  return <RechargeDialog trigger={balanceTrigger} />
+}
+
+export function RechargeButton() {
+  const { user } = useAuth()
+  if (!user) return null
 
   const plusButtonTrigger = (
     <Button className="rounded-full" variant="ghost" size={'xs'}>
@@ -24,10 +31,5 @@ export function DisplayBalance() {
     </Button>
   )
 
-  return (
-    <div className="flex items-center gap-1">
-      <RechargeDialog trigger={balanceTrigger} />
-      <RechargeDialog trigger={plusButtonTrigger} />
-    </div>
-  )
+  return <RechargeDialog trigger={plusButtonTrigger} />
 }

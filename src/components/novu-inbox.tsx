@@ -248,7 +248,7 @@ export default function NovuInbox() {
           },
         }}
         renderBell={(unreadCount) => (
-          <Button className="rounded-full relative w-8 h-8" variant="ghost" size={'icon'}>
+          <Button className="rounded-full relative w-8 h-8 !p-0 !py-2.5 !px-0" variant="ghost">
             <BellIcon className="text-highlight" />
             {unreadCount > 0 && (
               <span
