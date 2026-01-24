@@ -14,7 +14,8 @@ export const Transactions: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['user', 'amount', 'balance', 'description', 'createdAt'],
-    useAsTitle: 'amount',
+    useAsTitle: 'description',
+    listSearchableFields: ['description'],
     description: 'Transaction history',
     group: managerGroup,
   },

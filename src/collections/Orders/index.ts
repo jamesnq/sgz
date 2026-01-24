@@ -183,6 +183,7 @@ export const Orders: CollectionConfig = {
       'createdAt',
     ],
     useAsTitle: 'id',
+    listSearchableFields: ['status'],
     group: managerGroup,
   },
   fields: [
