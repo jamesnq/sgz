@@ -64,7 +64,7 @@ function RechargeBank() {
         toast.error('Không thể tạo liên kết thanh toán')
         return
       }
-      window.location.replace(res.data?.checkoutUrl)
+      window.open(res.data?.checkoutUrl, '_blank')
       setPaymentUrl(res.data?.checkoutUrl)
       toast.success('Đã mở trang thanh toán')
       setShowPaymentDialog(true)
@@ -77,7 +77,7 @@ function RechargeBank() {
 
   const handleManualRedirect = () => {
     if (paymentUrl) {
-      window.location.replace(paymentUrl)
+      window.open(paymentUrl, '_blank')
       setShowPaymentDialog(false)
     }
   }
