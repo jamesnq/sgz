@@ -32,6 +32,29 @@ export const Products: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, req: { payload } }) => {
+        console.log('[DEBUG] Product data:', JSON.stringify(data, null, 2))
+        
+        // Fix: Convert category titles to IDs if strings are received
+        if (data.categories && Array.isArray(data.categories)) {
+          const hasStrings = data.categories.some((cat: any) => typeof cat === 'string')
+          if (hasStrings) {
+            const stringCategories = data.categories.filter((cat: any) => typeof cat === 'string')
+            const { docs: categories } = await payload.find({
+              collection: 'categories',
+              where: { title: { in: stringCategories } },
+              limit: 100,
+            })
+            
+            data.categories = data.categories.map((cat: any) => {
+              if (typeof cat === 'string') {
+                const found = categories.find((c) => c.title === cat)
+                return found ? found.id : cat
+              }
+              return cat
+            })
+          }
+        }
+        
         // update product price range
         if (typeof data === 'number' || !data.variants || !data.variants.length) return
         let prices: number[] = []
