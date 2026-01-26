@@ -116,8 +116,10 @@ function ProductPageProvider({
       (product?.variants as ProductVariant[])?.find((v) => v.status !== 'STOPPED') ||
       ((product?.variants && product.variants[0]) as ProductVariant)
 
-    // Initialize the previous form ID ref
-    previousFormIdRef.current = initialVariant.form ? String(initialVariant.form) : null
+    // Initialize the previous form ID ref with null check
+    if (initialVariant) {
+      previousFormIdRef.current = initialVariant.form ? String(initialVariant.form) : null
+    }
     return initialVariant
   })
 
@@ -140,15 +142,15 @@ function ProductPageProvider({
   )
 
   const [shippingInfo, setShippingInfo] = React.useState<{ [key: string]: any }>(() =>
-    getInitShippingInfo({}, currentVariant.form as Form),
+    getInitShippingInfo({}, currentVariant?.form as Form | null),
   )
 
   // Memoize form validation to prevent unnecessary recalculations
   const isFormValid = useMemo(() => {
-    const form = currentVariant.form as Form
+    const form = currentVariant?.form as Form | null
     if (!form || !form.fields) return true
     return validateRequiredFields(form.fields, shippingInfo)
-  }, [currentVariant.form, shippingInfo])
+  }, [currentVariant?.form, shippingInfo])
 
   // Memoize price calculations to prevent unnecessary recalculations
   const calc = useMemo(() => {
@@ -933,8 +935,8 @@ const MobileVariantsDrawer = React.memo(function MobileVariantsDrawer() {
 // Product Form Component
 const ProductForm = React.memo(
   function ProductForm() {
-    const form = useProductPageContext((state) => state.currentVariant.form) as Form
-    const status = useProductPageContext((state) => state.currentVariant.status)
+    const form = useProductPageContext((state) => state.currentVariant?.form) as Form | null
+    const status = useProductPageContext((state) => state.currentVariant?.status)
 
     if (!form || status === 'STOPPED') return null
 

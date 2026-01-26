@@ -12,7 +12,7 @@ import { LucideLogOut } from 'lucide-react'
 import AuthDialog from './AuthDialog'
 import { HeaderNav } from './Nav'
 
-import { DisplayBalance } from '@/components/display-balance'
+import { DisplayBalance, RechargeButton } from '@/components/display-balance'
 import NovuInbox from '@/components/novu-inbox'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, type ButtonProps } from '@/components/ui/button'
@@ -30,7 +30,6 @@ import { useAuth } from '@/providers/Auth'
 import { ThemeToggle } from '@/providers/Theme/theme-toggle'
 import { Routes } from '@/utilities/routes'
 import { cn } from '@/utilities/ui'
-import { ProductSearchTrigger } from '@/components/product-search'
 
 interface AuthDropdownProps
   extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>,
@@ -138,9 +137,9 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         </div>
         <div className="flex items-center">
           <HeaderNav data={data} />
-          <div className="flex items-center gap-1">
-            <ProductSearchTrigger />
+          <div className="flex items-center gap-2">
             <DisplayBalance />
+            <RechargeButton />
             <NovuInbox />
             <AuthDropdown />
           </div>
