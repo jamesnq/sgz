@@ -48,21 +48,21 @@ const ProductCard = ({ product }: { product: Product }) => {
                   imgClassName="absolute inset-0 h-[131px] w-[98px] object-cover"
                 />
               </div>
-              <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
+              <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2 relative">
+                {product.maxDiscount > 0 && (
+                  <Badge className={cn(styles.badge, 'absolute top-2 right-2')}>
+                    -{product.maxDiscount.toFixed(0)}%
+                  </Badge>
+                )}
                 <div>
-                  <div className="flex items-center gap-1 justify-between">
-                    <p
-                      className={cn(
-                        'line-clamp-1 h-auto text-[14px] font-bold leading-[17px]',
-                        styles.name,
-                      )}
-                    >
-                      {product.name}
-                    </p>
-                    {product.maxDiscount > 0 && (
-                      <Badge className={styles.badge}>-{product.maxDiscount.toFixed(0)}%</Badge>
+                  <p
+                    className={cn(
+                      'line-clamp-1 h-auto text-[14px] font-bold leading-[17px] pr-16',
+                      styles.name,
                     )}
-                  </div>
+                  >
+                    {product.name}
+                  </p>
                   {product.description && (
                     <p className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden">
                       {product.description as unknown as string}

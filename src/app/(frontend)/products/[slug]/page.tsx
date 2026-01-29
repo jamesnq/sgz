@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Product, ProductVariant } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import { pick } from '@/utilities/pick'
+import { getProductWhereClause } from '@/utilities/productFilters'
 import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
@@ -101,14 +102,11 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
           depth: 1,
           overrideAccess: true,
           pagination: false,
-          where: {
+          where: getProductWhereClause({
             slug: {
               equals: slug,
             },
-            status: {
-              not_equals: 'PRIVATE',
-            },
-          },
+          }),
           select: {
             id: true,
             slug: true,
