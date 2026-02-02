@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { ChatwootLoader } from '@/components/chatwoot'
+import { SocialSupport } from '@/components/social-support'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 import { AuthProvider } from './Auth'
@@ -21,7 +21,7 @@ export const Providers: React.FC<{
             <ThemeProvider>
               <HeaderThemeProvider>
                 <ClientProviders>{children}</ClientProviders>
-                <ChatwootLoader />
+                <SocialSupport />
               </HeaderThemeProvider>
             </ThemeProvider>
           </NuqsAdapter>
