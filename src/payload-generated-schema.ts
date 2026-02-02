@@ -6,6 +6,7 @@
  * and re-run `payload generate:db-schema` to regenerate this file.
  */
 
+import type {} from '@payloadcms/db-postgres'
 import {
   pgTable,
   index,
@@ -48,6 +49,23 @@ export const enum_recharges_status = pgEnum('enum_recharges_status', [
 ])
 export const enum_recharges_gateway = pgEnum('enum_recharges_gateway', ['PAYOS', 'DOITHE'])
 export const enum_suppliers_status = pgEnum('enum_suppliers_status', ['ACTIVE', 'INACTIVE'])
+export const enum_posts_status = pgEnum('enum_posts_status', ['draft', 'published'])
+export const enum__posts_v_version_status = pgEnum('enum__posts_v_version_status', [
+  'draft',
+  'published',
+])
+export const enum_payload_jobs_log_task_slug = pgEnum('enum_payload_jobs_log_task_slug', [
+  'inline',
+  'schedulePublish',
+])
+export const enum_payload_jobs_log_state = pgEnum('enum_payload_jobs_log_state', [
+  'failed',
+  'succeeded',
+])
+export const enum_payload_jobs_task_slug = pgEnum('enum_payload_jobs_task_slug', [
+  'inline',
+  'schedulePublish',
+])
 
 export const media = pgTable(
   'media',
@@ -854,6 +872,244 @@ export const suppliers = pgTable(
   }),
 )
 
+export const posts = pgTable(
+  'posts',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title'),
+    image: integer('image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
+    excerpt: varchar('excerpt'),
+    content: jsonb('content'),
+    publishedAt: timestamp('published_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    slug: varchar('slug'),
+    slugLock: boolean('slug_lock').default(true),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    _status: enum_posts_status('_status').default('draft'),
+  },
+  (columns) => ({
+    posts_image_idx: index('posts_image_idx').on(columns.image),
+    posts_slug_idx: index('posts_slug_idx').on(columns.slug),
+    posts_updated_at_idx: index('posts_updated_at_idx').on(columns.updatedAt),
+    posts_created_at_idx: index('posts_created_at_idx').on(columns.createdAt),
+    posts__status_idx: index('posts__status_idx').on(columns._status),
+  }),
+)
+
+export const posts_rels = pgTable(
+  'posts_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    'post-tagsID': integer('post_tags_id'),
+  },
+  (columns) => ({
+    order: index('posts_rels_order_idx').on(columns.order),
+    parentIdx: index('posts_rels_parent_idx').on(columns.parent),
+    pathIdx: index('posts_rels_path_idx').on(columns.path),
+    posts_rels_post_tags_id_idx: index('posts_rels_post_tags_id_idx').on(columns['post-tagsID']),
+    parentFk: foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [posts.id],
+      name: 'posts_rels_parent_fk',
+    }).onDelete('cascade'),
+    'post-tagsIdFk': foreignKey({
+      columns: [columns['post-tagsID']],
+      foreignColumns: [post_tags.id],
+      name: 'posts_rels_post_tags_fk',
+    }).onDelete('cascade'),
+  }),
+)
+
+export const _posts_v = pgTable(
+  '_posts_v',
+  {
+    id: serial('id').primaryKey(),
+    parent: integer('parent_id').references(() => posts.id, {
+      onDelete: 'set null',
+    }),
+    version_title: varchar('version_title'),
+    version_image: integer('version_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
+    version_excerpt: varchar('version_excerpt'),
+    version_content: jsonb('version_content'),
+    version_publishedAt: timestamp('version_published_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_slug: varchar('version_slug'),
+    version_slugLock: boolean('version_slug_lock').default(true),
+    version_updatedAt: timestamp('version_updated_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_createdAt: timestamp('version_created_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version__status: enum__posts_v_version_status('version__status').default('draft'),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    latest: boolean('latest'),
+    autosave: boolean('autosave'),
+  },
+  (columns) => ({
+    _posts_v_parent_idx: index('_posts_v_parent_idx').on(columns.parent),
+    _posts_v_version_version_image_idx: index('_posts_v_version_version_image_idx').on(
+      columns.version_image,
+    ),
+    _posts_v_version_version_slug_idx: index('_posts_v_version_version_slug_idx').on(
+      columns.version_slug,
+    ),
+    _posts_v_version_version_updated_at_idx: index('_posts_v_version_version_updated_at_idx').on(
+      columns.version_updatedAt,
+    ),
+    _posts_v_version_version_created_at_idx: index('_posts_v_version_version_created_at_idx').on(
+      columns.version_createdAt,
+    ),
+    _posts_v_version_version__status_idx: index('_posts_v_version_version__status_idx').on(
+      columns.version__status,
+    ),
+    _posts_v_created_at_idx: index('_posts_v_created_at_idx').on(columns.createdAt),
+    _posts_v_updated_at_idx: index('_posts_v_updated_at_idx').on(columns.updatedAt),
+    _posts_v_latest_idx: index('_posts_v_latest_idx').on(columns.latest),
+    _posts_v_autosave_idx: index('_posts_v_autosave_idx').on(columns.autosave),
+  }),
+)
+
+export const _posts_v_rels = pgTable(
+  '_posts_v_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    'post-tagsID': integer('post_tags_id'),
+  },
+  (columns) => ({
+    order: index('_posts_v_rels_order_idx').on(columns.order),
+    parentIdx: index('_posts_v_rels_parent_idx').on(columns.parent),
+    pathIdx: index('_posts_v_rels_path_idx').on(columns.path),
+    _posts_v_rels_post_tags_id_idx: index('_posts_v_rels_post_tags_id_idx').on(
+      columns['post-tagsID'],
+    ),
+    parentFk: foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [_posts_v.id],
+      name: '_posts_v_rels_parent_fk',
+    }).onDelete('cascade'),
+    'post-tagsIdFk': foreignKey({
+      columns: [columns['post-tagsID']],
+      foreignColumns: [post_tags.id],
+      name: '_posts_v_rels_post_tags_fk',
+    }).onDelete('cascade'),
+  }),
+)
+
+export const post_tags = pgTable(
+  'post_tags',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title').notNull(),
+    slug: varchar('slug'),
+    slugLock: boolean('slug_lock').default(true),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    post_tags_slug_idx: index('post_tags_slug_idx').on(columns.slug),
+    post_tags_updated_at_idx: index('post_tags_updated_at_idx').on(columns.updatedAt),
+    post_tags_created_at_idx: index('post_tags_created_at_idx').on(columns.createdAt),
+  }),
+)
+
+export const payload_jobs_log = pgTable(
+  'payload_jobs_log',
+  {
+    _order: integer('_order').notNull(),
+    _parentID: integer('_parent_id').notNull(),
+    id: varchar('id').primaryKey(),
+    executedAt: timestamp('executed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    completedAt: timestamp('completed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    taskSlug: enum_payload_jobs_log_task_slug('task_slug').notNull(),
+    taskID: varchar('task_i_d').notNull(),
+    input: jsonb('input'),
+    output: jsonb('output'),
+    state: enum_payload_jobs_log_state('state').notNull(),
+    error: jsonb('error'),
+  },
+  (columns) => ({
+    _orderIdx: index('payload_jobs_log_order_idx').on(columns._order),
+    _parentIDIdx: index('payload_jobs_log_parent_id_idx').on(columns._parentID),
+    _parentIDFk: foreignKey({
+      columns: [columns['_parentID']],
+      foreignColumns: [payload_jobs.id],
+      name: 'payload_jobs_log_parent_id_fk',
+    }).onDelete('cascade'),
+  }),
+)
+
+export const payload_jobs = pgTable(
+  'payload_jobs',
+  {
+    id: serial('id').primaryKey(),
+    input: jsonb('input'),
+    completedAt: timestamp('completed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    totalTried: numeric('total_tried').default('0'),
+    hasError: boolean('has_error').default(false),
+    error: jsonb('error'),
+    taskSlug: enum_payload_jobs_task_slug('task_slug'),
+    queue: varchar('queue').default('default'),
+    waitUntil: timestamp('wait_until', { mode: 'string', withTimezone: true, precision: 3 }),
+    processing: boolean('processing').default(false),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    payload_jobs_completed_at_idx: index('payload_jobs_completed_at_idx').on(columns.completedAt),
+    payload_jobs_total_tried_idx: index('payload_jobs_total_tried_idx').on(columns.totalTried),
+    payload_jobs_has_error_idx: index('payload_jobs_has_error_idx').on(columns.hasError),
+    payload_jobs_task_slug_idx: index('payload_jobs_task_slug_idx').on(columns.taskSlug),
+    payload_jobs_queue_idx: index('payload_jobs_queue_idx').on(columns.queue),
+    payload_jobs_wait_until_idx: index('payload_jobs_wait_until_idx').on(columns.waitUntil),
+    payload_jobs_processing_idx: index('payload_jobs_processing_idx').on(columns.processing),
+    payload_jobs_updated_at_idx: index('payload_jobs_updated_at_idx').on(columns.updatedAt),
+    payload_jobs_created_at_idx: index('payload_jobs_created_at_idx').on(columns.createdAt),
+  }),
+)
+
 export const payload_locked_documents = pgTable(
   'payload_locked_documents',
   {
@@ -902,6 +1158,9 @@ export const payload_locked_documents_rels = pgTable(
     'form-submissionsID': integer('form_submissions_id'),
     'novu-channelsID': integer('novu_channels_id'),
     suppliersID: integer('suppliers_id'),
+    postsID: integer('posts_id'),
+    'post-tagsID': integer('post_tags_id'),
+    'payload-jobsID': integer('payload_jobs_id'),
   },
   (columns) => ({
     order: index('payload_locked_documents_rels_order_idx').on(columns.order),
@@ -955,6 +1214,15 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_suppliers_id_idx: index(
       'payload_locked_documents_rels_suppliers_id_idx',
     ).on(columns.suppliersID),
+    payload_locked_documents_rels_posts_id_idx: index(
+      'payload_locked_documents_rels_posts_id_idx',
+    ).on(columns.postsID),
+    payload_locked_documents_rels_post_tags_id_idx: index(
+      'payload_locked_documents_rels_post_tags_id_idx',
+    ).on(columns['post-tagsID']),
+    payload_locked_documents_rels_payload_jobs_id_idx: index(
+      'payload_locked_documents_rels_payload_jobs_id_idx',
+    ).on(columns['payload-jobsID']),
     parentFk: foreignKey({
       columns: [columns['parent']],
       foreignColumns: [payload_locked_documents.id],
@@ -1039,6 +1307,21 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['suppliersID']],
       foreignColumns: [suppliers.id],
       name: 'payload_locked_documents_rels_suppliers_fk',
+    }).onDelete('cascade'),
+    postsIdFk: foreignKey({
+      columns: [columns['postsID']],
+      foreignColumns: [posts.id],
+      name: 'payload_locked_documents_rels_posts_fk',
+    }).onDelete('cascade'),
+    'post-tagsIdFk': foreignKey({
+      columns: [columns['post-tagsID']],
+      foreignColumns: [post_tags.id],
+      name: 'payload_locked_documents_rels_post_tags_fk',
+    }).onDelete('cascade'),
+    'payload-jobsIdFk': foreignKey({
+      columns: [columns['payload-jobsID']],
+      foreignColumns: [payload_jobs.id],
+      name: 'payload_locked_documents_rels_payload_jobs_fk',
     }).onDelete('cascade'),
   }),
 )
@@ -1390,6 +1673,68 @@ export const relations_form_submissions = relations(form_submissions, ({ one }) 
 }))
 export const relations_novu_channels = relations(novu_channels, () => ({}))
 export const relations_suppliers = relations(suppliers, () => ({}))
+export const relations_posts_rels = relations(posts_rels, ({ one }) => ({
+  parent: one(posts, {
+    fields: [posts_rels.parent],
+    references: [posts.id],
+    relationName: '_rels',
+  }),
+  'post-tagsID': one(post_tags, {
+    fields: [posts_rels['post-tagsID']],
+    references: [post_tags.id],
+    relationName: 'post-tags',
+  }),
+}))
+export const relations_posts = relations(posts, ({ one, many }) => ({
+  image: one(media, {
+    fields: [posts.image],
+    references: [media.id],
+    relationName: 'image',
+  }),
+  _rels: many(posts_rels, {
+    relationName: '_rels',
+  }),
+}))
+export const relations__posts_v_rels = relations(_posts_v_rels, ({ one }) => ({
+  parent: one(_posts_v, {
+    fields: [_posts_v_rels.parent],
+    references: [_posts_v.id],
+    relationName: '_rels',
+  }),
+  'post-tagsID': one(post_tags, {
+    fields: [_posts_v_rels['post-tagsID']],
+    references: [post_tags.id],
+    relationName: 'post-tags',
+  }),
+}))
+export const relations__posts_v = relations(_posts_v, ({ one, many }) => ({
+  parent: one(posts, {
+    fields: [_posts_v.parent],
+    references: [posts.id],
+    relationName: 'parent',
+  }),
+  version_image: one(media, {
+    fields: [_posts_v.version_image],
+    references: [media.id],
+    relationName: 'version_image',
+  }),
+  _rels: many(_posts_v_rels, {
+    relationName: '_rels',
+  }),
+}))
+export const relations_post_tags = relations(post_tags, () => ({}))
+export const relations_payload_jobs_log = relations(payload_jobs_log, ({ one }) => ({
+  _parentID: one(payload_jobs, {
+    fields: [payload_jobs_log._parentID],
+    references: [payload_jobs.id],
+    relationName: 'log',
+  }),
+}))
+export const relations_payload_jobs = relations(payload_jobs, ({ many }) => ({
+  log: many(payload_jobs_log, {
+    relationName: 'log',
+  }),
+}))
 export const relations_payload_locked_documents_rels = relations(
   payload_locked_documents_rels,
   ({ one }) => ({
@@ -1478,6 +1823,21 @@ export const relations_payload_locked_documents_rels = relations(
       references: [suppliers.id],
       relationName: 'suppliers',
     }),
+    postsID: one(posts, {
+      fields: [payload_locked_documents_rels.postsID],
+      references: [posts.id],
+      relationName: 'posts',
+    }),
+    'post-tagsID': one(post_tags, {
+      fields: [payload_locked_documents_rels['post-tagsID']],
+      references: [post_tags.id],
+      relationName: 'post-tags',
+    }),
+    'payload-jobsID': one(payload_jobs, {
+      fields: [payload_locked_documents_rels['payload-jobsID']],
+      references: [payload_jobs.id],
+      relationName: 'payload-jobs',
+    }),
   }),
 )
 export const relations_payload_locked_documents = relations(
@@ -1521,6 +1881,11 @@ type DatabaseSchema = {
   enum_recharges_status: typeof enum_recharges_status
   enum_recharges_gateway: typeof enum_recharges_gateway
   enum_suppliers_status: typeof enum_suppliers_status
+  enum_posts_status: typeof enum_posts_status
+  enum__posts_v_version_status: typeof enum__posts_v_version_status
+  enum_payload_jobs_log_task_slug: typeof enum_payload_jobs_log_task_slug
+  enum_payload_jobs_log_state: typeof enum_payload_jobs_log_state
+  enum_payload_jobs_task_slug: typeof enum_payload_jobs_task_slug
   media: typeof media
   categories: typeof categories
   category_groups: typeof category_groups
@@ -1548,6 +1913,13 @@ type DatabaseSchema = {
   form_submissions: typeof form_submissions
   novu_channels: typeof novu_channels
   suppliers: typeof suppliers
+  posts: typeof posts
+  posts_rels: typeof posts_rels
+  _posts_v: typeof _posts_v
+  _posts_v_rels: typeof _posts_v_rels
+  post_tags: typeof post_tags
+  payload_jobs_log: typeof payload_jobs_log
+  payload_jobs: typeof payload_jobs
   payload_locked_documents: typeof payload_locked_documents
   payload_locked_documents_rels: typeof payload_locked_documents_rels
   payload_preferences: typeof payload_preferences
@@ -1582,6 +1954,13 @@ type DatabaseSchema = {
   relations_form_submissions: typeof relations_form_submissions
   relations_novu_channels: typeof relations_novu_channels
   relations_suppliers: typeof relations_suppliers
+  relations_posts_rels: typeof relations_posts_rels
+  relations_posts: typeof relations_posts
+  relations__posts_v_rels: typeof relations__posts_v_rels
+  relations__posts_v: typeof relations__posts_v
+  relations_post_tags: typeof relations_post_tags
+  relations_payload_jobs_log: typeof relations_payload_jobs_log
+  relations_payload_jobs: typeof relations_payload_jobs
   relations_payload_locked_documents_rels: typeof relations_payload_locked_documents_rels
   relations_payload_locked_documents: typeof relations_payload_locked_documents
   relations_payload_preferences_rels: typeof relations_payload_preferences_rels

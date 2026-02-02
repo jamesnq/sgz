@@ -17,6 +17,8 @@ import { Header } from './collections/Globals/Header/config'
 import { Media } from './collections/Media'
 import { NovuChannels } from './collections/NovuChannels/config'
 import { Orders } from './collections/Orders'
+import { Posts } from './collections/Posts'
+import { PostTags } from './collections/PostTags'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
 import { ProductVariantSupplies } from './collections/ProductVariantSupplies'
@@ -99,6 +101,8 @@ export default buildConfig({
     FormSubmissions,
     NovuChannels,
     Suppliers,
+    Posts,
+    PostTags,
   ],
   serverURL: getServerSideURL(),
   cors: [getServerSideURL()].filter(Boolean),
