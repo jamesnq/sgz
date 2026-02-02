@@ -35,4 +35,8 @@ export class Routes {
   static order(id: string | number): string {
     return `/user/orders/${id}`
   }
+
+  static post(slug: string): string {
+    return `/posts/${slug}`
+  }
 }
