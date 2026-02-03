@@ -139,6 +139,9 @@ const config: Config = {
                 fontWeight: 'normal',
                 marginBottom: '0.25em',
               },
+              img: {
+                margin: '0 auto',
+              },
             },
           ],
         },
