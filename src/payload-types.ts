@@ -85,6 +85,7 @@ export interface Config {
     suppliers: Supplier;
     posts: Post;
     'post-tags': PostTag;
+    vouchers: Voucher;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -114,6 +115,7 @@ export interface Config {
     suppliers: SuppliersSelect<false> | SuppliersSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'post-tags': PostTagsSelect<false> | PostTagsSelect<true>;
+    vouchers: VouchersSelect<false> | VouchersSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -432,6 +434,11 @@ export interface Order {
   supplierPaid?: boolean | null;
   cost?: number | null;
   revenue?: number | null;
+  voucher?: (number | null) | Voucher;
+  /**
+   * Số tiền giảm từ voucher
+   */
+  voucherDiscount?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -543,8 +550,57 @@ export interface Product {
   } | null;
   relatedProducts?: (number | Product)[] | null;
   categories?: (number | Category)[] | null;
+  /**
+   * Voucher giảm giá áp dụng cho sản phẩm
+   */
+  voucher?: (number | null) | Voucher;
   slug?: string | null;
   slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers".
+ */
+export interface Voucher {
+  id: number;
+  /**
+   * Mã voucher (tự động viết hoa)
+   */
+  code: string;
+  /**
+   * Loại giảm giá
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Giá trị giảm (% hoặc VND tuỳ loại)
+   */
+  discountValue: number;
+  /**
+   * Giá trị đơn hàng tối thiểu để sử dụng (bỏ trống = không giới hạn)
+   */
+  minPurchase?: number | null;
+  /**
+   * Số lần sử dụng tối đa (bỏ trống = không giới hạn)
+   */
+  maxUses?: number | null;
+  /**
+   * Số lần đã sử dụng
+   */
+  usedCount?: number | null;
+  /**
+   * Ngày bắt đầu hiệu lực (bỏ trống = có hiệu lực ngay)
+   */
+  startDate?: string | null;
+  /**
+   * Ngày hết hạn (bỏ trống = không hết hạn)
+   */
+  expirationDate?: string | null;
+  /**
+   * Bật/tắt voucher
+   */
+  active?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1042,6 +1098,10 @@ export interface PayloadLockedDocument {
         value: number | PostTag;
       } | null)
     | ({
+        relationTo: 'vouchers';
+        value: number | Voucher;
+      } | null)
+    | ({
         relationTo: 'payload-jobs';
         value: number | PayloadJob;
       } | null);
@@ -1238,6 +1298,7 @@ export interface ProductsSelect<T extends boolean = true> {
   description?: T;
   relatedProducts?: T;
   categories?: T;
+  voucher?: T;
   slug?: T;
   slugLock?: T;
   updatedAt?: T;
@@ -1303,6 +1364,8 @@ export interface OrdersSelect<T extends boolean = true> {
   supplierPaid?: T;
   cost?: T;
   revenue?: T;
+  voucher?: T;
+  voucherDiscount?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1466,6 +1529,23 @@ export interface PostTagsSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers_select".
+ */
+export interface VouchersSelect<T extends boolean = true> {
+  code?: T;
+  discountType?: T;
+  discountValue?: T;
+  minPurchase?: T;
+  maxUses?: T;
+  usedCount?: T;
+  startDate?: T;
+  expirationDate?: T;
+  active?: T;
   updatedAt?: T;
   createdAt?: T;
 }

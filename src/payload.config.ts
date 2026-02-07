@@ -27,6 +27,7 @@ import { Stocks } from './collections/Stocks'
 import { Suppliers } from './collections/Suppliers'
 import { Transactions } from './collections/Transactions'
 import { Users } from './collections/Users'
+import { Vouchers } from './collections/Vouchers'
 import { config } from './config'
 import { plugins } from './plugins'
 import { getServerSideURL } from './utilities/getURL'
@@ -103,6 +104,7 @@ export default buildConfig({
     Suppliers,
     Posts,
     PostTags,
+    Vouchers,
   ],
   serverURL: getServerSideURL(),
   cors: [getServerSideURL()].filter(Boolean),

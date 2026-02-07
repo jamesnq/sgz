@@ -377,6 +377,30 @@ export const Orders: CollectionConfig = {
         update: hasRole(['admin']),
       },
     },
+    {
+      name: 'voucher',
+      type: 'relationship',
+      relationTo: 'vouchers',
+      admin: {
+        readOnly: true,
+      },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+    },
+    {
+      name: 'voucherDiscount',
+      type: 'number',
+      admin: {
+        readOnly: true,
+        description: 'Số tiền giảm từ voucher',
+      },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+    },
   ],
   timestamps: true,
 }

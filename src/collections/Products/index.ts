@@ -213,6 +213,15 @@ export const Products: CollectionConfig = {
     //     },
     //   ],
     // },
+    {
+      name: 'voucher',
+      type: 'relationship',
+      relationTo: 'vouchers',
+      admin: {
+        position: 'sidebar',
+        description: 'Voucher giảm giá áp dụng cho sản phẩm',
+      },
+    },
     ...slugField(),
   ],
 }

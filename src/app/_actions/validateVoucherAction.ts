@@ -1,0 +1,44 @@
+'use server'
+import { authActionClient, ServerNotification } from '@/utilities/safe-action'
+import { validateVoucher, calculateVoucherDiscount } from '@/utilities/voucher'
+import payloadConfig from '@payload-config'
+import { getPayload } from 'payload'
+import { z } from 'zod'
+
+const ValidateVoucherSchema = z.object({
+  voucherCode: z.string().min(1),
+  totalPrice: z.coerce.number().min(0),
+})
+
+export const validateVoucherAction = authActionClient
+  .schema(ValidateVoucherSchema)
+  .action(async ({ parsedInput: { voucherCode, totalPrice } }) => {
+    const payload = await getPayload({ config: payloadConfig })
+
+    const { docs: vouchers } = await payload.find({
+      collection: 'vouchers',
+      where: { code: { equals: voucherCode.toUpperCase().trim() } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const voucher = vouchers[0]
+    if (!voucher) {
+      throw new ServerNotification('Mã voucher không hợp lệ')
+    }
+
+    try {
+      validateVoucher(voucher, totalPrice)
+    } catch (e) {
+      throw new ServerNotification((e as Error).message)
+    }
+
+    const discountAmount = calculateVoucherDiscount(voucher, totalPrice)
+
+    return {
+      discountAmount,
+      discountType: voucher.discountType,
+      discountValue: voucher.discountValue,
+      code: voucher.code,
+    }
+  })
