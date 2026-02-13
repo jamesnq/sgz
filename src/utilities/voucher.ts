@@ -53,3 +53,37 @@ export function calculateVoucherDiscount(
   }
   return Math.min(discountAmount, totalPrice)
 }
+
+/**
+ * Validate that a voucher applies to the given product/variant.
+ * If both applicableProducts and applicableProductVariants are empty, the voucher applies to all.
+ * Throws VoucherValidationError if the product/variant is not in scope.
+ */
+export function validateVoucherScope(
+  voucher: Pick<Voucher, 'applicableProducts' | 'applicableProductVariants'>,
+  productId: number,
+  productVariantId: number,
+): void {
+  const applicableProducts = voucher.applicableProducts ?? []
+  const applicableVariants = voucher.applicableProductVariants ?? []
+
+  const hasProducts = applicableProducts.length > 0
+  const hasVariants = applicableVariants.length > 0
+
+  // No scope defined = applies to all
+  if (!hasProducts && !hasVariants) return
+
+  // Check variant-level scope first (more specific)
+  if (hasVariants) {
+    const variantIds = applicableVariants.map((v) => (typeof v === 'object' ? v.id : v))
+    if (variantIds.includes(productVariantId)) return
+  }
+
+  // Check product-level scope
+  if (hasProducts) {
+    const productIds = applicableProducts.map((p) => (typeof p === 'object' ? p.id : p))
+    if (productIds.includes(productId)) return
+  }
+
+  throw new VoucherValidationError('Mã voucher không áp dụng cho sản phẩm này')
+}

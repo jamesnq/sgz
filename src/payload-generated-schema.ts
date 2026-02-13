@@ -54,6 +54,10 @@ export const enum__posts_v_version_status = pgEnum('enum__posts_v_version_status
   'draft',
   'published',
 ])
+export const enum_vouchers_discount_type = pgEnum('enum_vouchers_discount_type', [
+  'percentage',
+  'fixed',
+])
 export const enum_payload_jobs_log_task_slug = pgEnum('enum_payload_jobs_log_task_slug', [
   'inline',
   'schedulePublish',
@@ -530,6 +534,10 @@ export const orders = pgTable(
     supplierPaid: boolean('supplier_paid'),
     cost: numeric('cost'),
     revenue: numeric('revenue'),
+    voucher: integer('voucher_id').references(() => vouchers.id, {
+      onDelete: 'set null',
+    }),
+    voucherDiscount: numeric('voucher_discount'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -542,6 +550,7 @@ export const orders = pgTable(
     orders_product_variant_idx: index('orders_product_variant_idx').on(columns.productVariant),
     orders_form_submission_idx: index('orders_form_submission_idx').on(columns.formSubmission),
     orders_supplier_idx: index('orders_supplier_idx').on(columns.supplier),
+    orders_voucher_idx: index('orders_voucher_idx').on(columns.voucher),
     orders_updated_at_idx: index('orders_updated_at_idx').on(columns.updatedAt),
     orders_created_at_idx: index('orders_created_at_idx').on(columns.createdAt),
   }),
@@ -1043,6 +1052,73 @@ export const post_tags = pgTable(
   }),
 )
 
+export const vouchers = pgTable(
+  'vouchers',
+  {
+    id: serial('id').primaryKey(),
+    code: varchar('code').notNull(),
+    discountType: enum_vouchers_discount_type('discount_type').notNull(),
+    discountValue: numeric('discount_value').notNull(),
+    minPurchase: numeric('min_purchase'),
+    maxUses: numeric('max_uses'),
+    usedCount: numeric('used_count').default('0'),
+    startDate: timestamp('start_date', { mode: 'string', withTimezone: true, precision: 3 }),
+    expirationDate: timestamp('expiration_date', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    active: boolean('active').default(true),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => ({
+    vouchers_code_idx: uniqueIndex('vouchers_code_idx').on(columns.code),
+    vouchers_updated_at_idx: index('vouchers_updated_at_idx').on(columns.updatedAt),
+    vouchers_created_at_idx: index('vouchers_created_at_idx').on(columns.createdAt),
+  }),
+)
+
+export const vouchers_rels = pgTable(
+  'vouchers_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    productsID: integer('products_id'),
+    'product-variantsID': integer('product_variants_id'),
+  },
+  (columns) => ({
+    order: index('vouchers_rels_order_idx').on(columns.order),
+    parentIdx: index('vouchers_rels_parent_idx').on(columns.parent),
+    pathIdx: index('vouchers_rels_path_idx').on(columns.path),
+    vouchers_rels_products_id_idx: index('vouchers_rels_products_id_idx').on(columns.productsID),
+    vouchers_rels_product_variants_id_idx: index('vouchers_rels_product_variants_id_idx').on(
+      columns['product-variantsID'],
+    ),
+    parentFk: foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [vouchers.id],
+      name: 'vouchers_rels_parent_fk',
+    }).onDelete('cascade'),
+    productsIdFk: foreignKey({
+      columns: [columns['productsID']],
+      foreignColumns: [products.id],
+      name: 'vouchers_rels_products_fk',
+    }).onDelete('cascade'),
+    'product-variantsIdFk': foreignKey({
+      columns: [columns['product-variantsID']],
+      foreignColumns: [product_variants.id],
+      name: 'vouchers_rels_product_variants_fk',
+    }).onDelete('cascade'),
+  }),
+)
+
 export const payload_jobs_log = pgTable(
   'payload_jobs_log',
   {
@@ -1160,6 +1236,7 @@ export const payload_locked_documents_rels = pgTable(
     suppliersID: integer('suppliers_id'),
     postsID: integer('posts_id'),
     'post-tagsID': integer('post_tags_id'),
+    vouchersID: integer('vouchers_id'),
     'payload-jobsID': integer('payload_jobs_id'),
   },
   (columns) => ({
@@ -1220,6 +1297,9 @@ export const payload_locked_documents_rels = pgTable(
     payload_locked_documents_rels_post_tags_id_idx: index(
       'payload_locked_documents_rels_post_tags_id_idx',
     ).on(columns['post-tagsID']),
+    payload_locked_documents_rels_vouchers_id_idx: index(
+      'payload_locked_documents_rels_vouchers_id_idx',
+    ).on(columns.vouchersID),
     payload_locked_documents_rels_payload_jobs_id_idx: index(
       'payload_locked_documents_rels_payload_jobs_id_idx',
     ).on(columns['payload-jobsID']),
@@ -1317,6 +1397,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['post-tagsID']],
       foreignColumns: [post_tags.id],
       name: 'payload_locked_documents_rels_post_tags_fk',
+    }).onDelete('cascade'),
+    vouchersIdFk: foreignKey({
+      columns: [columns['vouchersID']],
+      foreignColumns: [vouchers.id],
+      name: 'payload_locked_documents_rels_vouchers_fk',
     }).onDelete('cascade'),
     'payload-jobsIdFk': foreignKey({
       columns: [columns['payload-jobsID']],
@@ -1573,6 +1658,11 @@ export const relations_orders = relations(orders, ({ one, many }) => ({
     references: [suppliers.id],
     relationName: 'supplier',
   }),
+  voucher: one(vouchers, {
+    fields: [orders.voucher],
+    references: [vouchers.id],
+    relationName: 'voucher',
+  }),
   _rels: many(orders_rels, {
     relationName: '_rels',
   }),
@@ -1723,6 +1813,28 @@ export const relations__posts_v = relations(_posts_v, ({ one, many }) => ({
   }),
 }))
 export const relations_post_tags = relations(post_tags, () => ({}))
+export const relations_vouchers_rels = relations(vouchers_rels, ({ one }) => ({
+  parent: one(vouchers, {
+    fields: [vouchers_rels.parent],
+    references: [vouchers.id],
+    relationName: '_rels',
+  }),
+  productsID: one(products, {
+    fields: [vouchers_rels.productsID],
+    references: [products.id],
+    relationName: 'products',
+  }),
+  'product-variantsID': one(product_variants, {
+    fields: [vouchers_rels['product-variantsID']],
+    references: [product_variants.id],
+    relationName: 'product-variants',
+  }),
+}))
+export const relations_vouchers = relations(vouchers, ({ many }) => ({
+  _rels: many(vouchers_rels, {
+    relationName: '_rels',
+  }),
+}))
 export const relations_payload_jobs_log = relations(payload_jobs_log, ({ one }) => ({
   _parentID: one(payload_jobs, {
     fields: [payload_jobs_log._parentID],
@@ -1833,6 +1945,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [post_tags.id],
       relationName: 'post-tags',
     }),
+    vouchersID: one(vouchers, {
+      fields: [payload_locked_documents_rels.vouchersID],
+      references: [vouchers.id],
+      relationName: 'vouchers',
+    }),
     'payload-jobsID': one(payload_jobs, {
       fields: [payload_locked_documents_rels['payload-jobsID']],
       references: [payload_jobs.id],
@@ -1883,6 +2000,7 @@ type DatabaseSchema = {
   enum_suppliers_status: typeof enum_suppliers_status
   enum_posts_status: typeof enum_posts_status
   enum__posts_v_version_status: typeof enum__posts_v_version_status
+  enum_vouchers_discount_type: typeof enum_vouchers_discount_type
   enum_payload_jobs_log_task_slug: typeof enum_payload_jobs_log_task_slug
   enum_payload_jobs_log_state: typeof enum_payload_jobs_log_state
   enum_payload_jobs_task_slug: typeof enum_payload_jobs_task_slug
@@ -1918,6 +2036,8 @@ type DatabaseSchema = {
   _posts_v: typeof _posts_v
   _posts_v_rels: typeof _posts_v_rels
   post_tags: typeof post_tags
+  vouchers: typeof vouchers
+  vouchers_rels: typeof vouchers_rels
   payload_jobs_log: typeof payload_jobs_log
   payload_jobs: typeof payload_jobs
   payload_locked_documents: typeof payload_locked_documents
@@ -1959,6 +2079,8 @@ type DatabaseSchema = {
   relations__posts_v_rels: typeof relations__posts_v_rels
   relations__posts_v: typeof relations__posts_v
   relations_post_tags: typeof relations_post_tags
+  relations_vouchers_rels: typeof relations_vouchers_rels
+  relations_vouchers: typeof relations_vouchers
   relations_payload_jobs_log: typeof relations_payload_jobs_log
   relations_payload_jobs: typeof relations_payload_jobs
   relations_payload_locked_documents_rels: typeof relations_payload_locked_documents_rels

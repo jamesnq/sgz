@@ -550,57 +550,8 @@ export interface Product {
   } | null;
   relatedProducts?: (number | Product)[] | null;
   categories?: (number | Category)[] | null;
-  /**
-   * Voucher giảm giá áp dụng cho sản phẩm
-   */
-  voucher?: (number | null) | Voucher;
   slug?: string | null;
   slugLock?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "vouchers".
- */
-export interface Voucher {
-  id: number;
-  /**
-   * Mã voucher (tự động viết hoa)
-   */
-  code: string;
-  /**
-   * Loại giảm giá
-   */
-  discountType: 'percentage' | 'fixed';
-  /**
-   * Giá trị giảm (% hoặc VND tuỳ loại)
-   */
-  discountValue: number;
-  /**
-   * Giá trị đơn hàng tối thiểu để sử dụng (bỏ trống = không giới hạn)
-   */
-  minPurchase?: number | null;
-  /**
-   * Số lần sử dụng tối đa (bỏ trống = không giới hạn)
-   */
-  maxUses?: number | null;
-  /**
-   * Số lần đã sử dụng
-   */
-  usedCount?: number | null;
-  /**
-   * Ngày bắt đầu hiệu lực (bỏ trống = có hiệu lực ngay)
-   */
-  startDate?: string | null;
-  /**
-   * Ngày hết hạn (bỏ trống = không hết hạn)
-   */
-  expirationDate?: string | null;
-  /**
-   * Bật/tắt voucher
-   */
-  active?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -823,6 +774,59 @@ export interface FormSubmission {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vouchers".
+ */
+export interface Voucher {
+  id: number;
+  /**
+   * Mã voucher (tự động viết hoa)
+   */
+  code: string;
+  /**
+   * Loại giảm giá
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Giá trị giảm (% hoặc VND tuỳ loại)
+   */
+  discountValue: number;
+  /**
+   * Giá trị đơn hàng tối thiểu để sử dụng (bỏ trống = không giới hạn)
+   */
+  minPurchase?: number | null;
+  /**
+   * Số lần sử dụng tối đa (bỏ trống = không giới hạn)
+   */
+  maxUses?: number | null;
+  /**
+   * Số lần đã sử dụng
+   */
+  usedCount?: number | null;
+  /**
+   * Ngày bắt đầu hiệu lực (bỏ trống = có hiệu lực ngay)
+   */
+  startDate?: string | null;
+  /**
+   * Ngày hết hạn (bỏ trống = không hết hạn)
+   */
+  expirationDate?: string | null;
+  /**
+   * Bật/tắt voucher
+   */
+  active?: boolean | null;
+  /**
+   * Sản phẩm áp dụng (bỏ trống = tất cả)
+   */
+  applicableProducts?: (number | Product)[] | null;
+  /**
+   * Phiên bản sản phẩm áp dụng (bỏ trống = tất cả)
+   */
+  applicableProductVariants?: (number | ProductVariant)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1298,7 +1302,6 @@ export interface ProductsSelect<T extends boolean = true> {
   description?: T;
   relatedProducts?: T;
   categories?: T;
-  voucher?: T;
   slug?: T;
   slugLock?: T;
   updatedAt?: T;
@@ -1546,6 +1549,8 @@ export interface VouchersSelect<T extends boolean = true> {
   startDate?: T;
   expirationDate?: T;
   active?: T;
+  applicableProducts?: T;
+  applicableProductVariants?: T;
   updatedAt?: T;
   createdAt?: T;
 }

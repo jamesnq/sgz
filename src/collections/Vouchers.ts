@@ -115,5 +115,25 @@ export const Vouchers: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'applicableProducts',
+      type: 'relationship',
+      relationTo: 'products',
+      hasMany: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Sản phẩm áp dụng (bỏ trống = tất cả)',
+      },
+    },
+    {
+      name: 'applicableProductVariants',
+      type: 'relationship',
+      relationTo: 'product-variants',
+      hasMany: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Phiên bản sản phẩm áp dụng (bỏ trống = tất cả)',
+      },
+    },
   ],
 }

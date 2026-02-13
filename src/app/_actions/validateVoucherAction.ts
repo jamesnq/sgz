@@ -1,6 +1,11 @@
 'use server'
+import { Product } from '@/payload-types'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
-import { validateVoucher, calculateVoucherDiscount } from '@/utilities/voucher'
+import {
+  validateVoucher,
+  calculateVoucherDiscount,
+  validateVoucherScope,
+} from '@/utilities/voucher'
 import payloadConfig from '@payload-config'
 import { getPayload } from 'payload'
 import { z } from 'zod'
@@ -8,11 +13,12 @@ import { z } from 'zod'
 const ValidateVoucherSchema = z.object({
   voucherCode: z.string().min(1),
   totalPrice: z.coerce.number().min(0),
+  productVariantId: z.coerce.number(),
 })
 
 export const validateVoucherAction = authActionClient
   .schema(ValidateVoucherSchema)
-  .action(async ({ parsedInput: { voucherCode, totalPrice } }) => {
+  .action(async ({ parsedInput: { voucherCode, totalPrice, productVariantId } }) => {
     const payload = await getPayload({ config: payloadConfig })
 
     const { docs: vouchers } = await payload.find({
@@ -29,6 +35,23 @@ export const validateVoucherAction = authActionClient
 
     try {
       validateVoucher(voucher, totalPrice)
+    } catch (e) {
+      throw new ServerNotification((e as Error).message)
+    }
+
+    // Fetch product variant to get parent product ID for scope check
+    const pv = await payload.findByID({
+      collection: 'product-variants',
+      id: productVariantId,
+      depth: 1,
+      select: { product: true },
+    })
+    if (!pv) {
+      throw new ServerNotification('Không tìm thấy sản phẩm')
+    }
+
+    try {
+      validateVoucherScope(voucher, (pv.product as Product).id, productVariantId)
     } catch (e) {
       throw new ServerNotification((e as Error).message)
     }
