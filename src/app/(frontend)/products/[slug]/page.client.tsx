@@ -8,6 +8,7 @@ import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
 import { checkoutAction } from '@/app/_actions/checkoutAction'
+import { validateVoucherAction } from '@/app/_actions/validateVoucherAction'
 import { fields } from '@/blocks/Form/fields'
 import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import RichText from '@/components/RichText'
@@ -74,6 +75,10 @@ type ProductPageContextType = {
   isFormValid: boolean
   setCurrentVariant: (variant: ProductVariant) => void
   setShippingInfo: (key: string, value: string | number) => void
+  voucherCode: string
+  setVoucherCode: (code: string) => void
+  appliedVoucherDiscount: number
+  setAppliedVoucherDiscount: (amount: number) => void
 }
 
 const ProductPageContext = createContext<ProductPageContextType>({} as ProductPageContextType)
@@ -124,6 +129,8 @@ function ProductPageProvider({
   })
 
   const [quantity, setQuantity] = React.useState(1)
+  const [voucherCode, setVoucherCode] = React.useState('')
+  const [appliedVoucherDiscount, setAppliedVoucherDiscount] = React.useState(0)
 
   // Memoize the shipping info initialization function to prevent unnecessary recalculations
   const getInitShippingInfo = React.useCallback(
@@ -221,6 +228,10 @@ function ProductPageProvider({
         setShippingInfo: (key, value) => {
           setShippingInfo((prev) => ({ ...prev, [key]: value }))
         },
+        voucherCode,
+        setVoucherCode,
+        appliedVoucherDiscount,
+        setAppliedVoucherDiscount,
       }}
     >
       {children}
@@ -668,17 +679,19 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   const quantity = useProductPageContext((state) => state.quantity)
   const shippingInfo = useProductPageContext((state) => state.shippingInfo)
   const isFormValid = useProductPageContext((state) => state.isFormValid)
+  const voucherCode = useProductPageContext((state) => state.voucherCode)
 
   const checkout = React.useCallback(() => {
     executeAsync({
       quantity,
       productVariantId: currentVariant.id,
       shippingFields: shippingInfo,
+      voucherCode: voucherCode || undefined,
     }).then((x) => {
       if (!x?.data?.order) return
       router.push(Routes.order(x.data.order.id))
     })
-  }, [executeAsync, quantity, currentVariant.id, shippingInfo, router])
+  }, [executeAsync, quantity, currentVariant.id, shippingInfo, voucherCode, router])
 
   return (
     <Button className="w-full font-bold" disabled={isExecuting || !isFormValid} onClick={checkout}>
@@ -690,6 +703,73 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
 
 function CheckoutButton() {
   return <MemoizedCheckoutButton />
+}
+
+// Voucher code input component
+function VoucherInput() {
+  const voucherCode = useProductPageContext((state) => state.voucherCode)
+  const setVoucherCode = useProductPageContext((state) => state.setVoucherCode)
+  const setAppliedVoucherDiscount = useProductPageContext(
+    (state) => state.setAppliedVoucherDiscount,
+  )
+  const calc = useProductPageContext((state) => state.calc)
+  const { executeAsync, isExecuting } = useActionWarper(validateVoucherAction)
+  const [_error, setError] = React.useState<string | null>(null)
+  const [applied, setApplied] = React.useState(false)
+
+  const handleApply = React.useCallback(async () => {
+    if (!voucherCode.trim()) return
+    setError(null)
+    const result = await executeAsync({
+      voucherCode: voucherCode.trim(),
+      totalPrice: calc.totalPrice,
+    })
+    if (result?.data) {
+      setAppliedVoucherDiscount(result.data.discountAmount)
+      setApplied(true)
+    }
+  }, [voucherCode, calc.totalPrice, executeAsync, setAppliedVoucherDiscount])
+
+  const handleClear = React.useCallback(() => {
+    setVoucherCode('')
+    setAppliedVoucherDiscount(0)
+    setApplied(false)
+    setError(null)
+  }, [setVoucherCode, setAppliedVoucherDiscount])
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2">
+        <Input
+          placeholder="Nhập mã voucher"
+          value={voucherCode}
+          onChange={(e) => {
+            setVoucherCode(e.target.value)
+            if (applied) {
+              setApplied(false)
+              setAppliedVoucherDiscount(0)
+            }
+          }}
+          className="flex-1"
+          disabled={applied}
+        />
+        {applied ? (
+          <Button variant="outline" size="sm" onClick={handleClear}>
+            Huỷ
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleApply}
+            disabled={isExecuting || !voucherCode.trim()}
+          >
+            {isExecuting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Áp dụng'}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // Memoized checkout component
@@ -723,6 +803,9 @@ const MemoizedCheckout = React.memo(
       [currentVariant.max, currentVariant.min, setQuantity],
     )
 
+    const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
+    const finalPrice = Math.max(0, calc.totalPrice - appliedVoucherDiscount)
+
     return (
       <Card id="checkout" style={{ scrollMarginTop: '100px' }} className={cn('p-6', className)}>
         <div className="flex w-full text-sm items-center justify-between">
@@ -735,6 +818,12 @@ const MemoizedCheckout = React.memo(
             <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
           </div>
         ) : null}
+        {appliedVoucherDiscount > 0 && (
+          <div className="flex w-full text-sm items-center justify-between text-green-500">
+            <span>Mã giảm giá</span>
+            <span>-{formatPrice(appliedVoucherDiscount, 'VND')}</span>
+          </div>
+        )}
         {currentVariant.max > 1 && (
           <div className="flex justify-between mt-2">
             <span>Số lượng</span>
@@ -779,9 +868,10 @@ const MemoizedCheckout = React.memo(
 
         <hr className="my-4 border-t border-border" />
         <div className="space-y-4">
+          <VoucherInput />
           <div className="flex w-full items-center justify-between">
             <span className="font-bold">Tổng tiền</span>
-            <span className="font-bold text-highlight">{formatPrice(calc.totalPrice, 'VND')}</span>
+            <span className="font-bold text-highlight">{formatPrice(finalPrice, 'VND')}</span>
           </div>
           {currentVariant.status === 'ORDER' && workingTime}
           {user ? <CheckoutButton /> : <AuthDialog className="w-full" />}

@@ -18,6 +18,7 @@ export const CheckoutSchema = z.object({
   productVariantId: z.coerce.number(),
   quantity: z.coerce.number(),
   shippingFields: z.any(),
+  voucherCode: z.string().optional(),
 })
 export const UpdateFormSubmissionSchema = z.object({
   id: z.coerce.number(),
