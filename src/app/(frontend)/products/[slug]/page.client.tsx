@@ -713,6 +713,7 @@ function VoucherInput() {
     (state) => state.setAppliedVoucherDiscount,
   )
   const calc = useProductPageContext((state) => state.calc)
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
   const { executeAsync, isExecuting } = useActionWarper(validateVoucherAction)
   const [_error, setError] = React.useState<string | null>(null)
   const [applied, setApplied] = React.useState(false)
@@ -723,12 +724,13 @@ function VoucherInput() {
     const result = await executeAsync({
       voucherCode: voucherCode.trim(),
       totalPrice: calc.totalPrice,
+      productVariantId: currentVariant.id,
     })
     if (result?.data) {
       setAppliedVoucherDiscount(result.data.discountAmount)
       setApplied(true)
     }
-  }, [voucherCode, calc.totalPrice, executeAsync, setAppliedVoucherDiscount])
+  }, [voucherCode, calc.totalPrice, currentVariant.id, executeAsync, setAppliedVoucherDiscount])
 
   const handleClear = React.useCallback(() => {
     setVoucherCode('')

@@ -14,6 +14,7 @@ import * as migration_20250429_064728 from './20250429_064728'
 import * as migration_20260202_133520 from './20260202_133520'
 import * as migration_20260207_160718_add_vouchers from './20260207_160718_add_vouchers'
 import * as migration_20260213_103900_fix_voucher_columns from './20260213_103900_fix_voucher_columns'
+import * as migration_20260213_125418_add_voucher_product_scope from './20260213_125418_add_voucher_product_scope'
 
 export const migrations = [
   {
@@ -95,5 +96,10 @@ export const migrations = [
     up: migration_20260213_103900_fix_voucher_columns.up,
     down: migration_20260213_103900_fix_voucher_columns.down,
     name: '20260213_103900_fix_voucher_columns',
+  },
+  {
+    up: migration_20260213_125418_add_voucher_product_scope.up,
+    down: migration_20260213_125418_add_voucher_product_scope.down,
+    name: '20260213_125418_add_voucher_product_scope',
   },
 ]

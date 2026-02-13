@@ -6,7 +6,11 @@ import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.s
 import { autoProcessOrder } from '@/services/orderProcessing'
 import { formatPrice } from '@/utilities/formatPrice'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
-import { validateVoucher, calculateVoucherDiscount } from '@/utilities/voucher'
+import {
+  validateVoucher,
+  calculateVoucherDiscount,
+  validateVoucherScope,
+} from '@/utilities/voucher'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
 import { eq } from '@payloadcms/db-postgres/drizzle'
@@ -76,6 +80,7 @@ export const checkoutAction = authActionClient
 
         try {
           validateVoucher(voucher, totalPrice)
+          validateVoucherScope(voucher, (pv.product as Product).id, pv.id)
         } catch (e) {
           throw new ServerNotification((e as Error).message)
         }
