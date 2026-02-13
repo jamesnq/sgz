@@ -11,8 +11,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"product_variants_id" integer
   );
   
-  ALTER TABLE "orders" ADD COLUMN "voucher_id" integer;
-  ALTER TABLE "orders" ADD COLUMN "voucher_discount" numeric;
+  ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "voucher_id" integer;
+  ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "voucher_discount" numeric;
   DO $$ BEGIN
    ALTER TABLE "vouchers_rels" ADD CONSTRAINT "vouchers_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."vouchers"("id") ON DELETE cascade ON UPDATE no action;
   EXCEPTION
