@@ -1,18 +1,19 @@
-import * as migration_20250312_121853 from './20250312_121853';
-import * as migration_20250314_140230 from './20250314_140230';
-import * as migration_20250318_095854 from './20250318_095854';
-import * as migration_20250321_094323 from './20250321_094323';
-import * as migration_20250330_034707 from './20250330_034707';
-import * as migration_20250407_053645 from './20250407_053645';
-import * as migration_20250410_045337 from './20250410_045337';
-import * as migration_20250415_101939 from './20250415_101939';
-import * as migration_20250419_161826 from './20250419_161826';
-import * as migration_20250424_123414 from './20250424_123414';
-import * as migration_20250425_062810 from './20250425_062810';
-import * as migration_20250428_040722 from './20250428_040722';
-import * as migration_20250429_064728 from './20250429_064728';
-import * as migration_20260202_133520 from './20260202_133520';
-import * as migration_20260207_160718_add_vouchers from './20260207_160718_add_vouchers';
+import * as migration_20250312_121853 from './20250312_121853'
+import * as migration_20250314_140230 from './20250314_140230'
+import * as migration_20250318_095854 from './20250318_095854'
+import * as migration_20250321_094323 from './20250321_094323'
+import * as migration_20250330_034707 from './20250330_034707'
+import * as migration_20250407_053645 from './20250407_053645'
+import * as migration_20250410_045337 from './20250410_045337'
+import * as migration_20250415_101939 from './20250415_101939'
+import * as migration_20250419_161826 from './20250419_161826'
+import * as migration_20250424_123414 from './20250424_123414'
+import * as migration_20250425_062810 from './20250425_062810'
+import * as migration_20250428_040722 from './20250428_040722'
+import * as migration_20250429_064728 from './20250429_064728'
+import * as migration_20260202_133520 from './20260202_133520'
+import * as migration_20260207_160718_add_vouchers from './20260207_160718_add_vouchers'
+import * as migration_20260213_103900_fix_voucher_columns from './20260213_103900_fix_voucher_columns'
 
 export const migrations = [
   {
@@ -88,6 +89,11 @@ export const migrations = [
   {
     up: migration_20260207_160718_add_vouchers.up,
     down: migration_20260207_160718_add_vouchers.down,
-    name: '20260207_160718_add_vouchers'
+    name: '20260207_160718_add_vouchers',
   },
-];
+  {
+    up: migration_20260213_103900_fix_voucher_columns.up,
+    down: migration_20260213_103900_fix_voucher_columns.down,
+    name: '20260213_103900_fix_voucher_columns',
+  },
+]
