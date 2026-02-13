@@ -714,7 +714,7 @@ function VoucherInput() {
   )
   const calc = useProductPageContext((state) => state.calc)
   const { executeAsync, isExecuting } = useActionWarper(validateVoucherAction)
-  const [error, setError] = React.useState<string | null>(null)
+  const [_error, setError] = React.useState<string | null>(null)
   const [applied, setApplied] = React.useState(false)
 
   const handleApply = React.useCallback(async () => {
