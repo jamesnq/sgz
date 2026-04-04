@@ -3,8 +3,8 @@ import { transactions, users } from '@/payload-generated-schema'
 import { formatPrice } from '@/utilities/formatPrice'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
-import PayOS from '@payos/node'
-import { CheckoutResponseDataType } from '@payos/node/lib/type'
+import { PayOS } from '@payos/node'
+type CheckoutResponseDataType = any
 import { after } from 'next/server'
 import { getPayload } from 'payload'
 import { discordWebhook } from './novu.service'
@@ -23,9 +23,13 @@ function getRandomInt(min: number, max: number) {
 }
 
 export class PaymentService {
-  payos = new PayOS(config.PAYOS_CLIENT_KEY, config.PAYOS_API_KEY, config.PAYOS_CHECKSUM_KEY)
+  payos = new PayOS({
+    clientId: config.PAYOS_CLIENT_KEY,
+    apiKey: config.PAYOS_API_KEY,
+    checksumKey: config.PAYOS_CHECKSUM_KEY,
+  })
   async init() {
-    await this.payos.confirmWebhook(config.PAYOS_WEBHOOK_URL)
+    await this.payos.webhooks.confirm(config.PAYOS_WEBHOOK_URL)
   }
 
   async createPaymentLink(data: z.infer<typeof CreatePaymentLinkSchema>) {
@@ -50,7 +54,7 @@ export class PaymentService {
             hasChecksumKey: !!config.PAYOS_CHECKSUM_KEY,
           })
 
-          const r = await this.payos.createPaymentLink({
+          const r = await this.payos.paymentRequests.create({
             orderCode,
             amount,
             cancelUrl: config.PAYOS_CANCEL_URL,
@@ -98,7 +102,7 @@ export class PaymentService {
     return result
   }
   async webhookHandle(data: any) {
-    const paymentData = this.payos.verifyPaymentWebhookData(data)
+    const paymentData = await this.payos.webhooks.verify(data)
     if (paymentData.orderCode < 999) return 't'
     const payload = await getPayload({ config: payloadConfig })
     const { docs } = await payload.find({

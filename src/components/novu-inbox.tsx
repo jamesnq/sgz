@@ -246,8 +246,8 @@ export default function NovuInbox() {
             colorPrimaryForeground: 'hsl(var(--primary-foreground))',
             colorSecondaryForeground: 'hsl(var(--secondary-foreground))',
           },
-        }}
-        renderBell={(unreadCount) => (
+        } as any}
+        renderBell={(unreadCount: any) => (
           <Button className="rounded-full relative w-8 h-8 !p-0 !py-2.5 !px-0" variant="ghost">
             <BellIcon className="text-highlight" />
             {unreadCount > 0 && (

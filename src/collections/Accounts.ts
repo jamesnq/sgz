@@ -1,8 +1,8 @@
 import { Users } from '@/collections/Users'
 import { managerGroup } from '@/utilities/constants'
 import { CollectionConfig } from 'payload'
-import { withAdminAccountCollection } from 'payload-auth-plugin/collection'
-export const Accounts: CollectionConfig = withAdminAccountCollection(
+import { withAccountCollection } from 'payload-auth-plugin/collection'
+export const Accounts: CollectionConfig = withAccountCollection(
   {
     slug: 'accounts',
     admin: {

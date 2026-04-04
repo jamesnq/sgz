@@ -19,14 +19,14 @@ const revalidatePost: CollectionAfterChangeHook<Post> = ({
   if (!context.disableRevalidate) {
     if (doc._status === 'published') {
       payload.logger.info(`Revalidating post at path: /posts/${doc.slug}`)
-      revalidatePath(`/posts/${doc.slug}`)
-      revalidateTag('posts-list')
+      revalidatePath(`/posts/${doc.slug}`);
+      (revalidateTag as any)('posts-list')
     }
 
     if (previousDoc?._status === 'published' && doc._status !== 'published') {
       payload.logger.info(`Revalidating old post at path: /posts/${previousDoc.slug}`)
-      revalidatePath(`/posts/${previousDoc.slug}`)
-      revalidateTag('posts-list')
+      revalidatePath(`/posts/${previousDoc.slug}`);
+      (revalidateTag as any)('posts-list')
     }
   }
   return doc
@@ -34,8 +34,8 @@ const revalidatePost: CollectionAfterChangeHook<Post> = ({
 
 const revalidateDelete: CollectionBeforeDeleteHook = ({ req: { payload, context } }) => {
   if (!context.disableRevalidate) {
-    payload.logger.info(`Revalidating posts list after delete`)
-    revalidateTag('posts-list')
+    payload.logger.info(`Revalidating posts list after delete`);
+    (revalidateTag as any)('posts-list')
   }
 }
 
