@@ -46,7 +46,7 @@ import { z } from 'zod'
 
 function RechargeBank() {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
-    resolver: zodResolver(RechargePayosSchema),
+    resolver: zodResolver(RechargePayosSchema) as any,
     defaultValues: {
       amount: undefined,
     },
@@ -176,7 +176,7 @@ function RechargeCard() {
   >({})
 
   const form = useForm<z.infer<typeof RechargeDoiTheSchema>>({
-    resolver: zodResolver(RechargeDoiTheSchema),
+    resolver: zodResolver(RechargeDoiTheSchema) as any,
     defaultValues: {
       telco: '',
       code: '',

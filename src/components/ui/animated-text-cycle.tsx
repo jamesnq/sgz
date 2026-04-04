@@ -10,7 +10,7 @@ interface AnimatedWordCycleProps {
 }
 
 // Animation variants - defined outside component to prevent recreation on each render
-const containerVariants = {
+const containerVariants: any = {
   hidden: {
     y: -20,
     opacity: 0,

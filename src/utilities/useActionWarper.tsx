@@ -1,18 +1,9 @@
 'use client'
-import { HookSafeActionFn, useAction, UseActionHookReturn } from 'next-safe-action/hooks'
+import { useAction } from 'next-safe-action/hooks'
 
 import { toast } from 'react-toastify'
 import { Schema } from 'zod'
-export function useActionWarper<
-  ServerError,
-  S extends Schema | undefined,
-  const BAS extends readonly Schema[],
-  CVE,
-  CBAVE,
-  Data,
->(
-  action: HookSafeActionFn<ServerError, S, BAS, CVE, CBAVE, Data>,
-): UseActionHookReturn<ServerError, S, BAS, CVE, CBAVE, Data> {
+export function useActionWarper(action: any): any {
   return useAction(action, {
     onSettled({ result }) {
       if (result.serverError) {
