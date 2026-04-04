@@ -11,9 +11,17 @@ import { InitTheme } from '@/providers/Theme/InitTheme'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
 import './globals.css'
 
+import { Be_Vietnam_Pro } from 'next/font/google'
+
+const beVietnamPro = Be_Vietnam_Pro({
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-be-vietnam-pro',
+})
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
         <InitTheme />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -21,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </head>
-      <body className={' antialiased'}>
+      <body className={`${beVietnamPro.variable} ${beVietnamPro.className} antialiased`}>
         <Providers>
           <AdminBar />
           <Header />
@@ -32,6 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     </html>
   )
 }
+
 
 export const metadata: Metadata = {
   // metadataBase: new URL(getServerSideURL()),

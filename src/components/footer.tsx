@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
 import { Handshake, LucideIcon, Scale } from 'lucide-react'
 import * as React from 'react'
+import Link from 'next/link'
+import { Logo } from '@/components/Logo/Logo'
 
 const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg role="img" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -51,29 +53,30 @@ interface FooterProps extends React.HTMLAttributes<HTMLDivElement> {
 const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
   ({ className, brand, columns, copyright, ...props }, ref) => {
     return (
-      <div ref={ref} className={cn(className)} {...props}>
-        <div className="w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12">
-            <div className="lg:col-span-4">
-              <a href="#" className="text-xl font-semibold">
-                {brand.name}
-              </a>
-              <p className="text-sm text-foreground/60">{brand.description}</p>
+      <footer id="footer" ref={ref} className={cn('w-full border-t border-sgz-border bg-sgz-dark/50 pt-16 pb-8', className)} {...props}>
+        <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0">
+            <div className="lg:col-span-4 flex flex-col items-start">
+              <Link className="flex items-center mb-6" href="/">
+                <Logo className="h-10 w-auto" />
+              </Link>
+              <p className="text-sgz-textMuted max-w-sm leading-relaxed">{brand.description}</p>
             </div>
-            <div className="grid mt-16 grid-cols-2 lg:col-span-8 lg:justify-items-end lg:mt-0">
+            
+            <div className="grid grid-cols-2 lg:col-span-8 lg:justify-items-end gap-12 lg:gap-8">
               {columns.map(({ title, links }) => (
-                <div key={title} className="md:last:mt-0">
-                  <h3 className="text-sm font-semibold">{title}</h3>
-                  <ul className="mt-4 space-y-2.5">
+                <div key={title} className="flex flex-col items-start lg:items-end">
+                  <h3 className="text-white font-bold tracking-wide uppercase text-sm mb-6">{title}</h3>
+                  <ul className="space-y-4">
                     {links.map(({ name, Icon, href, target }) => (
-                      <li key={name}>
+                      <li key={name} className="flex lg:justify-end">
                         <a
                           href={href || '#'}
                           target={target}
-                          className="text-sm transition-all text-foreground/60 hover:text-foreground/90 group"
+                          className="flex items-center gap-3 text-sgz-textMuted hover:text-sgz-primary transition-colors group font-medium"
                         >
-                          <Icon className="inline stroke-2 h-4 mr-1.5 transition-all stroke-foreground/60 group-hover:stroke-foreground/90" />
-                          {name}
+                          <Icon className="w-5 h-5 text-sgz-textMuted group-hover:text-sgz-primary transition-colors" />
+                          <span>{name}</span>
                         </a>
                       </li>
                     ))}
@@ -82,24 +85,20 @@ const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
               ))}
             </div>
           </div>
+          
           {copyright && (
-            <div className="mt-20 border-t pt-6 pb-8 flex justify-center">
-              <p className="text-xs text-foreground/55 text-center">{copyright}</p>
+            <div className="mt-20 border-t border-sgz-border/50 pt-8 flex justify-center">
+              <p className="text-sm text-sgz-textMuted">{copyright}</p>
             </div>
           )}
         </div>
-      </div>
+      </footer>
     )
   },
 )
 
 FooterComponent.displayName = 'Footer'
 export const infoLinks = [
-  // {
-  //   name: 'Giới thiệu',
-  //   Icon: Scale,
-  //   href: '/info/about',
-  // },
   {
     name: 'Chính sách bảo mật',
     Icon: Scale,
@@ -115,7 +114,7 @@ export const infoLinks = [
 export default function Footer() {
   return (
     <FooterComponent
-      className="mt-32 container"
+      className="mt-24"
       brand={{
         name: config.NEXT_PUBLIC_SITE_NAME,
         description: SITE_DESCRIPTION,
@@ -142,12 +141,6 @@ export default function Footer() {
               href: 'https://www.facebook.com/groups/1442376023838259',
               target: '_blank',
             },
-            {
-              name: 'X.com',
-              Icon: XIcon,
-              href: 'https://x.com/SubGameZone',
-              target: '_blank',
-            },
           ],
         },
         {
@@ -155,7 +148,7 @@ export default function Footer() {
           links: infoLinks,
         },
       ]}
-      copyright={`${config.NEXT_PUBLIC_SITE_NAME} © ${new Date().getFullYear()}`}
+      copyright={`${config.NEXT_PUBLIC_SITE_NAME} © ${new Date().getFullYear()}. All rights reserved.`}
     />
   )
 }

@@ -46,7 +46,7 @@ import { z } from 'zod'
 
 function RechargeBank() {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
-    resolver: zodResolver(RechargePayosSchema) as any,
+    resolver: zodResolver(RechargePayosSchema as any),
     defaultValues: {
       amount: undefined,
     },
@@ -93,35 +93,64 @@ function RechargeBank() {
     }
   }
 
+  const QUICK_AMOUNTS = [20000, 50000, 100000, 200000, 500000];
+
   return (
     <>
-      <AccordionItem className="border rounded-lg p-2" value="item-1">
-        <AccordionTrigger>Ngân hàng hoặc ví điện tử</AccordionTrigger>
-        <AccordionContent className="p-2">
+      <AccordionItem className="border border-[#2e2e38] bg-[#16161e] rounded-lg px-4 py-2" value="item-1">
+        <AccordionTrigger className="text-white hover:text-white/80 hover:no-underline">Ngân hàng hoặc ví điện tử</AccordionTrigger>
+        <AccordionContent className="p-2 pt-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex flex-col gap-5">
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="amount"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormControl>
-                      <div className="flex space-x-1 items-center">
-                        <Input
-                          className="w-[250px]"
-                          type="number"
-                          {...field}
-                          placeholder="Nhập số tiền muốn nạp"
-                        />
-                        <span className="ml-2">VND</span>
+                      <div className="flex flex-col space-y-3">
+                        <div className="flex space-x-2 items-center">
+                          <Input
+                            className="flex-1 bg-[#0f0f13] border-[#2e2e38] text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-[#8b5cf6]"
+                            type="text"
+                            {...field}
+                            value={field.value ? Number(field.value).toLocaleString('en-US') : ''}
+                            onChange={(e) => {
+                              const rawValue = e.target.value.replace(/,/g, '');
+                              const parsedValue = parseInt(rawValue, 10);
+                              field.onChange(isNaN(parsedValue) ? undefined : parsedValue);
+                            }}
+                            placeholder="Nhập số tiền muốn nạp"
+                          />
+                          <span className="font-medium text-white/80">VND</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {QUICK_AMOUNTS.map((amount) => (
+                            <Button
+                              key={amount}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="bg-[#0f0f13] border-[#2e2e38] text-white/80 hover:bg-[#2e2e38] hover:text-white font-normal"
+                              onClick={() => {
+                                form.setValue('amount', amount, { shouldValidate: true })
+                              }}
+                            >
+                              {formatPrice(amount)}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
                     </FormControl>
-
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
-              <Button className="w-32" type="submit" disabled={isLoading}>
+              <Button 
+                className="w-full sm:w-auto bg-[#8b5cf6] text-white hover:bg-[#7c3aed] border-0" 
+                type="submit" 
+                disabled={isLoading}
+              >
                 {isLoading ? 'Đang xử lý...' : 'Nạp tiền'}
               </Button>
             </form>
@@ -129,17 +158,17 @@ function RechargeBank() {
         </AccordionContent>
       </AccordionItem>
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-[#2e2e38] bg-[#16161e] text-white">
           <DialogHeader>
-            <DialogTitle>Thanh toán</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white mt-1">Thanh toán</DialogTitle>
+            <DialogDescription className="text-white/60">
               Nhấn nút bên dưới để chuyển đến trang thanh toán nếu không được tự động chuyển hướng
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-center mt-4">
+          <DialogFooter className="sm:justify-center mt-4 border-t border-[#2e2e38] pt-4">
             <Button
               type="button"
-              className="w-full bg-primary text-white hover:bg-primary/90"
+              className="w-full bg-[#8b5cf6] text-white hover:bg-[#7c3aed] border-0"
               onClick={handleManualRedirect}
             >
               Mở trang thanh toán
@@ -176,7 +205,7 @@ function RechargeCard() {
   >({})
 
   const form = useForm<z.infer<typeof RechargeDoiTheSchema>>({
-    resolver: zodResolver(RechargeDoiTheSchema) as any,
+    resolver: zodResolver(RechargeDoiTheSchema as any),
     defaultValues: {
       telco: '',
       code: '',
@@ -355,12 +384,12 @@ function RechargeCard() {
   }, [feeData])
 
   return (
-    <AccordionItem className="border rounded-lg p-2" value="item-2">
-      <AccordionTrigger>Thẻ cào điện thoại</AccordionTrigger>
-      <AccordionContent className="p-2">
-        <div className="text-yellow-500">
+    <AccordionItem className="border border-[#2e2e38] bg-[#16161e] rounded-lg px-4 py-2" value="item-2">
+      <AccordionTrigger className="text-white hover:text-white/80 hover:no-underline">Thẻ cào điện thoại</AccordionTrigger>
+      <AccordionContent className="p-2 pt-4">
+        <div className="text-amber-400 text-sm mb-4">
           Khuyến khích khách hàng nạp thông qua ngân hàng hoặc ví điện tử để tránh chiết khấu từ nhà
-          mạng
+          mạng.
         </div>
         {isLoading ? (
           <div className="flex justify-center p-4">
@@ -368,20 +397,20 @@ function RechargeCard() {
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex flex-col gap-4">
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="telco"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
-                    <FormLabel>Loại thẻ</FormLabel>
+                    <FormLabel className="text-white/80">Loại thẻ</FormLabel>
                     <Select onValueChange={(value) => handleTelcoChange(value)} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#0f0f13] border-[#2e2e38] text-white focus:ring-1 focus:ring-[#8b5cf6]">
                           <SelectValue placeholder="Chọn nhà mạng" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-[#16161e] border-[#2e2e38] text-white">
                         {uniqueTelcos.map((telco) => (
                           <SelectItem key={telco} value={telco}>
                             <div className="flex space-x-2 w-full items-center">
@@ -412,22 +441,22 @@ function RechargeCard() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="amount"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
-                    <FormLabel>Mệnh giá</FormLabel>
+                    <FormLabel className="text-white/80">Mệnh giá</FormLabel>
                     <Select
                       onValueChange={handleDenominationChange}
                       value={field.value.toString()}
                       disabled={availableDenominations.length === 0}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#0f0f13] border-[#2e2e38] text-white focus:ring-1 focus:ring-[#8b5cf6] disabled:opacity-50">
                           <SelectValue placeholder="Chọn mệnh giá" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-[#16161e] border-[#2e2e38] text-white">
                         {availableDenominations.map((amount) => {
                           const fee = getFeeForDenomination(selectedTelco, amount)
                           return (
@@ -447,16 +476,16 @@ function RechargeCard() {
               />
 
               {currentFeeInfo && (
-                <div className="text-sm space-y-2 p-3 bg-muted rounded-md">
+                <div className="text-sm space-y-2 p-3 bg-[#0f0f13] border border-[#2e2e38] rounded-md text-white/80">
                   <div className="flex justify-between">
                     <span>Chiết khấu từ nhà mạng:</span>
-                    <span className="font-medium text-amber-600">{currentFeeInfo.fees}%</span>
+                    <span className="font-medium text-amber-500">{currentFeeInfo.fees}%</span>
                   </div>
 
                   {selectedDenomination > 0 && (
-                    <div className="flex justify-between border-t border-gray-200 pt-2 mt-1">
+                    <div className="flex justify-between border-t border-[#2e2e38] pt-2 mt-1">
                       <span>Thực nhận (ước tính):</span>
-                      <span className="font-medium text-green-600">
+                      <span className="font-medium text-[#8b5cf6]">
                         {Math.round(
                           selectedDenomination * (1 - currentFeeInfo.fees / 100),
                         ).toLocaleString('vi-VN')}{' '}
@@ -465,7 +494,7 @@ function RechargeCard() {
                     </div>
                   )}
 
-                  <div className="mt-2 pt-2 border-t border-gray-200 text-red-500 text-xs">
+                  <div className="mt-2 pt-2 border-t border-[#2e2e38] text-red-400 text-xs">
                     <p className="font-medium mb-1">Lưu ý:</p>
                     <p>
                       Nếu nhập sai thông tin thẻ, bạn sẽ bị phạt {currentFeeInfo.penalty}% giá trị
@@ -476,34 +505,38 @@ function RechargeCard() {
               )}
 
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="serial"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
-                    <FormLabel>Số Serial</FormLabel>
+                    <FormLabel className="text-white/80">Số Serial</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nhập số serial thẻ" />
+                      <Input {...field} className="bg-[#0f0f13] border-[#2e2e38] text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-[#8b5cf6]" placeholder="Nhập số serial thẻ" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
 
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="code"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
-                    <FormLabel>Mã thẻ</FormLabel>
+                    <FormLabel className="text-white/80">Mã thẻ</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nhập mã thẻ" />
+                      <Input {...field} className="bg-[#0f0f13] border-[#2e2e38] text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-[#8b5cf6]" placeholder="Nhập mã thẻ" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
 
-              <Button className="w-32" type="submit" disabled={isSubmitting || !isFormValid()}>
+              <Button 
+                className="w-full sm:w-auto bg-[#8b5cf6] text-white hover:bg-[#7c3aed] border-0" 
+                type="submit" 
+                disabled={isSubmitting || !isFormValid()}
+              >
                 {isSubmitting ? 'Đang xử lý...' : 'Nạp thẻ'}
               </Button>
             </form>
@@ -527,12 +560,14 @@ export function RechargeDialog({ trigger }: { trigger?: React.ReactNode }) {
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-[600px]">
+      <DialogContent className="max-w-[600px] border-[#2e2e38] bg-[#0f0f13] text-white">
         <DialogHeader>
-          <DialogTitle>Nạp tiền</DialogTitle>
-          <DialogDescription>Chọn phương thức nạp tiền của bạn.</DialogDescription>
+          <DialogTitle className="text-white text-xl">Nạp tiền</DialogTitle>
+          <DialogDescription className="text-white/60">Chọn phương thức nạp tiền của bạn.</DialogDescription>
         </DialogHeader>
-        <Recharges />
+        <div className="mt-4">
+          <Recharges />
+        </div>
       </DialogContent>
     </Dialog>
   )

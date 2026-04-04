@@ -1,19 +1,17 @@
 'use client'
 
 import { Media } from '@/components/Media'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Post, PostTag } from '@/payload-types'
+import { useHeaderTheme } from '@/providers/HeaderTheme'
+import { Routes } from '@/utilities/routes'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useMemo, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-const POSTS_PER_PAGE = 9
+const POSTS_PER_PAGE = 12
 
 interface PostsPageClientProps {
   posts: Post[]
@@ -22,60 +20,161 @@ interface PostsPageClientProps {
 
 const PostCard = ({ post }: { post: Post }) => {
   const tags = post.tags as PostTag[] | undefined
+  const category =
+    tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : 'Tin Tức'
 
   return (
-    <Link href={`/posts/${post.slug}`} className="group">
-      <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow duration-300">
-        <div className="relative aspect-video">
-          <Media
-            resource={post.image}
-            className="w-full h-full"
-            imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+    <article
+      className="rounded-2xl overflow-hidden group hover:bg-[#1f1f24] transition-colors flex flex-col h-full"
+      style={{
+        background: 'rgba(25, 25, 30, 0.7)',
+        backdropFilter: 'blur(12px)',
+        borderTop: '1px solid rgba(72, 71, 76, 0.2)',
+      }}
+    >
+      <div className="h-48 overflow-hidden relative shrink-0">
+        <Media
+          resource={post.image}
+          className="w-full h-full"
+          imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        />
+      </div>
+      <div className="p-6 space-y-4 flex flex-col flex-1">
+        <div>
+          <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
+            {category}
+          </span>
         </div>
-        <div className="p-4">
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {tags.map((tag) => (
-                <Badge key={tag.id} variant="secondary" className="text-xs">
-                  {tag.title}
-                </Badge>
-              ))}
-            </div>
-          )}
-          <h3 className="font-bold text-lg line-clamp-2 group-hover:text-primary transition-colors">
+        <Link href={post.slug ? Routes.post(post.slug) : '#'} className="flex-1">
+          <h3 className="font-bold text-white text-xl leading-snug line-clamp-2 group-hover:text-sgz-primary transition-colors">
             {post.title}
           </h3>
-          {post.excerpt && (
-            <p className="text-muted-foreground text-sm line-clamp-2 mt-2">{post.excerpt}</p>
-          )}
-          {post.publishedAt && (
-            <p className="text-xs text-muted-foreground mt-3">
-              {format(new Date(post.publishedAt), 'dd MMM, yyyy', { locale: vi })}
-            </p>
-          )}
+        </Link>
+        {post.excerpt && (
+          <p className="text-[#acaab0] text-sm line-clamp-2 mt-2 font-medium">{post.excerpt}</p>
+        )}
+        <div className="pt-2 flex items-center gap-2 text-xs text-sgz-textMuted mt-auto">
+          <Clock className="w-4 h-4" />
+          {post.publishedAt
+            ? format(new Date(post.publishedAt), 'dd/MM/yyyy', { locale: vi })
+            : 'Mới đây'}
         </div>
-      </Card>
-    </Link>
+      </div>
+    </article>
+  )
+}
+
+function Sidebar({
+  tags,
+  appliedTags,
+  toggleTag,
+  clearFilter,
+}: {
+  tags: PostTag[]
+  appliedTags: number[]
+  toggleTag: (tagId: number) => void
+  clearFilter: () => void
+}) {
+  return (
+    <div className="hidden lg:block w-64 shrink-0">
+      <div className="sticky top-24 pt-2 space-y-6">
+        <div className="space-y-4">
+          <div className="sticky top-24 rounded-2xl bg-[#16161e] border border-[#2b2b36] p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white">Chủ đề</h2>
+              {appliedTags.length > 0 && (
+                <button
+                  onClick={clearFilter}
+                  className="text-xs text-sgz-primary hover:underline font-bold"
+                >
+                  Xoá tất cả
+                </button>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              {tags.length === 0 ? (
+                <p className="text-sm text-[#acaab0] italic">Chưa có chủ đề nào.</p>
+              ) : (
+                tags.map((tag) => {
+                  const isSelected = appliedTags.includes(tag.id)
+                  return (
+                    <label
+                      key={tag.id}
+                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={() => toggleTag(tag.id)}
+                    >
+                      <div
+                        className={cn(
+                          'w-5 h-5 rounded flex items-center justify-center transition-colors border',
+                          isSelected
+                            ? 'bg-[#ba9eff] border-[#ba9eff] text-[#16161e]'
+                            : 'bg-transparent border-[#48474c] group-hover:border-[#ba9eff]',
+                        )}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                      </div>
+                      <span 
+                        className={cn(
+                          "text-sm font-medium transition-colors",
+                            isSelected ? 'text-white' : 'text-[#acaab0] group-hover:text-white'
+                        )}
+                      >
+                        {tag.title}
+                      </span>
+                    </label>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
 export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<number[]>([])
+  const { setHeaderTheme } = useHeaderTheme()
   const [appliedTags, setAppliedTags] = useState<number[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortOrder, setSortOrder] = useState('newest')
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Filter posts by applied tags
-  const filteredPosts = useMemo(() => {
-    if (appliedTags.length === 0) return posts
+  useEffect(() => {
+    setHeaderTheme('dark')
+  }, [setHeaderTheme])
 
-    return posts.filter((post) => {
-      const postTags = post.tags as PostTag[] | undefined
-      if (!postTags) return false
-      return appliedTags.some((tagId) => postTags.some((tag) => tag.id === tagId))
+  // Filter and sort posts
+  const filteredPosts = useMemo(() => {
+    let result = posts
+
+    // Filter by tags
+    if (appliedTags.length > 0) {
+      result = result.filter((post) => {
+        const postTags = post.tags as PostTag[] | undefined
+        if (!postTags) return false
+        return appliedTags.some((tagId) => postTags.some((tag) => tag.id === tagId))
+      })
+    }
+
+    // Filter by search query
+    if (searchQuery.trim().length > 0) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((post) => 
+        post.title.toLowerCase().includes(q)
+      )
+    }
+
+    // Sort by date
+    result = [...result].sort((a, b) => {
+      const dateA = new Date(a.publishedAt || a.createdAt).getTime()
+      const dateB = new Date(b.publishedAt || b.createdAt).getTime()
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
     })
-  }, [posts, appliedTags])
+
+    return result
+  }, [posts, appliedTags, searchQuery, sortOrder])
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE)
@@ -84,26 +183,19 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
     return filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE)
   }, [filteredPosts, currentPage])
 
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [appliedTags])
+  }, [appliedTags, searchQuery, sortOrder])
 
   const toggleTag = (tagId: number) => {
-    setSelectedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId],
+    setAppliedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
     )
   }
 
-  const applyFilter = () => {
-    setAppliedTags(selectedTags)
-    setIsOpen(false)
-  }
-
   const clearFilter = () => {
-    setSelectedTags([])
     setAppliedTags([])
-    setIsOpen(false)
   }
 
   const goToPage = (page: number) => {
@@ -112,205 +204,170 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
   }
 
   return (
-    <div className="py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Bài viết</h1>
-        <p className="text-muted-foreground">Tin tức và hướng dẫn game mới nhất</p>
-      </div>
-
-      {/* Tag Filter */}
-      {tags.length > 0 && (
-        <div className="mb-6 flex items-center gap-3 flex-wrap">
-          <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
-              <Button variant={appliedTags.length > 0 ? 'default' : 'outline'} className="gap-2">
-                <Filter className="h-4 w-4" />
-                <span>Bộ lọc</span>
-                {appliedTags.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 bg-background text-foreground">
-                    {appliedTags.length}
-                  </Badge>
-                )}
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-4" align="start">
-              <div className="space-y-4">
-                <div className="font-medium text-sm">Chọn tag</div>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => {
-                    const isSelected = selectedTags.includes(tag.id)
-                    return (
-                      <Button
-                        key={tag.id}
-                        variant={isSelected ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => toggleTag(tag.id)}
-                        className={cn(
-                          'gap-1.5 transition-all',
-                          isSelected && 'ring-2 ring-primary ring-offset-2',
-                        )}
-                      >
-                        {isSelected && <Check className="h-3 w-3" />}
-                        {tag.title}
-                      </Button>
-                    )
-                  })}
-                </div>
-                <div className="flex gap-2 pt-2 border-t">
-                  <Button variant="outline" className="flex-1" onClick={clearFilter}>
-                    Đóng
-                  </Button>
-                  <Button className="flex-1" onClick={applyFilter}>
-                    Xem kết quả
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {appliedTags.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Đang lọc:</span>
-              <div className="flex flex-wrap gap-1">
-                {appliedTags.map((tagId) => {
-                  const tag = tags.find((t) => t.id === tagId)
-                  if (!tag) return null
-                  return (
-                    <Badge
-                      key={tagId}
-                      variant="secondary"
-                      className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => {
-                        setSelectedTags((prev) => prev.filter((t) => t !== tagId))
-                        setAppliedTags((prev) => prev.filter((t) => t !== tagId))
-                      }}
-                    >
-                      {tag.title}
-                      <X className="h-3 w-3" />
-                    </Badge>
-                  )
-                })}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilter}
-                className="text-destructive h-7"
-              >
-                Xóa tất cả
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Results count */}
-      <p className="text-sm text-muted-foreground mb-4">
-        {filteredPosts.length} bài viết
-        {totalPages > 1 && ` • Trang ${currentPage}/${totalPages}`}
-      </p>
-
-      {/* Posts Grid */}
-      {paginatedPosts.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
+    <div className="mb-16">
+      <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+          <div className="space-y-2">
+            <h1 className="font-headline text-4xl font-bold tracking-tight text-white">
+              Bài viết
+            </h1>
+            <p className="text-[#acaab0]">Tin tức cộng đồng và thủ thuật game mới nhất.</p>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Trước
-              </Button>
-
-              <div className="flex gap-1">
-                {(() => {
-                  const pages: (number | string)[] = []
-
-                  if (totalPages <= 7) {
-                    // Show all pages if 7 or fewer
-                    for (let i = 1; i <= totalPages; i++) pages.push(i)
-                  } else {
-                    // Always show first page
-                    pages.push(1)
-
-                    if (currentPage > 3) {
-                      pages.push('...')
-                    }
-
-                    // Pages around current
-                    const start = Math.max(2, currentPage - 1)
-                    const end = Math.min(totalPages - 1, currentPage + 1)
-
-                    for (let i = start; i <= end; i++) {
-                      if (!pages.includes(i)) pages.push(i)
-                    }
-
-                    if (currentPage < totalPages - 2) {
-                      pages.push('...')
-                    }
-
-                    // Always show last page
-                    if (!pages.includes(totalPages)) pages.push(totalPages)
-                  }
-
-                  return pages.map((page, idx) =>
-                    page === '...' ? (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => goToPage(page as number)}
-                        className="w-9"
-                      >
-                        {page}
-                      </Button>
-                    ),
-                  )
-                })()}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Sau
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground">
-            {appliedTags.length > 0
-              ? 'Không có bài viết nào với các tag này'
-              : 'Chưa có bài viết nào'}
-          </p>
-          {appliedTags.length > 0 && (
-            <Button variant="outline" className="mt-4" onClick={clearFilter}>
-              Xem tất cả bài viết
-            </Button>
-          )}
+          {/* Search and Sort */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+             <div className="relative w-full sm:w-64">
+               <input
+                 type="text"
+                 placeholder="Tìm kiếm bài viết..."
+                 className="w-full h-11 bg-[#16161e] border border-[#2b2b36] rounded-xl px-4 text-white focus:outline-none focus:border-[#ba9eff] transition-colors"
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+               />
+             </div>
+             
+             <div className="w-full sm:w-48 relative">
+               <select 
+                 className="w-full h-11 bg-[#16161e] border border-[#2b2b36] rounded-xl px-4 text-white focus:outline-none focus:border-[#ba9eff] transition-colors appearance-none cursor-pointer"
+                 value={sortOrder}
+                 onChange={(e) => setSortOrder(e.target.value)}
+               >
+                 <option value="newest">Ngày đăng: Mới nhất</option>
+                 <option value="oldest">Ngày đăng: Cũ nhất</option>
+               </select>
+               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#acaab0]">
+                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                 </svg>
+               </div>
+             </div>
+          </div>
         </div>
-      )}
+
+        <div className="flex flex-col lg:flex-row lg:gap-12 mt-4 mb-[120px] lg:mb-0">
+          <Sidebar 
+            tags={tags} 
+            appliedTags={appliedTags} 
+            toggleTag={toggleTag} 
+            clearFilter={clearFilter} 
+          />
+
+          <div className="flex-1 flex flex-col gap-2">
+            
+            {/* Mobile Tag Filter */}
+            {tags.length > 0 && (
+              <div className="lg:hidden mb-6 flex flex-wrap gap-2">
+                 {tags.map((tag) => {
+                    const isSelected = appliedTags.includes(tag.id)
+                    return (
+                      <button
+                        key={tag.id}
+                        onClick={() => toggleTag(tag.id)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border",
+                          isSelected 
+                            ? "bg-[#ba9eff] text-[#16161e] border-[#ba9eff]" 
+                            : "bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white"
+                        )}
+                      >
+                        {tag.title}
+                      </button>
+                    )
+                 })}
+              </div>
+            )}
+
+            {/* Posts Grid */}
+            {paginatedPosts.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedPosts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-12 mb-8">
+                    <button
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl border border-sgz-border bg-[#16161e] text-white hover:border-[#ba9eff] hover:text-[#ba9eff] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+
+                    <div className="flex gap-1">
+                      {(() => {
+                        const pages: (number | string)[] = []
+
+                        if (totalPages <= 7) {
+                          for (let i = 1; i <= totalPages; i++) pages.push(i)
+                        } else {
+                          pages.push(1)
+                          if (currentPage > 3) pages.push('...')
+                          const start = Math.max(2, currentPage - 1)
+                          const end = Math.min(totalPages - 1, currentPage + 1)
+                          for (let i = start; i <= end; i++) {
+                            if (!pages.includes(i)) pages.push(i)
+                          }
+                          if (currentPage < totalPages - 2) pages.push('...')
+                          if (!pages.includes(totalPages)) pages.push(totalPages)
+                        }
+
+                        return pages.map((page, idx) =>
+                          page === '...' ? (
+                            <span key={`ellipsis-${idx}`} className="px-2 text-sgz-textMuted flex items-center">
+                              ...
+                            </span>
+                          ) : (
+                            <button
+                              key={page}
+                              onClick={() => goToPage(page as number)}
+                              className={cn(
+                                "w-10 h-10 font-bold rounded-xl transition-colors border",
+                                currentPage === page
+                                  ? "bg-[#ba9eff] text-[#16161e] border-[#ba9eff]"
+                                  : "bg-[#16161e] text-white border-sgz-border hover:border-[#ba9eff] hover:text-[#ba9eff]"
+                              )}
+                            >
+                              {page}
+                            </button>
+                          ),
+                        )
+                      })()}
+                    </div>
+
+                    <button
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl border border-sgz-border bg-[#16161e] text-white hover:border-[#ba9eff] hover:text-[#ba9eff] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-20 bg-[#16161e] rounded-2xl border border-sgz-border">
+                <p className="text-[#acaab0] font-medium">
+                  {appliedTags.length > 0
+                    ? 'Không có bài viết nào với các chủ đề này.'
+                    : 'Chưa có bài viết nào.'}
+                </p>
+                {appliedTags.length > 0 && (
+                  <button 
+                    onClick={clearFilter} 
+                    className="mt-6 text-sgz-primary font-bold hover:underline"
+                  >
+                    Xem tất cả bài viết
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -20,8 +20,8 @@ export const Logo = (props: Props) => {
       loading={loading}
       fetchPriority={priority}
       decoding="async"
-      className={clsx('max-w-37.5 w-full h-[60px]', className)}
-      src={defaultLogo}
+      className={clsx('max-w-[12rem] w-full h-[40px]', className)}
+      src="/SubGamezone (2).svg"
     />
   )
 }

@@ -1,317 +1,235 @@
 'use client'
 
+import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
+import { config } from '@/config'
 import { Media } from '@/components/Media'
 import { Shell } from '@/components/shell'
 import { cn } from '@/lib/utils'
 import { Category, Post, PostTag, Product } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatPrice } from '@/utilities/formatPrice'
+import { formatSold } from '@/utilities/formatSold'
 import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronRight, ShoppingCart, Clock } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
 import { Configure, InstantSearch, useHits } from 'react-instantsearch'
 
-/* ─────────────────────── Hero Slider ─────────────────────── */
+/* ─────────────────────── Hero Section ─────────────────────── */
 
-const HeroSlider = ({ products }: { products: Product[] }) => {
-  const [current, setCurrent] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const total = products.length
-
-  const resetTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % total)
-    }, 5000)
-  }, [total])
-
-  useEffect(() => {
-    resetTimer()
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [resetTimer])
-
-  const goTo = (index: number) => {
-    setCurrent(index)
-    resetTimer()
-  }
-  const prev = () => goTo((current - 1 + total) % total)
-  const next = () => goTo((current + 1) % total)
-
-  if (total === 0) return null
-  const product = products[current]
-  if (!product) return null
-  const discount = product.maxDiscount
-  const salePrice = product.minPrice
-  const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
-
+const HeroSection = ({ stats }: { stats: { orders: number; users: number; products: number } }) => {
   return (
-    <div className="relative w-full lg:w-[70%] aspect-[16/9] rounded-lg overflow-hidden group">
-      {/* Background image */}
-      <div className="absolute inset-0">
-        <Media
-          resource={product.image}
-          className="w-full h-full"
-          imgClassName="w-full h-full object-cover"
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+    <section id="hero-section" className="relative h-[550px] md:h-[650px] flex items-center overflow-hidden">
+      <div className="absolute inset-0 z-0 bg-gradient-to-l from-sgz-textDark via-[#0f0f13] to-sgz-dark">
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent z-10 opacity-60"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10"></div>
       </div>
-
-      {/* Content overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 lg:p-8 z-10">
-        <Link href={product.slug ? Routes.product(product.slug) : '#'} className="block">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-2 line-clamp-2 hover:text-primary transition-colors">
-            {product.name}
-          </h2>
-        </Link>
-
-        {product.description && (
-          <div className="text-sm text-gray-300 mb-3 space-y-1">
-            <p className="font-medium">Thông tin gói mua :</p>
-            <p className="line-clamp-2 text-gray-400">{product.description as unknown as string}</p>
+      <div className="relative z-20 w-full px-6 lg:px-12 max-w-[1920px] mx-auto">
+        <div className="max-w-3xl space-y-8">
+          <div className="font-extrabold tracking-tighter lg:leading-[1.1] text-5xl md:text-7xl lg:text-8xl animate-fade-up wave-text text-white uppercase">
+            {config.NEXT_PUBLIC_SITE_NAME}
           </div>
-        )}
-
-        {/* Pricing */}
-        <div className="flex items-center gap-3 mb-4">
-          {discount > 0 && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
-              -{discount.toFixed(0)}%
-            </span>
-          )}
-          {discount > 0 && (
-            <span className="text-gray-400 line-through text-sm">{formatPrice(originalPrice)}</span>
-          )}
-          <span className="text-white font-bold text-lg md:text-xl">{formatPrice(salePrice)}</span>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          <Link
-            href={product.slug ? Routes.product(product.slug) : '#'}
-            className="px-6 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-md hover:bg-white/20 transition-all text-sm font-medium"
-          >
-            Mua Ngay
-          </Link>
-          <button className="px-6 py-2 bg-white/5 backdrop-blur-sm border border-white/10 text-white/70 rounded-md hover:bg-white/15 hover:text-white transition-all text-sm font-medium">
-            Yêu Thích
-          </button>
-        </div>
-      </div>
-
-      {/* Navigation arrows */}
-      <button
-        onClick={prev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 z-20"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 z-20"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-
-      {/* Dot indicators */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-        {products.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className={cn(
-              'w-2 h-2 rounded-full transition-all',
-              i === current ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60',
-            )}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ─────────────────────── Hero Sidebar ─────────────────────── */
-
-const HeroSidebar = ({ products }: { products: Product[] }) => {
-  return (
-    <div className="hidden lg:flex w-[30%] flex-col gap-1.5 pl-4">
-      {products.map((product) => (
-        <Link
-          key={product.id}
-          href={product.slug ? Routes.product(product.slug) : '#'}
-          className="flex items-center gap-3 p-2 rounded-lg bg-card/50 border border-border/50 hover:border-primary/50 hover:bg-card transition-all group/item"
-        >
-          <div className="w-[60px] h-[60px] rounded-md overflow-hidden flex-shrink-0 relative">
-            <Media
-              resource={product.image}
-              className="w-full h-full"
-              imgClassName="w-full h-full object-cover"
-            />
-          </div>
-          <p className="text-sm font-medium line-clamp-2 text-foreground/80 group-hover/item:text-primary transition-colors leading-tight">
-            {product.name}
+          <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-3xl md:text-5xl animate-fade-up text-white">
+            Dịch vụ{' '}
+            <AnimatedWordCycle
+              className="text-sgz-primary drop-shadow-[0_0_15px_rgba(186,158,255,0.4)]"
+              words={[
+                ['nạp', '', 'game'],
+                ['game', 'phần mềm', 'bản quyền'],
+              ]}
+              interval={3000}
+            />{' '}
+            giá rẻ
+          </h1>
+          <p className="text-sgz-textMuted text-lg md:text-xl max-w-xl font-medium leading-relaxed">
+            Khám phá hàng ngàn tựa game được chọn lọc với giá ưu đãi. Từ bom tấn AAA đến siêu phẩm
+            indie, cuộc phiêu lưu tiếp theo của bạn bắt đầu tại đây.
           </p>
-        </Link>
-      ))}
-    </div>
+          <div className="flex flex-wrap gap-6 pt-4">
+            <div className="flex flex-col">
+              <span className="text-2xl md:text-3xl font-bold text-white leading-none tracking-tight">
+                {stats.orders.toLocaleString()}+
+              </span>
+              <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
+                Đã hoàn thành
+              </span>
+            </div>
+            <div className="w-px bg-sgz-border/30 my-2"></div>
+            <div className="flex flex-col">
+              <span className="text-2xl md:text-3xl font-bold text-white leading-none tracking-tight">
+                {stats.users.toLocaleString()}+
+              </span>
+              <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
+                Khách hàng
+              </span>
+            </div>
+            <div className="w-px bg-sgz-border/30 my-2"></div>
+            <div className="flex flex-col">
+              <span className="text-2xl md:text-3xl font-bold text-white leading-none tracking-tight">
+                {stats.products.toLocaleString()}+
+              </span>
+              <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
+                Sản phẩm
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
 /* ─────────────────────── Horizontal Product Card ─────────────────────── */
 
 const ProductCard = ({ product }: { product: Product }) => {
-  const discount = product.maxDiscount
-  const salePrice = product.minPrice
+  const discount = product.maxDiscount || 0
+  const salePrice = product.minPrice || 0
   const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
 
   return (
-    <Link
-      href={product.slug ? Routes.product(product.slug) : '#'}
-      className="group block rounded-lg overflow-hidden bg-card border border-border/40 hover:border-primary/50 transition-all"
-    >
-      {/* Product Image — landscape */}
-      <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+    <div className="group cursor-pointer block">
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-sgz-surface">
         <Media
           resource={product.image}
           className="w-full h-full"
-          imgClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        {/* Product name */}
-        <h3 className="text-sm font-medium line-clamp-1 mb-2 text-foreground group-hover:text-primary transition-colors">
-          {product.name}
-        </h3>
-
-        {/* Pricing row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {discount > 0 && (
-            <span className="bg-emerald-600 text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
-              -{discount.toFixed(0)}%
-            </span>
-          )}
-          {discount > 0 && (
-            <span className="text-muted-foreground line-through text-xs">
-              {formatPrice(originalPrice)}
-            </span>
-          )}
-          <span className="text-emerald-500 font-bold text-sm">{formatPrice(salePrice)}</span>
+        {discount > 0 && (
+          <div className="absolute top-3 left-3 bg-[#ff97b5] text-[#380018] font-bold px-2 py-1 rounded text-xs">
+            -{discount.toFixed(0)}%
+          </div>
+        )}
+        <div className="absolute bottom-3 right-3 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+          <Link
+            href={product.slug ? Routes.product(product.slug) : '#'}
+            className="bg-sgz-primary text-sgz-textDark p-3 rounded-xl shadow-xl flex hover:bg-white transition-colors"
+          >
+            <ShoppingCart className="w-5 h-5 leading-none" />
+          </Link>
         </div>
       </div>
-    </Link>
+      <Link href={product.slug ? Routes.product(product.slug) : '#'}>
+        <h3 className="font-bold text-white line-clamp-1 mb-1 group-hover:text-sgz-primary transition-colors">
+          {product.name}
+        </h3>
+      </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {discount > 0 && (
+            <span className="text-sgz-textMuted line-through text-sm">{formatPrice(originalPrice)}</span>
+          )}
+          <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
+        </div>
+        {product.sold > 0 && (
+          <div className="text-[11px] text-[#acaab0]">Đã bán {formatSold(product.sold)}</div>
+        )}
+      </div>
+    </div>
   )
 }
 
-/* ─────────────────────── Section: "Game Bom Tấn AAA" ─────────────────────── */
+/* ─────────────────────── Section: "Sản Phẩm Nổi Bật" ─────────────────────── */
 
-const ProductGridSection = ({ products, title }: { products: Product[]; title: string }) => {
+const ProductGridSection = ({
+  products,
+  title,
+  subtitle,
+  viewAllLink,
+}: {
+  products: Product[]
+  title: string
+  subtitle?: string
+  viewAllLink?: string
+}) => {
+  if (!products || products.length === 0) return null
+
   return (
-    <div className="mt-8 mb-8">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-foreground">{title}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <section className="mb-16">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">{title}</h2>
+            <div className="h-px flex-1 bg-sgz-border/30 hidden sm:block"></div>
+          </div>
+          {subtitle && <p className="text-sgz-textMuted">{subtitle}</p>}
+        </div>
+        <Link
+          href={viewAllLink || Routes.PRODUCTS || '#'}
+          className="text-sgz-primary font-bold flex items-center gap-1 hover:underline shrink-0 sm:ml-6"
+        >
+          Xem tất cả
+          <ChevronRight className="w-5 h-5" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
-    </div>
+    </section>
   )
 }
-
-/* ─────────────────────── Hero + Sidebar Section ─────────────────────── */
-
-const HeroSection = ({ title }: { title: string }) => {
-  const { hits } = useHits()
-  const products = hits as unknown as Product[]
-
-  // First 5 products go to the slider, next 6 go to the sidebar
-  const sliderProducts = products.slice(0, 5)
-  const sidebarProducts = products.slice(5, 11)
-
-  return (
-    <div>
-      {/* Section title */}
-      <div className="flex items-center justify-center gap-2 mb-6">
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-foreground">
-          {title}
-        </h1>
-        <span className="text-primary">◆</span>
-      </div>
-
-      {/* Hero layout */}
-      <div className="flex">
-        <HeroSlider products={sliderProducts} />
-        <HeroSidebar products={sidebarProducts} />
-      </div>
-    </div>
-  )
-}
-
-/* ─────────────────────── Products Grid with Hits ─────────────────────── */
 
 const ProductGridWithHits = () => {
   const { hits } = useHits()
-  const products = (hits as unknown as Product[]).slice(0, 9)
+  const products = (hits as unknown as Product[]).slice(0, 10)
 
-  return <ProductGridSection products={products} title="Game Bom Tấn AAA" />
+  return (
+    <ProductGridSection
+      products={products}
+      title="Game Bán Chạy"
+      subtitle="Những siêu phẩm không thể bỏ lỡ từ đội ngũ của chúng tôi."
+      viewAllLink="/products?products[refinementList][categories][0]=Key Steam&products[refinementList][categories][1]=Tài khoản steam offline"
+    />
+  )
 }
 
 /* ─────────────────────── Post Card ─────────────────────── */
 
 const PostCard = ({ post }: { post: Post }) => {
   const tags = post.tags as PostTag[] | undefined
+  const category =
+    tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : 'Tin Tức'
 
   return (
-    <Link
-      href={post.slug ? Routes.post(post.slug) : '#'}
-      className="group block rounded-lg overflow-hidden bg-card border border-border/40 hover:border-primary/50 transition-all"
+    <article
+      className="rounded-2xl overflow-hidden group hover:bg-[#1f1f24] transition-colors flex flex-col h-full"
+      style={{
+        background: 'rgba(25, 25, 30, 0.7)',
+        backdropFilter: 'blur(12px)',
+        borderTop: '1px solid rgba(72, 71, 76, 0.2)',
+      }}
     >
-      {/* Post Image — landscape */}
-      <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+      <div className="h-48 overflow-hidden relative shrink-0">
         <Media
           resource={post.image}
           className="w-full h-full"
-          imgClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
       </div>
-
-      {/* Info */}
-      <div className="p-3">
-        {/* Post title */}
-        <h3 className="text-sm font-medium line-clamp-1 mb-2 text-foreground group-hover:text-primary transition-colors">
-          {post.title}
-        </h3>
-
-        {/* Tags + date */}
-        <div className="flex items-center justify-between gap-2">
-          {tags && tags.length > 0 && (
-            <div className="flex gap-1">
-              {tags.slice(0, 2).map((tag) => (
-                <span
-                  key={tag.id}
-                  className="text-[11px] text-muted-foreground border border-border/60 rounded px-1.5 py-0.5"
-                >
-                  {tag.title}
-                </span>
-              ))}
-            </div>
-          )}
-          {post.publishedAt && (
-            <span className="text-[11px] text-muted-foreground">
-              {format(new Date(post.publishedAt), 'dd/MM/yyyy', { locale: vi })}
-            </span>
-          )}
+      <div className="p-6 space-y-4 flex flex-col flex-1">
+        <div>
+          <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
+            {category}
+          </span>
+        </div>
+        <Link href={post.slug ? Routes.post(post.slug) : '#'} className="flex-1">
+          <h3 className="font-bold text-white text-xl leading-snug line-clamp-2 group-hover:text-sgz-primary transition-colors">
+            {post.title}
+          </h3>
+        </Link>
+        <div className="pt-2 flex items-center gap-2 text-xs text-sgz-textMuted mt-auto">
+          <Clock className="w-4 h-4" />
+          {post.publishedAt
+            ? format(new Date(post.publishedAt), 'dd/MM/yyyy', { locale: vi })
+            : 'Mới đây'}
         </div>
       </div>
-    </Link>
+    </article>
   )
 }
 
@@ -321,23 +239,29 @@ const PostsSection = ({ posts }: { posts: Post[] }) => {
   if (!posts || posts.length === 0) return null
 
   return (
-    <div className="mt-8 mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl md:text-2xl font-bold text-foreground">Bài viết</h2>
+    <section id="posts-section" className="mb-16">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Bài Viết</h2>
+            <div className="h-px flex-1 bg-sgz-border/30 hidden sm:block"></div>
+          </div>
+          <p className="text-sgz-textMuted">Cập nhật tin tức và thủ thuật mới nhất.</p>
+        </div>
         <Link
-          href={Routes.POSTS}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+          href={Routes.POSTS || '#'}
+          className="text-sgz-primary font-bold flex items-center gap-1 hover:underline shrink-0 sm:ml-6"
         >
           Xem tất cả
-          <ArrowRight className="w-4 h-4" />
+          <ChevronRight className="w-5 h-5" />
         </Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {posts.slice(0, 6).map((post) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {posts.slice(0, 3).map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -345,9 +269,17 @@ const PostsSection = ({ posts }: { posts: Post[] }) => {
 
 interface HomePageClientProps {
   posts: Post[]
+  stats: {
+    orders: number
+    users: number
+    products: number
+  }
+  latestProducts: Product[]
+  topUpProducts?: Product[]
+  serviceProducts?: Product[]
 }
 
-const HomePageClient = ({ posts }: HomePageClientProps) => {
+const HomePageClient = ({ posts, stats, latestProducts, topUpProducts, serviceProducts }: HomePageClientProps) => {
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {
@@ -356,23 +288,46 @@ const HomePageClient = ({ posts }: HomePageClientProps) => {
 
   return (
     <InstantSearch
-      indexName={productIndex}
+      indexName={`${productIndex}:sold:desc`}
       searchClient={instantSearchClient.searchClient as any}
       future={{ preserveSharedStateOnUnmount: true }}
-      initialUiState={{
-        [productIndex]: {
-          sortBy: `${productIndex}:sold:desc`,
-        },
-      }}
     >
-      <Configure analytics={false} hitsPerPage={20} />
-      <Shell>
-        <div className="mt-2">
-          <HeroSection title="Khám phá game mới" />
+      <Configure 
+        analytics={false} 
+        hitsPerPage={10} 
+        filters="categories='Key Steam' OR categories='Tài khoản steam offline'" 
+      />
+      <div className="mb-16">
+        <HeroSection stats={stats} />
+        <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-8 space-y-16">
+          {latestProducts && latestProducts.length > 0 && (
+            <ProductGridSection
+              products={latestProducts}
+              title="Game Mới Nhất"
+              subtitle="Những tựa game vừa cập bến cửa hàng, hãy là người đầu tiên trải nghiệm."
+              viewAllLink="/products?products[refinementList][categories][0]=Key Steam&products[refinementList][categories][1]=Tài khoản steam offline"
+            />
+          )}
           <ProductGridWithHits />
+          {topUpProducts && topUpProducts.length > 0 && (
+            <ProductGridSection
+              products={topUpProducts}
+              title="Gói Nạp In-Game Nổi Bật"
+              subtitle="Nạp game nhanh chóng, an toàn và đa dạng lựa chọn."
+              viewAllLink="/products?products[refinementList][categories][0]=Nạp game"
+            />
+          )}
+          {serviceProducts && serviceProducts.length > 0 && (
+            <ProductGridSection
+              products={serviceProducts}
+              title="Dịch Vụ"
+              subtitle="Các dịch vụ hỗ trợ game thủ chuyên nghiệp."
+              viewAllLink="/products?products[refinementList][categories][0]=Dịch vụ"
+            />
+          )}
           <PostsSection posts={posts} />
         </div>
-      </Shell>
+      </div>
     </InstantSearch>
   )
 }

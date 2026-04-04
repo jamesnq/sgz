@@ -109,7 +109,6 @@ export const Products: CollectionConfig = {
           defaultValue: 0,
           required: true,
           access: {
-            read: hasRole(['admin']),
             update: hasRole(['admin']),
           },
         },
@@ -133,7 +132,6 @@ export const Products: CollectionConfig = {
           required: true,
           admin: { readOnly: true },
           access: {
-            read: hasRole(['admin']),
             update: hasRole(['admin']),
           },
         },
@@ -144,7 +142,6 @@ export const Products: CollectionConfig = {
           required: true,
           admin: { readOnly: true },
           access: {
-            read: hasRole(['admin']),
             update: hasRole(['admin']),
           },
         },
@@ -155,7 +152,6 @@ export const Products: CollectionConfig = {
           required: true,
           admin: { readOnly: true },
           access: {
-            read: hasRole(['admin']),
             update: hasRole(['admin']),
           },
         },

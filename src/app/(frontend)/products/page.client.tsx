@@ -1,16 +1,10 @@
 'use client'
 
 import { Media } from '@/components/Media'
+import { PriceRangeFilter } from '@/components/search/price-range-filter'
 import { RefinementList } from '@/components/search/refinement-list'
 import { SearchBox } from '@/components/search/searchbox'
-import { SortByHorizontal } from '@/components/search/sort-by'
-import { Shell } from '@/components/shell'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { getProductCardStyles } from '@/lib/product-card-styles'
-import { cn } from '@/lib/utils'
+import { SortBy } from '@/components/search/sort-by'
 import { Product } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { formatPrice } from '@/utilities/formatPrice'
@@ -18,76 +12,57 @@ import { formatSold } from '@/utilities/formatSold'
 import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
-import { FilterIcon } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Configure, InstantSearch, useInfiniteHits, useRefinementList } from 'react-instantsearch'
+import { useEffect, useState } from 'react'
+import { Configure, InstantSearch, useInfiniteHits } from 'react-instantsearch'
 import { useInView } from 'react-intersection-observer'
-import { ProductPageHeader } from './components/ProductPageHeader'
 
 const ProductCard = ({ product }: { product: Product }) => {
-  const styles = getProductCardStyles()
+  const discount = product.maxDiscount || 0
+  const salePrice = product.minPrice || 0
+  const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
+
   return (
-    <div className={styles.wrapper}>
-      <Link
-        className={cn('block h-full w-full cursor-pointer', styles.link)}
-        href={product.slug ? Routes.product(product.slug) : '#'}
-      >
-        <Card className={cn('w-full h-[131px] p-0!', styles.card)}>
-          <div className="w-full">
-            <div className="text-[14px] flex items-start p-0">
-              <div
-                className={cn(
-                  'h-[131px] w-[98px] flex items-center justify-center',
-                  styles.mediaContainer,
-                )}
-              >
-                <Media
-                  resource={product.image}
-                  className={cn('w-full h-full', styles.media)}
-                  imgClassName="absolute inset-0 h-[131px] w-[98px] object-cover"
-                />
-              </div>
-              <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2 relative">
-                {product.maxDiscount > 0 && (
-                  <Badge className={cn(styles.badge, 'absolute top-2 right-2')}>
-                    -{product.maxDiscount.toFixed(0)}%
-                  </Badge>
-                )}
-                <div>
-                  <p
-                    className={cn(
-                      'line-clamp-1 h-auto text-[14px] font-bold leading-[17px] pr-16',
-                      styles.name,
-                    )}
-                  >
-                    {product.name}
-                  </p>
-                  {product.description && (
-                    <p className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden">
-                      {product.description as unknown as string}
-                    </p>
-                  )}
-                </div>
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex">
-                    <span className={cn('text-xs text-muted-foreground', styles.price)}>
-                      {product.minPrice === product.maxPrice
-                        ? formatPrice(product.minPrice)
-                        : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
-                    </span>
-                  </div>
-                  {product.sold > 0 && (
-                    <span className="text-[12px] leading-none text-muted-foreground">
-                      Đã bán {formatSold(product.sold)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+    <div className="group cursor-pointer block">
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-sgz-surface">
+        <Media
+          resource={product.image}
+          className="w-full h-full"
+          imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {discount > 0 && (
+          <div className="absolute top-3 left-3 bg-[#ff97b5] text-[#380018] font-bold px-2 py-1 rounded text-xs z-10">
+            -{discount.toFixed(0)}%
           </div>
-        </Card>
+        )}
+        <div className="absolute bottom-3 right-3 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-20">
+          <Link
+            href={product.slug ? Routes.product(product.slug) : '#'}
+            className="bg-sgz-primary text-sgz-textDark p-3 rounded-xl shadow-xl flex hover:bg-white transition-colors"
+          >
+            <ShoppingCart className="w-5 h-5 leading-none" />
+          </Link>
+        </div>
+      </div>
+      <Link href={product.slug ? Routes.product(product.slug) : '#'}>
+        <h3 className="font-bold text-white line-clamp-1 mb-1 group-hover:text-sgz-primary transition-colors">
+          {product.name}
+        </h3>
       </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {discount > 0 && (
+            <span className="text-sgz-textMuted line-through text-sm">
+              {formatPrice(originalPrice)}
+            </span>
+          )}
+          <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
+        </div>
+        {product.sold > 0 && (
+          <div className="text-[11px] text-[#acaab0]">Đã bán {formatSold(product.sold)}</div>
+        )}
+      </div>
     </div>
   )
 }
@@ -95,23 +70,6 @@ const ProductCard = ({ product }: { product: Product }) => {
 const ProductHits = () => {
   const { items, showMore, isLastPage, results } = useInfiniteHits()
   const [loadingMore, setLoadingMore] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Determine number of columns based on screen width
-  const [columnCount, setColumnCount] = useState(1)
-
-  useEffect(() => {
-    const updateColumnCount = () => {
-      setColumnCount(window.innerWidth >= 768 ? 2 : 1)
-    }
-
-    updateColumnCount()
-    window.addEventListener('resize', updateColumnCount)
-    return () => window.removeEventListener('resize', updateColumnCount)
-  }, [])
-
-  // Calculate row count based on items length and column count
-  const rowCount = Math.ceil(items.length / columnCount)
 
   // Intersection observer for infinite loading
   const { ref: loadMoreRef, inView } = useInView({
@@ -119,56 +77,6 @@ const ProductHits = () => {
     rootMargin: '0px 0px 500px 0px',
     triggerOnce: false,
   })
-
-  // State to track visible range
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 0 })
-
-  // Update visible range on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return
-
-      const rect = containerRef.current.getBoundingClientRect()
-      const windowHeight = window.innerHeight
-
-      // If container is not in view at all, don't render any items
-      if (rect.bottom < 0 || rect.top > windowHeight) {
-        setVisibleRange({ start: 0, end: 0 })
-        return
-      }
-
-      // Calculate which rows are visible based on scroll position
-      const containerTop = rect.top
-      const containerHeight = rect.height
-      const rowHeight = 140 // Same as row height
-
-      // Calculate visible rows
-      const visibleTop = Math.max(0, -containerTop)
-      const visibleBottom = Math.min(containerHeight, windowHeight - containerTop)
-
-      // Convert to row indices
-      const startRow = Math.floor(visibleTop / rowHeight)
-      const endRow = Math.min(rowCount - 1, Math.ceil(visibleBottom / rowHeight))
-
-      // Add a small buffer (1 row) for smoother scrolling
-      const bufferStart = Math.max(0, startRow - 1)
-      const bufferEnd = Math.min(rowCount - 1, endRow + 1)
-
-      setVisibleRange({ start: bufferStart, end: bufferEnd })
-    }
-
-    // Initial calculation
-    handleScroll()
-
-    // Add scroll listener
-    window.addEventListener('scroll', handleScroll)
-    window.addEventListener('resize', handleScroll)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('resize', handleScroll)
-    }
-  }, [rowCount])
 
   // Reset loading state when results change
   useEffect(() => {
@@ -185,52 +93,19 @@ const ProductHits = () => {
     }
   }, [inView, showMore, isLastPage, loadingMore])
 
-  // Generate rows to render based on visible range
-  const rowsToRender = useMemo(() => {
-    const rows = []
-
-    for (let rowIndex = visibleRange.start; rowIndex <= visibleRange.end; rowIndex++) {
-      rows.push(
-        <div
-          key={rowIndex}
-          className="grid grid-cols-1 md:grid-cols-2 gap-2 absolute left-0 right-0"
-          style={{
-            top: `${rowIndex * 140}px`, // rowIndex * rowHeight
-            height: '140px',
-          }}
-        >
-          {Array.from({ length: columnCount }).map((_, columnIndex) => {
-            const itemIndex = rowIndex * columnCount + columnIndex
-            if (itemIndex >= items.length) return null
-
-            return (
-              <div key={`${rowIndex}-${columnIndex}`} className="w-full">
-                <ProductCard product={items[itemIndex] as unknown as Product} />
-              </div>
-            )
-          })}
-        </div>,
-      )
-    }
-
-    return rows
-  }, [visibleRange, items, columnCount])
-
   return (
-    <div className="mb-8 relative" ref={containerRef}>
-      <div
-        style={{
-          height: `${rowCount * 140}px`, // Total height based on number of rows
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {rowsToRender}
+    <div className="mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+        {items.map((item, index) => (
+          <div key={item.objectID || index} className="w-full">
+            <ProductCard product={item as unknown as Product} />
+          </div>
+        ))}
       </div>
 
       {!isLastPage && (
-        <div ref={loadMoreRef} className="flex justify-center py-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+        <div ref={loadMoreRef} className="flex justify-center py-8">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#ba9eff] border-t-transparent"></div>
         </div>
       )}
     </div>
@@ -239,93 +114,16 @@ const ProductHits = () => {
 
 function Sidebar() {
   return (
-    <div className="w-full lg:w-[280px] lg:min-w-[280px] lg:pr-2 mb-8 lg:mb-0 hidden lg:block">
-      <div className="sticky top-24 flex flex-col gap-2">
-        {/* Desktop search and sort */}
-        <div className="hidden lg:block">
-          <SearchBox />
-        </div>
-        <div className="hidden lg:block mb-2">
-          <SortByHorizontal
-            items={[
-              {
-                value: `${productIndex}:sold:desc`,
-                label: 'Bán chạy',
-              },
-              {
-                value: `${productIndex}:maxDiscount:desc`,
-                label: 'Giảm giá sốc',
-              },
-            ]}
-          />
-        </div>
-        <RefinementList attribute="categories" />
-      </div>
-    </div>
-  )
-}
-
-// Mobile filter component
-function MobileFilters() {
-  // Track selected refinements for the categories attribute
-  const { items } = useRefinementList({ attribute: 'categories' })
-  const selectedCategoriesCount = items.filter((item) => item.isRefined).length
-  const hasSelectedCategories = selectedCategoriesCount > 0
-
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant={hasSelectedCategories ? 'default' : 'outline'}
-          size="sm"
-          className="lg:hidden flex items-center gap-2"
-        >
-          <FilterIcon className="h-4 w-4" />
-          <span>Bộ lọc{hasSelectedCategories ? ` (${selectedCategoriesCount})` : ''}</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[85vw] sm:w-[350px] pt-10">
-        <SheetHeader>
-          <SheetTitle>Bộ lọc sản phẩm</SheetTitle>
-        </SheetHeader>
-        <div className="mt-6 h-[calc(100vh-120px)] overflow-y-auto pb-20">
-          <RefinementList attribute="categories" />
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-// Mobile search component that's always fixed at the bottom on mobile screens
-function MobileSearchBar() {
-  return (
-    <div className="container lg:hidden fixed bottom-0 left-0 right-0 p-2 z-10 bg-background shadow-md border rounded">
-      <div className="flex items-center gap-2">
-        <MobileFilters />
-        <div className="flex-1">
-          <SearchBox />
-        </div>
-      </div>
-      <div className="mt-2">
-        <SortByHorizontal
-          items={[
-            {
-              value: `${productIndex}:sold:desc`,
-              label: 'Bán chạy',
-            },
-            {
-              value: `${productIndex}:maxDiscount:desc`,
-              label: 'Giảm giá sốc',
-            },
-          ]}
-        />
+    <div className="hidden lg:block w-64 shrink-0">
+      <div className="sticky top-24 pt-2 space-y-6">
+        <RefinementList attribute="categories" className="text-[#acaab0]" />
+        <PriceRangeFilter attribute="minPrice" title="Khoảng giá" />
       </div>
     </div>
   )
 }
 
 const PageClient = () => {
-  /* Force the header to be dark mode while we have an image behind it */
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {
@@ -336,6 +134,7 @@ const PageClient = () => {
     <InstantSearch
       indexName={productIndex}
       searchClient={instantSearchClient.searchClient as any}
+      routing={true}
       future={{ preserveSharedStateOnUnmount: true }}
       initialUiState={{
         [productIndex]: {
@@ -344,21 +143,71 @@ const PageClient = () => {
       }}
     >
       <Configure analytics={false} hitsPerPage={12} />
-      <Shell>
-        <ProductPageHeader />
 
-        {/* Mobile search and filter bar */}
-        <MobileSearchBar />
+      <div className="mb-16">
+        <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+            <div className="space-y-2">
+              <h1 className="font-headline text-4xl font-bold tracking-tight text-white">
+                Khám phá Trò chơi
+              </h1>
+              <p className="text-[#acaab0]">Hàng ngàn tựa game tuyệt đỉnh đang chờ bạn.</p>
+            </div>
 
-        <div className="flex flex-col lg:flex-row lg:gap-6 mt-4 mb-[120px] lg:mb-0">
-          <Sidebar />
-          <div className="flex-1 flex flex-col gap-2">
-            <ProductHits />
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+              <div className="w-full sm:w-64">
+                <SearchBox />
+              </div>
+              <SortBy
+                title="Sắp xếp"
+                items={[
+                  {
+                    value: `${productIndex}:sold:desc`,
+                    label: 'Bán chạy nhất',
+                  },
+                  {
+                    value: `${productIndex}:minPrice:asc`,
+                    label: 'Giá từ Thấp đến Cao',
+                  },
+                  {
+                    value: `${productIndex}:minPrice:desc`,
+                    label: 'Giá từ Cao xuống Thấp',
+                  },
+                  {
+                    value: `${productIndex}:maxDiscount:desc`,
+                    label: '% Giảm giá nhiều nhất',
+                  },
+                  {
+                    value: `${productIndex}:createdAt:desc`,
+                    label: 'Mới nhất',
+                  },
+                  {
+                    value: `${productIndex}:createdAt:asc`,
+                    label: 'Cũ nhất',
+                  },
+                  {
+                    value: `${productIndex}:title:asc`,
+                    label: 'Tên A-Z',
+                  },
+                  {
+                    value: `${productIndex}:title:desc`,
+                    label: 'Tên Z-A',
+                  },
+                ]}
+              />
+            </div>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row lg:gap-12 mt-4 mb-[120px] lg:mb-0">
+            <Sidebar />
+            <div className="flex-1 flex flex-col gap-2">
+              <ProductHits />
+            </div>
           </div>
         </div>
-      </Shell>
+      </div>
     </InstantSearch>
   )
 }
-
 export default PageClient
+

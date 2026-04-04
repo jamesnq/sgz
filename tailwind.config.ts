@@ -74,6 +74,16 @@ const config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       colors: {
+        sgz: {
+          primary: '#8b5cf6',
+          primaryDark: '#7c3aed',
+          dark: '#0e0e12',
+          surface: '#19191e',
+          surfaceHover: '#25252b',
+          textMuted: '#acaab0',
+          textDark: '#39008c',
+          border: '#48474c',
+        },
         highlight: '#6d28d9',
         accent: {
           DEFAULT: 'hsl(var(--accent))',
@@ -114,7 +124,7 @@ const config = {
       },
       fontFamily: {
         mono: ['var(--font-geist-mono)'],
-        sans: ['var(--font-geist-sans)'],
+        sans: ['var(--font-be-vietnam-pro)', 'sans-serif'],
       },
       keyframes: {
         'accordion-down': {

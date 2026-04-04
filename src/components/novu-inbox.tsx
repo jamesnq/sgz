@@ -246,22 +246,20 @@ export default function NovuInbox() {
             colorPrimaryForeground: 'hsl(var(--primary-foreground))',
             colorSecondaryForeground: 'hsl(var(--secondary-foreground))',
           },
-        }}
-        renderBell={(unreadCount: any) => {
-          const count = typeof unreadCount === 'number' ? unreadCount : (unreadCount?.count ?? Number(unreadCount) ?? 0);
-          return (
-          <Button className="rounded-full relative w-8 h-8 p-0! py-2.5! px-0!" variant="ghost">
-            <BellIcon className="text-highlight" />
-            {count > 0 && (
+        } as any}
+        renderBell={(unreadCount: any) => (
+          <Button className="rounded-full relative w-8 h-8 !p-0 !py-2.5 !px-0 flex items-center justify-center transition-colors" variant="ghost">
+            <BellIcon className="size-5 text-sgz-primary" />
+            {unreadCount > 0 && (
               <span
-                className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-2.5 h-[20px] w-[20px] font-bold text-white bg-red-500 rounded-full px-0.5"
-                style={{ fontSize: count > 10 ? '10px' : '12px' }}
+                className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[0.625rem] h-[20px] w-[20px] font-bold text-white bg-red-500 rounded-full px-0.5"
+                style={{ fontSize: unreadCount > 10 ? '10px' : '12px' }}
               >
-                {count > 99 ? '99+' : count}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </Button>
-        )}}
+        )}
         applicationIdentifier={config.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER}
         subscriberId={currentChannel.subscriberId}
         subscriberHash={currentChannel.hash}
