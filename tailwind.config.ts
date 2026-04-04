@@ -32,7 +32,6 @@ const config: Config = {
     }),
   ],
   prefix: '',
-  // @ts-ignore
   safelist: [
     'lg:col-span-4',
     'lg:col-span-6',

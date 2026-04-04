@@ -1,7 +1,7 @@
 import { config } from '@/config'
-import { Meilisearch } from 'meilisearch'
+import { MeiliSearch } from 'meilisearch'
 
-export const meiliSearchServer = new Meilisearch({
+export const meiliSearchServer = new MeiliSearch({
   host: config.NEXT_PUBLIC_MEILI_HOST,
   apiKey: config.MEILI_MASTER_KEY,
 })

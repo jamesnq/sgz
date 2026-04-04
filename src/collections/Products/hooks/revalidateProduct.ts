@@ -64,8 +64,8 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
 
   payload.logger.info(`Revalidating old product at path: ${oldPath}`)
   revalidatePath(oldPath)
-  revalidateProductsPage();
-  (revalidateTag as any)('products-sitemap')
+  revalidateProductsPage()
+  revalidateTag('products-sitemap')
 
   return doc
 }
@@ -86,8 +86,8 @@ export const revalidateDelete: CollectionBeforeDeleteHook = async ({
     const path = Routes.product(doc?.slug)
 
     revalidatePath(path)
-    revalidateProductsPage();
-    (revalidateTag as any)('products-sitemap')
+    revalidateProductsPage()
+    revalidateTag('products-sitemap')
   }
   return doc
 }
