@@ -358,9 +358,9 @@ export async function sendProductOutOfStockNotification(
 export async function resetAndCreateSubscribers(subscriberIds: string[]): Promise<void> {
   try {
     // Delete existing subscribers
-    const res = await novu.subscribers.list()
+    const res = await (novu.subscribers as any).list()
     await Promise.all(
-      res.result.data.map(async (subscriber) => {
+      res.result.data.map(async (subscriber: any) => {
         if (subscriber.subscriberId) {
           await novu.subscribers.delete(subscriber.subscriberId)
         }

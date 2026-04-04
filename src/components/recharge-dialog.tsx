@@ -46,7 +46,7 @@ import { z } from 'zod'
 
 function RechargeBank() {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
-    resolver: zodResolver(RechargePayosSchema),
+    resolver: zodResolver(RechargePayosSchema as any),
     defaultValues: {
       amount: undefined,
     },
@@ -99,11 +99,11 @@ function RechargeBank() {
         <AccordionTrigger>Ngân hàng hoặc ví điện tử</AccordionTrigger>
         <AccordionContent className="p-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex flex-col gap-2">
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="amount"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormControl>
                       <div className="flex space-x-1 items-center">
@@ -176,7 +176,7 @@ function RechargeCard() {
   >({})
 
   const form = useForm<z.infer<typeof RechargeDoiTheSchema>>({
-    resolver: zodResolver(RechargeDoiTheSchema),
+    resolver: zodResolver(RechargeDoiTheSchema as any),
     defaultValues: {
       telco: '',
       code: '',
@@ -368,11 +368,11 @@ function RechargeCard() {
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex flex-col gap-4">
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="telco"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormLabel>Loại thẻ</FormLabel>
                     <Select onValueChange={(value) => handleTelcoChange(value)} value={field.value}>
@@ -412,9 +412,9 @@ function RechargeCard() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="amount"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormLabel>Mệnh giá</FormLabel>
                     <Select
@@ -476,9 +476,9 @@ function RechargeCard() {
               )}
 
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="serial"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormLabel>Số Serial</FormLabel>
                     <FormControl>
@@ -490,9 +490,9 @@ function RechargeCard() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as any}
                 name="code"
-                render={({ field }) => (
+                render={({ field }: any) => (
                   <FormItem>
                     <FormLabel>Mã thẻ</FormLabel>
                     <FormControl>

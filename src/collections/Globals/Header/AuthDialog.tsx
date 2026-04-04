@@ -10,9 +10,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { adminClient } from 'payload-auth-plugin/client'
+import { AuthClient } from 'payload-auth-plugin/client'
 
-const { signin } = adminClient()
+const authClient = new AuthClient('sgz-admin-auth')
 
 type OAuthProvider = 'google' | 'discord' | 'facebook'
 
@@ -37,20 +37,14 @@ export default function NewAuthDialog({ className }: { className?: string }) {
     setLoadingState((prev) => ({ ...prev, [provider]: true }))
 
     try {
-      const { isSuccess, isError } = await signin().oauth(provider)
-      if (isError) {
-        setError(`Đăng nhập bằng ${provider.charAt(0).toUpperCase() + provider.slice(1)} thất bại`)
-      }
-      if (isSuccess) {
-        window.location.reload()
-      }
+      // oauth() will redirect the user to the provider
+      authClient.signin().oauth(provider)
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : `Đăng nhập bằng ${provider.charAt(0).toUpperCase() + provider.slice(1)} thất bại`,
       )
-    } finally {
       setLoadingState((prev) => ({ ...prev, [provider]: false }))
     }
   }

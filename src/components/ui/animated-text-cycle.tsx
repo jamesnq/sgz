@@ -194,7 +194,7 @@ export default function AnimatedWordCycle({
                   <motion.span
                     key={`${arrayIndex}-${currentWord}`}
                     className={`inline-block font-bold ${className}`}
-                    variants={containerVariants}
+                    variants={containerVariants as any}
                     initial="hidden"
                     animate="visible"
                     exit="exit"
@@ -206,7 +206,7 @@ export default function AnimatedWordCycle({
                   <motion.span
                     key={`${arrayIndex}-exiting`}
                     className={`inline-block font-bold ${className}`}
-                    variants={containerVariants}
+                    variants={containerVariants as any}
                     initial="visible"
                     exit="exit"
                     style={{ whiteSpace: 'nowrap', opacity: 0 }}

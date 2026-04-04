@@ -1,10 +1,11 @@
 import { Accounts } from '@/collections/Accounts'
+import { Users } from '@/collections/Users'
 import { config } from '@/config'
 import { fieldsSelect } from '@payload-enchants/fields-select'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
-import { adminAuthPlugin } from 'payload-auth-plugin'
+import { authPlugin } from 'payload-auth-plugin'
 import { GoogleAuthProvider } from 'payload-auth-plugin/providers'
 import { env } from 'process'
 
@@ -26,8 +27,15 @@ export const plugins: Plugin[] = [
     },
   }),
   payloadCloudPlugin(),
-  adminAuthPlugin({
+  authPlugin({
+    name: 'sgz-admin-auth',
     enabled: true,
+    useAdmin: true,
+    usersCollectionSlug: Users.slug,
+    accountsCollectionSlug: Accounts.slug,
+    allowOAuthAutoSignUp: true,
+    successRedirectPath: '/admin',
+    errorRedirectPath: '/admin/login',
     providers: [
       GoogleAuthProvider({
         client_id: config.GOOGLE_PROVIDER_CLIENT_ID as string,
@@ -42,7 +50,5 @@ export const plugins: Plugin[] = [
       //   client_secret: config.FACEBOOK_PROVIDER_CLIENT_SECRET as string,
       // }),
     ],
-    allowSignUp: true,
-    accountsCollectionSlug: Accounts.slug,
   }),
 ]
