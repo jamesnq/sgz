@@ -687,7 +687,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
       productVariantId: currentVariant.id,
       shippingFields: shippingInfo,
       voucherCode: voucherCode || undefined,
-    }).then((x) => {
+    }).then((x: any) => {
       if (!x?.data?.order) return
       router.push(Routes.order(x.data.order.id))
     })

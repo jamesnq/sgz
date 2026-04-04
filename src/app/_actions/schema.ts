@@ -3,8 +3,7 @@ import { z } from 'zod'
 export const RechargePayosSchema = z.object({
   amount: z.coerce
     .number({
-      invalid_type_error: 'Số tiền nạp tối thiểu là 2000 VND',
-      required_error: 'Số tiền nạp tối thiểu là 2000 VND',
+      message: 'Số tiền nạp tối thiểu là 2000 VND',
     })
     .min(2000, 'Số tiền nạp tối thiểu là 2000 VND'),
 })

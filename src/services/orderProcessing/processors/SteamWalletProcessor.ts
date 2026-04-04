@@ -89,7 +89,7 @@ export class SteamWalletProcessor implements OrderProcessor {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          message: `Invalid metadata: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+          message: `Invalid metadata: ${(error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
         }
       }
       return { success: false, message: 'Failed to validate metadata' }
