@@ -130,6 +130,37 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
           return null
         }
 
+        const categoryIds = (product.categories || []).map((cat: any) => typeof cat === 'object' ? cat.id : cat)
+        if (categoryIds.length > 0) {
+           const relatedResult = await payload.find({
+             collection: 'products',
+             limit: 16,
+             depth: 0,
+             overrideAccess: true,
+             pagination: false,
+             where: getProductWhereClause({
+               and: [
+                 { id: { not_equals: product.id } },
+                 { categories: { in: categoryIds } },
+               ]
+             }),
+             sort: '-sold',
+             select: {
+               id: true,
+               slug: true,
+               name: true,
+               image: true,
+               minPrice: true,
+               maxPrice: true,
+               maxDiscount: true,
+               sold: true,
+             }
+           })
+           product.relatedProducts = relatedResult.docs
+        } else {
+           product.relatedProducts = []
+        }
+
         ;(product.variants as any) = product.variants
           .filter((variant) => {
             return (variant as ProductVariant).status !== 'PRIVATE'
@@ -226,7 +257,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
         return null
       }
     },
-    [`product-detail-${slug}`], // Cache key based on slug
+    [`product-detail-${slug}-current`], // Cache key based on slug
     {
       tags: [`products-${slug}`, 'product-detail'],
       revalidate: 3600, // Cache for 1 hour (matching page revalidate)

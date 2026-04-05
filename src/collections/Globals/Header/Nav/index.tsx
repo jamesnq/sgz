@@ -6,6 +6,18 @@ import { usePathname } from 'next/navigation'
 
 import type { Header as HeaderType } from '@/payload-types'
 import { Routes } from '@/utilities/routes'
+import { Menu } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { HeaderSearch } from '../HeaderSearch.client'
+import { Logo } from '@/components/Logo/Logo'
+
+export const navItems = [
+  { label: 'Trang chủ', href: Routes.HOME, sectionId: 'hero-section' },
+  { label: 'Sản phẩm', href: Routes.PRODUCTS, sectionId: 'products-section' },
+  { label: 'Bài viết', href: Routes.POSTS, sectionId: 'posts-section' },
+  { label: 'Liên hệ', href: '#footer', sectionId: 'footer' },
+]
 
 export function useScrollSpy(ids: string[], offset: number = 100) {
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -78,18 +90,13 @@ export function useScrollSpy(ids: string[], offset: number = 100) {
 export const HeaderNav: React.FC<{ data: HeaderType }> = ({}) => {
   const pathname = usePathname()
   
-  const navItems = [
-    { label: 'Trang chủ', href: Routes.HOME, sectionId: 'hero-section' },
-    { label: 'Sản phẩm', href: Routes.PRODUCTS, sectionId: 'products-section' },
-    { label: 'Bài viết', href: Routes.POSTS, sectionId: 'posts-section' },
-    { label: 'Liên hệ', href: '#footer', sectionId: 'footer' },
-  ]
+  const navItemsRef = navItems
 
   const activeSection = useScrollSpy(pathname === '/' ? navItems.map(item => item.sectionId) : [])
 
   return (
     <nav className="flex gap-8 items-center font-sans">
-      {navItems.map((item, i) => {
+      {navItemsRef.map((item, i) => {
         let isActive = false
 
         if (pathname === '/') {
@@ -115,6 +122,61 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({}) => {
         )
       })}
     </nav>
+  )
+}
+
+export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
+  const pathname = usePathname()
+  const activeSection = useScrollSpy(pathname === '/' ? navItems.map(item => item.sectionId) : [])
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="lg:hidden shrink-0 text-white hover:bg-sgz-surface hover:text-sgz-primary">
+          <Menu className="h-6 w-6" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[300px] sm:w-[350px] bg-sgz-dark border-r-sgz-border overflow-y-auto">
+        <SheetHeader className="pb-6 border-b border-sgz-border text-left">
+          <SheetTitle asChild>
+            <Link href={Routes.HOME} onClick={() => setOpen(false)} className="inline-block">
+              <Logo loading="lazy" className="h-[40px] w-auto" />
+            </Link>
+          </SheetTitle>
+        </SheetHeader>
+        <div className="py-6 flex flex-col gap-6">
+          <HeaderSearch className="w-full flex" />
+          <nav className="flex flex-col gap-4">
+            {navItems.map((item, i) => {
+              let isActive = false
+              if (pathname === '/') {
+                isActive = activeSection === item.sectionId
+              } else {
+                if (item.href !== '/' && !item.href.includes('#footer') && pathname.startsWith(item.href)) {
+                  isActive = true
+                }
+              }
+
+              return (
+                <Link
+                  key={i}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={
+                    isActive
+                      ? 'text-sgz-primary font-bold text-lg'
+                      : 'text-sgz-textMuted font-medium hover:text-white text-lg transition-colors'
+                  }
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 

@@ -23,7 +23,10 @@ import { Configure, InstantSearch, useHits } from 'react-instantsearch'
 
 const HeroSection = ({ stats }: { stats: { orders: number; users: number; products: number } }) => {
   return (
-    <section id="hero-section" className="relative h-[550px] md:h-[650px] flex items-center overflow-hidden">
+    <section
+      id="hero-section"
+      className="relative h-[550px] md:h-[650px] flex items-center overflow-hidden"
+    >
       <div className="absolute inset-0 z-0 bg-gradient-to-l from-sgz-textDark via-[#0f0f13] to-sgz-dark">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent z-10 opacity-60"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10"></div>
@@ -120,7 +123,9 @@ const ProductCard = ({ product }: { product: Product }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {discount > 0 && (
-            <span className="text-sgz-textMuted line-through text-sm">{formatPrice(originalPrice)}</span>
+            <span className="text-sgz-textMuted line-through text-sm">
+              {formatPrice(originalPrice)}
+            </span>
           )}
           <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
         </div>
@@ -192,8 +197,7 @@ const ProductGridWithHits = () => {
 
 const PostCard = ({ post }: { post: Post }) => {
   const tags = post.tags as PostTag[] | undefined
-  const category =
-    tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : 'Tin Tức'
+  const category = tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : null
 
   return (
     <article
@@ -213,9 +217,11 @@ const PostCard = ({ post }: { post: Post }) => {
       </div>
       <div className="p-6 space-y-4 flex flex-col flex-1">
         <div>
-          <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
-            {category}
-          </span>
+          {category && (
+            <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
+              {category}
+            </span>
+          )}
         </div>
         <Link href={post.slug ? Routes.post(post.slug) : '#'} className="flex-1">
           <h3 className="font-bold text-white text-xl leading-snug line-clamp-2 group-hover:text-sgz-primary transition-colors">
@@ -279,7 +285,13 @@ interface HomePageClientProps {
   serviceProducts?: Product[]
 }
 
-const HomePageClient = ({ posts, stats, latestProducts, topUpProducts, serviceProducts }: HomePageClientProps) => {
+const HomePageClient = ({
+  posts,
+  stats,
+  latestProducts,
+  topUpProducts,
+  serviceProducts,
+}: HomePageClientProps) => {
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {
@@ -292,10 +304,10 @@ const HomePageClient = ({ posts, stats, latestProducts, topUpProducts, servicePr
       searchClient={instantSearchClient.searchClient as any}
       future={{ preserveSharedStateOnUnmount: true }}
     >
-      <Configure 
-        analytics={false} 
-        hitsPerPage={10} 
-        filters="categories='Key Steam' OR categories='Tài khoản steam offline'" 
+      <Configure
+        analytics={false}
+        hitsPerPage={10}
+        filters="categories='Key Steam' OR categories='Tài khoản steam offline'"
       />
       <div className="mb-16">
         <HeroSection stats={stats} />

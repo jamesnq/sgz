@@ -81,9 +81,9 @@ function AutocompleteDropdown() {
   )
 }
 
-export const HeaderSearch = () => {
+export const HeaderSearch = ({ className }: { className?: string }) => {
   return (
-    <div className="hidden md:flex w-[200px] lg:w-[260px]">
+    <div className={className || "hidden md:flex w-[200px] lg:w-[260px]"}>
       <InstantSearch
         indexName={productIndex}
         searchClient={instantSearchClient.searchClient as any}

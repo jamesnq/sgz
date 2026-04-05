@@ -53,20 +53,27 @@ interface FooterProps extends React.HTMLAttributes<HTMLDivElement> {
 const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
   ({ className, brand, columns, copyright, ...props }, ref) => {
     return (
-      <footer id="footer" ref={ref} className={cn('w-full border-t border-sgz-border bg-sgz-dark/50 pt-16 pb-8', className)} {...props}>
+      <footer
+        id="footer"
+        ref={ref}
+        className={cn('w-full border-t border-sgz-border bg-sgz-dark/50 pt-16 pb-8', className)}
+        {...props}
+      >
         <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0">
             <div className="lg:col-span-4 flex flex-col items-start">
               <Link className="flex items-center mb-6" href="/">
-                <Logo className="h-10 w-auto" />
+                <Logo className="h-20 md:h-24 w-auto" />
               </Link>
               <p className="text-sgz-textMuted max-w-sm leading-relaxed">{brand.description}</p>
             </div>
-            
+
             <div className="grid grid-cols-2 lg:col-span-8 lg:justify-items-end gap-12 lg:gap-8">
               {columns.map(({ title, links }) => (
                 <div key={title} className="flex flex-col items-start lg:items-end">
-                  <h3 className="text-white font-bold tracking-wide uppercase text-sm mb-6">{title}</h3>
+                  <h3 className="text-white font-bold tracking-wide uppercase text-sm mb-6">
+                    {title}
+                  </h3>
                   <ul className="space-y-4">
                     {links.map(({ name, Icon, href, target }) => (
                       <li key={name} className="flex lg:justify-end">
@@ -85,7 +92,7 @@ const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
               ))}
             </div>
           </div>
-          
+
           {copyright && (
             <div className="mt-20 border-t border-sgz-border/50 pt-8 flex justify-center">
               <p className="text-sm text-sgz-textMuted">{copyright}</p>
@@ -130,15 +137,15 @@ export default function Footer() {
               target: '_blank',
             },
             {
-              name: 'Facebook',
+              name: 'Fanpage',
               Icon: FacebookIcon,
               href: 'https://www.facebook.com/subgamezoneoffical',
               target: '_blank',
             },
             {
-              name: 'Nhóm Facebook',
+              name: 'Nhóm Cộng Đồng',
               Icon: FacebookIcon,
-              href: 'https://www.facebook.com/groups/1442376023838259',
+              href: 'https://www.facebook.com/groups/brawlhallavnoffical',
               target: '_blank',
             },
           ],

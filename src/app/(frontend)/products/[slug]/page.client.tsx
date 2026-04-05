@@ -54,7 +54,7 @@ import { cn } from '@/utilities/ui'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert } from 'lucide-react'
+import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, useQueryState } from 'nuqs'
@@ -693,7 +693,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
 
   return (
     <button 
-      className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#8b5cf6]/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center" 
+      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center" 
       disabled={isExecuting || !isFormValid} 
       onClick={checkout}
     >
@@ -911,9 +911,13 @@ const MemoizedCheckout = React.memo(
 
           {currentVariant.status === 'ORDER' && workingTime}
           {user ? <CheckoutButton /> : (
-            <div className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-[#8b5cf6]/20 transition-all active:scale-[0.98] border-none cursor-pointer">
-              <AuthDialog />
-            </div>
+            <AuthDialog>
+              <button 
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+              >
+                Đăng nhập để thanh toán
+              </button>
+            </AuthDialog>
           )}
         </div>
       </div>
@@ -931,46 +935,51 @@ function Checkout({ className }: { className?: string }) {
   return <MemoizedCheckout className={className} />
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const styles = getProductCardStyles()
+function GridProductCard({ product }: { product: Product }) {
+  const discount = product.maxDiscount || 0
+  const salePrice = product.minPrice || 0
+  const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
 
   return (
-    <div className={styles.wrapper}>
-      <Link
-        href={Routes.product(product.slug!)}
-        className={cn('flex p-1 items-center rounded-md', styles.link)}
-      >
-        <Card className={cn('flex w-full items-center', styles.card)}>
-          <div className={cn('h-[64px] w-[48px] rounded-md', styles.mediaContainer)}>
-            <Media
-              resource={product.image}
-              imgClassName={cn('absolute h-[64px] w-[48px] ease-in-out object-cover', styles.media)}
-            />
+    <div className="group cursor-pointer block">
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-[#16161e] border border-white/5">
+        <Media
+          resource={product.image}
+          className="w-full h-full"
+          imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {discount > 0 && (
+          <div className="absolute top-2 left-2 bg-[#ff97b5] text-[#380018] font-bold px-1.5 py-0.5 rounded text-[10px]">
+            -{discount.toFixed(0)}%
           </div>
-          <div className="flex flex-1 items-start gap-2 p-2">
-            <div className="flex h-full flex-col justify-between">
-              <div className={cn('font-bold text-sm', styles.name)}>{product.name}</div>
-              <div className="flex items-center gap-2">
-                <div className={cn('text-xs text-muted-foreground', styles.price)}>
-                  {product.minPrice === product.maxPrice
-                    ? formatPrice(product.minPrice)
-                    : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
-                </div>
-                {product.maxDiscount > 0 && (
-                  <Badge className={cn('text-xs px-1 py-0', styles.badge)}>
-                    -{product.maxDiscount.toFixed(0)}%
-                  </Badge>
-                )}
-              </div>
-              {product.sold > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  Đã bán {formatSold(product.sold)}
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
+        )}
+        <div className="absolute bottom-2 right-2 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+          <Link
+            href={product.slug ? Routes.product(product.slug) : '#'}
+            className="bg-[#8b5cf6] text-white p-2 rounded-xl shadow-xl flex hover:bg-white hover:text-[#8b5cf6] transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4 leading-none" />
+          </Link>
+        </div>
+      </div>
+      <Link href={product.slug ? Routes.product(product.slug) : '#'}>
+        <h3 className="font-bold text-white text-sm line-clamp-1 mb-1 hover:text-[#8b5cf6] transition-colors">
+          {product.name}
+        </h3>
       </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {discount > 0 && (
+            <span className="text-gray-500 line-through text-[11px]">
+              {formatPrice(originalPrice)}
+            </span>
+          )}
+          <span className="text-[#8b5cf6] font-bold text-sm">{formatPrice(salePrice)}</span>
+        </div>
+        {product.sold > 0 && (
+          <div className="text-[10px] text-gray-500">Đã bán {formatSold(product.sold)}</div>
+        )}
+      </div>
     </div>
   )
 }
@@ -983,17 +992,85 @@ function ProductRelated({ className }: { className?: string }) {
     if (typeof product.relatedProducts[0] !== 'object') return []
     return product.relatedProducts as Product[]
   }, [product])
+
+  const [currentPage, setCurrentPage] = useState(0)
+  
   if (relatedProducts.length <= 0) return null
+
+  const itemsPerPage = 4
+  const totalPages = Math.ceil(relatedProducts.length / itemsPerPage)
+
+  const handlePrev = React.useCallback(() => {
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages)
+  }, [totalPages])
+
+  const handleNext = React.useCallback(() => {
+    setCurrentPage((prev) => (prev + 1) % totalPages)
+  }, [totalPages])
+
+  const pages = []
+  for (let i = 0; i < relatedProducts.length; i += itemsPerPage) {
+    pages.push(relatedProducts.slice(i, i + itemsPerPage))
+  }
+
   return (
-    <section className={cn('bg-[#16161e] border border-white/10 rounded-2xl p-6', className)}>
-      <h2 className="text-lg font-bold mb-4 text-white flex items-center gap-2">
-        <span className="w-1 h-5 bg-[#8b5cf6] rounded-full"></span>
-        Sản phẩm liên quan
-      </h2>
-      <div className="space-y-2">
-        {relatedProducts.map((relatedProduct) => (
-          <ProductCard key={relatedProduct.id} product={relatedProduct} />
-        ))}
+    <section className={cn('pt-4', className)}>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-[#8b5cf6] rounded-full"></span>
+          Sản phẩm liên quan
+        </h2>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2 hidden md:flex">
+            <button 
+              onClick={handlePrev}
+              className="w-8 h-8 rounded-full bg-[#16161e] border border-white/10 hover:bg-[#8b5cf6] hover:border-[#8b5cf6] flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={handleNext}
+              className="w-8 h-8 rounded-full bg-[#16161e] border border-white/10 hover:bg-[#8b5cf6] hover:border-[#8b5cf6] flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative w-full group">
+        <div className="overflow-hidden">
+          <div 
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${currentPage * 100}%)` }}
+          >
+            {pages.map((pageProducts, pageIndex) => (
+              <div key={pageIndex} className="w-full shrink-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {pageProducts.map((relatedProduct) => (
+                    <GridProductCard key={relatedProduct.id} product={relatedProduct} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-6 gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  currentPage === i ? "w-6 bg-[#8b5cf6]" : "w-1.5 bg-gray-600 hover:bg-gray-400"
+                )}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -1039,6 +1116,25 @@ const ProductDescription = React.memo(function ProductDescription() {
     return hasText(variantDescription) ? variantDescription : productDescription
   }, [variantDescription, productDescription])
 
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const [isExpanded, setIsExpanded] = React.useState(false)
+  const [isLongContent, setIsLongContent] = React.useState(false)
+
+  React.useEffect(() => {
+    const checkHeight = () => {
+      if (contentRef.current && contentRef.current.scrollHeight > 320) {
+        setIsLongContent(true)
+      } else {
+        setIsLongContent(false)
+        setIsExpanded(true) // Expand implicitly so it doesn't clip if slightly over
+      }
+    }
+    
+    checkHeight()
+    const timeout = setTimeout(checkHeight, 500)
+    return () => clearTimeout(timeout)
+  }, [description])
+
   if (!hasText(description)) return null
 
   return (
@@ -1047,9 +1143,32 @@ const ProductDescription = React.memo(function ProductDescription() {
         <span className="w-1 h-6 bg-[#8b5cf6] rounded-full"></span>
         Mô tả sản phẩm
       </h2>
-      <div className="space-y-4 text-gray-300 leading-relaxed text-sm md:text-base">
-        <RichText className="text-sm" data={description as any} enableGutter={false}></RichText>
+      <div 
+        ref={contentRef}
+        className={cn(
+          "relative transition-all duration-500 ease-in-out",
+          !isExpanded && isLongContent ? "max-h-[300px] overflow-hidden" : ""
+        )}
+      >
+        <div className="space-y-4 text-gray-300 leading-relaxed text-sm md:text-base">
+          <RichText className="text-sm" data={description as any} enableGutter={false}></RichText>
+        </div>
+        
+        {!isExpanded && isLongContent && (
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#16161e] to-transparent pointer-events-none" />
+        )}
       </div>
+
+      {isLongContent && (
+        <div className="mt-6 flex justify-center">
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-[#8b5cf6] hover:text-white transition-colors text-sm font-semibold py-2 px-6 rounded-full border border-[#8b5cf6]/30 hover:bg-[#8b5cf6]/10 flex items-center justify-center min-w-[140px]"
+          >
+            {isExpanded ? 'Thu gọn' : 'Hiển thị thêm'}
+          </button>
+        </div>
+      )}
     </section>
   )
 })
@@ -1136,19 +1255,22 @@ const CheckoutOrOutOfStock = React.memo(function CheckoutOrOutOfStock() {
 const MemoizedScreen = React.memo(function ScreenInner() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1 space-y-8" data-purpose="content-left">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_400px] gap-8">
+        <div className="order-1 lg:col-start-1 lg:row-start-1">
           <Head />
-          <ProductDescription />
-          <ProductRelated className="md:hidden" />
         </div>
-        <aside className="w-full lg:w-[400px] space-y-6" data-purpose="checkout-sidebar">
+
+        <aside className="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6 w-full lg:w-[400px] lg:order-none" data-purpose="checkout-sidebar">
           <div className="space-y-6 lg:sticky lg:top-24">
             <ProductForm />
             <CheckoutOrOutOfStock />
           </div>
-          <ProductRelated className="hidden md:block" />
         </aside>
+
+        <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8 lg:order-none" data-purpose="content-left">
+          <ProductDescription />
+          <ProductRelated className="mt-8" />
+        </div>
       </div>
     </main>
   )

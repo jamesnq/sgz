@@ -33,3 +33,15 @@ export function RechargeButton() {
 
   return <RechargeDialog trigger={plusButtonTrigger} />
 }
+
+export function UserBalanceWidget() {
+  const { user } = useAuth()
+  if (!user) return null
+
+  return (
+    <div className="flex items-center gap-2 bg-sgz-surface py-1.5 px-2 rounded-xl border border-sgz-border">
+      <DisplayBalance />
+      <RechargeButton />
+    </div>
+  )
+}

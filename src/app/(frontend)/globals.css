@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-
+@config "../../../tailwind.config.ts";
 @layer base {
   h1,
   h2,
@@ -130,8 +130,7 @@
     outline: 1px solid hsl(var(--primary)) !important;
     outline-offset: 1px;
   }
-  #cw-bubble-holder
-    > button.woot-elements--right.woot-widget-bubble.woot--close {
+  #cw-bubble-holder > button.woot-elements--right.woot-widget-bubble.woot--close {
     background-color: hsl(var(--background)) !important;
     color: hsl(var(--primary)) !important;
     outline: 1px solid hsl(var(--primary)) !important;
@@ -159,8 +158,7 @@
   #woot-widget--expanded__text {
     font-size: clamp(12px, 2vw, 15px) !important;
   }
-  #cw-bubble-holder
-    > button.woot-widget-bubble.woot-elements--right.woot-widget--expanded {
+  #cw-bubble-holder > button.woot-widget-bubble.woot-elements--right.woot-widget--expanded {
     height: clamp(28px, 2vw, 48px) !important;
   }
 

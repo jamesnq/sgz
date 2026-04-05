@@ -8,10 +8,10 @@ import { Logo } from '@/components/Logo/Logo'
 
 import { LucideLogOut, Search } from 'lucide-react'
 import AuthDialog from './AuthDialog'
-import { HeaderNav } from './Nav'
+import { HeaderNav, MobileNav } from './Nav'
 import { HeaderSearch } from './HeaderSearch.client'
 
-import { DisplayBalance, RechargeButton } from '@/components/display-balance'
+import { UserBalanceWidget } from '@/components/display-balance'
 import NovuInbox from '@/components/novu-inbox'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button, type ButtonProps } from '@/components/ui/button'
@@ -128,7 +128,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
     <header className="bg-sgz-dark/90 backdrop-blur-xl font-sans antialiased shadow-[0_10px_40px_-15px_rgba(139,92,246,0.15)] sticky top-0 z-50 transition-all duration-300 border-b border-sgz-border">
       <div className="flex justify-between items-center w-full px-6 lg:px-12 h-20 max-w-[1920px] mx-auto gap-4">
-        <div className="flex items-center gap-8 lg:gap-12 shrink-0">
+        <div className="flex items-center gap-4 lg:gap-12 shrink-0">
+          <MobileNav data={data} />
           <Link href={Routes.HOME} className="flex items-center shrink-0">
             <Logo loading="eager" priority="high" className="aspect-square object-contain" />
           </Link>
@@ -140,10 +141,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div className="flex items-center gap-3 md:gap-5 shrink-0 ml-auto">
           <HeaderSearch />
 
-          <div className="flex items-center gap-2 bg-sgz-surface py-1.5 px-2 rounded-xl border border-sgz-border">
-            <DisplayBalance />
-            <RechargeButton />
-          </div>
+          <UserBalanceWidget />
           <NovuInbox />
           <AuthDropdown />
         </div>

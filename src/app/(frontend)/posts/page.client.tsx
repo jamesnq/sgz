@@ -20,8 +20,7 @@ interface PostsPageClientProps {
 
 const PostCard = ({ post }: { post: Post }) => {
   const tags = post.tags as PostTag[] | undefined
-  const category =
-    tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : 'Tin Tức'
+  const category = tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : null
 
   return (
     <article
@@ -41,9 +40,11 @@ const PostCard = ({ post }: { post: Post }) => {
       </div>
       <div className="p-6 space-y-4 flex flex-col flex-1">
         <div>
-          <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
-            {category}
-          </span>
+          {category && (
+            <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
+              {category}
+            </span>
+          )}
         </div>
         <Link href={post.slug ? Routes.post(post.slug) : '#'} className="flex-1">
           <h3 className="font-bold text-white text-xl leading-snug line-clamp-2 group-hover:text-sgz-primary transition-colors">

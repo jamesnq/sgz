@@ -23,7 +23,7 @@ interface OAuthButtonProps {
   icon: React.ReactNode
 }
 
-export default function NewAuthDialog({ className }: { className?: string }) {
+export default function NewAuthDialog({ className, children }: { className?: string; children?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [loadingState, setLoadingState] = useState<Record<OAuthProvider, boolean>>({
     google: false,
@@ -69,7 +69,7 @@ export default function NewAuthDialog({ className }: { className?: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className={className}>Đăng nhập</Button>
+        {children ? children : <Button className={className}>Đăng nhập</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

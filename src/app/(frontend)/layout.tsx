@@ -24,10 +24,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
         <InitTheme />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className={`${beVietnamPro.variable} ${beVietnamPro.className} antialiased`}>
         <Providers>
@@ -49,9 +45,17 @@ export const metadata: Metadata = {
   },
   description: `${config.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-32x32.png',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon.ico?v=2' },
+      { url: '/favicon-96x96.png?v=2', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon.svg?v=2', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico?v=2',
+    apple: '/apple-touch-icon.png?v=2',
+  },
+  manifest: '/site.webmanifest',
+  appleWebApp: {
+    title: config.NEXT_PUBLIC_SITE_NAME,
   },
   // openGraph: mergeOpenGraph(),
 }
