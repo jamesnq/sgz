@@ -41,8 +41,12 @@ export async function productsToSearch(products: Product[]): Promise<Product[]> 
           product.image = image
           product.categories = categories
         }
-        // @ts-expect-error ignore
-        product.categories = product.categories.map((c) => c.title)
+        // Ensure product.categories only maps valid objects with titles
+        product.categories = (product.categories || [])
+          .filter(Boolean)
+          .map((c: any) => c?.title || c)
+          .filter((c: any) => typeof c === 'string' && c.trim().length > 0)
+          
         // @ts-expect-error ignore
         product.description = product.description && textOnly(product.description)
         return product
