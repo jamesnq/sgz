@@ -54,7 +54,7 @@ import { cn } from '@/utilities/ui'
 import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert } from 'lucide-react'
+import { ArrowUpDown, Loader2, MinusIcon, PlusIcon, Search, TriangleAlert, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, useQueryState } from 'nuqs'
@@ -243,19 +243,19 @@ function Head() {
   const product = useProductPageContext((state) => state.product)
   const currentVariant = useProductPageContext((state) => state.currentVariant)
   return (
-    <div className="h-60 mb-5">
-      <div className="relative flex h-full items-center gap-[24px] max-md:flex-col md:items-end">
-        <Media
-          resource={currentVariant?.image || product.image}
-          imgClassName="relative h-[242px] w-[180px] rounded-[24px] object-cover md:-bottom-[24px] bg-secondary"
-        />
-        <div className="flex-1 md:my-[24px]">
-          <h1 className="text-[18px] font-bold leading-none max-sm:text-center md:text-[24px] md:leading-[1.4]">
-            {currentVariant?.name || product.name}
-          </h1>
-        </div>
-      </div>
-    </div>
+    <section className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+      {/* 
+      <Media
+        resource={currentVariant?.image || product.image}
+        imgClassName="w-full h-auto object-cover aspect-video lg:aspect-auto max-h-[500px]"
+      />
+      */}
+      <img 
+        src="/1crimsondesert.jpg" 
+        alt="Crimson Desert Test Banner" 
+        className="w-full h-auto object-cover aspect-video lg:aspect-auto max-h-[500px]" 
+      />
+    </section>
   )
 }
 
@@ -302,7 +302,7 @@ const MemoizedProductVariantCard = React.memo(
               imgClassName={cn('absolute h-[96px] w-[72px] ease-in-out object-cover', styles.media)}
             />
           </div>
-          <div className="flex flex-3 items-start gap-1 p-1">
+          <div className="flex flex-[3] items-start gap-1 p-1">
             <div className="flex h-full flex-1 flex-col justify-between">
               <div className={styles.name + ' max-md:line-clamp-2 line-clamp-3'}>
                 {productVariant.name}
@@ -638,26 +638,24 @@ const MemoizedShippingForm = React.memo(
     )
 
     return (
-      <Card id="shipping-form" className="w-full overflow-hidden">
-        <CardHeader>Thông tin đơn hàng</CardHeader>
-        <CardContent>
-          <div>
-            {form.fields?.map((field: any, index: number) => {
-              const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
-              if (!Field) return null
+      <div id="shipping-form" className="bg-[#16161e] border border-white/10 rounded-2xl p-6 shadow-xl w-full overflow-hidden">
+        <h2 className="text-xl font-bold text-white mb-4">Thông tin đơn hàng</h2>
+        <div>
+          {form.fields?.map((field: any, index: number) => {
+            const Field: React.FC<any> = fields?.[field.blockType as keyof typeof fields]
+            if (!Field) return null
 
-              return (
-                <div className="mb-4 last:mb-0" key={index}>
-                  <MemoizedFormField
-                    field={field}
-                    onChange={createFieldChangeHandler(field.name)}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+            return (
+              <div className="mb-4 last:mb-0" key={index}>
+                <MemoizedFormField
+                  field={field}
+                  onChange={createFieldChangeHandler(field.name)}
+                />
+              </div>
+            )
+          })}
+        </div>
+      </div>
     )
   },
   // Custom comparison function to prevent re-renders when form ID is the same
@@ -694,10 +692,14 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   }, [executeAsync, quantity, currentVariant.id, shippingInfo, voucherCode, router])
 
   return (
-    <Button className="w-full font-bold" disabled={isExecuting || !isFormValid} onClick={checkout}>
+    <button 
+      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center" 
+      disabled={isExecuting || !isFormValid} 
+      onClick={checkout}
+    >
       {isExecuting && <Loader2 className="animate-spin mr-2" />}
       Thanh toán
-    </Button>
+    </button>
   )
 })
 
@@ -740,7 +742,8 @@ function VoucherInput() {
   }, [setVoucherCode, setAppliedVoucherDiscount])
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5 w-full">
+      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Voucher</label>
       <div className="flex gap-2">
         <Input
           placeholder="Nhập mã voucher"
@@ -752,24 +755,24 @@ function VoucherInput() {
               setAppliedVoucherDiscount(0)
             }
           }}
-          className="flex-1"
+          className="flex-1 bg-[#0f0f13] border-white/10 rounded-lg text-sm text-white focus:ring-[#8b5cf6] focus:border-[#8b5cf6] py-2 h-[42px]"
           disabled={applied}
         />
         {applied ? (
-          <Button variant="outline" size="sm" onClick={handleClear}>
+          <button className="px-4 py-2 bg-[#2d2d39] hover:bg-[#3d3d4d] text-white rounded-lg text-xs font-bold transition-colors h-[42px]" onClick={handleClear}>
             Huỷ
-          </Button>
+          </button>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="px-4 py-2 bg-[#2d2d39] hover:bg-[#3d3d4d] text-white rounded-lg text-xs font-bold transition-colors h-[42px] disabled:opacity-50 flex items-center justify-center"
             onClick={handleApply}
             disabled={isExecuting || !voucherCode.trim()}
           >
             {isExecuting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Áp dụng'}
-          </Button>
+          </button>
         )}
       </div>
+      {_error && <p className="text-xs text-red-500 mt-1">{_error}</p>}
     </div>
   )
 }
@@ -778,7 +781,10 @@ function VoucherInput() {
 const MemoizedCheckout = React.memo(
   function CheckoutInner({ className }: { className?: string }) {
     const user = useAuth().user
+    const product = useProductPageContext((state) => state.product)
+    const variants = product.variants as ProductVariant[]
     const currentVariant = useProductPageContext((state) => state.currentVariant)
+    const setCurrentVariant = useProductPageContext((state) => state.setCurrentVariant)
     const quantity = useProductPageContext((state) => state.quantity)
     const incQuantity = useProductPageContext((state) => state.incQuantity)
     const decQuantity = useProductPageContext((state) => state.decQuantity)
@@ -808,77 +814,113 @@ const MemoizedCheckout = React.memo(
     const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
     const finalPrice = Math.max(0, calc.totalPrice - appliedVoucherDiscount)
 
-    return (
-      <Card id="checkout" style={{ scrollMarginTop: '100px' }} className={cn('p-6', className)}>
-        <div className="flex w-full text-sm items-center justify-between">
-          <span>Giá gốc</span>
-          <span>{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
-        </div>
-        {calc.totalDiscountPrice > 0 ? (
-          <div className="flex w-full text-sm items-center justify-between">
-            <span>Giá giảm</span>
-            <span>{formatPrice(calc.totalDiscountPrice, 'VND')}</span>
-          </div>
-        ) : null}
-        {appliedVoucherDiscount > 0 && (
-          <div className="flex w-full text-sm items-center justify-between text-green-500">
-            <span>Mã giảm giá</span>
-            <span>-{formatPrice(appliedVoucherDiscount, 'VND')}</span>
-          </div>
-        )}
-        {currentVariant.max > 1 && (
-          <div className="flex justify-between mt-2">
-            <span>Số lượng</span>
-            <div className="flex">
-              <Button
-                id={`decrement-quantity`}
-                disabled={quantity <= currentVariant.min}
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-8 shrink-0 rounded-r-none"
-                onClick={() => decQuantity()}
-              >
-                <MinusIcon className="size-3 text-highlight" aria-hidden="true" />
-              </Button>
-              <div className="flex items-center justify-center h-8 w-16 rounded-none border-y border-x-0">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  className="w-full text-center bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  value={editingQuantity !== undefined ? editingQuantity : quantity}
-                  onFocus={() => setEditingQuantity(quantity)}
-                  onChange={handleQuantityChange}
-                  onBlur={handleQuantityBlur}
-                />
-              </div>
-              <Button
-                id={`increment-quantity`}
-                disabled={quantity >= currentVariant.max}
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-8 shrink-0 rounded-l-none"
-                onClick={() => incQuantity()}
-              >
-                <PlusIcon className="size-3 text-highlight" aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-        )}
+    const productTitle = currentVariant?.name || product.name
+    const discountPercentage = calc.totalOriginalPrice > 0 ? ((calc.totalDiscountPrice / calc.totalOriginalPrice) * 100).toFixed(0) : 0
 
-        <hr className="my-4 border-t border-border" />
-        <div className="space-y-4">
-          <VoucherInput />
-          <div className="flex w-full items-center justify-between">
-            <span className="font-bold">Tổng tiền</span>
-            <span className="font-bold text-highlight">{formatPrice(finalPrice, 'VND')}</span>
-          </div>
-          {currentVariant.status === 'ORDER' && workingTime}
-          {user ? <CheckoutButton /> : <AuthDialog className="w-full" />}
+    return (
+      <div id="checkout" style={{ scrollMarginTop: '100px' }} className={cn('bg-[#16161e] border border-white/10 rounded-2xl p-6 shadow-xl', className)}>
+        <h1 className="text-xl font-bold text-white mb-2 leading-tight">
+          {productTitle}
+        </h1>
+
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-2xl font-bold text-[#8b5cf6]">{formatPrice(finalPrice, 'VND')}</span>
+          {calc.totalDiscountPrice > 0 && (
+             <>
+               <span className="text-sm text-gray-500 line-through">{formatPrice(calc.totalOriginalPrice, 'VND')}</span>
+               <span className="bg-[#8b5cf6]/20 text-[#8b5cf6] text-xs font-bold px-2 py-0.5 rounded">-{discountPercentage}%</span>
+             </>
+          )}
         </div>
-      </Card>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-3 w-full">
+            {variants?.length > 0 && (
+              <div className={`space-y-1.5 ${currentVariant.max > 1 ? 'col-span-3' : 'col-span-4'}`}>
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap">Phiên bản</label>
+                <Select value={String(currentVariant.id)} onValueChange={(val) => {
+                  const selected = variants.find(v => String(v.id) === val)
+                  if (selected) {
+                    setCurrentVariant(selected)
+                  }
+                }}>
+                  <SelectTrigger className="w-full bg-[#0f0f13] border-white/10 rounded-lg text-sm text-white focus:ring-[#8b5cf6] focus:border-[#8b5cf6] h-[42px]">
+                    <SelectValue placeholder="Chọn phiên bản" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {variants.map((v) => (
+                      <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {currentVariant.max > 1 && (
+              <div className={`space-y-1.5 ${variants?.length > 0 ? 'col-span-1' : 'col-span-4'}`}>
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap text-center">Số lượng</label>
+                <div className="flex items-center justify-between bg-[#0f0f13] border border-white/10 rounded-lg p-1 w-full h-[42px]">
+                  <button
+                    id={`decrement-quantity`}
+                    disabled={quantity <= currentVariant.min}
+                    type="button"
+                    className="w-7 h-7 flex shrink-0 items-center justify-center hover:bg-white/5 rounded text-white disabled:opacity-50"
+                    onClick={() => decQuantity()}
+                  >
+                    <MinusIcon className="size-3" aria-hidden="true" />
+                  </button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    className="w-full min-w-0 px-1 text-sm font-bold text-center text-white bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none"
+                    value={editingQuantity !== undefined ? editingQuantity : quantity}
+                    onFocus={() => setEditingQuantity(quantity)}
+                    onChange={handleQuantityChange}
+                    onBlur={handleQuantityBlur}
+                  />
+                  <button
+                    id={`increment-quantity`}
+                    disabled={quantity >= currentVariant.max}
+                    type="button"
+                    className="w-7 h-7 flex shrink-0 items-center justify-center hover:bg-white/5 rounded text-white disabled:opacity-50"
+                    onClick={() => incQuantity()}
+                  >
+                    <PlusIcon className="size-3" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <ImportantNotice />
+
+          <VoucherInput />
+
+          <div className="pt-6 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-400">Tổng thanh toán:</span>
+             <div className="flex flex-col items-end gap-1 text-right">
+                {appliedVoucherDiscount > 0 && (
+                   <span className="text-sm text-green-500">
+                     Khuyến mãi: -{formatPrice(appliedVoucherDiscount, 'VND')}
+                   </span>
+                )}
+                <span className="text-xl font-bold text-white">{formatPrice(finalPrice, 'VND')}</span>
+             </div>
+          </div>
+
+          {currentVariant.status === 'ORDER' && workingTime}
+          {user ? <CheckoutButton /> : (
+            <AuthDialog>
+              <button 
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+              >
+                Đăng nhập để thanh toán
+              </button>
+            </AuthDialog>
+          )}
+        </div>
+      </div>
     )
   },
   // Custom comparison function to prevent re-renders when form ID is the same
@@ -893,46 +935,51 @@ function Checkout({ className }: { className?: string }) {
   return <MemoizedCheckout className={className} />
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const styles = getProductCardStyles()
+function GridProductCard({ product }: { product: Product }) {
+  const discount = product.maxDiscount || 0
+  const salePrice = product.minPrice || 0
+  const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
 
   return (
-    <div className={styles.wrapper}>
-      <Link
-        href={Routes.product(product.slug!)}
-        className={cn('flex p-1 items-center rounded-md', styles.link)}
-      >
-        <Card className={cn('flex w-full items-center', styles.card)}>
-          <div className={cn('h-[64px] w-[48px] rounded-md', styles.mediaContainer)}>
-            <Media
-              resource={product.image}
-              imgClassName={cn('absolute h-[64px] w-[48px] ease-in-out object-cover', styles.media)}
-            />
+    <div className="group cursor-pointer block">
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-[#16161e] border border-white/5">
+        <Media
+          resource={product.image}
+          className="w-full h-full"
+          imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {discount > 0 && (
+          <div className="absolute top-2 left-2 bg-[#ff97b5] text-[#380018] font-bold px-1.5 py-0.5 rounded text-[10px]">
+            -{discount.toFixed(0)}%
           </div>
-          <div className="flex flex-1 items-start gap-2 p-2">
-            <div className="flex h-full flex-col justify-between">
-              <div className={cn('font-bold text-sm', styles.name)}>{product.name}</div>
-              <div className="flex items-center gap-2">
-                <div className={cn('text-xs text-muted-foreground', styles.price)}>
-                  {product.minPrice === product.maxPrice
-                    ? formatPrice(product.minPrice)
-                    : `${formatPrice(product.minPrice)} ~ ${formatPrice(product.maxPrice)}`}
-                </div>
-                {product.maxDiscount > 0 && (
-                  <Badge className={cn('text-xs px-1 py-0', styles.badge)}>
-                    -{product.maxDiscount.toFixed(0)}%
-                  </Badge>
-                )}
-              </div>
-              {product.sold > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  Đã bán {formatSold(product.sold)}
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
+        )}
+        <div className="absolute bottom-2 right-2 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+          <Link
+            href={product.slug ? Routes.product(product.slug) : '#'}
+            className="bg-[#8b5cf6] text-white p-2 rounded-xl shadow-xl flex hover:bg-white hover:text-[#8b5cf6] transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4 leading-none" />
+          </Link>
+        </div>
+      </div>
+      <Link href={product.slug ? Routes.product(product.slug) : '#'}>
+        <h3 className="font-bold text-white text-sm line-clamp-1 mb-1 hover:text-[#8b5cf6] transition-colors">
+          {product.name}
+        </h3>
       </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {discount > 0 && (
+            <span className="text-gray-500 line-through text-[11px]">
+              {formatPrice(originalPrice)}
+            </span>
+          )}
+          <span className="text-[#8b5cf6] font-bold text-sm">{formatPrice(salePrice)}</span>
+        </div>
+        {product.sold > 0 && (
+          <div className="text-[10px] text-gray-500">Đã bán {formatSold(product.sold)}</div>
+        )}
+      </div>
     </div>
   )
 }
@@ -945,37 +992,118 @@ function ProductRelated({ className }: { className?: string }) {
     if (typeof product.relatedProducts[0] !== 'object') return []
     return product.relatedProducts as Product[]
   }, [product])
+
+  const [currentPage, setCurrentPage] = useState(0)
+  
   if (relatedProducts.length <= 0) return null
+
+  const itemsPerPage = 4
+  const totalPages = Math.ceil(relatedProducts.length / itemsPerPage)
+
+  const handlePrev = React.useCallback(() => {
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages)
+  }, [totalPages])
+
+  const handleNext = React.useCallback(() => {
+    setCurrentPage((prev) => (prev + 1) % totalPages)
+  }, [totalPages])
+
+  const pages = []
+  for (let i = 0; i < relatedProducts.length; i += itemsPerPage) {
+    pages.push(relatedProducts.slice(i, i + itemsPerPage))
+  }
+
   return (
-    <Card className={cn(className)}>
-      <CardHeader className="font-bold pb-2">Sản phẩm liên quan</CardHeader>
-      <CardContent>
-        {relatedProducts.map((relatedProduct) => (
-          <ProductCard key={relatedProduct.id} product={relatedProduct} />
-        ))}
-      </CardContent>
-    </Card>
+    <section className={cn('pt-4', className)}>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-[#8b5cf6] rounded-full"></span>
+          Sản phẩm liên quan
+        </h2>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2 hidden md:flex">
+            <button 
+              onClick={handlePrev}
+              className="w-8 h-8 rounded-full bg-[#16161e] border border-white/10 hover:bg-[#8b5cf6] hover:border-[#8b5cf6] flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={handleNext}
+              className="w-8 h-8 rounded-full bg-[#16161e] border border-white/10 hover:bg-[#8b5cf6] hover:border-[#8b5cf6] flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative w-full group">
+        <div className="overflow-hidden">
+          <div 
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${currentPage * 100}%)` }}
+          >
+            {pages.map((pageProducts, pageIndex) => (
+              <div key={pageIndex} className="w-full shrink-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {pageProducts.map((relatedProduct) => (
+                    <GridProductCard key={relatedProduct.id} product={relatedProduct} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-6 gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  currentPage === i ? "w-6 bg-[#8b5cf6]" : "w-1.5 bg-gray-600 hover:bg-gray-400"
+                )}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
 
 // Important Notice Component
-const ImportantNotice = React.memo(function ImportantNotice() {
+const ImportantNotice = React.memo(function ImportantNotice({ className }: { className?: string }) {
   const important = useProductPageContext((state) => state.currentVariant.important)
 
-  if (!hasText(important)) return null
+  const isImportantEmpty = React.useMemo(() => {
+    if (!important) return true;
+    if (typeof important === 'object' && 'root' in important) {
+      const root = (important as any).root;
+      if (!root?.children?.length) return true;
+      // Check if all children (paragraphs) are empty
+      const hasContent = root.children.some((child: any) => {
+        if (child.children?.length > 0) return true;
+        if (typeof child.text === 'string' && child.text.trim() !== '') return true;
+        return false;
+      });
+      return !hasContent;
+    }
+    return !hasText(important);
+  }, [important]);
+
+  if (isImportantEmpty) return null
 
   return (
-    <Card>
-      <CardHeader className="font-bold px-4 pb-1">
-        <div className="flex gap-2">
-          <TriangleAlert></TriangleAlert>
-          <span>Thông báo quan trọng</span>
-        </div>
-      </CardHeader>
-      <CardContent className="px-4">
+    <section className={cn("bg-red-500/10 border border-red-500/20 rounded-2xl p-4", className)}>
+      <div className="space-y-3 text-red-200/80 leading-relaxed text-sm">
         <RichText className="text-sm" data={important as any} overrideClassName></RichText>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 })
 
@@ -988,19 +1116,60 @@ const ProductDescription = React.memo(function ProductDescription() {
     return hasText(variantDescription) ? variantDescription : productDescription
   }, [variantDescription, productDescription])
 
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const [isExpanded, setIsExpanded] = React.useState(false)
+  const [isLongContent, setIsLongContent] = React.useState(false)
+
+  React.useEffect(() => {
+    const checkHeight = () => {
+      if (contentRef.current && contentRef.current.scrollHeight > 320) {
+        setIsLongContent(true)
+      } else {
+        setIsLongContent(false)
+        setIsExpanded(true) // Expand implicitly so it doesn't clip if slightly over
+      }
+    }
+    
+    checkHeight()
+    const timeout = setTimeout(checkHeight, 500)
+    return () => clearTimeout(timeout)
+  }, [description])
+
   if (!hasText(description)) return null
 
   return (
-    <Card>
-      <CardHeader className="font-bold px-4 pb-1">
-        <div className="flex gap-2">
-          <span>Mô tả</span>
+    <section className="bg-[#16161e] border border-white/10 rounded-2xl p-6 md:p-8" id="product-details">
+      <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <span className="w-1 h-6 bg-[#8b5cf6] rounded-full"></span>
+        Mô tả sản phẩm
+      </h2>
+      <div 
+        ref={contentRef}
+        className={cn(
+          "relative transition-all duration-500 ease-in-out",
+          !isExpanded && isLongContent ? "max-h-[300px] overflow-hidden" : ""
+        )}
+      >
+        <div className="space-y-4 text-gray-300 leading-relaxed text-sm md:text-base">
+          <RichText className="text-sm" data={description as any} enableGutter={false}></RichText>
         </div>
-      </CardHeader>
-      <CardContent className="px-4">
-        <RichText className="text-sm" data={description as any} enableGutter={false}></RichText>
-      </CardContent>
-    </Card>
+        
+        {!isExpanded && isLongContent && (
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#16161e] to-transparent pointer-events-none" />
+        )}
+      </div>
+
+      {isLongContent && (
+        <div className="mt-6 flex justify-center">
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-[#8b5cf6] hover:text-white transition-colors text-sm font-semibold py-2 px-6 rounded-full border border-[#8b5cf6]/30 hover:bg-[#8b5cf6]/10 flex items-center justify-center min-w-[140px]"
+          >
+            {isExpanded ? 'Thu gọn' : 'Hiển thị thêm'}
+          </button>
+        </div>
+      )}
+    </section>
   )
 })
 
@@ -1085,25 +1254,25 @@ const CheckoutOrOutOfStock = React.memo(function CheckoutOrOutOfStock() {
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
   return (
-    <Shell>
-      <Head />
-      <div className="flex flex-wrap gap-x-4 max-md:flex-col">
-        <div className="flex-2 flex-col space-y-2 max-md:order-2">
-          <ImportantNotice />
-          <DesktopVariantsFilter />
-          <ProductDescription />
-          <ProductRelated className="md:hidden" />
+    <main className="max-w-7xl mx-auto px-4 py-8">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_400px] gap-8">
+        <div className="order-1 lg:col-start-1 lg:row-start-1">
+          <Head />
         </div>
-        <div className="flex-1 max-md:order-1 max-md:mt-3">
-          <MobileVariantsDrawer />
-          <div className={'space-y-2'}>
+
+        <aside className="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6 w-full lg:w-[400px] lg:order-none" data-purpose="checkout-sidebar">
+          <div className="space-y-6 lg:sticky lg:top-24">
             <ProductForm />
             <CheckoutOrOutOfStock />
-            <ProductRelated className="hidden md:block" />
           </div>
+        </aside>
+
+        <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8 lg:order-none" data-purpose="content-left">
+          <ProductDescription />
+          <ProductRelated className="mt-8" />
         </div>
       </div>
-    </Shell>
+    </main>
   )
 })
 

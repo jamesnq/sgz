@@ -1,4 +1,3 @@
-import { Shell } from '@/components/shell'
 import { Post, PostTag } from '@/payload-types'
 import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
@@ -49,9 +48,7 @@ const getTags = unstable_cache(
 export default async function PostsPage() {
   const [posts, tags] = await Promise.all([getPosts(), getTags()])
 
-  return (
-    <Shell>
-      <PostsPageClient posts={posts} tags={tags} />
-    </Shell>
-  )
+  console.log("Recompiling PostsPage to clear stale cache that wraps it in Shell")
+
+  return <PostsPageClient posts={posts} tags={tags} />
 }
