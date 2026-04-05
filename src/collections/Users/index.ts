@@ -78,6 +78,15 @@ export const Users: CollectionConfig = {
       //   })
       // },
     ],
+    beforeValidate: [
+      ({ data, operation }) => {
+        if (operation === 'create' && data && !data.password) {
+          // Generate a strong random password for OAuth created users
+          data.password = CryptoJS.lib.WordArray.random(32).toString()
+        }
+        return data
+      },
+    ],
     beforeRead: [
       async ({ req, doc }) => {
         if (!doc) return doc
