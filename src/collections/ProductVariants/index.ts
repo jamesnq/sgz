@@ -68,7 +68,11 @@ export const ProductVariants: CollectionConfig = {
     afterChange: [
       async ({ previousDoc, doc, req: { payload } }) => {
         // update product price range
-        if (previousDoc.price == doc.price) {
+        if (
+          previousDoc.price == doc.price &&
+          previousDoc.originalPrice == doc.originalPrice &&
+          previousDoc.status == doc.status
+        ) {
           return
         }
         const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
@@ -86,7 +90,7 @@ export const ProductVariants: CollectionConfig = {
         await updateProductPriceRange(
           payload,
           productId,
-          product.variants.map((v: any) => v.price),
+          product.variants as { price: number; originalPrice: number; status: string }[],
         )
       },
       revalidateProduct,

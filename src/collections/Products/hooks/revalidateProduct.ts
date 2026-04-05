@@ -8,6 +8,8 @@ import { Routes } from '@/utilities/routes'
 import { productsToSearch as updateSearchProducts } from '@/app/(frontend)/next/sync-search/route'
 import { eq } from '@payloadcms/db-postgres/drizzle'
 import type { Product } from '../../../payload-types'
+import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
+
 export const revalidateProductsPage = () => {
   revalidatePath(Routes.PRODUCTS)
 }
@@ -15,12 +17,20 @@ export const revalidateProductsPage = () => {
 export const updateProductPriceRange = async (
   payload: Payload,
   productId: number,
-  prices: number[],
+  variants: { price: number; originalPrice: number; status: string }[],
 ) => {
-  if (!productId || !prices || !prices.length) return
+  if (!productId || !variants || !variants.length) return
 
+  const prices = variants.map((v) => v.price)
   const minPrice = Math.min(...prices)
   const maxPrice = Math.max(...prices)
+
+  const discounts = variants
+    .filter((v) => v.status !== 'STOPPED')
+    .map((v) => calculateDiscountPercentage(v.originalPrice, v.price))
+
+  const maxDiscount = discounts.length > 0 ? Math.max(...discounts) : 0
+
   if (prices.length > 0) {
     // use drizzle to avoid update loop
     const db = payload.db.drizzle
@@ -29,6 +39,7 @@ export const updateProductPriceRange = async (
       .set({
         minPrice: minPrice.toString(),
         maxPrice: maxPrice.toString(),
+        maxDiscount: maxDiscount.toString(),
       })
       .where(eq(products.id, productId))
   }
