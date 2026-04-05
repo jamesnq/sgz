@@ -134,7 +134,24 @@ const PageClient = () => {
     <InstantSearch
       indexName={productIndex}
       searchClient={instantSearchClient.searchClient as any}
-      routing={true}
+      routing={{
+        stateMapping: {
+          stateToRoute(uiState: any) {
+            return uiState
+          },
+          routeToState(routeState: any) {
+            const indexState = routeState[productIndex] || {}
+            return {
+              ...routeState,
+              [productIndex]: {
+                ...indexState,
+                query: routeState.q || indexState.query,
+                sortBy: indexState.sortBy || `${productIndex}:sold:desc`,
+              },
+            }
+          },
+        },
+      }}
       future={{ preserveSharedStateOnUnmount: true }}
       initialUiState={{
         [productIndex]: {
