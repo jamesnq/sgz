@@ -121,9 +121,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = (await getCurrentUser({ name: 'admin' }, {})) as any
+      const res = (await getCurrentUser({ name: 'app' }, {})) as any
 
-      if (res.data?.user) {
+      if (res?.data?.user) {
         setUser(res.data.user)
         setStatus('loggedIn')
       } else {
