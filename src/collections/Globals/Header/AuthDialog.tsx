@@ -12,9 +12,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { adminClient } from 'payload-auth-plugin/client'
+import { appClient } from 'payload-auth-plugin/client'
 
-const { signin } = adminClient()
+const { signin } = appClient({
+  name: 'app',
+})
 
 type OAuthProvider = 'google' | 'discord' | 'facebook'
 

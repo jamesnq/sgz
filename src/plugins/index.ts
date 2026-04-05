@@ -4,7 +4,7 @@ import { fieldsSelect } from '@payload-enchants/fields-select'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { Plugin } from 'payload'
-import { adminAuthPlugin } from 'payload-auth-plugin'
+import { appAuthPlugin } from 'payload-auth-plugin'
 import { GoogleAuthProvider } from 'payload-auth-plugin/providers'
 import { env } from 'process'
 
@@ -26,7 +26,7 @@ export const plugins: Plugin[] = [
     },
   }),
   payloadCloudPlugin(),
-  adminAuthPlugin({
+  appAuthPlugin({
     enabled: true,
     providers: [
       GoogleAuthProvider({
@@ -39,10 +39,10 @@ export const plugins: Plugin[] = [
       // }),
       // FacebookAuthProvider({
       //   client_id: config.FACEBOOK_PROVIDER_CLIENT_ID as string,
-      //   client_secret: config.FACEBOOK_PROVIDER_CLIENT_SECRET as string,
-      // }),
     ],
-    allowSignUp: true,
+    name: 'app',
+    usersCollectionSlug: 'users',
+    secret: env.PAYLOAD_SECRET || 'fallback-secret-key-12345',
     accountsCollectionSlug: Accounts.slug,
   }),
 ]

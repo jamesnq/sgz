@@ -1,6 +1,7 @@
 'use client'
 import { User } from '@/payload-types'
 import { usePathname, useRouter } from 'next/navigation'
+import { getCurrentUser } from 'payload-auth-plugin/client/hooks'
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 type ResetPassword = (args: { password: string; token: string }) => Promise<void>
@@ -120,19 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = await fetch(`/api/users/me?t=${Date.now()}`, {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+      const res = (await getCurrentUser({ name: 'app' }, {})) as any
 
-      if (res.ok) {
-        const { user: meUser } = await res.json()
-        setUser(meUser || null)
-        setStatus(meUser ? 'loggedIn' : undefined)
+      if (res?.data?.user) {
+        setUser(res.data.user)
+        setStatus('loggedIn')
       } else {
         throw new Error('An error occurred while fetching your account.')
       }
