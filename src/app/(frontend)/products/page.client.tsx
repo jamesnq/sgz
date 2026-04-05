@@ -141,10 +141,10 @@ const PageClient = () => {
             // Remove 'page' from the URL so infinite scrolling doesn't change the URL
             // and F5 refresh will always start from page 1.
             const { page, ...restIndexState } = indexState
-            
+
             return {
               ...uiState,
-              [productIndex]: restIndexState
+              [productIndex]: restIndexState,
             }
           },
           routeToState(routeState: any) {
@@ -171,7 +171,7 @@ const PageClient = () => {
       <Configure analytics={false} hitsPerPage={12} filters="status = 'PUBLIC'" />
 
       <div className="mb-16">
-        <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-12">
+        <div className="w-full px-6 lg:px-12 max-w-[1440px] mx-auto py-12">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div className="space-y-2">
               <h1 className="font-headline text-4xl font-bold tracking-tight text-white">
@@ -223,7 +223,7 @@ const PageClient = () => {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-col lg:flex-row lg:gap-12 mt-4 mb-[120px] lg:mb-0">
             <Sidebar />
             <div className="flex-1 flex flex-col gap-2">
@@ -236,4 +236,3 @@ const PageClient = () => {
   )
 }
 export default PageClient
-

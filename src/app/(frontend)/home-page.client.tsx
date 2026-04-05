@@ -14,7 +14,7 @@ import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { ChevronRight, ShoppingCart, Clock, ShoppingBag, Gamepad2 } from 'lucide-react'
+import { ChevronRight, ShoppingCart, Clock, ShoppingBag, Gamepad2, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { Configure, InstantSearch, useHits } from 'react-instantsearch'
@@ -31,7 +31,7 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
         <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent z-10 opacity-60"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10"></div>
       </div>
-      <div className="relative z-20 w-full px-6 lg:px-12 max-w-[1920px] mx-auto">
+      <div className="relative z-20 w-full px-6 lg:px-12 max-w-[1440px] mx-auto">
         <div className="max-w-3xl space-y-8">
           <div className="font-extrabold tracking-tighter lg:leading-[1.1] text-5xl md:text-7xl lg:text-8xl animate-fade-up wave-text text-white uppercase">
             {config.NEXT_PUBLIC_SITE_NAME}
@@ -60,10 +60,10 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
                 </div>
                 <div className="flex flex-col">
                   <span className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">
-                    {stats.orders.toLocaleString()}+
+                    {stats.orders.toLocaleString()}
                   </span>
                   <span className="text-sgz-textMuted text-xs font-semibold uppercase tracking-widest mt-1">
-                    Đơn hàng
+                    Đơn đặt hàng
                   </span>
                 </div>
               </div>
@@ -71,29 +71,15 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
               <div className="w-full md:w-px h-px md:h-auto bg-white/10"></div>
 
               <div className="flex items-center justify-center gap-4 group cursor-default">
-                <div className="flex -space-x-3">
-                  <img
-                    className="w-11 h-11 border-2 border-[#1a1a20] rounded-full object-cover z-30"
-                    src="https://i.pravatar.cc/100?img=33"
-                    alt="User 1"
-                  />
-                  <img
-                    className="w-11 h-11 border-2 border-[#1a1a20] rounded-full object-cover z-20"
-                    src="https://i.pravatar.cc/100?img=12"
-                    alt="User 2"
-                  />
-                  <img
-                    className="w-11 h-11 border-2 border-[#1a1a20] rounded-full object-cover z-10"
-                    src="https://i.pravatar.cc/100?img=11"
-                    alt="User 3"
-                  />
+                <div className="w-12 h-12 rounded-full bg-sgz-primary/20 flex items-center justify-center text-sgz-primary group-hover:scale-110 group-hover:bg-sgz-primary/30 transition-all">
+                  <Users className="w-6 h-6" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">
-                    {stats.users.toLocaleString()}+
+                    {stats.users.toLocaleString()}
                   </span>
                   <span className="text-sgz-textMuted text-xs font-semibold uppercase tracking-widest mt-1">
-                    Khách tin dùng
+                    Khách hàng
                   </span>
                 </div>
               </div>
@@ -106,10 +92,10 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
                 </div>
                 <div className="flex flex-col">
                   <span className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">
-                    {stats.products.toLocaleString()}+
+                    {stats.products.toLocaleString()}
                   </span>
                   <span className="text-sgz-textMuted text-xs font-semibold uppercase tracking-widest mt-1">
-                    Game & Dịch vụ
+                    Sản phẩm
                   </span>
                 </div>
               </div>
@@ -346,7 +332,7 @@ const HomePageClient = ({
       />
       <div className="mb-16">
         <HeroSection stats={stats} />
-        <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-8 space-y-16">
+        <div className="w-full px-6 lg:px-12 max-w-[1440px] mx-auto py-8 space-y-16">
           {latestProducts && latestProducts.length > 0 && (
             <ProductGridSection
               products={latestProducts}

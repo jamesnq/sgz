@@ -127,7 +127,7 @@ interface HeaderClientProps {
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
     <header className="bg-sgz-dark/90 backdrop-blur-xl font-sans antialiased shadow-[0_10px_40px_-15px_rgba(139,92,246,0.15)] sticky top-0 z-50 transition-all duration-300 border-b border-sgz-border">
-      <div className="flex justify-between items-center w-full px-6 lg:px-12 h-20 max-w-[1920px] mx-auto gap-4">
+      <div className="flex justify-between items-center w-full px-6 lg:px-12 h-20 max-w-[1440px] mx-auto gap-4">
         <div className="flex items-center gap-4 lg:gap-12 shrink-0">
           <MobileNav data={data} />
           <Link href={Routes.HOME} className="flex items-center shrink-0">
