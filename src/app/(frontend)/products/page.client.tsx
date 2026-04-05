@@ -212,11 +212,11 @@ const PageClient = () => {
                     label: 'Cũ nhất',
                   },
                   {
-                    value: `${productIndex}:title:asc`,
+                    value: `${productIndex}:name:asc`,
                     label: 'Tên A-Z',
                   },
                   {
-                    value: `${productIndex}:title:desc`,
+                    value: `${productIndex}:name:desc`,
                     label: 'Tên Z-A',
                   },
                 ]}

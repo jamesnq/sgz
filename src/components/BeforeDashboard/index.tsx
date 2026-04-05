@@ -1,14 +1,12 @@
 import React from 'react'
 
 import { SyncSearchButton } from './SyncSearchButton'
-import './index.scss'
 
-const baseClass = 'before-dashboard'
 // TODO make it better like request init,...
 const BeforeDashboard: React.FC = () => {
   return (
-    <div className={baseClass}>
-      <div className={`${baseClass}__button-container`}>
+    <div className="before-dashboard" style={{ marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <SyncSearchButton />
       </div>
     </div>
