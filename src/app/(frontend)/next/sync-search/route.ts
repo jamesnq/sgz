@@ -101,6 +101,7 @@ export async function POST(): Promise<Response> {
         maxPrice: true,
         maxDiscount: true,
         meta: true,
+        createdAt: true,
       },
     })
 
@@ -122,6 +123,8 @@ export async function POST(): Promise<Response> {
         'maxDiscount',
         'sold',
         'status',
+        'createdAt',
+        'name',
       ] as (keyof Product)[])
 
     await meiliSearchServer
