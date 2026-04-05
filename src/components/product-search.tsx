@@ -104,7 +104,7 @@ function ProductSearchResults({ onClose }: { onClose: () => void }) {
               onSelect={() => handleSelect(product.slug as string)}
               className="flex items-center gap-2 py-3 cursor-pointer"
             >
-              <div className="flex-shrink-0 h-10 w-10 relative overflow-hidden rounded">
+              <div className="shrink-0 h-10 w-10 relative overflow-hidden rounded">
                 {product.image && (
                   <Media
                     resource={product.image}

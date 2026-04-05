@@ -157,7 +157,7 @@ const PageClient = ({ order }: { order: Order }) => {
         <div className=" flex-1 flex flex-col gap-2">
           <OrderCard order={order}></OrderCard>
         </div>
-        <div className="flex-[2] flex flex-col gap-2">
+        <div className="flex-2 flex flex-col gap-2">
           {order.status === 'USER_UPDATE' && (
             <Card>
               <CardContent className="p-4">

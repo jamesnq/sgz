@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 @layer base {
   h1,
@@ -75,10 +73,14 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsla(var(--border));
   }
   body {
-    @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     font-family: Arial, Helvetica, sans-serif;
   }
 }
@@ -110,68 +112,73 @@
   }
 }
 
-html {
-  opacity: 0;
-  scroll-behavior: smooth;
-}
+@layer utilities {
+  html {
+    opacity: 0;
+    scroll-behavior: smooth;
+  }
 
-html[data-theme='dark'],
-html[data-theme='light'] {
-  opacity: initial;
-}
+  html[data-theme='dark'],
+  html[data-theme='light'] {
+    opacity: initial;
+  }
 
-/* Chatwoot */
-#cw-bubble-holder > button:nth-child(1) {
-  background-color: hsl(var(--background)) !important;
-  color: hsl(var(--primary)) !important;
-  outline: 1px solid hsl(var(--primary)) !important;
-  outline-offset: 1px;
-}
-#cw-bubble-holder > button.woot-elements--right.woot-widget-bubble.woot--close {
-  background-color: hsl(var(--background)) !important;
-  color: hsl(var(--primary)) !important;
-  outline: 1px solid hsl(var(--primary)) !important;
-  outline-offset: 1px;
-}
+  /* Chatwoot */
+  #cw-bubble-holder > button:nth-child(1) {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--primary)) !important;
+    outline: 1px solid hsl(var(--primary)) !important;
+    outline-offset: 1px;
+  }
+  #cw-bubble-holder
+    > button.woot-elements--right.woot-widget-bubble.woot--close {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--primary)) !important;
+    outline: 1px solid hsl(var(--primary)) !important;
+    outline-offset: 1px;
+  }
 
-#woot-widget-bubble-icon {
-  width: clamp(12px, 2vw, 20px) !important;
-  height: clamp(12px, 2vw, 20px) !important;
-}
+  #woot-widget-bubble-icon {
+    width: clamp(12px, 2vw, 20px) !important;
+    height: clamp(12px, 2vw, 20px) !important;
+  }
 
-#woot-widget-bubble-icon > path {
-  fill: hsl(var(--primary)) !important;
-}
+  #woot-widget-bubble-icon > path {
+    fill: hsl(var(--primary)) !important;
+  }
 
-.woot--close::before,
-.woot--close::after {
-  background-color: hsl(var(--primary)) !important;
-}
+  .woot--close::before,
+  .woot--close::after {
+    background-color: hsl(var(--primary)) !important;
+  }
 
-#woot-widget--expanded__text {
-  color: hsl(var(--primary)) !important;
-}
+  #woot-widget--expanded__text {
+    color: hsl(var(--primary)) !important;
+  }
 
-#woot-widget--expanded__text {
-  font-size: clamp(12px, 2vw, 15px) !important;
-}
-#cw-bubble-holder > button.woot-widget-bubble.woot-elements--right.woot-widget--expanded {
-  height: clamp(28px, 2vw, 48px) !important;
-}
+  #woot-widget--expanded__text {
+    font-size: clamp(12px, 2vw, 15px) !important;
+  }
+  #cw-bubble-holder
+    > button.woot-widget-bubble.woot-elements--right.woot-widget--expanded {
+    height: clamp(28px, 2vw, 48px) !important;
+  }
 
-/* Hide Novu mark */
-div
-  > div
-  > div.nt-flex.nt-shrink-0.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-pt-9.nt-pb-3.nt-text-foreground-alpha-200 {
-  display: none !important;
+  /* Hide Novu mark */
+  div
+    > div
+    > div.nt-flex.nt-shrink-0.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-pt-9.nt-pb-3.nt-text-foreground-alpha-200 {
+    display: none !important;
+  }
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: hsla(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 

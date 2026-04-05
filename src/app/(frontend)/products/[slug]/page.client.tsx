@@ -302,7 +302,7 @@ const MemoizedProductVariantCard = React.memo(
               imgClassName={cn('absolute h-[96px] w-[72px] ease-in-out object-cover', styles.media)}
             />
           </div>
-          <div className="flex flex-[3] items-start gap-1 p-1">
+          <div className="flex flex-3 items-start gap-1 p-1">
             <div className="flex h-full flex-1 flex-col justify-between">
               <div className={styles.name + ' max-md:line-clamp-2 line-clamp-3'}>
                 {productVariant.name}
@@ -1088,7 +1088,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
     <Shell>
       <Head />
       <div className="flex flex-wrap gap-x-4 max-md:flex-col">
-        <div className="flex-[2] flex-col space-y-2 max-md:order-2">
+        <div className="flex-2 flex-col space-y-2 max-md:order-2">
           <ImportantNotice />
           <DesktopVariantsFilter />
           <ProductDescription />

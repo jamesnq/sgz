@@ -99,7 +99,7 @@ export function OrderShippingForm({ order }: OrderShippingFormProps) {
                       <TooltipTrigger asChild>
                         <div className="truncate text-sm">{value}</div>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-[300px] break-words">
+                      <TooltipContent side="bottom" className="max-w-[300px] wrap-break-word">
                         {value}
                       </TooltipContent>
                     </Tooltip>

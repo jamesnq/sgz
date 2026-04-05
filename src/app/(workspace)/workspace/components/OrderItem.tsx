@@ -286,7 +286,7 @@ export const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemPr
               </div>
             </SheetTitle>
           </SheetHeader>
-          <div className="mt-4 space-y-4 overflow-y-auto flex-grow pb-4">
+          <div className="mt-4 space-y-4 overflow-y-auto grow pb-4">
             <Accordion
               type="multiple"
               defaultValue={['product', 'submission', 'buyer', 'delivery', 'message', 'note']}
