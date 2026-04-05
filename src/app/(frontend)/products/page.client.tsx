@@ -168,7 +168,7 @@ const PageClient = () => {
         },
       }}
     >
-      <Configure analytics={false} hitsPerPage={12} />
+      <Configure analytics={false} hitsPerPage={12} filters="status = 'PUBLIC'" />
 
       <div className="mb-16">
         <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-12">
