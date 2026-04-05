@@ -1,6 +1,7 @@
 'use client'
 import { User } from '@/payload-types'
 import { usePathname, useRouter } from 'next/navigation'
+import { getCurrentUser } from 'payload-auth-plugin/client/hooks'
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 type ResetPassword = (args: { password: string; token: string }) => Promise<void>
@@ -22,6 +23,7 @@ type AuthContext = {
   resetPassword: ResetPassword
   forgotPassword: ForgotPassword
   status: undefined | 'loggedOut' | 'loggedIn'
+  fetchMe: () => Promise<void>
 }
 const Context = createContext({} as AuthContext)
 
@@ -116,35 +118,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [router])
   const pathname = usePathname()
   const prevPathname = useRef<string | undefined>(undefined)
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await fetch(`/api/users/me?t=${Date.now()}`, {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
 
-        if (res.ok) {
-          const { user: meUser } = await res.json()
-          setUser(meUser || null)
-          setStatus(meUser ? 'loggedIn' : undefined)
-        } else {
-          throw new Error('An error occurred while fetching your account.')
-        }
-      } catch {
-        setUser(null)
+  const fetchMe = useCallback(async () => {
+    try {
+      const res = (await getCurrentUser({ name: 'admin' }, {})) as any
+
+      if (res.data?.user) {
+        setUser(res.data.user)
+        setStatus('loggedIn')
+      } else {
         throw new Error('An error occurred while fetching your account.')
       }
+    } catch {
+      setUser(null)
     }
+  }, [])
+
+  // Fetch on initial mount
+  useEffect(() => {
+    fetchMe()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Re-fetch when pathname changes (navigation between pages)
+  useEffect(() => {
     if (pathname != prevPathname.current) {
       prevPathname.current = pathname
       fetchMe()
     }
-  }, [pathname, prevPathname])
+  }, [pathname, prevPathname, fetchMe])
 
   const forgotPassword = useCallback<ForgotPassword>(async (args) => {
     try {
@@ -209,6 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
         forgotPassword,
         status,
+        fetchMe,
       }}
     >
       {children}

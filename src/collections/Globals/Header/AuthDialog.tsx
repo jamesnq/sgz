@@ -1,4 +1,6 @@
 'use client'
+import { useAuth } from '@/providers/Auth'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -23,7 +25,13 @@ interface OAuthButtonProps {
   icon: React.ReactNode
 }
 
-export default function NewAuthDialog({ className, children }: { className?: string; children?: React.ReactNode }) {
+export default function NewAuthDialog({
+  className,
+  children,
+}: {
+  className?: string
+  children?: React.ReactNode
+}) {
   const [open, setOpen] = useState(false)
   const [loadingState, setLoadingState] = useState<Record<OAuthProvider, boolean>>({
     google: false,
@@ -31,6 +39,8 @@ export default function NewAuthDialog({ className, children }: { className?: str
     facebook: false,
   })
   const [error, setError] = useState<string>('')
+  const { fetchMe } = useAuth()
+  const router = useRouter()
 
   const handleOAuthSignin = async (provider: OAuthProvider) => {
     setError('')
@@ -42,7 +52,9 @@ export default function NewAuthDialog({ className, children }: { className?: str
         setError(`Đăng nhập bằng ${provider.charAt(0).toUpperCase() + provider.slice(1)} thất bại`)
       }
       if (isSuccess) {
-        window.location.reload()
+        setOpen(false)
+        await fetchMe()
+        router.refresh()
       }
     } catch (err) {
       setError(
