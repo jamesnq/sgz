@@ -14,10 +14,20 @@ import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { ChevronRight, ShoppingCart, Clock, ShoppingBag, Gamepad2, Users } from 'lucide-react'
+import {
+  ChevronRight,
+  ShoppingCart,
+  Clock,
+  ShoppingBag,
+  Gamepad2,
+  Users,
+  ChevronDown,
+  Mouse,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { Configure, InstantSearch, useHits } from 'react-instantsearch'
+import { motion } from 'framer-motion'
 
 /* ─────────────────────── Hero Section ─────────────────────── */
 
@@ -25,7 +35,7 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
   return (
     <section
       id="hero-section"
-      className="relative h-[550px] md:h-[650px] flex items-center overflow-hidden"
+      className="relative min-h-[calc(100vh-80px)] pt-8 pb-16 flex items-center overflow-hidden"
     >
       <div className="absolute inset-0 z-0 bg-gradient-to-l from-sgz-textDark via-[#0f0f13] to-sgz-dark">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent z-10 opacity-60"></div>
@@ -103,6 +113,20 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
           </div>
         </div>
       </div>
+
+      {/* Scroll Down Indicator */}
+      <div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-fade-up"
+        style={{ animationDelay: '800ms', animationFillMode: 'both' }}
+      >
+        <div className="flex flex-col items-center justify-center opacity-80 animate-bounce">
+          <Mouse className="w-5 h-5 text-white mb-2" />
+          <span className="text-[10px] uppercase tracking-[0.2em] text-sgz-primary font-bold">
+            Xem thêm
+          </span>
+          <ChevronDown className="w-4 h-4 text-sgz-primary -mt-1" />
+        </div>
+      </div>
     </section>
   )
 }
@@ -174,7 +198,13 @@ const ProductGridSection = ({
   if (!products || products.length === 0) return null
 
   return (
-    <section className="mb-16">
+    <motion.section
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, margin: '-100px' }}
+      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+      className="mb-16"
+    >
       <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-4">
@@ -196,7 +226,7 @@ const ProductGridSection = ({
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
-    </section>
+    </motion.section>
   )
 }
 
@@ -266,7 +296,14 @@ const PostsSection = ({ posts }: { posts: Post[] }) => {
   if (!posts || posts.length === 0) return null
 
   return (
-    <section id="posts-section" className="mb-16">
+    <motion.section
+      id="posts-section"
+      className="mb-16"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, margin: '-100px' }}
+      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+    >
       <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-4">
@@ -288,7 +325,7 @@ const PostsSection = ({ posts }: { posts: Post[] }) => {
           <PostCard key={post.id} post={post} />
         ))}
       </div>
-    </section>
+    </motion.section>
   )
 }
 

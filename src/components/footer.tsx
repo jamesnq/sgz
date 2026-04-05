@@ -59,7 +59,7 @@ const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
         className={cn('w-full border-t border-sgz-border bg-sgz-dark/50 pt-16 pb-8', className)}
         {...props}
       >
-        <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto">
+        <div className="w-full px-6 lg:px-12 max-w-[1440px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0">
             <div className="lg:col-span-4 flex flex-col items-start">
               <Link className="flex items-center mb-6" href="/">
