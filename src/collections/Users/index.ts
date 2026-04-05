@@ -57,7 +57,7 @@ export const Users: CollectionConfig = {
       }
       return false
     },
-    create: () => false,
+    create: () => true,
     delete: hasRole(['admin']),
     read: hasRoleOrSelf(managerRoles),
     update: hasRoleOrSelf(managerRoles),
