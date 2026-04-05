@@ -244,16 +244,9 @@ function Head() {
   const currentVariant = useProductPageContext((state) => state.currentVariant)
   return (
     <section className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-      {/* 
       <Media
         resource={currentVariant?.image || product.image}
         imgClassName="w-full h-auto object-cover aspect-video lg:aspect-auto max-h-[500px]"
-      />
-      */}
-      <img 
-        src="/1crimsondesert.jpg" 
-        alt="Crimson Desert Test Banner" 
-        className="w-full h-auto object-cover aspect-video lg:aspect-auto max-h-[500px]" 
       />
     </section>
   )
