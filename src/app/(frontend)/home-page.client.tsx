@@ -14,7 +14,7 @@ import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { ChevronRight, ShoppingCart, Clock } from 'lucide-react'
+import { ChevronRight, ShoppingCart, Clock, ShoppingBag, Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { Configure, InstantSearch, useHits } from 'react-instantsearch'
@@ -52,32 +52,67 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
             Khám phá hàng ngàn tựa game được chọn lọc với giá ưu đãi. Từ bom tấn AAA đến siêu phẩm
             indie, cuộc phiêu lưu tiếp theo của bạn bắt đầu tại đây.
           </p>
-          <div className="flex flex-wrap gap-6 pt-4">
-            <div className="flex flex-col">
-              <span className="text-2xl md:text-3xl font-bold text-white leading-none tracking-tight">
-                {stats.orders.toLocaleString()}+
-              </span>
-              <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
-                Đơn hàng
-              </span>
-            </div>
-            <div className="w-px bg-sgz-border/30 my-2"></div>
-            <div className="flex flex-col">
-              <span className="text-2xl md:text-3xl font-bold text-white leading-none tracking-tight">
-                {stats.users.toLocaleString()}+
-              </span>
-              <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
-                Khách hàng
-              </span>
-            </div>
-            <div className="w-px bg-sgz-border/30 my-2"></div>
-            <div className="flex flex-col">
-              <span className="text-2xl md:text-3xl font-bold text-white leading-none tracking-tight">
-                {stats.products.toLocaleString()}+
-              </span>
-              <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
-                Sản phẩm
-              </span>
+          <div className="flex flex-wrap gap-8 pt-8">
+            <div className="inline-flex flex-col md:flex-row items-center md:items-stretch gap-6 md:gap-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6 md:px-8 py-5 shadow-2xl">
+              <div className="flex items-center justify-center gap-4 group cursor-default">
+                <div className="w-12 h-12 rounded-full bg-sgz-primary/20 flex items-center justify-center text-sgz-primary group-hover:scale-110 group-hover:bg-sgz-primary/30 transition-all">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">
+                    {stats.orders.toLocaleString()}+
+                  </span>
+                  <span className="text-sgz-textMuted text-xs font-semibold uppercase tracking-widest mt-1">
+                    Đơn hàng
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full md:w-px h-px md:h-auto bg-white/10"></div>
+
+              <div className="flex items-center justify-center gap-4 group cursor-default">
+                <div className="flex -space-x-3">
+                  <img
+                    className="w-11 h-11 border-2 border-[#1a1a20] rounded-full object-cover z-30"
+                    src="https://i.pravatar.cc/100?img=33"
+                    alt="User 1"
+                  />
+                  <img
+                    className="w-11 h-11 border-2 border-[#1a1a20] rounded-full object-cover z-20"
+                    src="https://i.pravatar.cc/100?img=12"
+                    alt="User 2"
+                  />
+                  <img
+                    className="w-11 h-11 border-2 border-[#1a1a20] rounded-full object-cover z-10"
+                    src="https://i.pravatar.cc/100?img=11"
+                    alt="User 3"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">
+                    {stats.users.toLocaleString()}+
+                  </span>
+                  <span className="text-sgz-textMuted text-xs font-semibold uppercase tracking-widest mt-1">
+                    Khách tin dùng
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full md:w-px h-px md:h-auto bg-white/10"></div>
+
+              <div className="flex items-center justify-center gap-4 group cursor-default">
+                <div className="w-12 h-12 rounded-full bg-sgz-primary/20 flex items-center justify-center text-sgz-primary group-hover:scale-110 group-hover:bg-sgz-primary/30 transition-all">
+                  <Gamepad2 className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400">
+                    {stats.products.toLocaleString()}+
+                  </span>
+                  <span className="text-sgz-textMuted text-xs font-semibold uppercase tracking-widest mt-1">
+                    Game & Dịch vụ
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

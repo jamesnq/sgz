@@ -98,13 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback<Logout>(async () => {
     try {
-      const res = await fetch(`/api/users/logout`, {
+      const res = await fetch(`/api/logout`, {
         method: 'POST',
         credentials: 'include',
       })
 
       if (res.ok) {
         setUser(null)
+
         setStatus('loggedOut')
         router.push('/')
         //@ts-expect-error ignore
@@ -121,16 +122,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = (await getCurrentUser({ name: 'app' }, {})) as any
-
-      if (res?.data?.user) {
-        setUser(res.data.user)
-        setStatus('loggedIn')
-      } else {
-        throw new Error('An error occurred while fetching your account.')
+      // 1. Check standard Payload session (for email/password logins)
+      const standardRes = await fetch('/api/users/me', {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (standardRes.ok) {
+        const payloadMe = await standardRes.json()
+        if (payloadMe?.user) {
+          setUser(payloadMe.user)
+          setStatus('loggedIn')
+          return
+        }
       }
+
+      // 2. Fallback to payload-auth-plugin session (for OAuth logins)
+      // We do a manual fetch instead of getCurrentUser to guarantee the query string is formatted correctly
+      const oauthSessionRes = await fetch(
+        '/api/app/session?fields[0]=id&fields[1]=email&fields[2]=name&fields[3]=roles&fields[4]=balance&fields[5]=picture',
+        { headers: { 'Content-Type': 'application/json' } },
+      )
+      if (oauthSessionRes.ok) {
+        const oauthData = await oauthSessionRes.json()
+        if (oauthData?.data?.isAuthenticated) {
+          const oauthUser = oauthData.data as User
+          setUser(oauthUser)
+          setStatus('loggedIn')
+          return
+        }
+      }
+
+      throw new Error('An error occurred while fetching your account.')
     } catch {
       setUser(null)
+      setStatus('loggedOut')
     }
   }, [])
 

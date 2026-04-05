@@ -28,6 +28,7 @@ export const plugins: Plugin[] = [
   payloadCloudPlugin(),
   appAuthPlugin({
     enabled: true,
+    allowAutoSignUp: true,
     providers: [
       GoogleAuthProvider({
         client_id: config.GOOGLE_PROVIDER_CLIENT_ID as string,
