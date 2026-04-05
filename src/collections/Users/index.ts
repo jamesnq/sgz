@@ -230,8 +230,18 @@ export const Users: CollectionConfig = {
       type: 'select',
       options: userRoles.map((role) => ({ label: role.toUpperCase(), value: role })),
       access: {
-        create: hasRole(['admin']),
+        create: () => true,
         update: hasRole(['admin']),
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value, operation }) => {
+            if (operation === 'create' && !hasRole(['admin'])({ req })) {
+              return ['user']
+            }
+            return value
+          },
+        ],
       },
       hasMany: true,
       required: true,
