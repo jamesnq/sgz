@@ -88,7 +88,7 @@ export const HeaderSearch = ({ className }: { className?: string }) => {
         indexName={productIndex}
         searchClient={instantSearchClient.searchClient as any}
       >
-        <Configure hitsPerPage={5} />
+        <Configure hitsPerPage={5} filters="status = 'PUBLIC'" />
         <AutocompleteDropdown />
       </InstantSearch>
     </div>

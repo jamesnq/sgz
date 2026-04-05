@@ -176,7 +176,7 @@ export function ProductSearch({ open, onOpenChange }: ProductSearchProps) {
             },
           }}
         >
-          <Configure hitsPerPage={10} />
+          <Configure hitsPerPage={10} filters="status = 'PUBLIC'" />
           <ProductSearchResults onClose={() => onOpenChange(false)} />
         </InstantSearch>
       </TopDialogContent>

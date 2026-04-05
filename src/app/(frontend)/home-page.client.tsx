@@ -307,7 +307,7 @@ const HomePageClient = ({
       <Configure
         analytics={false}
         hitsPerPage={10}
-        filters="categories='Key Steam' OR categories='Tài khoản steam offline'"
+        filters="(categories='Key Steam' OR categories='Tài khoản steam offline') AND status = 'PUBLIC'"
       />
       <div className="mb-16">
         <HeroSection stats={stats} />
