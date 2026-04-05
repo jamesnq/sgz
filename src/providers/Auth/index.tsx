@@ -119,9 +119,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchMe = async () => {
       try {
-        const res = await fetch(`/api/users/me`, {
+        const res = await fetch(`/api/users/me?t=${Date.now()}`, {
           method: 'GET',
           credentials: 'include',
+          cache: 'no-store',
           headers: {
             'Content-Type': 'application/json',
           },
