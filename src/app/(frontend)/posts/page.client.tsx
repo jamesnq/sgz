@@ -92,7 +92,7 @@ function Sidebar({
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-2">
               {tags.length === 0 ? (
                 <p className="text-sm text-[#acaab0] italic">Chưa có chủ đề nào.</p>
@@ -115,10 +115,10 @@ function Sidebar({
                       >
                         {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
                       </div>
-                      <span 
+                      <span
                         className={cn(
-                          "text-sm font-medium transition-colors",
-                            isSelected ? 'text-white' : 'text-[#acaab0] group-hover:text-white'
+                          'text-sm font-medium transition-colors',
+                          isSelected ? 'text-white' : 'text-[#acaab0] group-hover:text-white',
                         )}
                       >
                         {tag.title}
@@ -162,9 +162,7 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
     // Filter by search query
     if (searchQuery.trim().length > 0) {
       const q = searchQuery.toLowerCase()
-      result = result.filter((post) => 
-        post.title.toLowerCase().includes(q)
-      )
+      result = result.filter((post) => post.title.toLowerCase().includes(q))
     }
 
     // Sort by date
@@ -191,7 +189,7 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
 
   const toggleTag = (tagId: number) => {
     setAppliedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId],
     )
   }
 
@@ -206,75 +204,84 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
 
   return (
     <div className="mb-16">
-      <div className="w-full px-6 lg:px-12 max-w-[1920px] mx-auto py-12">
+      <div className="w-full px-6 lg:px-12 max-w-[1440px] mx-auto py-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div className="space-y-2">
-            <h1 className="font-headline text-4xl font-bold tracking-tight text-white">
-              Bài viết
-            </h1>
+            <h1 className="font-headline text-4xl font-bold tracking-tight text-white">Bài viết</h1>
             <p className="text-[#acaab0]">Tin tức cộng đồng và thủ thuật game mới nhất.</p>
           </div>
 
           {/* Search and Sort */}
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-             <div className="relative w-full sm:w-64">
-               <input
-                 type="text"
-                 placeholder="Tìm kiếm bài viết..."
-                 className="w-full h-11 bg-[#16161e] border border-[#2b2b36] rounded-xl px-4 text-white focus:outline-none focus:border-[#ba9eff] transition-colors"
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-               />
-             </div>
-             
-             <div className="w-full sm:w-48 relative">
-               <select 
-                 className="w-full h-11 bg-[#16161e] border border-[#2b2b36] rounded-xl px-4 text-white focus:outline-none focus:border-[#ba9eff] transition-colors appearance-none cursor-pointer"
-                 value={sortOrder}
-                 onChange={(e) => setSortOrder(e.target.value)}
-               >
-                 <option value="newest">Ngày đăng: Mới nhất</option>
-                 <option value="oldest">Ngày đăng: Cũ nhất</option>
-               </select>
-               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#acaab0]">
-                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                 </svg>
-               </div>
-             </div>
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Tìm kiếm bài viết..."
+                className="w-full h-11 bg-[#16161e] border border-[#2b2b36] rounded-xl px-4 text-white focus:outline-none focus:border-[#ba9eff] transition-colors"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="w-full sm:w-48 relative">
+              <select
+                className="w-full h-11 bg-[#16161e] border border-[#2b2b36] rounded-xl px-4 text-white focus:outline-none focus:border-[#ba9eff] transition-colors appearance-none cursor-pointer"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              >
+                <option value="newest">Ngày đăng: Mới nhất</option>
+                <option value="oldest">Ngày đăng: Cũ nhất</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#acaab0]">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2.5 4.5L6 8L9.5 4.5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:gap-12 mt-4 mb-[120px] lg:mb-0">
-          <Sidebar 
-            tags={tags} 
-            appliedTags={appliedTags} 
-            toggleTag={toggleTag} 
-            clearFilter={clearFilter} 
+          <Sidebar
+            tags={tags}
+            appliedTags={appliedTags}
+            toggleTag={toggleTag}
+            clearFilter={clearFilter}
           />
 
           <div className="flex-1 flex flex-col gap-2">
-            
             {/* Mobile Tag Filter */}
             {tags.length > 0 && (
               <div className="lg:hidden mb-6 flex flex-wrap gap-2">
-                 {tags.map((tag) => {
-                    const isSelected = appliedTags.includes(tag.id)
-                    return (
-                      <button
-                        key={tag.id}
-                        onClick={() => toggleTag(tag.id)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border",
-                          isSelected 
-                            ? "bg-[#ba9eff] text-[#16161e] border-[#ba9eff]" 
-                            : "bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white"
-                        )}
-                      >
-                        {tag.title}
-                      </button>
-                    )
-                 })}
+                {tags.map((tag) => {
+                  const isSelected = appliedTags.includes(tag.id)
+                  return (
+                    <button
+                      key={tag.id}
+                      onClick={() => toggleTag(tag.id)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border',
+                        isSelected
+                          ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
+                          : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                      )}
+                    >
+                      {tag.title}
+                    </button>
+                  )
+                })}
               </div>
             )}
 
@@ -318,7 +325,10 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
 
                         return pages.map((page, idx) =>
                           page === '...' ? (
-                            <span key={`ellipsis-${idx}`} className="px-2 text-sgz-textMuted flex items-center">
+                            <span
+                              key={`ellipsis-${idx}`}
+                              className="px-2 text-sgz-textMuted flex items-center"
+                            >
                               ...
                             </span>
                           ) : (
@@ -326,10 +336,10 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
                               key={page}
                               onClick={() => goToPage(page as number)}
                               className={cn(
-                                "w-10 h-10 font-bold rounded-xl transition-colors border",
+                                'w-10 h-10 font-bold rounded-xl transition-colors border',
                                 currentPage === page
-                                  ? "bg-[#ba9eff] text-[#16161e] border-[#ba9eff]"
-                                  : "bg-[#16161e] text-white border-sgz-border hover:border-[#ba9eff] hover:text-[#ba9eff]"
+                                  ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
+                                  : 'bg-[#16161e] text-white border-sgz-border hover:border-[#ba9eff] hover:text-[#ba9eff]',
                               )}
                             >
                               {page}
@@ -357,8 +367,8 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
                     : 'Chưa có bài viết nào.'}
                 </p>
                 {appliedTags.length > 0 && (
-                  <button 
-                    onClick={clearFilter} 
+                  <button
+                    onClick={clearFilter}
                     className="mt-6 text-sgz-primary font-bold hover:underline"
                   >
                     Xem tất cả bài viết
