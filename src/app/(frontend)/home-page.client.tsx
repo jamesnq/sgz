@@ -30,7 +30,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         className={cn('block h-full w-full cursor-pointer', styles.link)}
         href={product.slug ? Routes.product(product.slug) : '#'}
       >
-        <Card className={cn('w-full h-[131px] !p-0', styles.card)}>
+        <Card className={cn('w-full h-[131px] p-0!', styles.card)}>
           <div className="w-full">
             <div className="text-[14px] flex items-start p-0">
               <div
@@ -99,7 +99,7 @@ const PostCard = ({ post }: { post: Post }) => {
         className={cn('block h-full w-full cursor-pointer', styles.link)}
         href={post.slug ? Routes.post(post.slug) : '#'}
       >
-        <Card className={cn('w-full h-[131px] !p-0', styles.card)}>
+        <Card className={cn('w-full h-[131px] p-0!', styles.card)}>
           <div className="w-full">
             <div className="text-[14px] flex items-start p-0">
               <div

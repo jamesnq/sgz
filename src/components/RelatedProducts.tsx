@@ -65,7 +65,7 @@ const RelatedProducts = ({
             className="relative block h-full w-full cursor-pointer overflow-hidden transition-all duration-300 hover:border-secondary"
             href={`/products/${product.slug}`}
           >
-            <Card className="w-full h-[131px] overflow-hidden !p-0">
+            <Card className="w-full h-[131px] overflow-hidden p-0!">
               <div className="w-full">
                 <div className="text-[14px] flex items-start p-0">
                   <div className="relative h-[131px] w-[98px] overflow-hidden flex items-center justify-center">
@@ -77,7 +77,7 @@ const RelatedProducts = ({
                   </div>
                   <div className="flex w-full h-[131px] flex-1 flex-col items-start justify-between gap-[8px] p-2">
                     <div>
-                      <div className="truncate h-auto overflow-hidden text-[14px] font-[400] leading-[17px]">
+                      <div className="truncate h-auto overflow-hidden text-[14px] font-normal leading-[17px]">
                         {product.name}
                       </div>
                       ks

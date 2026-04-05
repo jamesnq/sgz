@@ -50,7 +50,7 @@ export function SocialSupport() {
         className={`flex items-center gap-2 text-white px-4 py-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 ${
           isOpen
             ? 'bg-gray-600 hover:bg-gray-700'
-            : 'bg-gradient-to-r from-[#5865F2] to-[#1877F2] hover:from-[#4752C4] hover:to-[#166FE5]'
+            : 'bg-linear-to-r from-[#5865F2] to-[#1877F2] hover:from-[#4752C4] hover:to-[#166FE5]'
         }`}
       >
         {isOpen ? (

@@ -36,7 +36,7 @@ export const InlineDialog: React.FC<Props> = (props) => {
             <DialogTitle>{dialogTitle || ''}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto pr-4">
+          <div className="grow overflow-y-auto pr-4">
             {content && (
               <div className={cn('mt-4', { 'mt-0': !dialogTitle })}>
                 <RichText

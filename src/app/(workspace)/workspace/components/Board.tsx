@@ -18,7 +18,7 @@ export const Board = memo(
     return (
       <div className="container">
         <div className="flex flex-col w-full gap-3 overflow-x-auto">
-          <div className="w-full max-w-sm flex-shrink-0">
+          <div className="w-full max-w-sm shrink-0">
             <Input
               placeholder="Tìm kiếm theo ID hoặc Sản phẩm..."
               value={searchQuery}
