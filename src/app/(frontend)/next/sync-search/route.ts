@@ -100,6 +100,7 @@ export async function POST(): Promise<Response> {
         minPrice: true,
         maxPrice: true,
         maxDiscount: true,
+        status: true,
         meta: true,
         createdAt: true,
       },

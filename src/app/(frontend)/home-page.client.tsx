@@ -58,7 +58,7 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
                 {stats.orders.toLocaleString()}+
               </span>
               <span className="text-sgz-textMuted text-sm font-medium mt-1 uppercase tracking-wider">
-                Đã hoàn thành
+                Đơn hàng
               </span>
             </div>
             <div className="w-px bg-sgz-border/30 my-2"></div>
