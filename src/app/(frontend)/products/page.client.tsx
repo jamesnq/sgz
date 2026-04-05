@@ -137,7 +137,15 @@ const PageClient = () => {
       routing={{
         stateMapping: {
           stateToRoute(uiState: any) {
-            return uiState
+            const indexState = uiState[productIndex] || {}
+            // Remove 'page' from the URL so infinite scrolling doesn't change the URL
+            // and F5 refresh will always start from page 1.
+            const { page, ...restIndexState } = indexState
+            
+            return {
+              ...uiState,
+              [productIndex]: restIndexState
+            }
           },
           routeToState(routeState: any) {
             const indexState = routeState[productIndex] || {}
@@ -147,6 +155,7 @@ const PageClient = () => {
                 ...indexState,
                 query: routeState.q || indexState.query,
                 sortBy: indexState.sortBy || `${productIndex}:sold:desc`,
+                page: 1, // Always force page 1 on initial load from URL
               },
             }
           },

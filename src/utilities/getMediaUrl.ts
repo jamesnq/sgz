@@ -9,8 +9,9 @@ import { getClientSideURL } from '@/utilities/getURL'
 export const getMediaUrl = (url: string | null | undefined, cacheTag?: string | null): string => {
   if (!url) return ''
 
-  const baseUrl = url.startsWith('http://') || url.startsWith('https://') ? '' : getClientSideURL()
-  const fullUrl = `${baseUrl}${url}`
+  // For next/image and <video> components, relative paths are preferable for local resources.
+  // Using absolute URLs pointing to localhost causes Next.js to block them as private IPs.
+  const fullUrl = url
 
   return cacheTag ? `${fullUrl}?${cacheTag}` : fullUrl
 }
