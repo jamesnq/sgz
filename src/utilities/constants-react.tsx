@@ -1,5 +1,12 @@
 import { config } from '@/config'
+import { Zap } from 'lucide-react'
 
+export const instantDelivery = (
+  <div className="bg-green-500/10 text-green-500 border border-green-500/20 text-sm font-medium px-4 py-3 rounded-xl flex items-center gap-2">
+    <Zap className="h-4 w-4 shrink-0 fill-current" />
+    Nhận sản phẩm ngay lập tức sau khi thanh toán (Instant delivery)
+  </div>
+)
 export const workingTime = (
   <div className="text-highlight w-full">
     Xử lý đơn hàng: <span className="text-green-400">8h sáng</span> đến{' '}

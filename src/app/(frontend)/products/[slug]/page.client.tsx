@@ -46,7 +46,7 @@ import { config } from '@/config'
 import { getProductCardStyles } from '@/lib/product-card-styles'
 import { useAuth } from '@/providers/Auth'
 import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
-import { workingTime } from '@/utilities/constants-react'
+import { workingTime, instantDelivery } from '@/utilities/constants-react'
 import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { Routes } from '@/utilities/routes'
@@ -940,6 +940,7 @@ const MemoizedCheckout = React.memo(
           </div>
 
           {currentVariant.status === 'ORDER' && workingTime}
+          {currentVariant.status === 'AVAILABLE' && instantDelivery}
           {user ? (
             <CheckoutButton />
           ) : (
