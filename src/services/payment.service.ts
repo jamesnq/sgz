@@ -133,7 +133,7 @@ export class PaymentService {
       if (!user || user.balance === null) throw new Error('User not found')
 
       const _transaction = await tx.insert(transactions).values({
-        amount: paymentData.amount.toString(),
+        amount: paymentData.amount,
         user: recharge.user as number,
         description: `Nạp tiền qua ngân hàng mã nạp #${recharge.orderCode}`,
         balance: user.balance,

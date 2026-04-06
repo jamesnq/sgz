@@ -138,7 +138,7 @@ const refundHook: FieldHook<Order> = async ({
       if (!newUser || !newUser.balance) throw new ConflictsError('Không tìm thấy người dùng')
 
       await tx.insert(transactions).values({
-        amount: (data.totalPrice as number).toString(),
+        amount: data.totalPrice as number,
         user: orderBy as number,
         description: `Hoàn trả đơn hàng #${data.id}`,
         balance: newUser.balance,

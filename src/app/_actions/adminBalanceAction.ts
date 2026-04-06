@@ -21,18 +21,18 @@ export const adminBalanceAction = authActionClient
     }
     const payload = await getPayload({ config: payloadConfig })
     const db = payload.db.drizzle
-    const { newUser } = await db.transaction(async () => {
-      const [newUser] = await db
+    const { newUser } = await db.transaction(async (tx) => {
+      const [newUser] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${amount}` })
         .where(eq(users.id, userId))
         .returning({ balance: users.balance, email: users.email })
       if (!newUser || !newUser.balance) throw new Error('Không tìm thấy người dùng')
-      await db.insert(transactions).values({
+      await tx.insert(transactions).values({
         user: userId,
-        amount: amount.toString(),
+        amount: amount,
         description: `${config.NEXT_PUBLIC_SITE_NAME} ${amount > 0 ? 'nạp' : 'trừ'} tiền ${note || ''}`,
-        balance: newUser.balance.toString(),
+        balance: newUser.balance,
       })
       return { newUser }
     })

@@ -133,7 +133,7 @@ export const checkoutAction = authActionClient
           .where(eq(users.id, user.id))
           .returning({ balance: users.balance })
         if (!newUser) throw new ServerNotification('Không tìm thấy người dùng')
-        const newUserBalance = parseFloat(newUser.balance as string)
+        const newUserBalance = newUser.balance ?? 0
         if (newUserBalance < 0) throw new ServerNotification('Số dư không đủ')
 
         const [order] = await tx
@@ -143,17 +143,17 @@ export const checkoutAction = authActionClient
             orderedBy: user.id,
             productVariant: pv.id,
             formSubmission: formSubmissionId,
-            quantity: quantity.toString(),
-            totalDiscount: totalDiscount.toString(),
-            subTotal: subTotal.toString(),
-            totalPrice: totalPrice.toString(),
+            quantity: quantity,
+            totalDiscount: totalDiscount,
+            subTotal: subTotal,
+            totalPrice: totalPrice,
             ...(voucherId
-              ? { voucher: voucherId, voucherDiscount: voucherDiscountAmount.toString() }
+              ? { voucher: voucherId, voucherDiscount: voucherDiscountAmount }
               : {}),
             ...(affiliateUserId
               ? {
                   affiliateUser: affiliateUserId,
-                  affiliateCommission: affiliateCommission.toString(),
+                  affiliateCommission: affiliateCommission,
                   affiliatePaid: false,
                 }
               : {}),
@@ -165,10 +165,10 @@ export const checkoutAction = authActionClient
         if (!order) throw new ServerNotification('Tạo đơn hàng thất bại')
         ;(order as any).productVariant = pv
         await tx.insert(transactions).values({
-          amount: (-totalPrice).toString(),
+          amount: -totalPrice,
           user: user.id,
           description: `Thanh toán đơn hàng #${order.id}`,
-          balance: newUserBalance.toString(),
+          balance: newUserBalance,
         })
         return order
       })
