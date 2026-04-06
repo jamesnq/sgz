@@ -19,92 +19,22 @@ export const navItems = [
   { label: 'Liên hệ', href: '#footer', sectionId: 'footer' },
 ]
 
-export function useScrollSpy(ids: string[], offset: number = 100) {
-  const [activeId, setActiveId] = useState<string | null>(null)
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (ids.length === 0) return
-
-      // If exactly at top, set to the first element
-      if (window.scrollY <= 0 && ids.length > 0) {
-        const firstId = ids[0]
-        if (firstId) {
-          setActiveId(firstId)
-        }
-        return
-      }
-
-      // For very bottom of page, highlight the last item (footer)
-      // Only do this if the page is actually scrollable to avoid false positive on mount
-      if (
-        ids.includes('footer') &&
-        document.documentElement.scrollHeight > window.innerHeight + 100 &&
-        (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50
-      ) {
-        if (document.getElementById('footer')) {
-          setActiveId('footer')
-          return
-        }
-      }
-
-      let currentId = null
-      for (const id of ids) {
-        const element = document.getElementById(id)
-        if (element) {
-          const top = element.getBoundingClientRect().top + window.scrollY - offset
-          if (window.scrollY >= top) {
-            currentId = id
-          }
-        }
-      }
-      
-      if (currentId) {
-        setActiveId(currentId)
-      } else if (ids.length > 0) {
-        const firstId = ids[0]
-        if (firstId) {
-          const firstEl = document.getElementById(firstId)
-          if (firstEl && window.scrollY < firstEl.offsetTop + offset) {
-            setActiveId(firstId)
-          }
-        }
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // initial call
-    
-    // Re-evaluate after a short delay to account for hydration/image loading layout shifts
-    const timeoutId = setTimeout(handleScroll, 500)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      clearTimeout(timeoutId)
-    }
-  }, [ids.join(',')])
-
-  return activeId
-}
 
 export const HeaderNav: React.FC<{ data: HeaderType }> = ({}) => {
   const pathname = usePathname()
   
   const navItemsRef = navItems
 
-  const activeSection = useScrollSpy(pathname === '/' ? navItems.map(item => item.sectionId) : [])
-
   return (
     <nav className="flex gap-8 items-center font-sans">
       {navItemsRef.map((item, i) => {
         let isActive = false
 
-        if (pathname === '/') {
-          isActive = activeSection === item.sectionId
-        } else {
-          if (item.href !== '/' && !item.href.includes('#footer') && pathname.startsWith(item.href)) {
-            isActive = true
-          }
+        if (item.href === '/') {
+          isActive = pathname === '/'
+        } else if (!item.href.includes('#')) {
+          isActive = pathname.startsWith(item.href)
         }
 
         return (
@@ -133,7 +63,6 @@ import { LogOut } from 'lucide-react'
 
 export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
   const pathname = usePathname()
-  const activeSection = useScrollSpy(pathname === '/' ? navItems.map((item) => item.sectionId) : [])
   const [open, setOpen] = useState(false)
   const { user, logout } = useAuth()
 
@@ -158,12 +87,10 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
           <nav className="flex flex-col gap-4">
             {navItems.map((item, i) => {
               let isActive = false
-              if (pathname === '/') {
-                isActive = activeSection === item.sectionId
-              } else {
-                if (item.href !== '/' && !item.href.includes('#footer') && pathname.startsWith(item.href)) {
-                  isActive = true
-                }
+              if (item.href === '/') {
+                isActive = pathname === '/'
+              } else if (!item.href.includes('#')) {
+                isActive = pathname.startsWith(item.href)
               }
 
               return (
