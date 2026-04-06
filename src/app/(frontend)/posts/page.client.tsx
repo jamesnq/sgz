@@ -39,12 +39,12 @@ const PostCard = ({ post }: { post: Post }) => {
         />
       </div>
       <div className="p-6 space-y-4 flex flex-col flex-1">
-        <div>
-          {category && (
-            <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
-              {category}
+        <div className="flex flex-wrap gap-1.5">
+          {tags && tags.length > 0 && tags.map((tag: any) => (
+            <span key={tag.id || tag} className="bg-sgz-primary/10 border border-sgz-primary/20 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
+              {tag.title || tag}
             </span>
-          )}
+          ))}
         </div>
         <Link href={post.slug ? Routes.post(post.slug) : '#'} className="flex-1">
           <h3 className="font-bold text-white text-xl leading-snug line-clamp-2 group-hover:text-sgz-primary transition-colors">
