@@ -71,6 +71,7 @@
     "instantsearch.css": "^8.13.0",
     "lodash": "^4.18.1",
     "lucide-react": "^1.7.0",
+    "marked": "^17.0.6",
     "meilisearch": "^0.57.0",
     "next": "^16.2.2",
     "next-safe-action": "8.4.0",

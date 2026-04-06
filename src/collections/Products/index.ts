@@ -28,6 +28,9 @@ export const Products: CollectionConfig = {
     defaultColumns: ['name', 'status', 'image', 'slug', 'sold', 'updatedAt'],
     useAsTitle: 'name',
     group: mediaGroup,
+    components: {
+      beforeListTable: ['@/collections/Products/components/BulkAddButton#BulkAddButton'],
+    },
   },
   hooks: {
     beforeChange: [
