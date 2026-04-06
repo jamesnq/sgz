@@ -133,6 +133,26 @@ const getServiceProducts = unstable_cache(
   { tags: ['products-list'], revalidate: 60 },
 )
 
+const getFeaturedProducts = unstable_cache(
+  async () => {
+    const payload = await getPayload({ config: configPromise })
+    const { docs } = await payload.find({
+      collection: 'products',
+      depth: 1,
+      limit: 15,
+      overrideAccess: true,
+      where: {
+        status: { equals: 'PUBLIC' },
+        featured: { equals: true },
+      },
+      sort: '-sold',
+    })
+    return docs as Product[]
+  },
+  ['homepage-featured-products'],
+  { tags: ['products-list'], revalidate: 60 },
+)
+
 const getStats = unstable_cache(
   async () => {
     const payload = await getPayload({ config: configPromise })
@@ -157,6 +177,7 @@ export default async function Home() {
   const latestProducts = await getLatestProducts()
   const topUpProducts = await getTopUpProducts()
   const serviceProducts = await getServiceProducts()
+  const featuredProducts = await getFeaturedProducts()
 
   return (
     <HomePageClient
@@ -165,6 +186,7 @@ export default async function Home() {
       latestProducts={latestProducts}
       topUpProducts={topUpProducts}
       serviceProducts={serviceProducts}
+      featuredProducts={featuredProducts}
     />
   )
 }

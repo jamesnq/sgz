@@ -451,6 +451,18 @@ export interface Order {
    * Số tiền giảm từ voucher
    */
   voucherDiscount?: number | null;
+  /**
+   * Người sáng tạo nội dung nhận hoa hồng
+   */
+  affiliateUser?: (number | null) | User;
+  /**
+   * Số tiền hoa hồng affiliate (VND)
+   */
+  affiliateCommission?: number | null;
+  /**
+   * Đánh dấu đã thanh toán hoa hồng cho affiliate
+   */
+  affiliatePaid?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -561,6 +573,10 @@ export interface Product {
     [k: string]: unknown;
   } | null;
   relatedProducts?: (number | Product)[] | null;
+  /**
+   * Hiển thị sản phẩm trong mục "Game Nổi Bật" trên trang chủ
+   */
+  featured?: boolean | null;
   categories?: (number | Category)[] | null;
   slug?: string | null;
   slugLock?: boolean | null;
@@ -839,6 +855,18 @@ export interface Voucher {
    * Phiên bản sản phẩm áp dụng (bỏ trống = tất cả)
    */
   applicableProductVariants?: (number | ProductVariant)[] | null;
+  /**
+   * Người sáng tạo nội dung nhận hoa hồng từ voucher này
+   */
+  affiliateUser?: (number | null) | User;
+  /**
+   * Loại hoa hồng trả cho affiliate
+   */
+  commissionType?: ('percentage' | 'fixed') | null;
+  /**
+   * Giá trị hoa hồng (% hoặc VND tùy loại). Tính trên giá gốc sản phẩm.
+   */
+  commissionValue?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1333,6 +1361,7 @@ export interface ProductsSelect<T extends boolean = true> {
   note?: T;
   description?: T;
   relatedProducts?: T;
+  featured?: T;
   categories?: T;
   slug?: T;
   slugLock?: T;
@@ -1401,6 +1430,9 @@ export interface OrdersSelect<T extends boolean = true> {
   revenue?: T;
   voucher?: T;
   voucherDiscount?: T;
+  affiliateUser?: T;
+  affiliateCommission?: T;
+  affiliatePaid?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1583,6 +1615,9 @@ export interface VouchersSelect<T extends boolean = true> {
   active?: T;
   applicableProducts?: T;
   applicableProductVariants?: T;
+  affiliateUser?: T;
+  commissionType?: T;
+  commissionValue?: T;
   updatedAt?: T;
   createdAt?: T;
 }

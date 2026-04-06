@@ -201,6 +201,15 @@ export const Products: CollectionConfig = {
       relationTo: 'products',
     },
     {
+      name: 'featured',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Hiển thị sản phẩm trong mục "Game Nổi Bật" trên trang chủ',
+      },
+    },
+    {
       name: 'categories',
       type: 'relationship',
       admin: {

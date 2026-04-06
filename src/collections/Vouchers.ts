@@ -135,5 +135,45 @@ export const Vouchers: CollectionConfig = {
         description: 'Phiên bản sản phẩm áp dụng (bỏ trống = tất cả)',
       },
     },
+    // --- Affiliate / Creator ---
+    {
+      type: 'collapsible',
+      label: 'Cấu hình Affiliate (Tiếp thị liên kết)',
+      admin: {
+        initCollapsed: true,
+        description: 'Cấu hình hoa hồng cho người sáng tạo nội dung',
+      },
+      fields: [
+        {
+          name: 'affiliateUser',
+          type: 'relationship',
+          relationTo: 'users',
+          admin: {
+            description: 'Người sáng tạo nội dung nhận hoa hồng từ voucher này',
+          },
+        },
+        {
+          name: 'commissionType',
+          type: 'select',
+          options: [
+            { label: 'Phần trăm', value: 'percentage' },
+            { label: 'Số tiền cố định', value: 'fixed' },
+          ],
+          admin: {
+            description: 'Loại hoa hồng trả cho affiliate',
+            condition: (data) => !!data?.affiliateUser,
+          },
+        },
+        {
+          name: 'commissionValue',
+          type: 'number',
+          min: 0,
+          admin: {
+            description: 'Giá trị hoa hồng (% hoặc VND tùy loại). Tính trên giá gốc sản phẩm.',
+            condition: (data) => !!data?.affiliateUser,
+          },
+        },
+      ],
+    },
   ],
 }

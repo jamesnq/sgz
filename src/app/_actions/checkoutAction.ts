@@ -64,6 +64,8 @@ export const checkoutAction = authActionClient
       // Voucher validation and discount calculation
       let voucherId: number | undefined = undefined
       let voucherDiscountAmount = 0
+      let affiliateUserId: number | undefined = undefined
+      let affiliateCommission = 0
 
       if (voucherCode) {
         const { docs: vouchers } = await payload.find({
@@ -89,6 +91,20 @@ export const checkoutAction = authActionClient
         totalPrice = totalPrice - voucherDiscountAmount
         totalDiscount = totalDiscount + voucherDiscountAmount
         voucherId = voucher.id
+
+        // --- Affiliate commission calculation ---
+        // Commission is calculated on the ORIGINAL price (subTotal), not the discounted price
+        if (voucher.affiliateUser && voucher.commissionType && voucher.commissionValue) {
+          affiliateUserId =
+            typeof voucher.affiliateUser === 'object'
+              ? voucher.affiliateUser.id
+              : voucher.affiliateUser
+          if (voucher.commissionType === 'percentage') {
+            affiliateCommission = Math.round((subTotal * voucher.commissionValue) / 100)
+          } else {
+            affiliateCommission = voucher.commissionValue * quantity
+          }
+        }
       }
 
       let formSubmissionId: any = undefined
@@ -133,6 +149,13 @@ export const checkoutAction = authActionClient
             totalPrice: totalPrice.toString(),
             ...(voucherId
               ? { voucher: voucherId, voucherDiscount: voucherDiscountAmount.toString() }
+              : {}),
+            ...(affiliateUserId
+              ? {
+                  affiliateUser: affiliateUserId,
+                  affiliateCommission: affiliateCommission.toString(),
+                  affiliatePaid: false,
+                }
               : {}),
           })
           .returning({
