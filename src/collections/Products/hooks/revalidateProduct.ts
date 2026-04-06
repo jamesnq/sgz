@@ -37,9 +37,9 @@ export const updateProductPriceRange = async (
     await db
       .update(products)
       .set({
-        minPrice: minPrice.toString(),
-        maxPrice: maxPrice.toString(),
-        maxDiscount: maxDiscount.toString(),
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        maxDiscount: maxDiscount,
       })
       .where(eq(products.id, productId))
   }

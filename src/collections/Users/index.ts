@@ -108,7 +108,6 @@ export const Users: CollectionConfig = {
           const db = req.payload.db.drizzle
           await db
             .update(users)
-            // @ts-expect-error ts missmatch
             .set({ ...userUpdate })
             .where(eq(users.id, doc.id))
         }
