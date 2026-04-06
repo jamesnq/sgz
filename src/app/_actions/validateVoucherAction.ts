@@ -51,7 +51,7 @@ export const validateVoucherAction = authActionClient
     }
 
     try {
-      validateVoucherScope(voucher, (pv.product as Product).id, productVariantId)
+      validateVoucherScope(voucher, typeof pv.product === 'object' ? pv.product.id : pv.product, productVariantId)
     } catch (e) {
       throw new ServerNotification((e as Error).message)
     }

@@ -80,7 +80,7 @@ export const checkoutAction = authActionClient
 
         try {
           validateVoucher(voucher, totalPrice)
-          validateVoucherScope(voucher, (pv.product as Product).id, pv.id)
+          validateVoucherScope(voucher, typeof pv.product === 'object' ? pv.product.id : pv.product, pv.id)
         } catch (e) {
           throw new ServerNotification((e as Error).message)
         }
@@ -185,7 +185,7 @@ export const checkoutAction = authActionClient
           db
             .update(products)
             .set({ sold: sql`${products.sold} + ${quantity}` })
-            .where(eq(products.id, (pv.product as Product).id)),
+            .where(eq(products.id, typeof pv.product === 'object' ? pv.product.id : pv.product)),
           db
             .update(product_variants)
             .set({ sold: sql`${product_variants.sold} + ${quantity}` })
