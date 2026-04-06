@@ -18,7 +18,7 @@ const getPosts = unstable_cache(
       collection: 'posts',
       depth: 1,
       limit: 100,
-      overrideAccess: false,
+      overrideAccess: true,
       where: {
         _status: { equals: 'published' },
       },
@@ -36,7 +36,7 @@ const getTags = unstable_cache(
     const { docs } = await payload.find({
       collection: 'post-tags',
       limit: 50,
-      overrideAccess: false,
+      overrideAccess: true,
       sort: 'title',
     })
     return docs as PostTag[]
