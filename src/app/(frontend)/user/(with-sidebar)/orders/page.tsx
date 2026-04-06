@@ -38,18 +38,17 @@ function OrdersPageSkeleton() {
   )
 }
 
+import { getServerSession } from '@/hooks/getServerSession'
+
 async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
   // TODO optimize using drizzle
   const { q: query, status, page } = SearchParamsSchema.parse(await searchParams)
   const payload = await getPayload({ config: configPromise })
-  const headersData = await headers()
-  const { user } = await payload.auth({
-    headers: headersData,
-  })
+  const { user } = await getServerSession()
   if (!user) {
     return null
   }
-  const queryWhere: any = { orderedBy: { equals: user.id } }
+  const queryWhere: any = { orderedBy: { equals: Number(user.id) } }
   if (query || status) {
     queryWhere.and = []
     if (query) {
@@ -80,8 +79,7 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
     collection: 'orders',
     depth: 1,
     limit: 5,
-    user,
-    overrideAccess: false,
+    overrideAccess: true,
     where: queryWhere,
     page,
     select: {
@@ -97,6 +95,10 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
       transactionID: undefined,
     },
   })
+
+  // console.log('[OrdersPage] user ID:', user.id)
+  // console.log('[OrdersPage] queryWhere:', JSON.stringify(queryWhere))
+  // console.log('[OrdersPage] found orders count:', res.docs.length)
 
   const productIds = Array.from(new Set(res.docs.map((order: any) => order.productVariant.product)))
   if (productIds.length) {

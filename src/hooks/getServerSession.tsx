@@ -5,7 +5,29 @@ export async function getServerSession() {
   const { headers: nextHeaders } = await import('next/headers')
   const headers = await nextHeaders()
   const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
+  let { user } = await payload.auth({ headers })
+
+  if (!user) {
+    try {
+      // Fallback for payload-auth-plugin (OAuth sessions)
+      const port = process.env.PORT || 3000
+      const baseUrl = `http://127.0.0.1:${port}`
+      const response = await fetch(`${baseUrl}/api/app/session?fields[0]=id&fields[1]=email&fields[2]=roles`, {
+        headers: {
+          cookie: headers.get('cookie') || '',
+        },
+        cache: 'no-store'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data?.data?.isAuthenticated && data?.data?.id) {
+          user = data.data
+        }
+      }
+    } catch (e) {
+      console.error('[getServerSession] Error fetching OAuth session:', e)
+    }
+  }
 
   return { user }
 }
