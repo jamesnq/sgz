@@ -37,8 +37,19 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
       id="hero-section"
       className="relative min-h-[calc(100dvh-80px)] pt-6 md:pt-8 pb-32 md:pb-16 flex items-center overflow-hidden"
     >
-      <div className="absolute inset-0 z-0 bg-gradient-to-l from-sgz-textDark via-[#0f0f13] to-sgz-dark">
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent z-10 opacity-60"></div>
+      <div className="absolute inset-0 z-0 bg-sgz-dark">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster="/herovideo_optimized.webp"
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/herovideo_compressed.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-black/50 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent z-10 opacity-80"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10"></div>
       </div>
       <div className="relative z-20 w-full px-6 lg:px-12 max-w-[1440px] mx-auto mb-8 md:mb-0">
@@ -355,39 +366,43 @@ const HomePageClient = ({
   useEffect(() => {
     setHeaderTheme('dark')
 
-    let isSnapping = false;
-    let lastScrollY = window.scrollY;
+    let isSnapping = false
+    let lastScrollY = window.scrollY
 
     const handleScroll = () => {
-      const currentY = window.scrollY;
-      const delta = currentY - lastScrollY;
-      lastScrollY = currentY;
+      const currentY = window.scrollY
+      const delta = currentY - lastScrollY
+      lastScrollY = currentY
 
-      if (isSnapping) return;
+      if (isSnapping) return
 
-      const heroEl = document.getElementById('hero-section');
-      if (!heroEl) return;
+      const heroEl = document.getElementById('hero-section')
+      if (!heroEl) return
 
       // Tính chính xác tọa độ của vùng nội dung ngay dưới Hero
-      const contentTop = heroEl.getBoundingClientRect().bottom + window.scrollY;
-      const targetY = contentTop - 80; // Trừ 80px chiều cao của Header
+      const contentTop = heroEl.getBoundingClientRect().bottom + window.scrollY
+      const targetY = contentTop - 80 // Trừ 80px chiều cao của Header
 
       // Kéo xuống khi đang ở nửa trên Hero
       if (delta > 0 && currentY > 20 && currentY < targetY - 50) {
-        isSnapping = true;
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-        setTimeout(() => { isSnapping = false }, 800);
+        isSnapping = true
+        window.scrollTo({ top: targetY, behavior: 'smooth' })
+        setTimeout(() => {
+          isSnapping = false
+        }, 800)
       }
       // Kéo lên khi đang lấp lửng ở Hero
       else if (delta < 0 && currentY > 20 && currentY < targetY - 50) {
-        isSnapping = true;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => { isSnapping = false }, 800);
+        isSnapping = true
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setTimeout(() => {
+          isSnapping = false
+        }, 800)
       }
-    };
+    }
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [setHeaderTheme])
 
   return (
