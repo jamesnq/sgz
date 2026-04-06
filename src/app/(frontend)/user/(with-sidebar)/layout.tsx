@@ -3,23 +3,11 @@ import { ReactNode } from 'react'
 import SidebarNavClient from './sidebar-nav-client'
 import { Shell } from '@/components/shell'
 import { getServerSession } from '@/hooks/getServerSession'
-import { getPayload } from 'payload'
-import payloadConfig from '@payload-config'
+import { checkIsAffiliate } from '@/utilities/user'
 
 export default async function UserLayout({ children }: { children: ReactNode }) {
   const { user } = await getServerSession()
-  let isAffiliate = false
-
-  if (user) {
-    const payload = await getPayload({ config: payloadConfig })
-    const { totalDocs } = await payload.count({
-      collection: 'vouchers',
-      where: {
-        affiliateUser: { equals: user.id },
-      },
-    })
-    isAffiliate = totalDocs > 0
-  }
+  const isAffiliate = await checkIsAffiliate(user?.id)
 
   return (
     <Shell>

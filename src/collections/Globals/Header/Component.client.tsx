@@ -32,9 +32,11 @@ import { cn } from '@/utilities/ui'
 import { useRouter } from 'next/navigation'
 
 interface AuthDropdownProps
-  extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>, ButtonProps {}
+  extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>, ButtonProps {
+  isAffiliate?: boolean
+}
 
-export function AuthDropdown({ className, ...props }: AuthDropdownProps) {
+export function AuthDropdown({ className, isAffiliate, ...props }: AuthDropdownProps) {
   const { user, logout } = useAuth()
 
   if (!user) {
@@ -89,7 +91,12 @@ export function AuthDropdown({ className, ...props }: AuthDropdownProps) {
           }
         >
           <DropdownMenuGroup className="p-2">
-            {Routes.USER_NAV.map((item) => (
+            {Routes.USER_NAV.filter((item) => {
+              if (item.href === Routes.AFFILIATE && !isAffiliate) {
+                return false
+              }
+              return true
+            }).map((item) => (
               <DropdownMenuItem
                 key={item.label}
                 asChild
@@ -122,9 +129,10 @@ export function AuthDropdown({ className, ...props }: AuthDropdownProps) {
 
 interface HeaderClientProps {
   data: Header
+  isAffiliate?: boolean
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data, isAffiliate }) => {
   return (
     <header className="bg-sgz-dark/90 backdrop-blur-xl font-sans antialiased shadow-[0_10px_40px_-15px_rgba(139,92,246,0.15)] sticky top-0 z-50 transition-all duration-300 border-b border-sgz-border">
       <div className="flex justify-between items-center w-full px-6 lg:px-12 h-20 max-w-[1440px] mx-auto gap-4">
@@ -142,9 +150,9 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
             <HeaderSearch />
             <UserBalanceWidget />
             <NovuInbox />
-            <AuthDropdown />
+            <AuthDropdown isAffiliate={isAffiliate} />
           </div>
-          <MobileNav data={data} />
+          <MobileNav data={data} isAffiliate={isAffiliate} />
         </div>
       </div>
     </header>

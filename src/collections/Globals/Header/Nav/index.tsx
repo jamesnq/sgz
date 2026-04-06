@@ -61,7 +61,9 @@ import AuthDialog from '../AuthDialog'
 import { useAuth } from '@/providers/Auth'
 import { LogOut } from 'lucide-react'
 
-export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
+export const MobileNav: React.FC<{ data: HeaderType; isAffiliate?: boolean }> = ({
+  isAffiliate,
+}) => {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const { user, logout } = useAuth()
@@ -128,7 +130,12 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {Routes.USER_NAV.map((item) => (
+                {Routes.USER_NAV.filter((item) => {
+                  if (item.href === Routes.AFFILIATE && !isAffiliate) {
+                    return false
+                  }
+                  return true
+                }).map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
