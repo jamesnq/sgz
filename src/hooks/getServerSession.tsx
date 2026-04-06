@@ -11,7 +11,7 @@ export async function getServerSession() {
     try {
       // Fallback for payload-auth-plugin (OAuth sessions)
       const port = process.env.PORT || 3000
-      const baseUrl = `http://127.0.0.1:${port}`
+      const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || `http://127.0.0.1:${port}`
       const response = await fetch(`${baseUrl}/api/app/session?fields[0]=id&fields[1]=email&fields[2]=roles`, {
         headers: {
           cookie: headers.get('cookie') || '',
