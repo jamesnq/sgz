@@ -2,7 +2,7 @@ import type { Product } from '@/payload-types'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-export const revalidate = 86000
+export const dynamic = 'force-dynamic'
 
 interface SitemapEntry {
   url: string
