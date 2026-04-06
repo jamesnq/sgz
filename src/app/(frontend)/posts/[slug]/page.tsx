@@ -242,14 +242,14 @@ export default async function PostDetailPage({ params }: Args) {
           </article>
 
           {/* Sidebar (Right Column) */}
-          <aside className="w-full lg:w-[380px] shrink-0 space-y-6 sticky top-32">
-            <div className="bg-[#16161e] border border-[#2b2b36] rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <aside className="w-full lg:w-[380px] shrink-0 sticky top-32 z-10">
+            <div className="bg-[#16161e] border border-[#2b2b36] rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col max-h-[calc(100vh-10rem)]">
               <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-sgz-primary/5 rounded-full blur-[60px] pointer-events-none" />
-              <h2 className="text-xl font-bold text-white mb-6 font-headline relative z-10 border-b border-[#2b2b36] pb-4">
+              <h2 className="text-xl font-bold text-white mb-6 font-headline relative z-10 border-b border-[#2b2b36] pb-4 shrink-0">
                 Bài viết liên quan
               </h2>
               
-              <div className="flex flex-col gap-4 relative z-10">
+              <div className="flex flex-col gap-4 relative z-10 overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2b2b36] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#3b3b4a] transition-all">
                 {relatedPosts.length > 0 ? (
                   relatedPosts.map(rp => (
                     <RelatedPostCard key={rp.id} post={rp} />
