@@ -11,11 +11,11 @@ export const RechargeDoiTheSchema = z.object({
   telco: z.string(),
   code: z.string(),
   serial: z.string(),
-  amount: z.coerce.number(),
+  amount: z.coerce.number().int('Số tiền nạp phải là số nguyên').positive('Số tiền nạp phải lớn hơn 0'),
 })
 export const CheckoutSchema = z.object({
   productVariantId: z.coerce.number(),
-  quantity: z.coerce.number(),
+  quantity: z.coerce.number().int('Số lượng phải là số nguyên').positive('Số lượng tối thiểu là 1'),
   shippingFields: z.any(),
   voucherCode: z.string().optional(),
 })

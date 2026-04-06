@@ -1,6 +1,6 @@
 'use server'
 import { config } from '@/config'
-import { orders, product_variants, products, transactions, users } from '@/payload-generated-schema'
+import { orders, product_variants, products, transactions, users, vouchers } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
 import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
@@ -170,26 +170,19 @@ export const checkoutAction = authActionClient
           description: `Thanh toán đơn hàng #${order.id}`,
           balance: newUserBalance,
         })
+
+        if (voucherId) {
+          await tx
+            .update(vouchers)
+            .set({ usedCount: sql`COALESCE(${vouchers.usedCount}, 0) + 1` })
+            .where(eq(vouchers.id, voucherId))
+        }
+
         return order
       })
 
       after(async () => {
         await Promise.all([
-          // Increment voucher usedCount
-          ...(voucherId
-            ? [
-                payload.update({
-                  collection: 'vouchers',
-                  id: voucherId,
-                  data: {
-                    usedCount:
-                      ((await payload.findByID({ collection: 'vouchers', id: voucherId, depth: 0 }))
-                        .usedCount ?? 0) + 1,
-                  } as any,
-                  overrideAccess: true,
-                }),
-              ]
-            : []),
           // update supplier
           (async () => {
             const defaultSupplierId =
