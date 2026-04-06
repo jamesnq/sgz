@@ -82,7 +82,22 @@ export const checkoutAction = authActionClient
 
         try {
           validateVoucher(voucher, totalPrice)
-          validateVoucherScope(voucher, typeof pv.product === 'object' ? pv.product.id : pv.product, pv.id)
+          validateVoucherScope(
+            voucher,
+            typeof pv.product === 'object' ? pv.product.id : pv.product,
+            pv.id,
+          )
+
+          // Prevent self-referral for affiliate vouchers
+          if (voucher.affiliateUser) {
+            const affiliateId =
+              typeof voucher.affiliateUser === 'object'
+                ? voucher.affiliateUser.id
+                : voucher.affiliateUser
+            if (affiliateId === user.id) {
+              throw new Error('Bạn không thể sử dụng mã voucher affiliate của chính mình')
+            }
+          }
         } catch (e) {
           throw new ServerNotification((e as Error).message)
         }
