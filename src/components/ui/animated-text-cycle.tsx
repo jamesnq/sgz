@@ -173,7 +173,7 @@ export default function AnimatedWordCycle({
         return (
           <span key={`fragment-${arrayIndex}`} className="inline-flex items-center">
             <motion.span
-              className="inline-block"
+              className="inline-block py-4 -my-4"
               animate={{
                 width: widths[arrayIndex] || 'auto',
                 transition: {

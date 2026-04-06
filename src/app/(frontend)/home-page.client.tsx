@@ -58,7 +58,7 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
           <div className="font-extrabold tracking-tighter lg:leading-[1.1] text-4xl sm:text-5xl md:text-7xl lg:text-8xl animate-fade-up wave-text text-white uppercase">
             {config.NEXT_PUBLIC_SITE_NAME}
           </div>
-          <h1 className="font-bold tracking-tighter lg:leading-[1.1] text-2xl sm:text-3xl md:text-5xl animate-fade-up text-white">
+          <h1 className="font-bold tracking-tighter lg:leading-[1.2] text-2xl sm:text-3xl md:text-5xl animate-fade-up text-white">
             Cung cấp{' '}
             <AnimatedWordCycle
               className="text-sgz-primary drop-shadow-[0_0_15px_rgba(186,158,255,0.4)]"
