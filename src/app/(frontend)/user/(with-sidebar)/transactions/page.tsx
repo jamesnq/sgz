@@ -43,23 +43,21 @@ function TransactionsTableSkeleton() {
   )
 }
 
+import { getServerSession } from '@/hooks/getServerSession'
+
 async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }) {
   const { q: query, page } = SearchParamsSchema.parse(await searchParams)
   const payload = await getPayload({ config: configPromise })
-  const headersData = await headers()
-  const { user } = await payload.auth({
-    headers: headersData,
-  })
+  const { user } = await getServerSession()
   if (!user) {
     return null
   }
-  let queryWhere: any = { user: { equals: user.id } }
+  let queryWhere: any = { user: { equals: Number(user.id) } }
   if (query) {
-    queryWhere = {
-      description: {
-        like: query,
-      },
-    }
+    queryWhere.and = [
+      { user: { equals: Number(user.id) } },
+      { description: { like: query } },
+    ]
   }
   const res = await payload.find({
     collection: 'transactions',
@@ -71,6 +69,10 @@ async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }
     sort: '-createdAt', // Sort by newest first
     req: { transactionID: undefined },
   })
+
+  // console.log('[TransactionsPage] user ID:', user.id)
+  // console.log('[TransactionsPage] queryWhere:', JSON.stringify(queryWhere))
+  // console.log('[TransactionsPage] found transactions count:', res.docs.length)
 
   return <PageClient data={res} />
 }

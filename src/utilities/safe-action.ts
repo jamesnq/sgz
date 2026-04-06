@@ -15,6 +15,7 @@ export class ServerNotification extends Error {
 
 export const actionClient = createSafeActionClient({
   handleServerError(error: any) {
+    console.error('[safe-action] Server error:', error)
     if (error.__isServerNotification) {
       return { notify: error.notify, message: error.message }
     }
@@ -26,6 +27,7 @@ export const actionClient = createSafeActionClient({
 export const authActionClient = actionClient.use(async ({ next }) => {
   const { user } = await getServerSession()
   if (!user) {
+    console.error('[authActionClient] Server session returned no user!')
     throw new Error('Session is not valid!')
   }
   // if (!user._verified) {
