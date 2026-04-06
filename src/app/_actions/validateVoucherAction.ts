@@ -18,7 +18,8 @@ const ValidateVoucherSchema = z.object({
 
 export const validateVoucherAction = authActionClient
   .schema(ValidateVoucherSchema)
-  .action(async ({ parsedInput: { voucherCode, totalPrice, productVariantId } }) => {
+  .action(async ({ parsedInput: { voucherCode, totalPrice, productVariantId }, ctx }) => {
+    const { user } = ctx
     const payload = await getPayload({ config: payloadConfig })
 
     const { docs: vouchers } = await payload.find({
@@ -35,6 +36,17 @@ export const validateVoucherAction = authActionClient
 
     try {
       validateVoucher(voucher, totalPrice)
+
+      // Prevent self-referral for affiliate vouchers
+      if (voucher.affiliateUser) {
+        const affiliateId =
+          typeof voucher.affiliateUser === 'object'
+            ? voucher.affiliateUser.id
+            : voucher.affiliateUser
+        if (affiliateId === user.id) {
+          throw new Error('Bạn không thể sử dụng mã voucher affiliate của chính mình')
+        }
+      }
     } catch (e) {
       throw new ServerNotification((e as Error).message)
     }
