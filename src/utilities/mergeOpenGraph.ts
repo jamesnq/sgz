@@ -9,17 +9,24 @@ const defaultOpenGraph: Metadata['openGraph'] = {
   images: [
     {
       url: `${getServerSideURL()}${defaultLogo}`,
-      secureUrl: `${getServerSideURL()}${defaultLogo}`,
     },
   ],
   siteName: config.NEXT_PUBLIC_SITE_NAME,
   title: config.NEXT_PUBLIC_SITE_NAME,
 }
 
-export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {
+export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata => {
   return {
-    ...defaultOpenGraph,
-    ...og,
-    images: og?.images ? og.images : defaultOpenGraph.images,
+    openGraph: {
+      ...defaultOpenGraph,
+      ...og,
+      images: og?.images ? og.images : defaultOpenGraph.images,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: og?.title || defaultOpenGraph.title,
+      description: og?.description || defaultOpenGraph.description || '',
+      images: og?.images ? og.images : defaultOpenGraph.images,
+    },
   }
 }

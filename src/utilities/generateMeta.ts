@@ -3,7 +3,7 @@ import type { Config, Media, Product, ProductVariant } from '../payload-types'
 
 import { config } from '@/config'
 import calculateDiscountPercentage from './calculateDiscountPercentage'
-import { defaultLogo, imageFallback } from './constants'
+import { defaultLogo, imageFallback, SITE_DESCRIPTION } from './constants'
 import { formatPrice } from './formatPrice'
 import { getServerSideURL } from './getURL'
 import { mergeOpenGraph } from './mergeOpenGraph'
@@ -39,12 +39,12 @@ export const defaultMetadata = (): Metadata => {
   const serverUrl = getServerSideURL()
   const defaultImage = serverUrl + imageFallback
   const title = config.NEXT_PUBLIC_SITE_NAME
-  const description = 'Cung cấp dịch vụ nạp game và ứng dụng giá rẻ'
+  const description = SITE_DESCRIPTION
 
   return {
     title,
     description,
-    openGraph: mergeOpenGraph({
+    ...mergeOpenGraph({
       title,
       description,
       images: [{ url: defaultImage }],
@@ -92,6 +92,7 @@ interface GenerateMetaArgs {
  * @returns Metadata object with title, description and OpenGraph data
  */
 export const generateMeta = async ({ doc, variant }: GenerateMetaArgs): Promise<Metadata> => {
+  const serverUrl = getServerSideURL()
   if (!doc) {
     return defaultMetadata()
   }
@@ -112,12 +113,13 @@ export const generateMeta = async ({ doc, variant }: GenerateMetaArgs): Promise<
     : textOnly(doc.description)
 
   // Generate the URL path
-  const url = Array.isArray(doc.slug) ? doc.slug.join('/') : '/'
+  const urlPath = Array.isArray(doc.slug) ? doc.slug.join('/') : doc.slug || ''
+  const url = `${serverUrl}/products/${urlPath}${variant > 0 ? `?variant=${variant}` : ''}`
 
   return {
     title,
     description,
-    openGraph: mergeOpenGraph({
+    ...mergeOpenGraph({
       title,
       description,
       images: ogImage ? [{ url: ogImage }] : undefined,

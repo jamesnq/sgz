@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 
 import React from 'react'
+import { getServerSideURL } from '@/utilities/getURL'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
 import { Header } from '@/collections/Globals/Header/Component'
 import { AdminBar } from '@/components/AdminBar'
@@ -39,11 +41,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 
 export const metadata: Metadata = {
-  // metadataBase: new URL(getServerSideURL()),
+  metadataBase: new URL(getServerSideURL()),
   title: {
-    absolute: config.NEXT_PUBLIC_SITE_NAME,
+    template: `%s | ${config.NEXT_PUBLIC_SITE_NAME}`,
+    default: config.NEXT_PUBLIC_SITE_NAME,
   },
-  description: `${config.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [
       { url: '/favicon.ico?v=2' },
@@ -57,5 +60,5 @@ export const metadata: Metadata = {
   appleWebApp: {
     title: config.NEXT_PUBLIC_SITE_NAME,
   },
-  // openGraph: mergeOpenGraph(),
+  ...mergeOpenGraph(),
 }
