@@ -17,7 +17,7 @@ export async function productsToSearch(products: Product[]): Promise<Product[]> 
         if (typeof product === 'number') return
         if (product.status === 'PRIVATE') return product
 
-        if (typeof product.image == 'number') {
+        if (typeof product.image === 'number' && !Number.isNaN(product.image)) {
           const [image, { docs: categories }] = await Promise.all([
             payload.findByID({
               collection: 'media',
