@@ -139,7 +139,7 @@ const getFeaturedProducts = unstable_cache(
     const { docs } = await payload.find({
       collection: 'products',
       depth: 1,
-      limit: 10,
+      limit: 15,
       overrideAccess: true,
       where: {
         status: { equals: 'PUBLIC' },

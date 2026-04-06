@@ -1,4 +1,4 @@
-import { ArrowLeftRight, LucideProps, Package } from 'lucide-react'
+import { ArrowLeftRight, HandCoins, LucideProps, Package } from 'lucide-react'
 import { ForwardRefExoticComponent, RefAttributes } from 'react'
 
 export class Routes {
@@ -9,6 +9,7 @@ export class Routes {
   static readonly ADMIN = '/admin'
   static readonly WORKSPACE = '/workspace'
   static readonly TRANSACTIONS = '/user/transactions'
+  static readonly AFFILIATE = '/user/affiliate'
   static readonly USER_NAV: {
     label: string
     href: string
@@ -23,6 +24,11 @@ export class Routes {
       label: 'Lịch sử giao dịch',
       href: Routes.TRANSACTIONS,
       icon: ArrowLeftRight,
+    },
+    {
+      label: 'Thu nhập Affiliate',
+      href: Routes.AFFILIATE,
+      icon: HandCoins,
     },
   ]
   static adminProductVariant(id: string | number): string {
@@ -40,3 +46,4 @@ export class Routes {
     return `/posts/${slug}`
   }
 }
+
