@@ -23,6 +23,7 @@ import {
   Users,
   ChevronDown,
   Mouse,
+  Star,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -257,6 +258,58 @@ const ProductGridWithHits = () => {
   )
 }
 
+/* ─────────────────────── Section: "Game Nổi Bật" ─────────────────────── */
+
+const FeaturedSection = ({ products }: { products: Product[] }) => {
+  if (!products || products.length === 0) return null
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, margin: '-100px' }}
+      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+      className="mb-16"
+    >
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <Star className="w-5 h-5 text-white fill-white" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
+                Game Nổi Bật
+              </h2>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-amber-500/30 to-transparent hidden sm:block"></div>
+          </div>
+          <p className="text-sgz-textMuted">
+            Những tựa game được đội ngũ chúng tôi đặc biệt khuyến nghị.
+          </p>
+        </div>
+        <Link
+          href="/products"
+          className="text-amber-400 font-bold flex items-center gap-1 hover:underline shrink-0 sm:ml-6"
+        >
+          Xem tất cả
+          <ChevronRight className="w-5 h-5" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {products.map((product) => (
+          <div key={product.id} className="relative">
+            <div className="absolute -top-2 -right-2 z-10 w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+              <Star className="w-3.5 h-3.5 text-white fill-white" />
+            </div>
+            <ProductCard product={product} />
+          </div>
+        ))}
+      </div>
+    </motion.section>
+  )
+}
+
 /* ─────────────────────── Post Card ─────────────────────── */
 
 const PostCard = ({ post }: { post: Post }) => {
@@ -355,6 +408,7 @@ interface HomePageClientProps {
   latestProducts: Product[]
   topUpProducts?: Product[]
   serviceProducts?: Product[]
+  featuredProducts?: Product[]
 }
 
 const HomePageClient = ({
@@ -363,6 +417,7 @@ const HomePageClient = ({
   latestProducts,
   topUpProducts,
   serviceProducts,
+  featuredProducts,
 }: HomePageClientProps) => {
   const { setHeaderTheme } = useHeaderTheme()
 
@@ -422,6 +477,9 @@ const HomePageClient = ({
       <div className="mb-16">
         <HeroSection stats={stats} />
         <div className="w-full px-6 lg:px-12 max-w-[1440px] mx-auto py-8 space-y-16">
+          {featuredProducts && featuredProducts.length > 0 && (
+            <FeaturedSection products={featuredProducts} />
+          )}
           {latestProducts && latestProducts.length > 0 && (
             <ProductGridSection
               products={latestProducts}

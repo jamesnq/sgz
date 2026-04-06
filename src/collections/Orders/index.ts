@@ -401,6 +401,44 @@ export const Orders: CollectionConfig = {
         update: noOne,
       },
     },
+    // --- Affiliate Tracking ---
+    {
+      name: 'affiliateUser',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        readOnly: true,
+        description: 'Người sáng tạo nội dung nhận hoa hồng',
+      },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+    },
+    {
+      name: 'affiliateCommission',
+      type: 'number',
+      admin: {
+        readOnly: true,
+        description: 'Số tiền hoa hồng affiliate (VND)',
+      },
+      access: {
+        create: noOne,
+        update: noOne,
+      },
+    },
+    {
+      name: 'affiliatePaid',
+      type: 'checkbox',
+      defaultValue: false,
+      access: {
+        create: hasRole(['admin']),
+        update: hasRole(['admin']),
+      },
+      admin: {
+        description: 'Đánh dấu đã thanh toán hoa hồng cho affiliate',
+      },
+    },
   ],
   timestamps: true,
 }
