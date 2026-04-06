@@ -14,7 +14,8 @@ import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
 
-export const revalidate = 3600
+// export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export async function generateStaticParams() {
   try {
