@@ -150,12 +150,13 @@ const ProductCard = ({ product }: { product: Product }) => {
   const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
 
   return (
-    <div className="group cursor-pointer block">
-      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-sgz-surface">
+    <div className="group cursor-pointer flex flex-col h-full">
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-sgz-surface shrink-0">
         <Media
           resource={product.image}
           className="w-full h-full"
           imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          size="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
         />
         {discount > 0 && (
           <div className="absolute top-3 left-3 bg-[#ff97b5] text-[#380018] font-bold px-2 py-1 rounded text-xs">
@@ -171,23 +172,26 @@ const ProductCard = ({ product }: { product: Product }) => {
           </Link>
         </div>
       </div>
-      <Link href={product.slug ? Routes.product(product.slug) : '#'}>
-        <h3 className="font-bold text-white line-clamp-1 mb-1 group-hover:text-sgz-primary transition-colors">
+      <Link href={product.slug ? Routes.product(product.slug) : '#'} className="mb-1">
+        <h3 className="font-bold text-white line-clamp-1 group-hover:text-sgz-primary transition-colors">
           {product.name}
         </h3>
       </Link>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {discount > 0 && (
-            <span className="text-sgz-textMuted line-through text-sm">
-              {formatPrice(originalPrice)}
-            </span>
-          )}
-          <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
+      
+      {product.sold > 0 && (
+        <div className="text-[11px] text-[#acaab0] mb-2 mt-0.5 flex items-center gap-1.5 font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          Đã bán {formatSold(product.sold)}
         </div>
-        {product.sold > 0 && (
-          <div className="text-[11px] text-[#acaab0]">Đã bán {formatSold(product.sold)}</div>
+      )}
+
+      <div className="flex items-center gap-2 mt-auto pt-1">
+        {discount > 0 && (
+          <span className="text-sgz-textMuted line-through text-sm">
+            {formatPrice(originalPrice)}
+          </span>
         )}
+        <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
       </div>
     </div>
   )
@@ -275,6 +279,7 @@ const PostCard = ({ post }: { post: Post }) => {
           resource={post.image}
           className="w-full h-full"
           imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          size="(max-width: 768px) 100vw, 33vw"
         />
       </div>
       <div className="p-6 space-y-4 flex flex-col flex-1">
