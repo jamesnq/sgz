@@ -13,8 +13,9 @@ export async function productsToSearch(products: Product[]): Promise<Product[]> 
 
   const data = (
     await Promise.all(
-      products.map(async (product) => {
-        if (typeof product === 'number') return
+      products.map(async (doc) => {
+        if (typeof doc === 'number') return
+        const product = { ...doc } as any // clone to prevent payload mutation
         if (product.status === 'PRIVATE') return product
 
         if (typeof product.image === 'number' && !Number.isNaN(product.image)) {
@@ -54,8 +55,8 @@ export async function productsToSearch(products: Product[]): Promise<Product[]> 
     )
   ).filter(Boolean) as Product[]
 
-  const updateProducts = products.filter((product) => product.status != 'PRIVATE')
-  const deleteProducts = products.filter((product) => product.status == 'PRIVATE')
+  const updateProducts = data.filter((product) => product.status != 'PRIVATE')
+  const deleteProducts = data.filter((product) => product.status == 'PRIVATE')
   await Promise.all([
     updateProducts.length > 0 &&
       meiliSearchServer.index('products').updateDocuments(updateProducts),

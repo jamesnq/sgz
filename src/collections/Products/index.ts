@@ -66,7 +66,17 @@ export const Products: CollectionConfig = {
     ] as CollectionBeforeChangeHook<Product>[],
     afterChange: [revalidateProduct] as CollectionAfterChangeHook<Product>[],
 
-    beforeDelete: [revalidateDelete],
+    beforeDelete: [
+      async ({ req, id }) => {
+        if (!id) return
+        await req.payload.delete({
+          collection: 'product-variants',
+          where: { product: { equals: id } },
+          overrideAccess: true,
+        })
+      },
+      revalidateDelete,
+    ],
   },
   fields: [
     {

@@ -257,6 +257,7 @@ function Head() {
       <Media
         resource={currentVariant?.image || product.image}
         imgClassName="w-full h-auto object-cover aspect-video lg:aspect-auto max-h-[500px]"
+        size="(max-width: 1024px) 100vw, 50vw"
       />
     </section>
   )
@@ -303,6 +304,7 @@ const MemoizedProductVariantCard = React.memo(
             <Media
               resource={productVariant.image || productImage}
               imgClassName={cn('absolute h-[96px] w-[72px] ease-in-out object-cover', styles.media)}
+              size="72px"
             />
           </div>
           <div className="flex flex-[3] items-start gap-1 p-1">
@@ -969,8 +971,8 @@ function GridProductCard({ product }: { product: Product }) {
   const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
 
   return (
-    <div className="group cursor-pointer block">
-      <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-[#16161e] border border-white/5">
+    <div className="group cursor-pointer flex flex-col h-full bg-[#16161e] border border-white/5 rounded-xl p-2 hover:bg-white/[0.04] transition-colors">
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-[#16161e] shrink-0">
         <Media
           resource={product.image}
           className="w-full h-full"
@@ -990,23 +992,26 @@ function GridProductCard({ product }: { product: Product }) {
           </Link>
         </div>
       </div>
-      <Link href={product.slug ? Routes.product(product.slug) : '#'}>
-        <h3 className="font-bold text-white text-sm line-clamp-1 mb-1 hover:text-[#8b5cf6] transition-colors">
+      <Link href={product.slug ? Routes.product(product.slug) : '#'} className="mb-1">
+        <h3 className="font-bold text-white text-sm line-clamp-1 hover:text-[#8b5cf6] transition-colors">
           {product.name}
         </h3>
       </Link>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {discount > 0 && (
-            <span className="text-gray-500 line-through text-[11px]">
-              {formatPrice(originalPrice)}
-            </span>
-          )}
-          <span className="text-[#8b5cf6] font-bold text-sm">{formatPrice(salePrice)}</span>
+      
+      {product.sold > 0 && (
+        <div className="text-[10px] text-gray-500 mb-2 mt-0.5 flex items-center gap-1.5 font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          Đã bán {formatSold(product.sold)}
         </div>
-        {product.sold > 0 && (
-          <div className="text-[10px] text-gray-500">Đã bán {formatSold(product.sold)}</div>
+      )}
+
+      <div className="flex items-center gap-1.5 mt-auto pt-1">
+        {discount > 0 && (
+          <span className="text-gray-500 line-through text-[11px]">
+            {formatPrice(originalPrice)}
+          </span>
         )}
+        <span className="text-[#8b5cf6] font-bold text-sm">{formatPrice(salePrice)}</span>
       </div>
     </div>
   )
