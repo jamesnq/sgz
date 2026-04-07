@@ -4,7 +4,7 @@ import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 import PostsPageClient from './page.client'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: 'Bài viết | Sub Game Zone',
@@ -27,7 +27,7 @@ const getPosts = unstable_cache(
     return docs as Post[]
   },
   ['posts-list'],
-  { tags: ['posts-list'], revalidate: 60 },
+  { tags: ['posts-list'], revalidate: 300 }
 )
 
 const getTags = unstable_cache(
@@ -42,7 +42,7 @@ const getTags = unstable_cache(
     return docs as PostTag[]
   },
   ['post-tags-list'],
-  { tags: ['post-tags-list'], revalidate: 60 },
+  { tags: ['post-tags-list'], revalidate: 300 }
 )
 
 export default async function PostsPage() {
