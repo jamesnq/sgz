@@ -10,9 +10,51 @@ import {
 import { cn } from '@/utilities/ui'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { RefinementListProps } from 'react-instantsearch'
 import { useClearRefinements, useRefinementList } from 'react-instantsearch'
+
+const FilterTooltip = ({
+  label,
+  children,
+}: {
+  label: string
+  children: (textRef: React.RefObject<HTMLSpanElement | null>) => React.ReactNode
+}) => {
+  const [isOverflowing, setIsOverflowing] = useState(false)
+  const textRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (textRef.current) {
+        setIsOverflowing(textRef.current.scrollWidth > textRef.current.clientWidth)
+      }
+    }
+    checkOverflow()
+    const timeout = setTimeout(checkOverflow, 100)
+    window.addEventListener('resize', checkOverflow)
+    return () => {
+      clearTimeout(timeout)
+      window.removeEventListener('resize', checkOverflow)
+    }
+  }, [label])
+
+  if (!isOverflowing) {
+    return <>{children(textRef)}</>
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children(textRef)}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center"
+      >
+        <p>{label}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
 export const RefinementList = (
   props: RefinementListProps & { title?: string; className?: string },
@@ -92,20 +134,17 @@ export const RefinementList = (
                       transition={{ duration: 0.15 }}
                       className="max-w-full"
                     >
-                      <Tooltip>
-                        <TooltipTrigger asChild>
+                      <FilterTooltip label={item.label}>
+                        {(textRef) => (
                           <button
                             className="max-w-full flex items-center px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border bg-[#ba9eff] text-[#16161e] border-[#ba9eff]"
                             onClick={() => handleItemClick(item)}
                           >
-                            <span className="truncate">{item.label}</span>
+                            <span ref={textRef} className="truncate">{item.label}</span>
                             <span className="opacity-60 text-xs ml-1.5 shrink-0">({item.count})</span>
                           </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center">
-                          <p>{item.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                        )}
+                      </FilterTooltip>
                     </motion.div>
                   ))}
 
@@ -118,20 +157,17 @@ export const RefinementList = (
                       transition={{ duration: 0.15 }}
                       className="max-w-full"
                     >
-                      <Tooltip>
-                        <TooltipTrigger asChild>
+                      <FilterTooltip label={item.label}>
+                        {(textRef) => (
                           <button
                             className="max-w-full flex items-center px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white"
                             onClick={() => handleItemClick(item)}
                           >
-                            <span className="truncate">{item.label}</span>
+                            <span ref={textRef} className="truncate">{item.label}</span>
                             <span className="opacity-50 text-xs ml-1.5 shrink-0">({item.count})</span>
                           </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center">
-                          <p>{item.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                        )}
+                      </FilterTooltip>
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -170,8 +206,8 @@ export const RefinementListHorizontal = (
                 transition={{ duration: 0.2 }}
                 className="max-w-full"
               >
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                <FilterTooltip label={item.label}>
+                  {(textRef) => (
                     <Badge
                       variant={item.isRefined ? 'default' : 'outline'}
                       className={cn(
@@ -180,14 +216,11 @@ export const RefinementListHorizontal = (
                       )}
                       onClick={() => refine(item.value)}
                     >
-                      <span className="truncate">{item.label}</span>
+                      <span ref={textRef} className="truncate">{item.label}</span>
                       <span className="ml-1 text-xs shrink-0">{item.count}</span>
                     </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center">
-                    <p>{item.label}</p>
-                  </TooltipContent>
-                </Tooltip>
+                  )}
+                </FilterTooltip>
               </motion.div>
             ))}
           </AnimatePresence>
