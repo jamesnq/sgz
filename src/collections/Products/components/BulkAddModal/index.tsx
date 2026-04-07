@@ -51,8 +51,8 @@ export const BulkAddModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         </p>
         
         <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded mb-6 text-sm text-blue-800 dark:text-blue-200">
-          <p className="font-semibold mb-1">Mẹo viết Description:</p>
-          <p>Bạn có thể sử dụng Markdown tại cột `description`:</p>
+          <p className="font-semibold mb-1">Mẹo viết Description &amp; Important:</p>
+          <p>Bạn có thể sử dụng Markdown tại cột <code>description</code> và <code>important</code> (lưu ý quan trọng cho khách):</p>
           <ul className="list-disc ml-5 mt-1 opacity-90">
             <li><code>## Tiêu đề</code> cho Header 2</li>
             <li><code>**Chữ đậm**</code> cho phần in đậm</li>

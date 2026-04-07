@@ -131,11 +131,15 @@ export async function POST(req: Request) {
         image: vals[8],
         note: vals[9],
         description: vals[10],
-        autoProcess: vals[11]
+        autoProcess: vals[11],
+        important: vals[12],
       })
     })
 
     let variantCount = 0;
+    // Track variant IDs per product to update the product's variants array
+    const productVariantIds = new Map<number, number[]>()
+
     for (const v of variantRows) {
       if (!v.name || !v.product) continue
       
@@ -145,9 +149,10 @@ export async function POST(req: Request) {
 
       let imageId = await processImage(payload, v.image)
       const descriptionJson = markdownToLexical(v.description || '')
+      const importantJson = v.important ? markdownToLexical(v.important) : undefined
 
       try {
-        await payload.create({
+        const newVariant = await payload.create({
           collection: 'product-variants',
           draft: true,
           data: {
@@ -162,12 +167,44 @@ export async function POST(req: Request) {
             image: imageId || undefined,
             note: v.note,
             description: descriptionJson as any,
+            important: importantJson as any,
             autoProcess: v.autoProcess === 'key' ? 'key' : undefined,
           }
         })
         variantCount++
+
+        // Collect variant IDs for this product
+        const existing = productVariantIds.get(rootProductId) || []
+        existing.push(newVariant.id)
+        productVariantIds.set(rootProductId, existing)
       } catch (err) {
         console.error('Failed to create variant:', v.name, err)
+      }
+    }
+
+    // 3. UPDATE PRODUCTS with their variant IDs
+    for (const [productId, variantIds] of productVariantIds) {
+      try {
+        // Get existing variants on the product (if any)
+        const product = await payload.findByID({
+          collection: 'products',
+          id: productId,
+          depth: 0,
+          select: { variants: true },
+        })
+        const existingVariantIds = (product.variants as number[]) || []
+        const mergedVariantIds = [...existingVariantIds, ...variantIds]
+
+        await payload.update({
+          collection: 'products',
+          id: productId,
+          draft: true,
+          data: {
+            variants: mergedVariantIds,
+          },
+        })
+      } catch (err) {
+        console.error('Failed to update product variants for productId:', productId, err)
       }
     }
 

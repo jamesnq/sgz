@@ -41,6 +41,7 @@ export async function GET() {
       { header: 'note', key: 'note', width: 25 },
       { header: 'description', key: 'description', width: 40 },
       { header: 'autoProcess', key: 'autoProcess', width: 15 },
+      { header: 'important', key: 'important', width: 40 },
     ]
 
     variantsSheet.addRow({
@@ -54,7 +55,8 @@ export async function GET() {
       image: '',
       note: '',
       description: 'Phiên bản tiêu chuẩn',
-      autoProcess: 'key',
+      autoProcess: '',
+      important: '## Lưu ý quan trọng\n\nĐây là lưu ý cho khách hàng',
     })
 
     const buffer = await workbook.xlsx.writeBuffer()
