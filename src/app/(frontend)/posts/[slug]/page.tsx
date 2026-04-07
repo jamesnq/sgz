@@ -14,6 +14,7 @@ import { getPayload } from 'payload'
 import { ArticleStructuredData } from '@/components/Schema/ArticleStructuredData'
 import { BreadcrumbStructuredData } from '@/components/Schema/BreadcrumbStructuredData'
 import { TableOfContents } from '@/components/TableOfContents'
+import { PostCard } from '@/components/home/PostsSection'
 
 type Args = {
   params: Promise<{
@@ -114,41 +115,6 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   }
 }
 
-const RelatedPostCard = ({ post }: { post: any }) => {
-  const tags = post.tags as PostTag[] | undefined
-  return (
-    <Link href={`/posts/${post.slug}`} className="group block bg-secondary border border-border rounded-xl overflow-hidden hover:border-sgz-primary/50 transition-colors">
-      <div className="flex flex-col">
-        <div className="h-32 relative overflow-hidden shrink-0">
-          <Media
-            resource={post.image}
-            className="w-full h-full"
-            imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        </div>
-        <div className="p-4 flex flex-col gap-2">
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {tags.slice(0, 2).map((tag: any) => (
-                <span key={tag.id || tag} className="text-[10px] font-bold tracking-wider text-sgz-primary uppercase">
-                  {tag.title || tag}
-                </span>
-              ))}
-            </div>
-          )}
-          <h3 className="font-bold text-white text-sm line-clamp-2 leading-snug group-hover:text-sgz-primary transition-colors">
-            {post.title}
-          </h3>
-          {post.publishedAt && (
-            <div className="text-[11px] text-muted-foreground">
-              {format(new Date(post.publishedAt), 'dd/MM/yyyy')}
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
-  )
-}
 
 export default async function PostDetailPage({ params }: Args) {
   const { slug } = await params
@@ -177,8 +143,10 @@ export default async function PostDetailPage({ params }: Args) {
         <div className="w-full px-6 lg:px-12 mx-auto max-w-[1440px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 relative items-start">
           
-          {/* Main Article (Left Column) */}
-          <article className="flex-1 w-full bg-card border border-border rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
+          {/* Main Content Area (Left Column) */}
+          <div className="flex-1 w-full flex flex-col gap-8 lg:gap-12">
+            {/* Main Article */}
+            <article className="w-full bg-card border border-border rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
             
             {/* subtle background glow */}
             <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-sgz-primary/5 rounded-full blur-[100px] pointer-events-none" />
@@ -253,29 +221,27 @@ export default async function PostDetailPage({ params }: Args) {
             </div>
           </article>
 
-          {/* Sidebar (Right Column) */}
-          <aside className="w-full lg:w-[35%] flex flex-col gap-8 sticky top-24 lg:pb-24">
-            
-            {post.content && <TableOfContents data={post.content} />}
-
-            {/* Related Posts widget */}
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col max-h-[calc(100vh-10rem)]">
-              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-sgz-primary/5 rounded-full blur-[60px] pointer-events-none" />
-              <h2 className="text-xl font-bold text-white mb-6 font-headline relative z-10 border-b border-border pb-4 shrink-0">
+          {/* Related Posts (Bottom) */}
+          {relatedPosts.length > 0 && (
+            <section className="w-full bg-card border border-border rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mr-32 -mt-32 w-64 h-64 bg-sgz-primary/5 rounded-full blur-[80px] pointer-events-none" />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-8 font-headline relative z-10 border-b border-border pb-4">
                 Bài viết liên quan
               </h2>
-              
-              <div className="flex flex-col gap-4 relative z-10 overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-secondary [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-secondary/80 transition-all">
-                {relatedPosts.length > 0 ? (
-                  relatedPosts.map(rp => (
-                    <RelatedPostCard key={rp.id} post={rp} />
-                  ))
-                ) : (
-                  <div className="py-6 text-center">
-                    <p className="text-sm text-muted-foreground">Chưa có bài viết liên quan.</p>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 relative z-10">
+                {relatedPosts.map((rp) => (
+                  <PostCard key={rp.id} post={rp as any} />
+                ))}
               </div>
+            </section>
+          )}
+
+          </div>
+
+          {/* Sidebar (Right Column) */}
+          <aside className="w-full lg:w-[35%] lg:sticky lg:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-secondary [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-secondary/80 transition-all">
+            <div className="flex flex-col gap-8 pb-12">
+              {post.content && <TableOfContents data={post.content} />}
             </div>
           </aside>
 

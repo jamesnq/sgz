@@ -158,7 +158,7 @@ export default function AnimatedWordCycle({
   )
 
   return (
-    <div ref={animationRef} className="inline-flex">
+    <div ref={animationRef} className="inline-flex items-baseline align-baseline">
       {/* Hidden measurement div with all words rendered */}
       {renderMeasurementDiv()}
 
@@ -171,9 +171,9 @@ export default function AnimatedWordCycle({
         if (!currentWord && !isExiting) return null
 
         return (
-          <span key={`fragment-${arrayIndex}`} className="inline-flex items-center">
+          <span key={`fragment-${arrayIndex}`} className="inline-flex items-baseline">
             <motion.span
-              className="inline-block py-4 -my-4"
+              className="inline-block pb-3 -mb-3 pt-1 -mt-1 align-bottom"
               animate={{
                 width: widths[arrayIndex] || 'auto',
                 transition: {

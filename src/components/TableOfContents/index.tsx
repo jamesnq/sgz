@@ -70,7 +70,7 @@ export const TableOfContents = ({ data }: { data: any }) => {
   if (headings.length === 0) return null
 
   return (
-    <div className="bg-card/50 rounded-xl p-6 border border-white/5 sticky top-24">
+    <div className="bg-card/50 rounded-xl p-6 border border-white/5">
       <h3 className="text-lg font-bold text-white mb-4">Nội dung bài viết</h3>
       <ul className="space-y-3 items-start flex flex-col">
         {headings.map((heading, index) => (
