@@ -44,7 +44,7 @@ function OrderCard({ o }: { o: Order }) {
             <span className="-ml-1">#{o.id}</span>
           </div>
           <div className="flex items-start gap-2">
-            <div className="relative w-[64px] h-[85px] bg-secondary rounded-lg items-center overflow-hidden">
+            <div className="relative w-[140px] shrink-0 aspect-video bg-secondary rounded-lg items-center overflow-hidden">
               <Media resource={image}></Media>
             </div>
             <div className="flex-1">
@@ -108,11 +108,11 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
   const debouncedSearch = useDebounce(search, 500)
   const [status, setStatus] = useQueryState(
     'status',
-    parseAsString.withDefault('').withOptions({ shallow: false }),
+    parseAsString.withDefault(''),
   )
   const [page, setPage] = useQueryState(
     'page',
-    parseAsInteger.withDefault(data.page || 1).withOptions({ shallow: false }),
+    parseAsInteger.withDefault(data.page || 1),
   )
 
   useEffect(() => {
@@ -123,9 +123,9 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
         page: page.toString(),
       }).toString()
       const url = Routes.ORDERS + (params ? `?${params}` : '')
-      router.push(url)
+      router.push(url, { scroll: false })
     })
-  }, [debouncedSearch, status, page, router, search])
+  }, [debouncedSearch, status, page, router])
 
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus)

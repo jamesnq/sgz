@@ -77,7 +77,7 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
   const debouncedSearch = useDebounce(search, 500)
   const [page, setPage] = useQueryState(
     'page',
-    parseAsInteger.withDefault(data.page || 1).withOptions({ shallow: false }),
+    parseAsInteger.withDefault(data.page || 1),
   )
 
   useEffect(() => {
@@ -91,14 +91,14 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
         page: page.toString(),
       }).toString()
       const url = `/user/transactions${params ? `?${params}` : ''}`
-      router.push(url)
+      router.push(url, { scroll: false })
     })
 
     // Reset searching state after navigation
     return () => {
       setIsSearching(false)
     }
-  }, [debouncedSearch, page, router, search])
+  }, [debouncedSearch, page, router])
 
   // Helper function to create pagination URLs
   const getPaginationUrl = (pageNum: number) => {

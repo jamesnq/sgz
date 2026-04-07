@@ -26,7 +26,7 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
     <Card className={className}>
       <CardHeader className="pb-2">
         <div className="flex items-start gap-[16px]">
-          <div className="relative w-[64px] h-[85px] bg-secondary rounded-lg items-center overflow-hidden">
+          <div className="relative w-[140px] shrink-0 aspect-video bg-secondary rounded-lg items-center overflow-hidden">
             <Media resource={image}></Media>
           </div>
           <div className="size-full flex-1">
@@ -190,9 +190,7 @@ const PageClient = ({ order }: { order: Order }) => {
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="p-4">{thankYouMessage}</CardContent>
-            </Card>
+            <div className="text-center text-muted-foreground mt-2">{thankYouMessage}</div>
           )}
 
           {hasText(order.message) && (
