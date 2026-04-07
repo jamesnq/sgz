@@ -23,7 +23,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className="scroll-smooth">
+    <html lang="vi" suppressHydrationWarning className="scroll-smooth">
       <head>
         <InitTheme />
       </head>
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),
   title: {
     template: `%s | ${config.NEXT_PUBLIC_SITE_NAME}`,
-    default: config.NEXT_PUBLIC_SITE_NAME,
+    default: `${config.NEXT_PUBLIC_SITE_NAME} - Key Steam, tài khoản Steam Offline, nạp game`,
   },
   description: SITE_DESCRIPTION,
   icons: {

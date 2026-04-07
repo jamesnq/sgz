@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 
+import { BreadcrumbStructuredData } from '@/components/Schema/BreadcrumbStructuredData'
 import { ProductStructuredData } from '@/components/SEO/ProductStructuredData'
 import { Spinner } from '@/components/ui/spinner'
 import { Product, ProductVariant } from '@/payload-types'
@@ -64,6 +65,13 @@ export default async function Page({ params: paramsPromise }: Args) {
   return (
     <>
       <ProductStructuredData product={product} />
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Trang chủ', item: '/' },
+          { name: 'Sản phẩm', item: '/products' },
+          { name: product.name, item: `/products/${product.slug}` },
+        ]}
+      />
       <Suspense
         fallback={
           <div className="flex items-center justify-center mt-16 mb-mt-16">

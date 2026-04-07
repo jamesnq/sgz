@@ -11,6 +11,9 @@ import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
+import { ArticleStructuredData } from '@/components/Schema/ArticleStructuredData'
+import { BreadcrumbStructuredData } from '@/components/Schema/BreadcrumbStructuredData'
+import { TableOfContents } from '@/components/TableOfContents'
 
 type Args = {
   params: Promise<{
@@ -161,8 +164,17 @@ export default async function PostDetailPage({ params }: Args) {
   const relatedPosts = await getRelatedPosts(post.id, tagIds)
 
   return (
-    <div className="min-h-[calc(100vh-10rem)] bg-transparent text-white pt-8 mb-20 lg:mb-[120px]">
-      <div className="w-full px-6 lg:px-12 mx-auto max-w-[1440px]">
+    <>
+      <ArticleStructuredData post={post} />
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Trang chủ', item: '/' },
+          { name: 'Bài viết', item: '/posts' },
+          { name: post.title, item: `/posts/${post.slug}` },
+        ]}
+      />
+      <div className="min-h-[calc(100vh-10rem)] bg-transparent text-white pt-8 mb-20 lg:mb-[120px]">
+        <div className="w-full px-6 lg:px-12 mx-auto max-w-[1440px]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 relative items-start">
           
           {/* Main Article (Left Column) */}
@@ -242,7 +254,11 @@ export default async function PostDetailPage({ params }: Args) {
           </article>
 
           {/* Sidebar (Right Column) */}
-          <aside className="w-full lg:w-[380px] shrink-0 sticky top-32 z-10">
+          <aside className="w-full lg:w-[35%] flex flex-col gap-8 sticky top-24 lg:pb-24">
+            
+            {post.content && <TableOfContents data={post.content} />}
+
+            {/* Related Posts widget */}
             <div className="bg-card border border-border rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col max-h-[calc(100vh-10rem)]">
               <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-sgz-primary/5 rounded-full blur-[60px] pointer-events-none" />
               <h2 className="text-xl font-bold text-white mb-6 font-headline relative z-10 border-b border-border pb-4 shrink-0">
@@ -266,5 +282,6 @@ export default async function PostDetailPage({ params }: Args) {
         </div>
       </div>
     </div>
+    </>
   )
 }

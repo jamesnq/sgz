@@ -6,4 +6,4 @@ export const mediaGroup = 'Media'
 export const managerGroup = 'Manager'
 export const STOCK_SEPARATOR = '\n'
 export const SITE_DESCRIPTION =
-  'Sub Game Zone cung cấp giải pháp nạp Game, Steam, Key Game và Ứng dụng bản quyền giá rẻ, an toàn, bảo mật. Giao dịch nhanh chóng, uy tín hàng đầu Việt Nam.'
+  'Sub Game Zone phân phối Key Steam bản quyền, tài khoản Steam Offline giá rẻ và uy tín. Hỗ trợ nạp game, nạp coin Brawlhalla an toàn, nhanh chóng.'

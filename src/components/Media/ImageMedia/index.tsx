@@ -34,7 +34,11 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
     const { alt: altFromResource, height: fullHeight, url, width: fullWidth, filename } = resource
     width = fullWidth!
     height = fullHeight!
-    alt = altFromResource || filename || ''
+    let parsedAlt = altFromResource || ''
+    if (!parsedAlt && filename) {
+      parsedAlt = filename.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ')
+    }
+    alt = parsedAlt
 
     const cacheTag = resource.updatedAt
 

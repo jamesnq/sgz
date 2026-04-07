@@ -25,6 +25,7 @@ import { InlineDialog } from '@/blocks/InlineDialog/Component'
 import { TableBlock } from '@/blocks/TableBlock/Component'
 import { cn } from '@/utilities/ui'
 import { textOnly } from './textOnly'
+import slugify from 'slugify'
 
 type NodeTypes =
   | DefaultNodeTypes
@@ -43,6 +44,13 @@ const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
 const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => ({
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
+  heading: ({ node, nodesToJSX }) => {
+    const children = nodesToJSX({ nodes: node.children })
+    const textOriginal = node.children?.map((c: any) => c.text || '').join('') || ''
+    const id = textOriginal ? slugify(textOriginal, { lower: true, strict: true }) : undefined
+    const Tag = (node as any).tag as any
+    return <Tag id={id} className="scroll-mt-28">{children}</Tag>
+  },
   inlineBlocks: {
     inlineDialog: ({ node }: { node: SerializedInlineBlockNode<{ blockType: string }> }) => (
       <InlineDialog {...(node.fields as InlineDialogProps)} />

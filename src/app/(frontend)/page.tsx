@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 import HomePageClient from './home-page.client'
+import { WebSiteSchema } from '@/components/Schema/WebSiteSchema'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 360000
@@ -214,14 +215,17 @@ export default async function Home() {
   const bestSellingProducts = await getBestSellingProducts()
 
   return (
-    <HomePageClient
-      posts={posts}
-      stats={stats}
-      latestProducts={latestProducts}
-      topUpProducts={topUpProducts}
-      serviceProducts={serviceProducts}
-      featuredProducts={featuredProducts}
-      bestSellingProducts={bestSellingProducts}
-    />
+    <>
+      <WebSiteSchema />
+      <HomePageClient
+        posts={posts}
+        stats={stats}
+        latestProducts={latestProducts}
+        topUpProducts={topUpProducts}
+        serviceProducts={serviceProducts}
+        featuredProducts={featuredProducts}
+        bestSellingProducts={bestSellingProducts}
+      />
+    </>
   )
 }
