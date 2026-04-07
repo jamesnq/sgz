@@ -21,7 +21,7 @@ export const Logo = (props: Props) => {
       fetchPriority={priority}
       decoding="async"
       className={cn('max-w-[12rem] w-full h-[40px]', className)}
-      src="/SubGamezone (2).svg"
+      src={defaultLogo}
     />
   )
 }
