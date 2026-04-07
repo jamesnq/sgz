@@ -1,6 +1,8 @@
 'use client'
 
 import { Media } from '@/components/Media'
+import { FilterTooltip } from '@/components/ui/filter-tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { Post, PostTag } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
@@ -93,41 +95,34 @@ function Sidebar({
               )}
             </div>
 
-            <div className="space-y-2">
-              {tags.length === 0 ? (
-                <p className="text-sm text-[#acaab0] italic">Chưa có chủ đề nào.</p>
-              ) : (
-                tags.map((tag) => {
-                  const isSelected = appliedTags.includes(tag.id)
-                  return (
-                    <label
-                      key={tag.id}
-                      className="flex items-center gap-3 cursor-pointer group"
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      <div
-                        className={cn(
-                          'w-5 h-5 rounded flex items-center justify-center transition-colors border',
-                          isSelected
-                            ? 'bg-[#ba9eff] border-[#ba9eff] text-[#16161e]'
-                            : 'bg-transparent border-[#48474c] group-hover:border-[#ba9eff]',
+            <TooltipProvider delayDuration={300}>
+              <div className="flex flex-wrap gap-2">
+                {tags.length === 0 ? (
+                  <p className="text-sm text-[#acaab0] italic">Chưa có chủ đề nào.</p>
+                ) : (
+                  tags.map((tag) => {
+                    const isSelected = appliedTags.includes(tag.id)
+                    return (
+                      <FilterTooltip key={tag.id} label={tag.title}>
+                        {(textRef) => (
+                          <button
+                            onClick={() => toggleTag(tag.id)}
+                            className={cn(
+                              'max-w-full px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border flex items-center',
+                              isSelected
+                                ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
+                                : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                            )}
+                          >
+                            <span ref={textRef} className="truncate block max-w-[180px]">{tag.title}</span>
+                          </button>
                         )}
-                      >
-                        {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
-                      </div>
-                      <span
-                        className={cn(
-                          'text-sm font-medium transition-colors',
-                          isSelected ? 'text-white' : 'text-[#acaab0] group-hover:text-white',
-                        )}
-                      >
-                        {tag.title}
-                      </span>
-                    </label>
-                  )
-                })
-              )}
-            </div>
+                      </FilterTooltip>
+                    )
+                  })
+                )}
+              </div>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -264,25 +259,30 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
           <div className="flex-1 flex flex-col gap-2">
             {/* Mobile Tag Filter */}
             {tags.length > 0 && (
-              <div className="lg:hidden mb-6 flex flex-wrap gap-2">
-                {tags.map((tag) => {
-                  const isSelected = appliedTags.includes(tag.id)
-                  return (
-                    <button
-                      key={tag.id}
-                      onClick={() => toggleTag(tag.id)}
-                      className={cn(
-                        'px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border',
-                        isSelected
-                          ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
-                          : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
-                      )}
-                    >
-                      {tag.title}
-                    </button>
-                  )
-                })}
-              </div>
+              <TooltipProvider delayDuration={300}>
+                <div className="lg:hidden mb-6 flex flex-wrap gap-2">
+                  {tags.map((tag) => {
+                    const isSelected = appliedTags.includes(tag.id)
+                    return (
+                      <FilterTooltip key={tag.id} label={tag.title}>
+                        {(textRef) => (
+                          <button
+                            onClick={() => toggleTag(tag.id)}
+                            className={cn(
+                              'max-w-full px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border flex items-center',
+                              isSelected
+                                ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
+                                : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                            )}
+                          >
+                            <span ref={textRef} className="truncate block max-w-[180px]">{tag.title}</span>
+                          </button>
+                        )}
+                      </FilterTooltip>
+                    )
+                  })}
+                </div>
+              </TooltipProvider>
             )}
 
             {/* Posts Grid */}

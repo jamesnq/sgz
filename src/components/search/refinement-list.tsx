@@ -1,60 +1,14 @@
 'use client'
 import { Badge } from '@/components/ui/badge'
+import { FilterTooltip } from '@/components/ui/filter-tooltip'
 import { Input } from '@/components/ui/input'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/utilities/ui'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { RefinementListProps } from 'react-instantsearch'
 import { useClearRefinements, useRefinementList } from 'react-instantsearch'
-
-const FilterTooltip = ({
-  label,
-  children,
-}: {
-  label: string
-  children: (textRef: React.RefObject<HTMLSpanElement | null>) => React.ReactNode
-}) => {
-  const [isOverflowing, setIsOverflowing] = useState(false)
-  const textRef = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (textRef.current) {
-        setIsOverflowing(textRef.current.scrollWidth > textRef.current.clientWidth)
-      }
-    }
-    checkOverflow()
-    const timeout = setTimeout(checkOverflow, 100)
-    window.addEventListener('resize', checkOverflow)
-    return () => {
-      clearTimeout(timeout)
-      window.removeEventListener('resize', checkOverflow)
-    }
-  }, [label])
-
-  if (!isOverflowing) {
-    return <>{children(textRef)}</>
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children(textRef)}</TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center"
-      >
-        <p>{label}</p>
-      </TooltipContent>
-    </Tooltip>
-  )
-}
 
 export const RefinementList = (
   props: RefinementListProps & { title?: string; className?: string },
