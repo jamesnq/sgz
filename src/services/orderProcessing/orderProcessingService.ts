@@ -62,11 +62,26 @@ export class OrderProcessingService {
           transactionID,
         }
       }
+
+      // Check if variant is available for auto-processing
+      if (productVariant.status !== 'AVAILABLE') {
+        console.log(`[OrderProcessingService] Variant ${productVariant.id} status is ${productVariant.status}, skipping auto-process.`)
+        return {
+          success: false,
+          message: `Product variant status is ${productVariant.status}, only AVAILABLE products can be auto-processed`,
+          transactionID,
+        }
+      }
+
+      // 1. Handle Fixed Stock (Direct Delivery)
       if (hasText(productVariant.fixedStock)) {
         await payload.update({
           collection: 'orders',
           id: orderId,
-          data: { status: 'COMPLETED' },
+          data: {
+            deliveryContent: productVariant.fixedStock,
+            status: 'COMPLETED',
+          },
           user: config.AUTO_PROCESS_USER_ID,
           req: { transactionID },
         })
@@ -75,11 +90,12 @@ export class OrderProcessingService {
         await sendOrderCompletedNotification(order)
         return {
           success: true,
-          message: 'Fixed stock processed successfully',
+          message: 'Fixed stock delivered successfully',
           transactionID,
         }
       }
-      // Process based on autoProcess setting
+
+      // 2. Handle Auto Process (Key System)
       if (productVariant.autoProcess) {
         const result = await this.handleAutoProcess(
           payload,
@@ -88,19 +104,24 @@ export class OrderProcessingService {
           orderId,
           transactionID,
         )
-        if (result?.success) {
+
+        // If it was supposed to be handled by autoProcess (e.g. 'key'), return the result immediately
+        // handleAutoProcess returns null only if the autoProcess type is not recognised
+        if (result !== null) {
           return result
         }
       }
 
-      // Process using specialized processor based on product type
-      return await this.processWithTypeProcessor(
+      // 3. Process using specialized processor based on product type (e.g. Steam Wallet)
+      const typeResult = await this.processWithTypeProcessor(
         payload,
         order,
         productVariant,
         orderId,
         transactionID,
       )
+
+      return typeResult
     } catch (error) {
       // Rollback transaction on error
       await payload.db.rollbackTransaction(transactionID)
@@ -147,26 +168,46 @@ export class OrderProcessingService {
     orderId: number,
     transactionID: string | number,
   ): Promise<ProcessResult | null> {
-    // Find available stocks for this product variant
-    const { docs: stocksAvailable } = await payload.find({
-      collection: 'stocks',
-      where: { productVariant: { equals: productVariant.id }, order: { equals: null } },
-      limit: order.quantity,
-      sort: '-createdAt',
-      req: { transactionID },
-    })
+    // 1. Process 'direct' type auto-processing (Complete immediately)
+    // No stock check needed
+    if (productVariant.autoProcess === 'direct') {
+      await payload.update({
+        collection: 'orders',
+        id: orderId,
+        data: { status: 'COMPLETED' },
+        user: config.AUTO_PROCESS_USER_ID,
+        req: { transactionID },
+      })
 
-    // Check if we have enough stocks
-    if (stocksAvailable.length < order.quantity) {
+      await payload.db.commitTransaction(transactionID)
+      await sendOrderCompletedNotification(order)
       return {
-        success: false,
-        message: 'Not enough stocks available',
+        success: true,
+        message: 'Order completed directly',
         transactionID,
       }
     }
 
-    // Process 'key' type auto-processing
+    // 2. Process 'key' type auto-processing
     if (productVariant.autoProcess === 'key') {
+      // Find available stocks for this product variant
+      const { docs: stocksAvailable } = await payload.find({
+        collection: 'stocks',
+        where: { productVariant: { equals: productVariant.id }, order: { equals: null } },
+        limit: order.quantity,
+        sort: '-createdAt',
+        req: { transactionID },
+      })
+
+      // Check if we have enough stocks
+      if (stocksAvailable.length < order.quantity) {
+        return {
+          success: false,
+          message: 'Not enough stocks available',
+          transactionID,
+        }
+      }
+
       await this.processKeyType(
         payload,
         order,

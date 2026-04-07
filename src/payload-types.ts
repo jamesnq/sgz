@@ -529,7 +529,7 @@ export interface ProductVariant {
     [k: string]: unknown;
   } | null;
   defaultSupplier?: (number | null) | Supplier;
-  autoProcess?: 'key' | null;
+  autoProcess?: ('key' | 'direct') | null;
   metadata?:
     | {
         [k: string]: unknown;

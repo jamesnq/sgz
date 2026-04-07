@@ -23,6 +23,7 @@ import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { formatPrice } from '@/utilities/formatPrice'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import { after } from 'next/server'
+import { autoProcessOrderHook } from '@/services/orderProcessing'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 const orderByOrAdmin: Access = ({ req }) => {
@@ -170,7 +171,7 @@ export const Orders: CollectionConfig = {
   },
   hooks: {
     beforeChange: [trackHandlersHook, calculateAnalysisHook] as CollectionBeforeChangeHook<Order>[],
-    afterChange: [notificationUpdateHook] as CollectionAfterChangeHook<Order>[],
+    afterChange: [notificationUpdateHook, autoProcessOrderHook] as CollectionAfterChangeHook<Order>[],
   },
   admin: {
     defaultColumns: [

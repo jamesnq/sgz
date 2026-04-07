@@ -312,6 +312,10 @@ export const ProductVariants: CollectionConfig = {
           label: 'Key',
           value: 'key',
         },
+        {
+          label: 'Direct (Hoàn thành ngay)',
+          value: 'direct',
+        },
       ],
       access: {
         read: hasRole(['admin']),
