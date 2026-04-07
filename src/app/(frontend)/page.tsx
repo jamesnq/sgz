@@ -133,6 +133,39 @@ const getServiceProducts = unstable_cache(
   { tags: ['products-list'], revalidate: 60 },
 )
 
+const getBestSellingProducts = unstable_cache(
+  async () => {
+    const payload = await getPayload({ config: configPromise })
+
+    const { docs: categories } = await payload.find({
+      collection: 'categories',
+      limit: 100,
+    })
+
+    const targetTitles = ['key steam', 'tài khoản steam offline']
+    const categoryIds = categories
+      .filter((c) => targetTitles.includes(c.title?.toLowerCase() || ''))
+      .map((c) => c.id)
+
+    if (categoryIds.length === 0) return []
+
+    const { docs } = await payload.find({
+      collection: 'products',
+      depth: 1,
+      limit: 10,
+      overrideAccess: true,
+      where: {
+        status: { equals: 'PUBLIC' },
+        categories: { in: categoryIds },
+      },
+      sort: '-sold',
+    })
+    return docs as Product[]
+  },
+  ['homepage-best-selling-products'],
+  { tags: ['products-list'], revalidate: 60 },
+)
+
 const getFeaturedProducts = unstable_cache(
   async () => {
     const payload = await getPayload({ config: configPromise })
@@ -178,6 +211,7 @@ export default async function Home() {
   const topUpProducts = await getTopUpProducts()
   const serviceProducts = await getServiceProducts()
   const featuredProducts = await getFeaturedProducts()
+  const bestSellingProducts = await getBestSellingProducts()
 
   return (
     <HomePageClient
@@ -187,6 +221,7 @@ export default async function Home() {
       topUpProducts={topUpProducts}
       serviceProducts={serviceProducts}
       featuredProducts={featuredProducts}
+      bestSellingProducts={bestSellingProducts}
     />
   )
 }

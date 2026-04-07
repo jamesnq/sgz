@@ -3,32 +3,27 @@
 import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 import { config } from '@/config'
 import { Media } from '@/components/Media'
-import { Shell } from '@/components/shell'
-import { cn } from '@/lib/utils'
-import { Category, Post, PostTag, Product } from '@/payload-types'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { formatPrice } from '@/utilities/formatPrice'
-import { formatSold } from '@/utilities/formatSold'
 import { instantSearchClient } from '@/utilities/meiliSearchClient'
-import { Routes } from '@/utilities/routes'
 import { productIndex } from '@/utilities/searchIndexes'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
 import {
-  ChevronRight,
-  ShoppingCart,
-  Clock,
-  ShoppingBag,
-  Gamepad2,
-  Users,
   ChevronDown,
+  Gamepad2,
   Mouse,
-  Star,
+  ShoppingBag,
+  Users,
 } from 'lucide-react'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { Configure, InstantSearch, useHits } from 'react-instantsearch'
-import { motion } from 'framer-motion'
+import Image from 'next/image'
+import { useEffect } from 'react'
+import { Configure, InstantSearch } from 'react-instantsearch'
+import dynamic from 'next/dynamic'
+import { Post, Product } from '@/payload-types'
+
+// Lazy load below-the-fold components
+const FeaturedSection = dynamic(() => import('@/components/home/FeaturedSection').then(mod => mod.FeaturedSection), { ssr: true })
+const PostsSection = dynamic(() => import('@/components/home/PostsSection').then(mod => mod.PostsSection), { ssr: true })
+const ProductGridSection = dynamic(() => import('@/components/home/ProductGridSection').then(mod => mod.ProductGridSection), { ssr: true })
+const SocialSupport = dynamic(() => import('@/components/social-support').then(mod => mod.SocialSupport), { ssr: false })
 
 /* ─────────────────────── Hero Section ─────────────────────── */
 
@@ -39,16 +34,29 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
       className="relative min-h-[calc(100dvh-80px)] pt-6 md:pt-8 pb-32 md:pb-16 flex items-center overflow-hidden"
     >
       <div className="absolute inset-0 z-0 bg-sgz-dark">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          poster="/herovideo_optimized.webp"
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/herovideo_compressed.mp4" type="video/mp4" />
-        </video>
+        {/* Render video only on desktop for performance */}
+        <div className="hidden md:block absolute inset-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="/herovideo_optimized.webp"
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/herovideo_compressed.mp4" type="video/mp4" />
+          </video>
+        </div>
+        {/* Mobile static poster fallback */}
+        <div className="md:hidden absolute inset-0">
+          <Image
+            src="/herovideo_optimized.webp"
+            alt="Sub Game Zone Hero"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
         <div className="absolute inset-0 bg-black/50 z-10"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent z-10 opacity-80"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10"></div>
@@ -143,124 +151,7 @@ const HeroSection = ({ stats }: { stats: { orders: number; users: number; produc
   )
 }
 
-/* ─────────────────────── Horizontal Product Card ─────────────────────── */
-
-const ProductCard = ({ product }: { product: Product }) => {
-  const discount = product.maxDiscount || 0
-  const salePrice = product.minPrice || 0
-  const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
-
-  return (
-    <div className="group cursor-pointer flex flex-col h-full">
-      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-sgz-surface shrink-0">
-        <Media
-          resource={product.image}
-          className="w-full h-full"
-          imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          size="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-        />
-        {discount > 0 && (
-          <div className="absolute top-3 left-3 bg-[#ff97b5] text-[#380018] font-bold px-2 py-1 rounded text-xs">
-            -{discount.toFixed(0)}%
-          </div>
-        )}
-        <div className="absolute bottom-3 right-3 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-          <Link
-            href={product.slug ? Routes.product(product.slug) : '#'}
-            className="bg-sgz-primary text-sgz-textDark p-3 rounded-xl shadow-xl flex hover:bg-white transition-colors"
-          >
-            <ShoppingCart className="w-5 h-5 leading-none" />
-          </Link>
-        </div>
-      </div>
-      <Link href={product.slug ? Routes.product(product.slug) : '#'} className="mb-1">
-        <h3 className="font-bold text-white line-clamp-1 group-hover:text-sgz-primary transition-colors">
-          {product.name}
-        </h3>
-      </Link>
-
-      <div className="text-[11px] text-[#acaab0] mb-2 mt-0.5 flex items-center gap-1.5 font-medium">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"
-        >
-          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-        </svg>
-        Đã bán {formatSold(product.sold || 0)}
-      </div>
-
-      <div className="flex items-center gap-2 mt-auto pt-1">
-        {discount > 0 && (
-          <span className="text-sgz-textMuted line-through text-sm">
-            {formatPrice(originalPrice)}
-          </span>
-        )}
-        <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
-      </div>
-    </div>
-  )
-}
-
-/* ─────────────────────── Section: "Sản Phẩm Nổi Bật" ─────────────────────── */
-
-const ProductGridSection = ({
-  products,
-  title,
-  subtitle,
-  viewAllLink,
-}: {
-  products: Product[]
-  title: string
-  subtitle?: string
-  viewAllLink?: string
-}) => {
-  if (!products || products.length === 0) return null
-
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, margin: '-100px' }}
-      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-      className="mb-16"
-    >
-      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-4">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">{title}</h2>
-            <div className="h-px flex-1 bg-sgz-border/30 hidden sm:block"></div>
-          </div>
-          {subtitle && <p className="text-sgz-textMuted">{subtitle}</p>}
-        </div>
-        <Link
-          href={viewAllLink || Routes.PRODUCTS || '#'}
-          className="text-sgz-primary font-bold flex items-center gap-1 hover:underline shrink-0 sm:ml-6"
-        >
-          Xem tất cả
-          <ChevronRight className="w-5 h-5" />
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </motion.section>
-  )
-}
-
-const ProductGridWithHits = () => {
-  const { hits } = useHits()
-  const products = (hits as unknown as Product[]).slice(0, 10)
-
+const ProductGridWithHits = ({ products }: { products: Product[] }) => {
   return (
     <ProductGridSection
       products={products}
@@ -268,189 +159,6 @@ const ProductGridWithHits = () => {
       subtitle="Những siêu phẩm không thể bỏ lỡ từ đội ngũ của chúng tôi."
       viewAllLink="/products?products[refinementList][categories][0]=Key Steam&products[refinementList][categories][1]=Tài khoản steam offline"
     />
-  )
-}
-
-/* ─────────────────────── Section: "Game Nổi Bật" ─────────────────────── */
-
-const FeaturedSection = ({ products }: { products: Product[] }) => {
-  const [currentPage, setCurrentPage] = useState(0)
-  const [itemsPerPage, setItemsPerPage] = useState(3)
-
-  if (!products || products.length === 0) return null
-
-  const maxProducts = products.slice(0, 15)
-
-  useEffect(() => {
-    const updateItems = () => {
-      if (window.innerWidth < 640) setItemsPerPage(1)
-      else if (window.innerWidth < 1024) setItemsPerPage(2)
-      else setItemsPerPage(3)
-    }
-    updateItems()
-    window.addEventListener('resize', updateItems)
-    return () => window.removeEventListener('resize', updateItems)
-  }, [])
-
-  const numPages = Math.ceil(maxProducts.length / itemsPerPage)
-
-  useEffect(() => {
-    if (numPages <= 1) return
-    const timer = setInterval(() => {
-      setCurrentPage((prev) => (prev + 1) % numPages)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [numPages])
-
-  // Ensure currentPage is within bounds if itemsPerPage changes
-  useEffect(() => {
-    if (currentPage >= numPages) {
-      setCurrentPage(0)
-    }
-  }, [itemsPerPage, numPages, currentPage])
-
-  if (numPages === 0) return null
-
-  const currentProducts = maxProducts.slice(
-    currentPage * itemsPerPage,
-    currentPage * itemsPerPage + itemsPerPage,
-  )
-
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, margin: '-100px' }}
-      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-      className="mb-16"
-    >
-      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-                Game Nổi Bật
-              </h2>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-amber-500/30 to-transparent hidden sm:block"></div>
-          </div>
-          <p className="text-sgz-textMuted">
-            Những tựa game được đội ngũ chúng tôi đặc biệt khuyến nghị.
-          </p>
-        </div>
-        {numPages > 1 && (
-          <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-6 shrink-0 h-8 flex-wrap">
-            {Array.from({ length: numPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === currentPage ? 'w-8 bg-amber-500' : 'w-2 bg-white/20 hover:bg-white/40'
-                } ${numPages > 10 ? 'w-1.5' : ''}`}
-                aria-label={`Chuyển đến trang ${i + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentProducts.map((product) => (
-          <motion.div
-            key={`${product.id}-${currentPage}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="relative"
-          >
-            <div className="absolute -top-2 -right-2 z-10 w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-              <Star className="w-3.5 h-3.5 text-white fill-white" />
-            </div>
-            <ProductCard product={product} />
-          </motion.div>
-        ))}
-      </div>
-    </motion.section>
-  )
-}
-
-/* ─────────────────────── Post Card ─────────────────────── */
-
-const PostCard = ({ post }: { post: Post }) => {
-  const tags = post.tags as PostTag[] | undefined
-  const category = tags && tags.length > 0 && typeof tags[0] === 'object' ? tags[0]?.title : null
-
-  return (
-    <article
-      className="rounded-2xl overflow-hidden group hover:bg-secondary transition-colors flex flex-col h-full bg-card/70 backdrop-blur-md border-t border-border"
-    >
-      <div className="h-48 overflow-hidden relative shrink-0">
-        <Media
-          resource={post.image}
-          className="w-full h-full"
-          imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-          size="(max-width: 768px) 100vw, 33vw"
-        />
-      </div>
-      <div className="p-6 space-y-4 flex flex-col flex-1">
-        <div>
-          {category && (
-            <span className="bg-sgz-primary/10 text-sgz-primary text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
-              {category}
-            </span>
-          )}
-        </div>
-        <Link href={post.slug ? Routes.post(post.slug) : '#'} className="flex-1">
-          <h3 className="font-bold text-white text-xl leading-snug line-clamp-2 group-hover:text-sgz-primary transition-colors">
-            {post.title}
-          </h3>
-        </Link>
-        <div className="pt-2 flex items-center gap-2 text-xs text-sgz-textMuted mt-auto">
-          <Clock className="w-4 h-4" />
-          {post.publishedAt
-            ? format(new Date(post.publishedAt), 'dd/MM/yyyy', { locale: vi })
-            : 'Mới đây'}
-        </div>
-      </div>
-    </article>
-  )
-}
-
-/* ─────────────────────── Posts Section ─────────────────────── */
-
-const PostsSection = ({ posts }: { posts: Post[] }) => {
-  if (!posts || posts.length === 0) return null
-
-  return (
-    <motion.section
-      id="posts-section"
-      className="mb-16"
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, margin: '-100px' }}
-      transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-    >
-      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-4">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Bài Viết</h2>
-            <div className="h-px flex-1 bg-sgz-border/30 hidden sm:block"></div>
-          </div>
-          <p className="text-sgz-textMuted">Cập nhật tin tức và thủ thuật mới nhất.</p>
-        </div>
-        <Link
-          href={Routes.POSTS || '#'}
-          className="text-sgz-primary font-bold flex items-center gap-1 hover:underline shrink-0 sm:ml-6"
-        >
-          Xem tất cả
-          <ChevronRight className="w-5 h-5" />
-        </Link>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {posts.slice(0, 3).map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-      </div>
-    </motion.section>
   )
 }
 
@@ -467,6 +175,7 @@ interface HomePageClientProps {
   topUpProducts?: Product[]
   serviceProducts?: Product[]
   featuredProducts?: Product[]
+  bestSellingProducts: Product[]
 }
 
 const HomePageClient = ({
@@ -476,6 +185,7 @@ const HomePageClient = ({
   topUpProducts,
   serviceProducts,
   featuredProducts,
+  bestSellingProducts,
 }: HomePageClientProps) => {
   const { setHeaderTheme } = useHeaderTheme()
 
@@ -546,7 +256,7 @@ const HomePageClient = ({
               viewAllLink="/products?products[refinementList][categories][0]=Key Steam&products[refinementList][categories][1]=Tài khoản steam offline"
             />
           )}
-          <ProductGridWithHits />
+          <ProductGridWithHits products={bestSellingProducts} />
           {topUpProducts && topUpProducts.length > 0 && (
             <ProductGridSection
               products={topUpProducts}
@@ -564,6 +274,7 @@ const HomePageClient = ({
             />
           )}
           <PostsSection posts={posts} />
+          <SocialSupport />
         </div>
       </div>
     </InstantSearch>

@@ -16,7 +16,7 @@ import './globals.css'
 import { Be_Vietnam_Pro } from 'next/font/google'
 
 const beVietnamPro = Be_Vietnam_Pro({
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '600', '800'],
   subsets: ['latin', 'vietnamese'],
   variable: '--font-be-vietnam-pro',
 })
