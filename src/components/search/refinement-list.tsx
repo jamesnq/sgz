@@ -1,6 +1,12 @@
 'use client'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { cn } from '@/utilities/ui'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
@@ -74,72 +80,62 @@ export const RefinementList = (
 
         <div className="relative">
           <div className="max-h-[400px] overflow-y-auto pr-2 overflow-x-hidden scrollbar-thin scrollbar-thumb-sgz-border scrollbar-track-transparent">
-            <div className="flex flex-col gap-1 min-h-[40px]">
-              <AnimatePresence initial={false} mode="popLayout">
-                {selectedItems.map((item) => (
-                  <motion.div
-                    key={`selected-${item.value}`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <button
-                      className="w-full flex items-center justify-between group px-2 py-2 rounded-lg bg-sgz-surfaceHover transition-colors text-left"
-                      onClick={() => handleItemClick(item)}
+            <div className="flex flex-wrap gap-2 min-h-[40px]">
+              <TooltipProvider delayDuration={300}>
+                <AnimatePresence initial={false} mode="popLayout">
+                  {selectedItems.map((item) => (
+                    <motion.div
+                      key={`selected-${item.value}`}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="max-w-full"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded flex items-center justify-center bg-sgz-primary border-none shadow-[0_0_10px_rgba(139,92,246,0.3)]">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="max-w-full flex items-center px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border bg-[#ba9eff] text-[#16161e] border-[#ba9eff]"
+                            onClick={() => handleItemClick(item)}
                           >
-                            <path
-                              d="M10 3L4.5 8.5L2 6"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </div>
-                        <span className="text-white font-medium">{item.label}</span>
-                      </div>
-                      <span className="text-xs text-sgz-textMuted bg-sgz-dark px-2 py-0.5 rounded-full">
-                        {item.count}
-                      </span>
-                    </button>
-                  </motion.div>
-                ))}
+                            <span className="truncate">{item.label}</span>
+                            <span className="opacity-60 text-xs ml-1.5 shrink-0">({item.count})</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center">
+                          <p>{item.label}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </motion.div>
+                  ))}
 
-                {unselectedItems.map((item) => (
-                  <motion.div
-                    key={item.value}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <button
-                      className="w-full flex items-center justify-between group px-2 py-2 rounded-lg hover:bg-sgz-surfaceHover transition-colors text-left"
-                      onClick={() => handleItemClick(item)}
+                  {unselectedItems.map((item) => (
+                    <motion.div
+                      key={item.value}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="max-w-full"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded flex items-center justify-center border border-sgz-border group-hover:border-sgz-primary/50 transition-colors bg-sgz-dark"></div>
-                        <span className="text-sgz-textMuted group-hover:text-white transition-colors">
-                          {item.label}
-                        </span>
-                      </div>
-                      <span className="text-xs text-sgz-textMuted/50 group-hover:text-sgz-textMuted transition-colors">
-                        {item.count}
-                      </span>
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="max-w-full flex items-center px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white"
+                            onClick={() => handleItemClick(item)}
+                          >
+                            <span className="truncate">{item.label}</span>
+                            <span className="opacity-50 text-xs ml-1.5 shrink-0">({item.count})</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center">
+                          <p>{item.label}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </TooltipProvider>
             </div>
           </div>
 
@@ -162,34 +158,44 @@ export const RefinementListHorizontal = (
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       {title && <span className="text-sm font-medium">{title}:</span>}
-      <div className="flex flex-wrap gap-2">
-        <AnimatePresence initial={false}>
-          {items.map((item) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Badge
-                variant={item.isRefined ? 'default' : 'outline'}
-                className={cn(
-                  'cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu',
-                  item.isRefined && 'bg-primary text-primary-foreground',
-                )}
-                onClick={() => refine(item.value)}
+      <TooltipProvider delayDuration={300}>
+        <div className="flex flex-wrap gap-2">
+          <AnimatePresence initial={false}>
+            {items.map((item) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="max-w-full"
               >
-                <span>{item.label}</span>
-                <span className="ml-1 text-xs">{item.count}</span>
-              </Badge>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {items.length === 0 && (
-          <p className="text-sm text-muted-foreground">Không có tùy chọn nào</p>
-        )}
-      </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant={item.isRefined ? 'default' : 'outline'}
+                      className={cn(
+                        'cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1 transform-gpu max-w-full',
+                        item.isRefined && 'bg-primary text-primary-foreground',
+                      )}
+                      onClick={() => refine(item.value)}
+                    >
+                      <span className="truncate">{item.label}</span>
+                      <span className="ml-1 text-xs shrink-0">{item.count}</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-[#16161e] text-white border-[#48474c] shadow-lg max-w-[250px] break-words text-center">
+                    <p>{item.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {items.length === 0 && (
+            <p className="text-sm text-muted-foreground">Không có tùy chọn nào</p>
+          )}
+        </div>
+      </TooltipProvider>
     </div>
   )
 }
