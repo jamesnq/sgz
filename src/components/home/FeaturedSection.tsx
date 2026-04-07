@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import { Product } from '@/payload-types'
-import { ProductCard } from './ProductGridSection'
+import { ProductCard } from '@/components/ProductCard'
 
 export const FeaturedSection = ({ products }: { products: Product[] }) => {
   const [currentPage, setCurrentPage] = useState(0)
