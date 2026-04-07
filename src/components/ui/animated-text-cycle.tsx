@@ -42,7 +42,7 @@ export default function AnimatedWordCycle({
   className = '',
 }: AnimatedWordCycleProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [widths, setWidths] = useState<string[]>(['auto'])
+  const [allWidths, setAllWidths] = useState<string[][]>([])
   const [exiting, setExiting] = useState<Record<number, boolean>>({})
   const measureRef = useRef<HTMLDivElement>(null)
   const animationRef = useRef<HTMLDivElement>(null)
@@ -90,21 +90,21 @@ export default function AnimatedWordCycle({
     if (!measureRef.current) return
 
     const elements = Array.from(measureRef.current.querySelectorAll('span'))
-    const newWidths: string[] = []
+    const newAllWidths: string[][] = []
 
     wordArrays.forEach((wordArray, arrayIndex) => {
-      let maxW = 0
-      wordArray.forEach((_, wordIndex) => {
+      const columnWidths = wordArray.map((_, wordIndex) => {
         const elementIndex = arrayIndex * maxLength + wordIndex
         if (elements[elementIndex]) {
           const rect = elements[elementIndex].getBoundingClientRect()
-          maxW = Math.max(maxW, rect.width)
+          return rect.width > 0 ? `${Math.ceil(rect.width + 2)}px` : '0px'
         }
+        return 'auto'
       })
-      newWidths.push(maxW > 0 ? `${Math.ceil(maxW + 2)}px` : 'auto')
+      newAllWidths.push(columnWidths)
     })
 
-    setWidths(newWidths)
+    setAllWidths(newAllWidths)
   }, [maxLength, wordArrays])
 
   // Set up interval timer with cleanup
@@ -171,11 +171,11 @@ export default function AnimatedWordCycle({
         if (!currentWord && !isExiting) return null
 
         return (
-          <span key={`fragment-${arrayIndex}`} className="inline-flex items-baseline">
+          <span key={`fragment-${arrayIndex}`} className="inline-flex items-baseline relative">
             <motion.span
-              className="inline-block pb-3 -mb-3 pt-1 -mt-1 align-bottom"
+              className="inline-flex items-baseline"
               animate={{
-                width: widths[arrayIndex] || 'auto',
+                width: allWidths[arrayIndex]?.[currentIndex % (wordArrays[arrayIndex]?.length || 1)] || 'auto',
                 transition: {
                   type: 'spring',
                   stiffness: 150,
@@ -183,7 +183,7 @@ export default function AnimatedWordCycle({
                   mass: 1.2,
                 },
               }}
-              style={{ overflow: 'hidden' }}
+              style={{ clipPath: 'inset(-0.5em 0 -0.5em 0)' }}
             >
               <AnimatePresence
                 mode="wait"

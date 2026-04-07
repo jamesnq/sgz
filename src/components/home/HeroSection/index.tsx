@@ -38,6 +38,7 @@ export const HeroSection = ({ stats }: HeroSectionProps) => {
             src="/herovideo_optimized.webp"
             alt={`${config.NEXT_PUBLIC_SITE_NAME} Hero`}
             fill
+            sizes="(max-width: 768px) 100vw, 100vw"
             className="object-cover"
             priority
           />
