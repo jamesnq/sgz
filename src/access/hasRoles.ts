@@ -9,7 +9,7 @@ export const hasRole =
       return false
     }
     if (typeof req.user === 'object') {
-      return req.user.roles.some((role) => roles.includes(role))
+      return req.user.roles?.some((role) => roles.includes(role)) ?? false
     }
     return req.user === config.AUTO_PROCESS_USER_ID
   }
@@ -19,7 +19,7 @@ export const userHasRole = (user: User | null, roles: User['roles']) => {
     return false
   }
   if (typeof user === 'object') {
-    return user.roles.some((role) => roles.includes(role))
+    return user.roles?.some((role) => roles.includes(role)) ?? false
   }
   return user === config.AUTO_PROCESS_USER_ID
 }

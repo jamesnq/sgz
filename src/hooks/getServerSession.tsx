@@ -21,7 +21,15 @@ export async function getServerSession() {
       if (response.ok) {
         const data = await response.json()
         if (data?.data?.isAuthenticated && data?.data?.id) {
-          user = data.data
+          try {
+            user = await payload.findByID({
+              collection: 'users',
+              id: data.data.id,
+            })
+          } catch (e) {
+            console.error('[getServerSession] Error fetching user by ID:', e)
+            user = data.data
+          }
         }
       }
     } catch (e) {
