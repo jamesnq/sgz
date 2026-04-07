@@ -1,6 +1,6 @@
 export const novuChannels = ['admin', 'staff']
 
-export const defaultLogo = '/logo.png'
+export const defaultLogo = '/logo-full.svg'
 export const imageFallback = defaultLogo
 export const mediaGroup = 'Media'
 export const managerGroup = 'Manager'

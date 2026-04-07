@@ -89,23 +89,23 @@ export default function AnimatedWordCycle({
   useEffect(() => {
     if (!measureRef.current) return
 
-    const elements = measureRef.current.children
+    const elements = Array.from(measureRef.current.querySelectorAll('span'))
     const newWidths: string[] = []
 
-    wordArrays.forEach((_, arrayIndex) => {
-      const elementIndex = arrayIndex * maxLength + currentIndex
-      if (elements.length > elementIndex) {
-        // @ts-expect-error ignore
-        const width = elements[elementIndex].getBoundingClientRect().width
-        // Add a small buffer (2px) to prevent text wrapping or cutting off
-        newWidths.push(`${Math.ceil(width)}px`)
-      } else {
-        newWidths.push('auto')
-      }
+    wordArrays.forEach((wordArray, arrayIndex) => {
+      let maxW = 0
+      wordArray.forEach((_, wordIndex) => {
+        const elementIndex = arrayIndex * maxLength + wordIndex
+        if (elements[elementIndex]) {
+          const rect = elements[elementIndex].getBoundingClientRect()
+          maxW = Math.max(maxW, rect.width)
+        }
+      })
+      newWidths.push(maxW > 0 ? `${Math.ceil(maxW + 2)}px` : 'auto')
     })
 
     setWidths(newWidths)
-  }, [currentIndex, maxLength, wordArrays])
+  }, [maxLength, wordArrays])
 
   // Set up interval timer with cleanup
   useEffect(() => {

@@ -25,6 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="vi" suppressHydrationWarning className="scroll-smooth">
       <head>
+        <link rel="preload" href="/herovideo_optimized.webp" as="image" />
         <InitTheme />
       </head>
       <body className={`${beVietnamPro.variable} ${beVietnamPro.className} antialiased`}>
