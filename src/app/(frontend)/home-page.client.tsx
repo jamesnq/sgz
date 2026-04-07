@@ -178,9 +178,22 @@ const ProductCard = ({ product }: { product: Product }) => {
           {product.name}
         </h3>
       </Link>
-      
+
       <div className="text-[11px] text-[#acaab0] mb-2 mt-0.5 flex items-center gap-1.5 font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"
+        >
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+        </svg>
         Đã bán {formatSold(product.sold || 0)}
       </div>
 
@@ -298,7 +311,10 @@ const FeaturedSection = ({ products }: { products: Product[] }) => {
 
   if (numPages === 0) return null
 
-  const currentProducts = maxProducts.slice(currentPage * itemsPerPage, currentPage * itemsPerPage + itemsPerPage)
+  const currentProducts = maxProducts.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage,
+  )
 
   return (
     <motion.section
@@ -312,9 +328,6 @@ const FeaturedSection = ({ products }: { products: Product[] }) => {
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Star className="w-5 h-5 text-white fill-white" />
-              </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
                 Game Nổi Bật
               </h2>
@@ -368,12 +381,7 @@ const PostCard = ({ post }: { post: Post }) => {
 
   return (
     <article
-      className="rounded-2xl overflow-hidden group hover:bg-[#1f1f24] transition-colors flex flex-col h-full"
-      style={{
-        background: 'rgba(25, 25, 30, 0.7)',
-        backdropFilter: 'blur(12px)',
-        borderTop: '1px solid rgba(72, 71, 76, 0.2)',
-      }}
+      className="rounded-2xl overflow-hidden group hover:bg-secondary transition-colors flex flex-col h-full bg-card/70 backdrop-blur-md border-t border-border"
     >
       <div className="h-48 overflow-hidden relative shrink-0">
         <Media

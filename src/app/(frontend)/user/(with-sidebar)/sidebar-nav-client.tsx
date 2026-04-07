@@ -26,10 +26,10 @@ export default function SidebarNavClient({ className, isAffiliate, ...props }: S
           key={item.href}
           href={item.href}
           className={cn(
-            'flex items-center px-3 py-2 text-sm font-medium rounded-md',
+            'flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors',
             pathname === item.href
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+              ? 'bg-[#8b5cf6] text-white'
+              : 'text-gray-400 hover:text-white hover:bg-white/5',
           )}
         >
           <item.icon className="mr-2 h-4 w-4" />

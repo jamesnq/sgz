@@ -27,8 +27,8 @@ function OrderCard({ o }: { o: Order }) {
   const productUrl = product?.slug ? Routes.product(product?.slug as string, variant?.id) : '#'
   const orderUrl = Routes.order(o.id)
   return (
-    <Card key={o.id}>
-      <CardHeader className="p-4">
+    <div key={o.id} className="bg-background border rounded-xl p-4 shadow-lg mb-3 last:mb-0">
+      <div className="mb-4">
         <div className="flex justify-between">
           <div className="text-muted-foreground">{formatOrderDate(new Date(o.createdAt))}</div>
           <div>
@@ -36,8 +36,8 @@ function OrderCard({ o }: { o: Order }) {
             <span>{formatPrice(o.totalPrice, 'VND')}</span>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
+      </div>
+      <div>
         <div className="flex items-start max-md:flex-col md:items-center gap-2">
           <div className="md:hidden space-x-2">
             <span className="text-muted-foreground md:hidden">Mã DH:</span>
@@ -67,21 +67,21 @@ function OrderCard({ o }: { o: Order }) {
           </div>
           <div className="flex flex-wrap gap-[8px] max-md:w-full flex-col">
             <Link href={orderUrl}>
-              <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
+              <Button variant="secondary" size="sm" className="w-full flex gap-2">
                 <Eye size={18}></Eye>
                 <span>Chi tiết</span>
               </Button>
             </Link>
             <Link href={orderUrl + '#update'}>
-              <Button variant={'secondary'} size={'sm'} className="w-full rounded-full flex gap-2">
+              <Button variant="secondary" size="sm" className="w-full flex gap-2">
                 <Pencil size={18}></Pencil>
                 <span>Sửa thông tin</span>
               </Button>
             </Link>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -150,16 +150,16 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
   }
 
   return (
-    <Card className="max-lg:border-0">
-      <CardHeader className="max-lg:p-1">
-        <h4 className="font-bold">Lịch sử đơn hàng</h4>
+    <Card className="p-6 w-full overflow-hidden">
+      <div className="max-lg:p-1 mb-6">
+        <h4 className="text-xl font-bold text-white mb-1">Lịch sử đơn hàng</h4>
         <div className="text-muted-foreground">Thông tin các sản phẩm bạn đã mua</div>
-        <div className="lg:flex lg:justify-end">
-          <div className="flex gap-2 max-xl:flex-col">
+        <div className="lg:flex lg:justify-end mt-4">
+          <div className="flex gap-2 max-xl:flex-col w-full lg:w-auto">
             <div className="grid grid-flow-col auto-cols-fr gap-2 max-lg:grid-rows-2">
               <Button
-                className="w-full rounded-full"
-                variant={!status ? 'default' : 'outline'}
+                className={!status ? "w-full font-bold h-11" : "w-full h-11"}
+                variant={!status ? 'default' : 'secondary'}
                 onClick={() => handleStatusChange('')}
               >
                 Tất cả
@@ -167,29 +167,29 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
               {Object.entries(orderStatus).map(([k, v]) => (
                 <Button
                   key={k}
-                  className="w-full rounded-full"
-                  variant={status === k ? 'default' : 'outline'}
+                  className={status === k ? "w-full font-bold h-11" : "w-full h-11"}
+                  variant={status === k ? 'default' : 'secondary'}
                   onClick={() => handleStatusChange(k)}
                 >
                   {v}
                 </Button>
               ))}
             </div>
-            <div className="relative">
+            <div className="relative w-full lg:w-auto">
               <Input
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                className="min-w-72 max-lg:w-full pr-10"
+                className="w-full lg:min-w-72 h-11"
                 placeholder="Mã đơn / Tên sản phẩm"
               />
             </div>
           </div>
-        </div>{' '}
-      </CardHeader>
-      <CardContent className="max-lg:p-1">
+        </div>
+      </div>
+      <div className="max-lg:p-1">
         {stableLoading ? (
           <div className="flex flex-col text-sm gap-2">
             {Array(5)
@@ -205,10 +205,10 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">Không có đơn hàng nào</div>
+          <div className="text-center py-8 text-white">Không có đơn hàng nào</div>
         )}
-      </CardContent>
-      <CardFooter>
+      </div>
+      <div className="pt-6">
         <div className="flex justify-center w-full">
           {data.totalPages > 0 && (
             <CustomPagination
@@ -220,7 +220,7 @@ function Orders({ data }: { data: PaginatedDocs<Order> }) {
             />
           )}
         </div>
-      </CardFooter>
+      </div>
     </Card>
   )
 }

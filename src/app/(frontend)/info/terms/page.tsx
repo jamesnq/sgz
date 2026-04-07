@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 
 export default async function TermsPage() {
   return (
-    <div className="text-xs">
-      <h1 className="text-2xl font-bold mb-6">Điều khoản dịch vụ {siteName}</h1>
+    <>
+      <h1 className="mb-6">Điều khoản dịch vụ {siteName}</h1>
 
       <div className="space-y-6">
         <section>
-          <h2 className="text-xl font-semibold ">1. Giới thiệu</h2>
+          <h2>1. Giới thiệu</h2>
           <p>Chào mừng quý khách hàng đến với {domain}.</p>
           <p>
             Khi quý khách hàng truy cập và sử dụng dịch vụ trên trang website của chúng tôi nghĩa là
@@ -37,7 +37,7 @@ export default async function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold ">2. Hướng dẫn sử dụng website</h2>
+          <h2>2. Hướng dẫn sử dụng website</h2>
           <p>
             Khi vào web của chúng tôi, khách hàng phải đảm bảo đủ 18 tuổi, hoặc truy cập dưới sự
             giám sát của cha mẹ hay người giám hộ hợp pháp. Khách hàng đảm bảo có đầy đủ hành vi dân
@@ -69,7 +69,7 @@ export default async function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold ">4. Chấp nhận đơn hàng và giá cả</h2>
+          <h2>3. Chấp nhận đơn hàng và giá cả</h2>
           <p>
             Chúng tôi có quyền từ chối hoặc hủy đơn hàng của quý khách vì bất kỳ lý do gì liên quan
             đến lỗi kỹ thuật, hệ thống một cách khách quan vào bất kỳ lúc nào.
@@ -91,8 +91,8 @@ export default async function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold ">
-            5. Giải quyết hậu quả do lỗi nhập sai thông tin tại {siteName}
+          <h2>
+            4. Giải quyết hậu quả do lỗi nhập sai thông tin tại {siteName}
           </h2>
           <p>
             Khách hàng có trách nhiệm cung cấp thông tin đầy đủ và chính xác khi tham gia giao dịch
@@ -108,7 +108,7 @@ export default async function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold ">6. Quyền pháp lý</h2>
+          <h2>5. Quyền pháp lý</h2>
           <p>
             Các điều kiện, điều khoản và nội dung của trang web này được điều chỉnh từ luật pháp
             Việt Nam và Tòa án có thẩm quyền tại Việt Nam sẽ giải quyết bất kỳ tranh chấp nào phát
@@ -117,7 +117,7 @@ export default async function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold ">7. Quy định về bảo mật</h2>
+          <h2>6. Quy định về bảo mật</h2>
           <p>
             Trang web của chúng tôi coi trọng việc bảo mật thông tin và sử dụng các biện pháp tốt
             nhất bảo vệ thông tin và việc thanh toán của quý khách. Thông tin của quý khách trong
@@ -138,7 +138,7 @@ export default async function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold ">8. Đảm bảo an toàn giao dịch tại {siteName}</h2>
+          <h2>7. Đảm bảo an toàn giao dịch tại {siteName}</h2>
           <p>
             Chúng tôi sử dụng các dịch vụ để bảo vệ thông tin về nội dung mà người bán đăng sản phẩm
             trên {siteName}. Để đảm bảo các giao dịch được tiến hành thành công, hạn chế tối đa rủi
@@ -146,6 +146,6 @@ export default async function TermsPage() {
           </p>
         </section>
       </div>
-    </div>
+    </>
   )
 }

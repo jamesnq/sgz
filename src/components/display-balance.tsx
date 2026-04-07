@@ -26,7 +26,11 @@ export function RechargeButton() {
   if (!user) return null
 
   const plusButtonTrigger = (
-    <Button className="rounded-xl size-8 p-0 bg-sgz-primary hover:bg-sgz-primaryDark text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all flex items-center justify-center" variant="ghost" size={'xs'}>
+    <Button
+      className="rounded-xl size-8 p-0 bg-sgz-primary hover:bg-sgz-primaryDark text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all flex items-center justify-center"
+      variant="ghost"
+      size={'xs'}
+    >
       <Plus className="size-5" />
     </Button>
   )

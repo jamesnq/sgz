@@ -43,7 +43,7 @@ function AutocompleteDropdown() {
             setTimeout(() => setIsOpen(false), 200)
           }}
           placeholder="Tìm kiếm..."
-          className="w-full bg-sgz-surface border-sgz-border text-white placeholder:text-sgz-textMuted pl-10 rounded-xl focus-visible:ring-sgz-primary transition-all h-10"
+          className="w-full bg-sgz-surface border-sgz-border text-white placeholder:text-sgz-textMuted pl-10 rounded-xl focus-visible:ring-sgz-primary transition-all h-11"
         />
       </form>
 

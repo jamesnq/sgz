@@ -58,9 +58,8 @@ export const RefinementList = (
   )
 
   return (
-    <div className={cn('space-y-4', className)}>
-      <div className="sticky top-24 rounded-2xl bg-[#16161e] border border-[#2b2b36] p-6 shadow-xl">
-        {title ? (
+    <div className={cn('rounded-[24px] bg-sgz-surface border border-sgz-border p-6 shadow-xl', className)}>
+      {title ? (
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-white">{title}</h2>
             {hasSelectedItems && <ClearFiltersButton />}
@@ -74,7 +73,7 @@ export const RefinementList = (
         )}
 
         <div className="relative">
-          <div className="max-h-[400px] overflow-y-auto pr-2 overflow-x-hidden scrollbar-thin scrollbar-thumb-[#2b2b36] scrollbar-track-transparent">
+          <div className="max-h-[400px] overflow-y-auto pr-2 overflow-x-hidden scrollbar-thin scrollbar-thumb-sgz-border scrollbar-track-transparent">
             <div className="flex flex-col gap-1 min-h-[40px]">
               <AnimatePresence initial={false} mode="popLayout">
                 {selectedItems.map((item) => (
@@ -86,11 +85,11 @@ export const RefinementList = (
                     transition={{ duration: 0.15 }}
                   >
                     <button
-                      className="w-full flex items-center justify-between group px-2 py-2 rounded-lg bg-white/5 transition-colors text-left"
+                      className="w-full flex items-center justify-between group px-2 py-2 rounded-lg bg-sgz-surfaceHover transition-colors text-left"
                       onClick={() => handleItemClick(item)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded flex items-center justify-center bg-[#ba9eff] border-none shadow-[0_0_10px_rgba(186,158,255,0.3)]">
+                        <div className="w-5 h-5 rounded flex items-center justify-center bg-sgz-primary border-none shadow-[0_0_10px_rgba(139,92,246,0.3)]">
                           <svg
                             width="12"
                             height="12"
@@ -100,7 +99,7 @@ export const RefinementList = (
                           >
                             <path
                               d="M10 3L4.5 8.5L2 6"
-                              stroke="#16161e"
+                              stroke="#ffffff"
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -109,7 +108,7 @@ export const RefinementList = (
                         </div>
                         <span className="text-white font-medium">{item.label}</span>
                       </div>
-                      <span className="text-xs text-[#acaab0] bg-[#0f0f13] px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-sgz-textMuted bg-sgz-dark px-2 py-0.5 rounded-full">
                         {item.count}
                       </span>
                     </button>
@@ -125,16 +124,16 @@ export const RefinementList = (
                     transition={{ duration: 0.15 }}
                   >
                     <button
-                      className="w-full flex items-center justify-between group px-2 py-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+                      className="w-full flex items-center justify-between group px-2 py-2 rounded-lg hover:bg-sgz-surfaceHover transition-colors text-left"
                       onClick={() => handleItemClick(item)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded flex items-center justify-center border border-[#acaab0]/30 group-hover:border-[#ba9eff]/50 transition-colors bg-[#0f0f13]"></div>
-                        <span className="text-[#acaab0] group-hover:text-white transition-colors">
+                        <div className="w-5 h-5 rounded flex items-center justify-center border border-sgz-border group-hover:border-sgz-primary/50 transition-colors bg-sgz-dark"></div>
+                        <span className="text-sgz-textMuted group-hover:text-white transition-colors">
                           {item.label}
                         </span>
                       </div>
-                      <span className="text-xs text-[#acaab0]/50 group-hover:text-[#acaab0] transition-colors">
+                      <span className="text-xs text-sgz-textMuted/50 group-hover:text-sgz-textMuted transition-colors">
                         {item.count}
                       </span>
                     </button>
@@ -146,11 +145,10 @@ export const RefinementList = (
 
           {selectedItems.length === 0 && unselectedItems.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pt-8">
-              <p className="text-sm text-[#acaab0]">Không tìm thấy danh mục phù hợp</p>
+              <p className="text-sm text-sgz-textMuted">Không tìm thấy danh mục phù hợp</p>
             </div>
           )}
         </div>
-      </div>
     </div>
   )
 }

@@ -55,9 +55,8 @@ export const PriceRangeFilter = (
   }
 
   return (
-    <div className={cn('space-y-4', props.className)}>
-      <div className="sticky top-24 rounded-2xl bg-[#16161e] border border-[#2b2b36] p-6 shadow-xl">
-        {props.title && (
+    <div className={cn('rounded-[24px] bg-sgz-surface border border-sgz-border p-6 shadow-xl', props.className)}>
+      {props.title && (
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-white">{props.title}</h2>
           </div>
@@ -75,15 +74,14 @@ export const PriceRangeFilter = (
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <div className="text-sm font-medium text-[#acaab0]">
+          <div className="text-sm font-medium text-sgz-textMuted">
             {formatPrice(localRange[0])}
           </div>
-          <div className="text-[#2b2b36]">-</div>
+          <div className="text-sgz-border">-</div>
           <div className="text-sm font-medium text-white">
             {formatPrice(localRange[1])}
           </div>
         </div>
-      </div>
     </div>
   )
 }

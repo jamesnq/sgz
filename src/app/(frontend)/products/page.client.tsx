@@ -117,8 +117,9 @@ const ProductHits = () => {
 function Sidebar() {
   return (
     <div className="hidden lg:block w-64 shrink-0">
-      <div className="sticky top-24 pt-2 space-y-6">
-        <RefinementList attribute="categories" className="text-[#acaab0]" />
+      <div className="sticky top-24 space-y-6">
+        <SearchBox />
+        <RefinementList attribute="categories" className="text-sgz-textMuted" />
         <PriceRangeFilter attribute="minPrice" title="Khoảng giá" />
       </div>
     </div>
@@ -182,8 +183,8 @@ const PageClient = () => {
               <p className="text-[#acaab0]">Hàng ngàn tựa game tuyệt đỉnh đang chờ bạn.</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-              <div className="w-full sm:w-64">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-4 w-full md:w-auto">
+              <div className="w-full sm:w-64 lg:hidden">
                 <SearchBox />
               </div>
               <SortBy

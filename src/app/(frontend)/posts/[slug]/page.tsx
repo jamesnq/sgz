@@ -114,7 +114,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
 const RelatedPostCard = ({ post }: { post: any }) => {
   const tags = post.tags as PostTag[] | undefined
   return (
-    <Link href={`/posts/${post.slug}`} className="group block bg-[#1f1f24] border border-[#2b2b36] rounded-xl overflow-hidden hover:border-sgz-primary/50 transition-colors">
+    <Link href={`/posts/${post.slug}`} className="group block bg-secondary border border-border rounded-xl overflow-hidden hover:border-sgz-primary/50 transition-colors">
       <div className="flex flex-col">
         <div className="h-32 relative overflow-hidden shrink-0">
           <Media
@@ -137,7 +137,7 @@ const RelatedPostCard = ({ post }: { post: any }) => {
             {post.title}
           </h3>
           {post.publishedAt && (
-            <div className="text-[11px] text-[#acaab0]">
+            <div className="text-[11px] text-muted-foreground">
               {format(new Date(post.publishedAt), 'dd/MM/yyyy')}
             </div>
           )}
@@ -166,7 +166,7 @@ export default async function PostDetailPage({ params }: Args) {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 relative items-start">
           
           {/* Main Article (Left Column) */}
-          <article className="flex-1 w-full bg-[#16161e] border border-[#2b2b36] rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
+          <article className="flex-1 w-full bg-card border border-border rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
             
             {/* subtle background glow */}
             <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-sgz-primary/5 rounded-full blur-[100px] pointer-events-none" />
@@ -175,7 +175,7 @@ export default async function PostDetailPage({ params }: Args) {
             <div className="mb-10 relative z-10 flex items-center justify-between">
               <Link
                 href="/posts"
-                className="inline-flex items-center gap-2 text-[#acaab0] hover:text-sgz-primary transition-colors font-medium border border-[#2b2b36] bg-[#1f1f24] hover:border-sgz-primary/50 px-4 py-2 rounded-xl"
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-sgz-primary transition-colors font-medium border border-border bg-secondary hover:border-sgz-primary/50 px-4 py-2 rounded-xl"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm">Quay lại danh sách</span>
@@ -203,8 +203,8 @@ export default async function PostDetailPage({ params }: Args) {
 
               {/* Meta */}
               {post.publishedAt && (
-                <div className="flex items-center gap-3 text-sm text-[#acaab0] font-medium border-t border-[#2b2b36] pt-6 mt-6">
-                  <div className="w-8 h-8 rounded-full bg-[#1f1f24] flex items-center justify-center border border-[#2b2b36]">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium border-t border-border pt-6 mt-6">
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border">
                     <span className="text-sgz-primary font-bold text-xs">{config.NEXT_PUBLIC_SITE_NAME?.charAt(0) || 'S'}</span>
                   </div>
                   <div>
@@ -228,14 +228,14 @@ export default async function PostDetailPage({ params }: Args) {
               {/* Excerpt */}
               {post.excerpt && (
                 <div className="mb-12">
-                  <p className="text-xl text-[#acaab0] italic font-medium leading-relaxed border-l-4 border-sgz-primary pl-6 py-2 bg-sgz-primary/5 rounded-r-2xl">
+                  <p className="text-xl text-muted-foreground italic font-medium leading-relaxed border-l-4 border-sgz-primary pl-6 py-2 bg-sgz-primary/5 rounded-r-2xl">
                     {post.excerpt}
                   </p>
                 </div>
               )}
 
               {/* Content */}
-              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-headings:font-bold prose-h2:text-3xl prose-h3:text-2xl prose-p:text-[#acaab0] prose-p:leading-relaxed prose-a:text-[#ba9eff] prose-a:no-underline hover:prose-a:underline prose-strong:text-white prose-ul:text-[#acaab0] prose-ol:text-[#acaab0] marker:text-sgz-primary prose-blockquote:border-sgz-primary prose-blockquote:text-[#acaab0] prose-blockquote:bg-[#1f1f24] prose-blockquote:px-6 prose-blockquote:py-2 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-img:rounded-xl prose-img:border prose-img:border-[#2b2b36] w-full">
+              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-headings:font-bold prose-h2:text-3xl prose-h3:text-2xl prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-sgz-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-white prose-ul:text-muted-foreground prose-ol:text-muted-foreground marker:text-sgz-primary prose-blockquote:border-sgz-primary prose-blockquote:text-muted-foreground prose-blockquote:bg-secondary prose-blockquote:px-6 prose-blockquote:py-2 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-img:rounded-xl prose-img:border prose-img:border-border w-full">
                 <RichText data={post.content} />
               </div>
             </div>
@@ -243,20 +243,20 @@ export default async function PostDetailPage({ params }: Args) {
 
           {/* Sidebar (Right Column) */}
           <aside className="w-full lg:w-[380px] shrink-0 sticky top-32 z-10">
-            <div className="bg-[#16161e] border border-[#2b2b36] rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col max-h-[calc(100vh-10rem)]">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col max-h-[calc(100vh-10rem)]">
               <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-sgz-primary/5 rounded-full blur-[60px] pointer-events-none" />
-              <h2 className="text-xl font-bold text-white mb-6 font-headline relative z-10 border-b border-[#2b2b36] pb-4 shrink-0">
+              <h2 className="text-xl font-bold text-white mb-6 font-headline relative z-10 border-b border-border pb-4 shrink-0">
                 Bài viết liên quan
               </h2>
               
-              <div className="flex flex-col gap-4 relative z-10 overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2b2b36] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#3b3b4a] transition-all">
+              <div className="flex flex-col gap-4 relative z-10 overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-secondary [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-secondary/80 transition-all">
                 {relatedPosts.length > 0 ? (
                   relatedPosts.map(rp => (
                     <RelatedPostCard key={rp.id} post={rp} />
                   ))
                 ) : (
                   <div className="py-6 text-center">
-                    <p className="text-sm text-[#acaab0]">Chưa có bài viết liên quan.</p>
+                    <p className="text-sm text-muted-foreground">Chưa có bài viết liên quan.</p>
                   </div>
                 )}
               </div>

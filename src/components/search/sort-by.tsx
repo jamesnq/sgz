@@ -23,21 +23,21 @@ export function SortBy(props: UseSortByProps & { title?: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center justify-between gap-2 bg-[#16161e] border-none rounded-full px-6 py-2 text-sm font-bold text-white hover:bg-white/5 active:scale-95 transition-all outline-none focus:ring-1 focus:ring-[#ba9eff] shrink-0">
+        <Button variant="secondary" className="flex items-center justify-between gap-2 bg-sgz-surface border border-sgz-border rounded-xl px-4 h-11 text-sm font-bold text-white hover:bg-sgz-surfaceHover transition-all shrink-0">
           <div className="flex items-center gap-2">
-            {title && <span className="text-[#acaab0]">{title}</span>}
+            {title && <span className="text-sgz-textMuted font-medium">{title}</span>}
             {label && <span>{label}</span>}
           </div>
-          <ArrowDownWideNarrow className="h-4 w-4 text-[#acaab0]" />
-        </button>
+          <ArrowDownWideNarrow className="h-4 w-4 text-sgz-textMuted ml-2" />
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-[#16161e] border-[#acaab0]/20 text-white rounded-xl shadow-xl">
+      <DropdownMenuContent className="w-56 bg-sgz-surface border-sgz-border text-white rounded-xl shadow-xl">
         <DropdownMenuRadioGroup value={currentRefinement} onValueChange={(value) => refine(value)}>
           {options.map((option) => (
             <DropdownMenuRadioItem 
               key={option.value} 
               value={option.value}
-              className="hover:bg-[#1f1f28] focus:bg-[#1f1f28] focus:text-white cursor-pointer transition-colors"
+              className="hover:bg-sgz-surfaceHover focus:bg-sgz-surfaceHover focus:text-white cursor-pointer transition-colors"
             >
               {option.label}
             </DropdownMenuRadioItem>
@@ -59,17 +59,14 @@ export function SortByHorizontal(props: UseSortByProps & { title?: string }) {
         {options.map((option) => {
           const active = option.value === currentRefinement
           return (
-            <button
+            <Button
               key={option.value}
+              variant={active ? 'default' : 'secondary'}
               onClick={() => refine(!active ? option.value : currentRefinement.split(':')[0] || '')}
-              className={`px-6 py-2 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
-                active 
-                  ? 'bg-[#ba9eff] text-[#39008c] hover:opacity-90' 
-                  : 'bg-transparent border border-[#acaab0]/30 text-white hover:bg-white/5'
-              }`}
+              className={`h-11 px-6 rounded-xl text-sm font-bold transition-all duration-200`}
             >
               {option.label}
-            </button>
+            </Button>
           )
         })}
       </div>

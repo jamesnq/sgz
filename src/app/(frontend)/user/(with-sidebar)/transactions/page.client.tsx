@@ -117,20 +117,20 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
   }
 
   return (
-    <Card className="max-md:border-0">
-      <CardHeader className="max-md:p-1">
-        <h4 className="font-bold">Lịch sử giao dịch</h4>
-        <div>Thông tin các giao dịch của tài khoản</div>
+    <Card className="p-6 w-full overflow-hidden">
+      <div className="max-md:p-1 mb-6">
+        <h4 className="text-xl font-bold text-white mb-1">Lịch sử giao dịch</h4>
+        <div className="text-muted-foreground">Thông tin các giao dịch của tài khoản</div>
         <div className="md:flex md:justify-end">
-          <div className="flex gap-2 max-md:flex-col">
-            <div className="relative">
+          <div className="flex gap-2 max-md:flex-col w-full md:w-auto mt-4 md:mt-0">
+            <div className="relative w-full md:w-auto">
               <Input
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                className="min-w-72 max-md:w-full pr-10"
+                className="w-full md:min-w-72 pr-10 h-11"
                 placeholder="Nội dung giao dịch"
                 disabled={isPending}
               />
@@ -142,8 +142,8 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
             </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="max-md:p-1">
+      </div>
+      <div className="max-md:p-1 overflow-x-auto">
         {isPending ? (
           <TransactionTableSkeleton />
         ) : data?.docs && data.docs.length > 0 ? (
@@ -177,10 +177,10 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
             </TableBody>
           </TableCustom>
         ) : (
-          <div className="text-center py-8">Không có giao dịch nào</div>
+          <div className="text-center py-8 text-white">Không có giao dịch nào</div>
         )}
-      </CardContent>
-      <CardFooter>
+      </div>
+      <div className="pt-6">
         <div className="flex justify-center w-full">
           {data.totalPages > 0 && (
             <CustomPagination
@@ -192,7 +192,7 @@ function Transactions({ data }: { data: PaginatedDocs<Transaction> }) {
             />
           )}
         </div>
-      </CardFooter>
+      </div>
     </Card>
   )
 }
