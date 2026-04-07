@@ -89,22 +89,28 @@ export default function AnimatedWordCycle({
   useEffect(() => {
     if (!measureRef.current) return
 
-    const elements = Array.from(measureRef.current.querySelectorAll('span'))
-    const newAllWidths: string[][] = []
+    // Defer measurement to avoid forced synchronous layout during initial paint
+    const timer = setTimeout(() => {
+      if (!measureRef.current) return
+      const elements = Array.from(measureRef.current.querySelectorAll('span'))
+      const newAllWidths: string[][] = []
 
-    wordArrays.forEach((wordArray, arrayIndex) => {
-      const columnWidths = wordArray.map((_, wordIndex) => {
-        const elementIndex = arrayIndex * maxLength + wordIndex
-        if (elements[elementIndex]) {
-          const rect = elements[elementIndex].getBoundingClientRect()
-          return rect.width > 0 ? `${Math.ceil(rect.width + 2)}px` : '0px'
-        }
-        return 'auto'
+      wordArrays.forEach((wordArray, arrayIndex) => {
+        const columnWidths = wordArray.map((_, wordIndex) => {
+          const elementIndex = arrayIndex * maxLength + wordIndex
+          if (elements[elementIndex]) {
+            const rect = elements[elementIndex].getBoundingClientRect()
+            return rect.width > 0 ? `${Math.ceil(rect.width + 2)}px` : '0px'
+          }
+          return 'auto'
+        })
+        newAllWidths.push(columnWidths)
       })
-      newAllWidths.push(columnWidths)
-    })
 
-    setAllWidths(newAllWidths)
+      setAllWidths(newAllWidths)
+    }, 200)
+
+    return () => clearTimeout(timer)
   }, [maxLength, wordArrays])
 
   // Set up interval timer with cleanup

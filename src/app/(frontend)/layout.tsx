@@ -19,13 +19,14 @@ const beVietnamPro = Be_Vietnam_Pro({
   weight: ['400', '600', '800'],
   subsets: ['latin', 'vietnamese'],
   variable: '--font-be-vietnam-pro',
+  display: 'swap',
+  adjustFontFallback: true,
 })
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" suppressHydrationWarning className="scroll-smooth">
       <head>
-        <link rel="preload" href="/herovideo_optimized.webp" as="image" />
         <InitTheme />
       </head>
       <body className={`${beVietnamPro.variable} ${beVietnamPro.className} antialiased`}>

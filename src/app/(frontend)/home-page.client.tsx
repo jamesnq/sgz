@@ -2,10 +2,8 @@
 
 import { Media } from '@/components/Media'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
-import { instantSearchClient } from '@/utilities/meiliSearchClient'
 import { productIndex } from '@/utilities/searchIndexes'
 import { useEffect } from 'react'
-import { Configure, InstantSearch } from 'react-instantsearch'
 import dynamic from 'next/dynamic'
 import { Post, Product } from '@/payload-types'
 
@@ -87,16 +85,7 @@ const HomePageClient = ({
   }, [setHeaderTheme])
 
   return (
-    <InstantSearch
-      indexName={`${productIndex}:sold:desc`}
-      searchClient={instantSearchClient.searchClient as any}
-      future={{ preserveSharedStateOnUnmount: true }}
-    >
-      <Configure
-        analytics={false}
-        hitsPerPage={10}
-        filters="(categories='Key Steam' OR categories='Tài khoản steam offline') AND status = 'PUBLIC'"
-      />
+    <>
       <div className="mb-16">
         <HeroSection stats={stats} />
         <div className="w-full px-6 lg:px-12 max-w-[1440px] mx-auto py-8 space-y-16">
@@ -137,7 +126,7 @@ const HomePageClient = ({
           <SocialSupport />
         </div>
       </div>
-    </InstantSearch>
+    </>
   )
 }
 

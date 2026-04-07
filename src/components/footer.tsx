@@ -121,7 +121,7 @@ export const infoLinks = [
 export default function Footer() {
   return (
     <FooterComponent
-      className="mt-24"
+      className="mt-24 min-h-[500px] lg:min-h-[350px]"
       brand={{
         name: config.NEXT_PUBLIC_SITE_NAME,
         description: SITE_DESCRIPTION,

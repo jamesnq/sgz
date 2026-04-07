@@ -1,8 +1,11 @@
+'use client'
+
 import AnimatedWordCycle from '@/components/ui/animated-text-cycle'
 import { config } from '@/config'
 import { ChevronDown, Gamepad2, Mouse, ShoppingBag, Users } from 'lucide-react'
 import Image from 'next/image'
 import { StatItem } from './StatItem'
+import { useEffect, useRef, useState } from 'react'
 
 interface HeroSectionProps {
   stats: {
@@ -13,6 +16,16 @@ interface HeroSectionProps {
 }
 
 export const HeroSection = ({ stats }: HeroSectionProps) => {
+  const [loadVideo, setLoadVideo] = useState(false)
+
+  useEffect(() => {
+    // Delay loading the video to prioritize the main thread for LCP and initial JS
+    const timer = setTimeout(() => {
+      setLoadVideo(true)
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <section
       id="hero-section"
@@ -26,10 +39,11 @@ export const HeroSection = ({ stats }: HeroSectionProps) => {
             loop
             muted
             playsInline
+            preload="none"
             poster="/herovideo_optimized.webp"
             className="absolute inset-0 w-full h-full object-cover"
           >
-            <source src="/herovideo_compressed.mp4" type="video/mp4" />
+            {loadVideo && <source src="/herovideo_compressed.mp4" type="video/mp4" />}
           </video>
         </div>
         {/* Mobile static poster fallback */}
@@ -41,6 +55,7 @@ export const HeroSection = ({ stats }: HeroSectionProps) => {
             sizes="(max-width: 768px) 100vw, 100vw"
             className="object-cover"
             priority
+            fetchPriority="high"
           />
         </div>
         <div className="absolute inset-0 bg-black/50 z-10"></div>

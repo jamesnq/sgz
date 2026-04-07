@@ -28,6 +28,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture_pageview: false, // Disable automatic pageview capture, as we capture manually
       capture_pageleave: true,
       disable_session_recording: true,
+      opt_in_site_apps: false,
     })
   }, [])
 
