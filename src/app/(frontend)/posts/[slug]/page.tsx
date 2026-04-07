@@ -5,7 +5,7 @@ import { PostTag } from '@/payload-types'
 import configPromise from '@payload-config'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Clock } from 'lucide-react'
 import type { Metadata } from 'next'
 import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
@@ -14,7 +14,7 @@ import { getPayload } from 'payload'
 import { ArticleStructuredData } from '@/components/Schema/ArticleStructuredData'
 import { BreadcrumbStructuredData } from '@/components/Schema/BreadcrumbStructuredData'
 import { TableOfContents } from '@/components/TableOfContents'
-import { PostCard } from '@/components/home/PostsSection'
+import { Routes } from '@/utilities/routes'
 
 type Args = {
   params: Promise<{
@@ -221,21 +221,6 @@ export default async function PostDetailPage({ params }: Args) {
             </div>
           </article>
 
-          {/* Related Posts (Bottom) */}
-          {relatedPosts.length > 0 && (
-            <section className="w-full bg-card border border-border rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mr-32 -mt-32 w-64 h-64 bg-sgz-primary/5 rounded-full blur-[80px] pointer-events-none" />
-              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-8 font-headline relative z-10 border-b border-border pb-4">
-                Bài viết liên quan
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 relative z-10">
-                {relatedPosts.map((rp) => (
-                  <PostCard key={rp.id} post={rp as any} />
-                ))}
-              </div>
-            </section>
-          )}
-
           </div>
 
           {/* Sidebar (Right Column) */}
@@ -246,6 +231,54 @@ export default async function PostDetailPage({ params }: Args) {
           </aside>
 
         </div>
+
+        {/* Related Posts - Full Width (outside the 2-column layout) */}
+        {relatedPosts.length > 0 && (
+          <section className="mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-sgz-primary rounded-full"></span>
+                Bài viết liên quan
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {relatedPosts.map((rp) => {
+                const rpTags = rp.tags as PostTag[] | undefined
+                const rpCategory = rpTags && rpTags.length > 0 && typeof rpTags[0] === 'object' ? rpTags[0]?.title : null
+                return (
+                  <Link
+                    key={rp.id}
+                    href={rp.slug ? Routes.post(rp.slug) : '#'}
+                    className="group cursor-pointer flex flex-col h-full bg-card border border-border rounded-xl p-2 hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-secondary shrink-0">
+                      <Media
+                        resource={rp.image}
+                        className="w-full h-full"
+                        imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      {rpCategory && (
+                        <div className="absolute top-2 left-2 bg-sgz-primary/90 text-white font-bold px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">
+                          {rpCategory}
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-white text-sm line-clamp-2 hover:text-sgz-primary transition-colors mb-1">
+                      {rp.title}
+                    </h3>
+                    <div className="text-[10px] text-muted-foreground mt-auto pt-1 flex items-center gap-1.5 font-medium">
+                      <Clock className="w-3 h-3" />
+                      {rp.publishedAt
+                        ? format(new Date(rp.publishedAt), 'dd/MM/yyyy', { locale: vi })
+                        : 'Mới đây'}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
       </div>
     </div>
     </>
