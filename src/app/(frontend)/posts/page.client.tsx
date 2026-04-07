@@ -9,9 +9,10 @@ import { useHeaderTheme } from '@/providers/HeaderTheme'
 import { Routes } from '@/utilities/routes'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 const POSTS_PER_PAGE = 12
 
@@ -72,25 +73,28 @@ function Sidebar({
   appliedTags,
   toggleTag,
   clearFilter,
+  tagCounts,
 }: {
   tags: PostTag[]
   appliedTags: number[]
   toggleTag: (tagId: number) => void
   clearFilter: () => void
+  tagCounts: Record<number, number>
 }) {
   return (
     <div className="hidden lg:block w-64 shrink-0">
       <div className="sticky top-24 pt-2 space-y-6">
         <div className="space-y-4">
-          <div className="sticky top-24 rounded-2xl bg-[#16161e] border border-[#2b2b36] p-6 shadow-xl">
+          <div className="sticky top-24 rounded-[24px] bg-sgz-surface border border-sgz-border p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white">Chủ đề</h2>
               {appliedTags.length > 0 && (
                 <button
                   onClick={clearFilter}
-                  className="text-xs text-sgz-primary hover:underline font-bold"
+                  className="text-xs text-muted-foreground hover:text-sgz-primary flex items-center transition-colors"
                 >
-                  Xoá tất cả
+                  <X className="h-3 w-3 mr-1" />
+                  Xóa bộ lọc
                 </button>
               )}
             </div>
@@ -100,26 +104,44 @@ function Sidebar({
                 {tags.length === 0 ? (
                   <p className="text-sm text-[#acaab0] italic">Chưa có chủ đề nào.</p>
                 ) : (
-                  tags.map((tag) => {
-                    const isSelected = appliedTags.includes(tag.id)
-                    return (
-                      <FilterTooltip key={tag.id} label={tag.title}>
-                        {(textRef) => (
-                          <button
-                            onClick={() => toggleTag(tag.id)}
-                            className={cn(
-                              'max-w-full px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border flex items-center',
-                              isSelected
-                                ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
-                                : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {tags.map((tag) => {
+                      const isSelected = appliedTags.includes(tag.id)
+                      const count = tagCounts[tag.id] || 0
+                      return (
+                        <motion.div
+                          key={tag.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="max-w-full"
+                        >
+                          <FilterTooltip label={tag.title}>
+                            {(textRef) => (
+                              <button
+                                onClick={() => toggleTag(tag.id)}
+                                className={cn(
+                                  'max-w-full px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border flex items-center',
+                                  isSelected
+                                    ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
+                                    : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                                )}
+                              >
+                                <span ref={textRef} className="truncate block max-w-[150px]">{tag.title}</span>
+                                <span className={cn(
+                                  'text-xs ml-1.5 shrink-0',
+                                  isSelected ? 'opacity-60' : 'opacity-50'
+                                )}>
+                                  ({count})
+                                </span>
+                              </button>
                             )}
-                          >
-                            <span ref={textRef} className="truncate block max-w-[180px]">{tag.title}</span>
-                          </button>
-                        )}
-                      </FilterTooltip>
-                    )
-                  })
+                          </FilterTooltip>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
                 )}
               </div>
             </TooltipProvider>
@@ -140,6 +162,22 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
   useEffect(() => {
     setHeaderTheme('dark')
   }, [setHeaderTheme])
+
+  // Calculate counts for each tag
+  const tagCounts = useMemo(() => {
+    const counts: Record<number, number> = {}
+    posts.forEach((post) => {
+      const postTags = post.tags as PostTag[] | undefined
+      if (postTags) {
+        postTags.forEach((tag) => {
+          if (tag && typeof tag === 'object') {
+            counts[tag.id] = (counts[tag.id] || 0) + 1
+          }
+        })
+      }
+    })
+    return counts
+  }, [posts])
 
   // Filter and sort posts
   const filteredPosts = useMemo(() => {
@@ -254,6 +292,7 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
             appliedTags={appliedTags}
             toggleTag={toggleTag}
             clearFilter={clearFilter}
+            tagCounts={tagCounts}
           />
 
           <div className="flex-1 flex flex-col gap-2">
@@ -261,26 +300,43 @@ export default function PostsPageClient({ posts, tags }: PostsPageClientProps) {
             {tags.length > 0 && (
               <TooltipProvider delayDuration={300}>
                 <div className="lg:hidden mb-6 flex flex-wrap gap-2">
-                  {tags.map((tag) => {
-                    const isSelected = appliedTags.includes(tag.id)
-                    return (
-                      <FilterTooltip key={tag.id} label={tag.title}>
-                        {(textRef) => (
-                          <button
-                            onClick={() => toggleTag(tag.id)}
-                            className={cn(
-                              'max-w-full px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border flex items-center',
-                              isSelected
-                                ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
-                                : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {tags.map((tag) => {
+                      const isSelected = appliedTags.includes(tag.id)
+                      const count = tagCounts[tag.id] || 0
+                      return (
+                        <motion.div
+                          key={`mobile-${tag.id}`}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <FilterTooltip label={tag.title}>
+                            {(textRef) => (
+                              <button
+                                onClick={() => toggleTag(tag.id)}
+                                className={cn(
+                                  'max-w-full px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border flex items-center',
+                                  isSelected
+                                    ? 'bg-[#ba9eff] text-[#16161e] border-[#ba9eff]'
+                                    : 'bg-transparent text-[#acaab0] border-[#48474c] hover:border-[#ba9eff] hover:text-white',
+                                )}
+                              >
+                                <span ref={textRef} className="truncate block max-w-[150px]">{tag.title}</span>
+                                <span className={cn(
+                                  'text-xs ml-1.5 shrink-0',
+                                  isSelected ? 'opacity-60' : 'opacity-50'
+                                )}>
+                                  ({count})
+                                </span>
+                              </button>
                             )}
-                          >
-                            <span ref={textRef} className="truncate block max-w-[180px]">{tag.title}</span>
-                          </button>
-                        )}
-                      </FilterTooltip>
-                    )
-                  })}
+                          </FilterTooltip>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
                 </div>
               </TooltipProvider>
             )}
