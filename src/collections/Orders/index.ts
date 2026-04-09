@@ -26,9 +26,9 @@ import { after } from 'next/server'
 import { autoProcessOrderHook } from '@/services/orderProcessing'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
-const orderByOrAdmin: Access = ({ req }) => {
+const orderByOrAdmin: Access = async ({ req }) => {
   // allow read to admin and staff or orderedBy
-  if (hasRole(['admin', 'staff'])({ req })) return true
+  if (await hasRole(['admin', 'staff'])({ req })) return true
   return { orderedBy: { equals: req.user?.id } }
 }
 

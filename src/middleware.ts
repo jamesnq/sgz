@@ -1,24 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 /**
- * Intercepts requests to /admin when the user has a valid OAuth session
- * (__app-session-token) but no Payload admin token (payload-token).
- * Redirects to the session sync endpoint which issues a payload-token,
- * allowing Google-authenticated users to access /admin without a separate login.
+ * Middleware is intentionally a no-op pass-through.
+ * The adminAuthPlugin handles cookie setting (payload-token) natively via PayloadSession.
+ * No session sync middleware is needed.
  */
-export function middleware(request: NextRequest) {
-  const appSessionToken = request.cookies.get('__app-session-token')?.value
-  const payloadToken = request.cookies.get('payload-token')?.value
-
-  if (appSessionToken && !payloadToken) {
-    const syncUrl = new URL('/api/auth/sync-admin-session', request.url)
-    syncUrl.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(syncUrl)
-  }
-
+export function middleware(_request: NextRequest) {
   return NextResponse.next()
 }
 
+// Only match a path that will never exist to effectively disable middleware
 export const config = {
-  matcher: ['/admin', '/admin/(.*)'],
+  matcher: [],
 }

@@ -42,8 +42,8 @@ const revalidateDelete: CollectionBeforeDeleteHook = ({ req: { payload, context 
 export const Posts: CollectionConfig = {
   slug: 'posts',
   access: {
-    read: ({ req: { user } }) => {
-      if (hasRole(['admin'])({ req: { user } } as any)) return true
+    read: async ({ req: { user } }) => {
+      if (await hasRole(['admin'])({ req: { user } } as any)) return true
       return { _status: { equals: 'published' } }
     },
     update: hasRole(['admin']),

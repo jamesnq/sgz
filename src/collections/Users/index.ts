@@ -50,8 +50,8 @@ export const userRoles: User['roles'] = ['admin', 'staff', 'user'] as const
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: ({ req }) => {
-      if (hasRole(managerRoles)({ req })) return true
+    admin: async ({ req }) => {
+      if (await hasRole(managerRoles)({ req })) return true
       if (process.env.NODE_ENV === 'development') {
         return !!req.user?.id
       }
@@ -90,27 +90,38 @@ export const Users: CollectionConfig = {
     beforeRead: [
       async ({ req, doc }) => {
         if (!doc) return doc
-        const [novuResult, chatwootHash] = await Promise.all([
-          !doc.novuHash
-            ? createNovuSubscriberAndSendWelcome({
-                subscriberId: doc.id.toString(),
-                data: { email: doc.email },
-              })
-            : null,
-          !doc.chatwootHash ? createChatwootHash(doc.email) : null,
-        ])
 
         const userUpdate: Partial<User> = {}
-        if (novuResult) userUpdate.novuHash = createSubscriberHash(doc.id.toString())
-        if (chatwootHash) userUpdate.chatwootHash = chatwootHash
 
+        // Non-essential side effects — wrapped individually so failures don't break auth
+        try {
+          if (!doc.novuHash) {
+            const novuResult = await createNovuSubscriberAndSendWelcome({
+              subscriberId: doc.id.toString(),
+              data: { email: doc.email },
+            })
+            if (novuResult) userUpdate.novuHash = createSubscriberHash(doc.id.toString())
+          }
+        } catch { /* Novu failure should not block auth */ }
+
+        try {
+          if (!doc.chatwootHash) {
+            const chatwootHash = createChatwootHash(doc.email)
+            if (chatwootHash) userUpdate.chatwootHash = chatwootHash
+          }
+        } catch { /* Chatwoot failure should not block auth */ }
+
+        // Persist side-effect updates if any
         if (Object.keys(userUpdate).length > 0) {
-          const db = req.payload.db.drizzle
-          await db
-            .update(users)
-            .set({ ...userUpdate })
-            .where(eq(users.id, doc.id))
+          try {
+            const db = req.payload.db.drizzle
+            await db
+              .update(users)
+              .set({ ...userUpdate })
+              .where(eq(users.id, doc.id))
+          } catch { /* DB update failure should not block read */ }
         }
+
         return { ...doc, ...userUpdate }
       },
     ] as BeforeReadHook<User>[],
@@ -122,6 +133,10 @@ export const Users: CollectionConfig = {
     group: managerGroup,
   },
   auth: {
+    // IMPORTANT: payload-auth-plugin creates JWTs without `sid` field.
+    // Payload 3's JWT strategy requires `sid` when useSessions is true (default).
+    // This mismatch causes OAuth tokens to be rejected. Disable sessions to fix.
+    useSessions: false,
     tokenExpiration: 60 * 60 * 24 * 30,
     maxLoginAttempts: 5,
     lockTime: 5000,

@@ -2,9 +2,9 @@
 
 import { Button } from '@payloadcms/ui'
 import { useRouter } from 'next/navigation'
-import { appClient } from 'payload-auth-plugin/client'
+import { adminClient } from 'payload-auth-plugin/client'
 
-const { signin } = appClient({ name: 'app' })
+const { signin } = adminClient()
 
 export const AuthComponent = () => {
   const router = useRouter()
@@ -15,7 +15,10 @@ export const AuthComponent = () => {
       console.log(message)
     }
     if (isSuccess) {
-      router.push('/')
+      const searchParams = new URLSearchParams(window.location.search)
+      const defaultRedirect = window.location.pathname.startsWith('/admin') ? '/admin' : '/'
+      const redirectURL = searchParams.get('redirect') || defaultRedirect
+      router.push(redirectURL)
     }
   }
 
