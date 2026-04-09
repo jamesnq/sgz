@@ -2,9 +2,9 @@
 
 import { Button } from '@payloadcms/ui'
 import { useRouter } from 'next/navigation'
-import { adminClient } from 'payload-auth-plugin/client'
+import { appClient } from 'payload-auth-plugin/client'
 
-const { signin } = adminClient()
+const { signin } = appClient({ name: 'app' })
 
 export const AuthComponent = () => {
   const router = useRouter()
