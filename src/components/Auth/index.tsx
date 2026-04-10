@@ -15,7 +15,10 @@ export const AuthComponent = () => {
       console.log(message)
     }
     if (isSuccess) {
-      router.push('/')
+      const searchParams = new URLSearchParams(window.location.search)
+      const defaultRedirect = window.location.pathname.startsWith('/admin') ? '/admin' : '/'
+      const redirectURL = searchParams.get('redirect') || defaultRedirect
+      router.push(redirectURL)
     }
   }
 

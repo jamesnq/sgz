@@ -191,9 +191,9 @@ const getStats = unstable_cache(
   async () => {
     const payload = await getPayload({ config: configPromise })
     const [ordersCount, usersCount, productsCount] = await Promise.all([
-      payload.count({ collection: 'orders' }),
-      payload.count({ collection: 'users' }),
-      payload.count({ collection: 'products' }),
+      payload.count({ collection: 'orders', overrideAccess: true }),
+      payload.count({ collection: 'users', overrideAccess: true }),
+      payload.count({ collection: 'products', overrideAccess: true }),
     ])
     return {
       orders: ordersCount.totalDocs,

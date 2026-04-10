@@ -4,10 +4,29 @@ import { config } from '@/config'
 
 export const hasRole =
   (roles: User['roles']) =>
-  ({ req }: Pick<AccessArgs, 'req'>): boolean => {
+  async ({ req }: Pick<AccessArgs, 'req'>): Promise<boolean> => {
     if (!req.user) {
       return false
     }
+
+    if (typeof req.user === 'object' && !req.user.roles) {
+      try {
+        const fullUser = await req.payload.find({
+          collection: 'users',
+          overrideAccess: true,
+          where: { id: { equals: req.user.id } },
+          depth: 0,
+          limit: 1,
+          showHiddenFields: true
+        });
+        if (fullUser.docs.length > 0 && fullUser.docs[0]?.roles) {
+           req.user.roles = fullUser.docs[0]?.roles;
+        }
+      } catch (e) {
+        console.error('[hasRole] Failed to hydrate user roles:', e)
+      }
+    }
+
     if (typeof req.user === 'object') {
       return req.user.roles?.some((role) => roles.includes(role)) ?? false
     }

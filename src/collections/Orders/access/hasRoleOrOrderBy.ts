@@ -3,9 +3,8 @@ import { AccessArgs, PayloadRequest, User } from 'payload'
 
 const hasRoleOrOrderBy =
   (roles: User['roles']) =>
-  ({ req }: { req: PayloadRequest } | AccessArgs): boolean | Promise<boolean> => {
-    if (hasRole(roles)({ req })) return true
-    //@ts-expect-error ts missmatch
+  async ({ req }: { req: PayloadRequest } | AccessArgs): Promise<boolean | any> => {
+    if (await hasRole(roles)({ req })) return true
     return { orderedBy: { equals: req.user?.id } }
   }
 export default hasRoleOrOrderBy

@@ -107,7 +107,8 @@ export default buildConfig({
     Vouchers,
   ],
   serverURL: getServerSideURL(),
-  cors: [getServerSideURL()].filter(Boolean),
+  cors: [getServerSideURL(), 'https://dev.subgamezone.com', 'https://subgamezone.com', 'http://localhost:3000'].filter(Boolean),
+  csrf: [getServerSideURL(), 'https://dev.subgamezone.com', 'https://subgamezone.com', 'http://localhost:3000'].filter(Boolean),
   globals: [Header, Footer],
   plugins: [
     ...plugins,
