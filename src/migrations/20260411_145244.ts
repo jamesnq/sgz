@@ -1,18 +1,69 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+  // Create enum type if not exists
   await db.execute(sql`
-   CREATE TYPE "public"."enum_category_groups_sort_products" AS ENUM('-sold', '-createdAt', '-updatedAt');
-  ALTER TYPE "public"."enum_product_variants_auto_process" ADD VALUE 'direct';
-  ALTER TABLE "users_sessions" DISABLE ROW LEVEL SECURITY;
-  DROP TABLE "users_sessions" CASCADE;
-  ALTER TABLE "category_groups" ADD COLUMN "slug" varchar NOT NULL;
-  ALTER TABLE "category_groups" ADD COLUMN "show_on_homepage" boolean DEFAULT false;
-  ALTER TABLE "category_groups" ADD COLUMN "homepage_subtitle" varchar;
-  ALTER TABLE "category_groups" ADD COLUMN "sort_order" numeric DEFAULT 0;
-  ALTER TABLE "category_groups" ADD COLUMN "sort_products" "enum_category_groups_sort_products" DEFAULT '-sold';
-  ALTER TABLE "category_groups" ADD COLUMN "homepage_limit" numeric DEFAULT 12;
-  CREATE UNIQUE INDEX "category_groups_slug_idx" ON "category_groups" USING btree ("slug");`)
+    DO $$ BEGIN
+      CREATE TYPE "public"."enum_category_groups_sort_products" AS ENUM('-sold', '-createdAt', '-updatedAt');
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;
+  `)
+
+  // Add enum value if not exists
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TYPE "public"."enum_product_variants_auto_process" ADD VALUE IF NOT EXISTS 'direct';
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;
+  `)
+
+  // Drop users_sessions if exists
+  await db.execute(sql`
+    DROP TABLE IF EXISTS "users_sessions" CASCADE;
+  `)
+
+  // Add columns if not exists
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "category_groups" ADD COLUMN "slug" varchar NOT NULL DEFAULT '';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `)
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "category_groups" ADD COLUMN "show_on_homepage" boolean DEFAULT false;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `)
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "category_groups" ADD COLUMN "homepage_subtitle" varchar;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `)
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "category_groups" ADD COLUMN "sort_order" numeric DEFAULT 0;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `)
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "category_groups" ADD COLUMN "sort_products" "enum_category_groups_sort_products" DEFAULT '-sold';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `)
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "category_groups" ADD COLUMN "homepage_limit" numeric DEFAULT 12;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `)
+
+  // Create index if not exists
+  await db.execute(sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS "category_groups_slug_idx" ON "category_groups" USING btree ("slug");
+  `)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {

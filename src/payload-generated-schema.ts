@@ -185,7 +185,7 @@ export const category_groups_rels = pgTable(
     index('category_groups_rels_order_idx').on(columns.order),
     index('category_groups_rels_parent_idx').on(columns.parent),
     index('category_groups_rels_path_idx').on(columns.path),
-    uniqueIndex('category_groups_rels_categories_id_idx').on(columns.categoriesID, columns.path),
+    index('category_groups_rels_categories_id_idx').on(columns.categoriesID),
     foreignKey({
       columns: [columns['parent']],
       foreignColumns: [category_groups.id],

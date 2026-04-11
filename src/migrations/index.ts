@@ -18,6 +18,7 @@ import * as migration_20260213_125418_add_voucher_product_scope from './20260213
 import * as migration_20260405_082700_add_users_sessions from './20260405_082700_add_users_sessions';
 import * as migration_20260406_122212_add_featured_to_products from './20260406_122212_add_featured_to_products';
 import * as migration_20260411_145244 from './20260411_145244';
+import * as migration_20260411_175225 from './20260411_175225';
 
 export const migrations = [
   {
@@ -118,6 +119,11 @@ export const migrations = [
   {
     up: migration_20260411_145244.up,
     down: migration_20260411_145244.down,
-    name: '20260411_145244'
+    name: '20260411_145244',
+  },
+  {
+    up: migration_20260411_175225.up,
+    down: migration_20260411_175225.down,
+    name: '20260411_175225'
   },
 ];
