@@ -17,12 +17,17 @@ import {
   jsonb,
   timestamp,
   numeric,
-  integer,
   boolean,
+  integer,
   text,
   pgEnum,
 } from '@payloadcms/db-postgres/drizzle/pg-core'
 import { sql, relations } from '@payloadcms/db-postgres/drizzle'
+export const enum_category_groups_sort_products = pgEnum('enum_category_groups_sort_products', [
+  '-sold',
+  '-createdAt',
+  '-updatedAt',
+])
 export const enum_users_roles = pgEnum('enum_users_roles', ['admin', 'staff', 'user'])
 export const enum_products_status = pgEnum('enum_products_status', ['PRIVATE', 'PUBLIC', 'STOPPED'])
 export const enum_product_variants_status = pgEnum('enum_product_variants_status', [
@@ -33,6 +38,7 @@ export const enum_product_variants_status = pgEnum('enum_product_variants_status
 ])
 export const enum_product_variants_auto_process = pgEnum('enum_product_variants_auto_process', [
   'key',
+  'direct',
 ])
 export const enum_orders_status = pgEnum('enum_orders_status', [
   'IN_QUEUE',
@@ -145,7 +151,13 @@ export const category_groups = pgTable(
   {
     id: serial('id').primaryKey(),
     title: varchar('title').notNull(),
+    slug: varchar('slug').notNull(),
     icon: varchar('icon').notNull().default('box'),
+    showOnHomepage: boolean('show_on_homepage').default(false),
+    homepageSubtitle: varchar('homepage_subtitle'),
+    sortOrder: numeric('sort_order', { mode: 'number' }).default(0),
+    sortProducts: enum_category_groups_sort_products('sort_products').default('-sold'),
+    homepageLimit: numeric('homepage_limit', { mode: 'number' }).default(12),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -154,6 +166,7 @@ export const category_groups = pgTable(
       .notNull(),
   },
   (columns) => [
+    uniqueIndex('category_groups_slug_idx').on(columns.slug),
     index('category_groups_updated_at_idx').on(columns.updatedAt),
     index('category_groups_created_at_idx').on(columns.createdAt),
   ],
@@ -235,30 +248,6 @@ export const users_roles = pgTable(
       columns: [columns['parent']],
       foreignColumns: [users.id],
       name: 'users_roles_parent_fk',
-    }).onDelete('cascade'),
-  ],
-)
-
-export const users_sessions = pgTable(
-  'users_sessions',
-  {
-    _order: integer('_order').notNull(),
-    _parentID: integer('_parent_id').notNull(),
-    id: varchar('id').primaryKey(),
-    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
-    expiresAt: timestamp('expires_at', {
-      mode: 'string',
-      withTimezone: true,
-      precision: 3,
-    }).notNull(),
-  },
-  (columns) => [
-    index('users_sessions_order_idx').on(columns._order),
-    index('users_sessions_parent_id_idx').on(columns._parentID),
-    foreignKey({
-      columns: [columns['_parentID']],
-      foreignColumns: [users.id],
-      name: 'users_sessions_parent_id_fk',
     }).onDelete('cascade'),
   ],
 )
@@ -1490,19 +1479,9 @@ export const relations_users_roles = relations(users_roles, ({ one }) => ({
     relationName: 'roles',
   }),
 }))
-export const relations_users_sessions = relations(users_sessions, ({ one }) => ({
-  _parentID: one(users, {
-    fields: [users_sessions._parentID],
-    references: [users.id],
-    relationName: 'sessions',
-  }),
-}))
 export const relations_users = relations(users, ({ many }) => ({
   roles: many(users_roles, {
     relationName: 'roles',
-  }),
-  sessions: many(users_sessions, {
-    relationName: 'sessions',
   }),
 }))
 export const relations_stocks = relations(stocks, ({ one }) => ({
@@ -1964,6 +1943,7 @@ export const relations_header = relations(header, () => ({}))
 export const relations_footer = relations(footer, () => ({}))
 
 type DatabaseSchema = {
+  enum_category_groups_sort_products: typeof enum_category_groups_sort_products
   enum_users_roles: typeof enum_users_roles
   enum_products_status: typeof enum_products_status
   enum_product_variants_status: typeof enum_product_variants_status
@@ -1985,7 +1965,6 @@ type DatabaseSchema = {
   category_groups_rels: typeof category_groups_rels
   accounts: typeof accounts
   users_roles: typeof users_roles
-  users_sessions: typeof users_sessions
   users: typeof users
   stocks: typeof stocks
   transactions: typeof transactions
@@ -2030,7 +2009,6 @@ type DatabaseSchema = {
   relations_category_groups: typeof relations_category_groups
   relations_accounts: typeof relations_accounts
   relations_users_roles: typeof relations_users_roles
-  relations_users_sessions: typeof relations_users_sessions
   relations_users: typeof relations_users
   relations_stocks: typeof relations_stocks
   relations_transactions: typeof relations_transactions

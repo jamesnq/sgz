@@ -42,10 +42,10 @@ export const checkoutAction = authActionClient
           defaultSupplier: true,
         },
       })
-      if (!pv) {
+      if (!pv || pv.status === 'PRIVATE') {
         throw new ServerNotification('Không tìm thấy sản phẩm')
       }
-      if (pv.status == 'STOPPED') {
+      if (pv.status === 'STOPPED') {
         throw new ServerNotification('Sản phẩm đã ngừng bán')
       }
       if (pv.min && quantity < pv.min) {

@@ -11,19 +11,24 @@ import type { Product } from '../../../payload-types'
 import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
 
 export const revalidateProductsPage = () => {
-  revalidatePath(Routes.PRODUCTS)
+  try {
+    revalidatePath(Routes.PRODUCTS)
+  } catch (e) {
+    console.error(`Failed to revalidate products page:`, e)
+  }
 }
 
 export const updateProductPriceRange = async (
   payload: Payload,
   productId: number,
   variants: { price: number; originalPrice: number; status: string }[],
+  req?: any,
 ) => {
-  if (!productId || !variants || !variants.length) return
+  if (!productId || !variants) return
 
   const prices = variants.map((v) => v.price)
-  const minPrice = Math.min(...prices)
-  const maxPrice = Math.max(...prices)
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
 
   const discounts = variants
     .filter((v) => v.status !== 'STOPPED')
@@ -31,18 +36,16 @@ export const updateProductPriceRange = async (
 
   const maxDiscount = discounts.length > 0 ? Math.max(...discounts) : 0
 
-  if (prices.length > 0) {
-    // use drizzle to avoid update loop
-    const db = payload.db.drizzle
-    await db
-      .update(products)
-      .set({
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-        maxDiscount: maxDiscount,
-      })
-      .where(eq(products.id, productId))
-  }
+  // use drizzle directly to avoid update loop, but bind to the active payload transaction!
+  const db = req?.transaction || payload.db.drizzle
+  await db
+    .update(products)
+    .set({
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      maxDiscount: maxDiscount,
+    })
+    .where(eq(products.id, productId))
 }
 
 export const revalidateProductPath = async (payload: Payload, productId: number) => {
@@ -58,12 +61,28 @@ export const revalidateProductPath = async (payload: Payload, productId: number)
     return
   }
 
-  await updateSearchProducts([product])
+  try {
+    await updateSearchProducts([product])
+  } catch (e) {
+    payload.logger.error({ err: e, message: `Failed to update search products for id: ${productId}` })
+  }
+
   const path = Routes.product(product.slug)
   payload.logger.info(`Revalidating product at path: ${path}`)
-  revalidatePath(path)
+  try {
+    revalidatePath(path)
+  } catch (e) {
+    payload.logger.error({ err: e, message: `Failed to revalidate product path: ${path}` })
+  }
+  
   revalidateProductsPage()
-  revalidatePath('/')
+  try {
+    revalidatePath('/')
+    revalidateTag('products-list', 'default')
+    revalidateTag('homepage-sections', 'default')
+  } catch (e) {
+    payload.logger.error({ err: e, message: `Failed to revalidate /` })
+  }
 }
 
 export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
@@ -71,23 +90,33 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
   previousDoc,
   req: { payload },
 }) => {
-  await updateSearchProducts([doc])
+  try {
+    await updateSearchProducts([doc])
+  } catch (e) {
+    payload.logger.error({ err: e, message: `Failed to update search products for id: ${doc.id}` })
+  }
   
-  if (previousDoc && previousDoc.slug && previousDoc.slug !== doc.slug) {
-    const oldPath = Routes.product(previousDoc.slug)
-    payload.logger.info(`Revalidating old product at path: ${oldPath}`)
-    revalidatePath(oldPath)
-  }
+  try {
+    if (previousDoc && previousDoc.slug && previousDoc.slug !== doc.slug) {
+      const oldPath = Routes.product(previousDoc.slug)
+      payload.logger.info(`Revalidating old product at path: ${oldPath}`)
+      revalidatePath(oldPath)
+    }
 
-  if (doc && doc.slug) {
-    const newPath = Routes.product(doc.slug)
-    payload.logger.info(`Revalidating product at path: ${newPath}`)
-    revalidatePath(newPath)
-  }
+    if (doc && doc.slug) {
+      const newPath = Routes.product(doc.slug)
+      payload.logger.info(`Revalidating product at path: ${newPath}`)
+      revalidatePath(newPath)
+    }
 
-  revalidateProductsPage()
-  revalidatePath('/')
-  revalidateTag('products-sitemap', 'default')
+    revalidateProductsPage()
+    revalidatePath('/')
+    revalidateTag('products-list', 'default')
+    revalidateTag('homepage-sections', 'default')
+    revalidateTag('products-sitemap', 'default')
+  } catch (e) {
+    payload.logger.error({ err: e, message: `Failed to revalidate paths for product: ${doc.id}` })
+  }
 
   return doc
 }
@@ -109,6 +138,8 @@ export const revalidateDelete: CollectionBeforeDeleteHook = async ({
 
     revalidatePath(path)
     revalidateProductsPage()
+    revalidateTag('products-list', 'default')
+    revalidateTag('homepage-sections', 'default')
     revalidateTag('products-sitemap', 'default')
   }
   return doc

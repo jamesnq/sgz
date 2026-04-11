@@ -48,7 +48,7 @@ async function OrdersPage({ searchParams }: { searchParams: Promise<any> }) {
   if (!user) {
     return null
   }
-  const queryWhere: any = { orderedBy: { equals: Number(user.id) } }
+  const queryWhere: any = { orderedBy: { equals: user.id } }
   if (query || status) {
     queryWhere.and = []
     if (query) {

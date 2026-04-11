@@ -15,8 +15,7 @@ import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
 
-// export const revalidate = 3600
-export const dynamic = 'force-dynamic'
+// Product detail uses ISR via unstable_cache with revalidate: 3600
 
 export async function generateStaticParams() {
   try {
@@ -74,7 +73,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       />
       <Suspense
         fallback={
-          <div className="flex items-center justify-center mt-16 mb-mt-16">
+          <div className="flex items-center justify-center mt-16 mb-16">
             <Spinner className="text-highlight" size={100} variant="ring" />
           </div>
         }

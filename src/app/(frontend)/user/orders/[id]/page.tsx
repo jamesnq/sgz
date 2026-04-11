@@ -19,6 +19,7 @@ export default async function Page({ params: paramsPromise }: Args) {
   }
   const payload = await getInstancePayload()
   const { user } = await getServerSession()
+  if (!user) return notFound()
 
   // TODO optimize using drizzle
   const { docs } = await payload.find({
@@ -32,7 +33,7 @@ export default async function Page({ params: paramsPromise }: Args) {
         equals: idNum,
       },
       orderedBy: {
-        equals: Number(user?.id),
+        equals: user.id,
       },
     },
     select: {
@@ -54,7 +55,7 @@ export default async function Page({ params: paramsPromise }: Args) {
     },
   })
 
-  if (!docs.length || !user || !docs[0]) notFound()
+  if (!docs.length || !docs[0]) notFound()
   const order = docs[0]
   // Filter fields
   let product = (order.productVariant as ProductVariant).product as Product

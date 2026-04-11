@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Clock } from 'lucide-react'
+import { ChevronRight, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Media } from '@/components/Media'
@@ -59,7 +59,7 @@ export const PostsSection = ({ posts }: { posts: Post[] }) => {
       className="mb-16"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, margin: '-100px' }}
+      viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
     >
       <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
@@ -86,7 +86,3 @@ export const PostsSection = ({ posts }: { posts: Post[] }) => {
     </motion.section>
   )
 }
-
-// ChevronRight is used but not imported in the original clip I saw, 
-// let me check its imports in home-page.client.tsx
-import { ChevronRight } from 'lucide-react'

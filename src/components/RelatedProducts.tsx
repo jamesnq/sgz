@@ -80,7 +80,6 @@ const RelatedProducts = ({
                       <div className="truncate h-auto overflow-hidden text-[14px] font-normal leading-[17px]">
                         {product.name}
                       </div>
-                      ks
                       {product.description?.root?.direction && (
                         <RichText
                           className="text-[12px] text-muted-foreground mt-2 line-clamp-2 overflow-hidden"

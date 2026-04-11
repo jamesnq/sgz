@@ -8,6 +8,7 @@ import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
 import { checkoutAction } from '@/app/_actions/checkoutAction'
+import { getAvailableVouchersAction, type AvailableVoucher } from '@/app/_actions/getAvailableVouchersAction'
 import { validateVoucherAction } from '@/app/_actions/validateVoucherAction'
 import { fields } from '@/blocks/Form/fields'
 import AuthDialog from '@/collections/Globals/Header/AuthDialog'
@@ -64,6 +65,8 @@ import {
   ShoppingCart,
   ChevronLeft,
   ChevronRight,
+  Tag,
+  Clock,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -724,12 +727,14 @@ function VoucherInput() {
   const { executeAsync, isExecuting } = useActionWarper(validateVoucherAction)
   const [_error, setError] = React.useState<string | null>(null)
   const [applied, setApplied] = React.useState(false)
+  const pendingAutoApplyRef = React.useRef(false)
 
-  const handleApply = React.useCallback(async () => {
-    if (!voucherCode.trim()) return
+  const handleApply = React.useCallback(async (codeOverride?: string) => {
+    const code = codeOverride || voucherCode
+    if (!code.trim()) return
     setError(null)
     const result = await executeAsync({
-      voucherCode: voucherCode.trim(),
+      voucherCode: code.trim(),
       totalPrice: calc.totalPrice,
       productVariantId: currentVariant.id,
     })
@@ -739,12 +744,32 @@ function VoucherInput() {
     }
   }, [voucherCode, calc.totalPrice, currentVariant.id, executeAsync, setAppliedVoucherDiscount])
 
+  // Auto-apply when voucher code is set from slideshow
+  React.useEffect(() => {
+    if (pendingAutoApplyRef.current && voucherCode.trim()) {
+      pendingAutoApplyRef.current = false
+      handleApply(voucherCode)
+    }
+  }, [voucherCode, handleApply])
+
   const handleClear = React.useCallback(() => {
     setVoucherCode('')
     setAppliedVoucherDiscount(0)
     setApplied(false)
     setError(null)
   }, [setVoucherCode, setAppliedVoucherDiscount])
+
+  // Expose auto-apply trigger via a callback that slideshow can use
+  const handleAutoApply = React.useCallback((code: string) => {
+    if (applied) {
+      // Clear current voucher first
+      setAppliedVoucherDiscount(0)
+      setApplied(false)
+      setError(null)
+    }
+    setVoucherCode(code)
+    pendingAutoApplyRef.current = true
+  }, [applied, setVoucherCode, setAppliedVoucherDiscount])
 
   return (
     <div className="space-y-1.5 w-full">
@@ -773,7 +798,7 @@ function VoucherInput() {
         ) : (
           <button
             className="px-4 py-2 bg-[#2d2d39] hover:bg-[#3d3d4d] text-white rounded-lg text-xs font-bold transition-colors h-[42px] disabled:opacity-50 flex items-center justify-center"
-            onClick={handleApply}
+            onClick={() => handleApply()}
             disabled={isExecuting || !voucherCode.trim()}
           >
             {isExecuting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Áp dụng'}
@@ -781,6 +806,136 @@ function VoucherInput() {
         )}
       </div>
       {_error && <p className="text-xs text-red-500 mt-1">{_error}</p>}
+      <VoucherSlideshow onApply={handleAutoApply} />
+    </div>
+  )
+}
+
+// Scarcity text helper for voucher expiration
+function getExpirationDisplay(expirationDate: string): { text: string; className: string } {
+  const now = new Date()
+  const expiry = new Date(expirationDate)
+  const diffMs = expiry.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays <= 0) {
+    return { text: '⏰ Hết hạn hôm nay!', className: 'text-red-400 font-semibold' }
+  }
+  if (diffDays === 1) {
+    return { text: '⏰ Còn vài giờ!', className: 'text-red-400 font-semibold' }
+  }
+  if (diffDays <= 3) {
+    return { text: `Còn ${diffDays} ngày`, className: 'text-orange-400 font-medium' }
+  }
+  if (diffDays <= 7) {
+    return { text: `Còn ${diffDays} ngày`, className: 'text-yellow-400' }
+  }
+  const d = expiry.getDate().toString().padStart(2, '0')
+  const m = (expiry.getMonth() + 1).toString().padStart(2, '0')
+  return { text: `HSD: ${d}/${m}`, className: 'text-gray-400' }
+}
+
+// Format voucher discount value for display
+function formatVoucherDiscount(voucher: AvailableVoucher): string {
+  if (voucher.discountType === 'percentage') {
+    return `-${voucher.discountValue}%`
+  }
+  return `-${formatPrice(voucher.discountValue)}`
+}
+
+// Voucher slideshow component
+function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
+  const product = useProductPageContext((state) => state.product)
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
+  const [vouchers, setVouchers] = React.useState<AvailableVoucher[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const { executeAsync } = useActionWarper(getAvailableVouchersAction)
+
+  React.useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    executeAsync({
+      productId: product.id,
+      productVariantId: currentVariant?.id,
+    }).then((result: any) => {
+      if (!cancelled && result?.data) {
+        setVouchers(result.data)
+      }
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id, currentVariant?.id])
+
+  if (loading || vouchers.length === 0) return null
+
+  return (
+    <div className="mt-2">
+      <div
+        ref={scrollRef}
+        className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1"
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {vouchers.map((voucher) => (
+          <div
+            key={voucher.code}
+            className="snap-start shrink-0 w-[200px] bg-[#0f0f13] border border-white/10 rounded-xl p-3 flex flex-col justify-between gap-2 hover:border-[#8b5cf6]/40 transition-colors"
+          >
+            <div className="flex flex-col gap-1.5">
+              {/* Voucher code */}
+              <div className="flex items-center gap-1.5">
+                <Tag className="w-3 h-3 text-[#8b5cf6] shrink-0" />
+                <span className="text-xs font-bold text-white tracking-wide truncate">
+                  {voucher.code}
+                </span>
+              </div>
+
+              {/* Discount value - always shown */}
+              <span className="text-sm font-bold text-[#8b5cf6]">
+                {formatVoucherDiscount(voucher)}
+              </span>
+
+              {/* Optional info - only render if data exists */}
+              {(voucher.remainingUses !== null || voucher.expirationDate) && (
+                <div className="flex flex-col gap-0.5">
+                  {voucher.remainingUses !== null && (
+                    <span className="text-[10px] text-gray-400">
+                      Còn {voucher.remainingUses} lượt
+                    </span>
+                  )}
+                  {voucher.expirationDate && (
+                    <span className={cn('text-[10px] flex items-center gap-1', getExpirationDisplay(voucher.expirationDate).className)}>
+                      <Clock className="w-2.5 h-2.5" />
+                      {getExpirationDisplay(voucher.expirationDate).text}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Apply button */}
+            <button
+              onClick={() => onApply(voucher.code)}
+              className="w-full text-[10px] font-bold py-1.5 rounded-lg bg-[#8b5cf6]/15 text-[#8b5cf6] hover:bg-[#8b5cf6]/25 transition-colors border border-[#8b5cf6]/20"
+            >
+              Áp dụng
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Scroll hint dots */}
+      {vouchers.length > 1 && (
+        <div className="flex justify-center mt-1.5 gap-1">
+          {vouchers.map((v, i) => (
+            <div
+              key={v.code}
+              className="h-1 w-1 rounded-full bg-gray-600"
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -925,23 +1080,50 @@ const MemoizedCheckout = React.memo(
 
           <ImportantNotice />
 
-          <VoucherInput />
+          {currentVariant.status !== 'STOPPED' && <VoucherInput />}
 
           <div className="pt-6 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm font-medium text-gray-400">Tổng thanh toán:</span>
             <div className="flex flex-col items-end gap-1 text-right">
-              {appliedVoucherDiscount > 0 && (
+              {appliedVoucherDiscount > 0 && currentVariant.status !== 'STOPPED' && (
                 <span className="text-sm text-green-500">
                   Khuyến mãi: -{formatPrice(appliedVoucherDiscount, 'VND')}
                 </span>
               )}
-              <span className="text-xl font-bold text-white">{formatPrice(finalPrice, 'VND')}</span>
+              <span className="text-xl font-bold text-white">{formatPrice(currentVariant.status === 'STOPPED' ? calc.totalPrice : finalPrice, 'VND')}</span>
             </div>
           </div>
 
+          {currentVariant.status === 'STOPPED' && (
+            <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex flex-col gap-3 mt-4">
+              <div className="flex items-center gap-2 text-orange-400">
+                <TriangleAlert className="h-5 w-5 shrink-0" />
+                <span className="font-bold text-sm">Sản phẩm hiện đang hết hàng!</span>
+              </div>
+              <p className="text-orange-200/90 text-xs leading-relaxed">
+                Mọi thông tin chi tiết vui lòng liên hệ qua Fanpage để kiểm tra giá và biết tình trạng hiện tại của sản phẩm.
+              </p>
+              <a
+                href="https://www.facebook.com/subgamezoneoffical"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166FE5] text-white py-2.5 px-4 rounded-lg font-semibold transition-colors w-full text-sm"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+                Liên hệ Fanpage
+              </a>
+            </div>
+          )}
+
           {currentVariant.status === 'ORDER' && workingTime}
           {currentVariant.status === 'AVAILABLE' && instantDelivery}
-          {user ? (
+          {currentVariant.status === 'STOPPED' ? (
+            <button disabled className="w-full bg-gray-600/50 text-gray-400 py-4 flex justify-center items-center rounded-xl font-bold cursor-not-allowed mt-2">
+              Hết hàng
+            </button>
+          ) : user ? (
             <CheckoutButton />
           ) : (
             <AuthDialog>
@@ -953,12 +1135,6 @@ const MemoizedCheckout = React.memo(
         </div>
       </div>
     )
-  },
-  // Custom comparison function to prevent re-renders when form ID is the same
-  (_prevProps, _nextProps) => {
-    // We don't actually use props here since we're getting data from context
-    // But we can still prevent unnecessary re-renders
-    return true
   },
 )
 
@@ -1238,53 +1414,9 @@ const ProductForm = React.memo(
 
     return <ShippingForm form={form} />
   },
-  // Custom comparison function to prevent re-renders when form ID is the same
-  (_prevProps, _nextProps) => {
-    // We don't actually use props here since we're getting data from context
-    // But we can still prevent unnecessary re-renders
-    return true
-  },
 )
 
-// Out of Stock Component
-const OutOfStockNotice = React.memo(function OutOfStockNotice() {
-  const status = useProductPageContext((state) => state.currentVariant.status)
 
-  if (status !== 'STOPPED') return null
-
-  return (
-    <Card className="p-4">
-      <CardHeader className="font-bold pb-2">
-        <div className="flex items-center gap-2">
-          <span>Sản phẩm hết hàng</span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Thông báo sản phẩm hiện đã hết hàng, mọi thông tin chi tiết vui lòng liên hệ qua chat hỗ
-          trợ hoặc các kênh cộng đồng của chúng tôi để kiểm tra giá và biết tình trạng hiện tại của
-          sản phẩm.
-        </p>
-        <p className="mt-2 text-sm font-semibold">
-          Email :{' '}
-          <a
-            href={`mailto:${config.NEXT_PUBLIC_EMAIL_CONTACT}`}
-            className="text-primary hover:underline"
-          >
-            {config.NEXT_PUBLIC_EMAIL_CONTACT}
-          </a>
-        </p>
-      </CardContent>
-    </Card>
-  )
-})
-
-// Checkout or Out of Stock Component
-const CheckoutOrOutOfStock = React.memo(function CheckoutOrOutOfStock() {
-  const status = useProductPageContext((state) => state.currentVariant.status)
-
-  return status === 'STOPPED' ? <OutOfStockNotice /> : <Checkout />
-})
 
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
@@ -1301,7 +1433,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
         >
           <div className="space-y-6 lg:sticky lg:top-24">
             <ProductForm />
-            <CheckoutOrOutOfStock />
+            <Checkout />
           </div>
         </aside>
 

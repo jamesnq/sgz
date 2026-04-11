@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import { Product } from '@/payload-types'
@@ -10,9 +10,8 @@ export const FeaturedSection = ({ products }: { products: Product[] }) => {
   const [currentPage, setCurrentPage] = useState(0)
   const [itemsPerPage, setItemsPerPage] = useState(3)
 
-  if (!products || products.length === 0) return null
-
-  const maxProducts = products.slice(0, 15)
+  const maxProducts = useMemo(() => (products || []).slice(0, 15), [products])
+  const numPages = Math.ceil(maxProducts.length / itemsPerPage)
 
   useEffect(() => {
     const updateItems = () => {
@@ -25,8 +24,6 @@ export const FeaturedSection = ({ products }: { products: Product[] }) => {
     return () => window.removeEventListener('resize', updateItems)
   }, [])
 
-  const numPages = Math.ceil(maxProducts.length / itemsPerPage)
-
   useEffect(() => {
     if (numPages <= 1) return
     const timer = setInterval(() => {
@@ -35,14 +32,12 @@ export const FeaturedSection = ({ products }: { products: Product[] }) => {
     return () => clearInterval(timer)
   }, [numPages])
 
-  // Ensure currentPage is within bounds if itemsPerPage changes
   useEffect(() => {
-    if (currentPage >= numPages) {
-      setCurrentPage(0)
-    }
+    if (currentPage >= numPages) setCurrentPage(0)
   }, [itemsPerPage, numPages, currentPage])
 
-  if (numPages === 0) return null
+  // Early return AFTER all hooks — React Rules of Hooks compliance
+  if (!products || products.length === 0 || numPages === 0) return null
 
   const currentProducts = maxProducts.slice(
     currentPage * itemsPerPage,
@@ -53,7 +48,7 @@ export const FeaturedSection = ({ products }: { products: Product[] }) => {
     <motion.section
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, margin: '-100px' }}
+      viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
       className="mb-16"
     >

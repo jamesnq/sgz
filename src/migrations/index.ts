@@ -17,6 +17,7 @@ import * as migration_20260213_103900_fix_voucher_columns from './20260213_10390
 import * as migration_20260213_125418_add_voucher_product_scope from './20260213_125418_add_voucher_product_scope';
 import * as migration_20260405_082700_add_users_sessions from './20260405_082700_add_users_sessions';
 import * as migration_20260406_122212_add_featured_to_products from './20260406_122212_add_featured_to_products';
+import * as migration_20260411_145244 from './20260411_145244';
 
 export const migrations = [
   {
@@ -112,6 +113,11 @@ export const migrations = [
   {
     up: migration_20260406_122212_add_featured_to_products.up,
     down: migration_20260406_122212_add_featured_to_products.down,
-    name: '20260406_122212_add_featured_to_products'
+    name: '20260406_122212_add_featured_to_products',
+  },
+  {
+    up: migration_20260411_145244.up,
+    down: migration_20260411_145244.down,
+    name: '20260411_145244'
   },
 ];
