@@ -36,10 +36,13 @@ export const Products: CollectionConfig = {
     beforeChange: [
       async ({ data, req: { payload } }) => {
         // update product price range
-        if (typeof data === 'number' || !data.variants || !data.variants.length) return
+        if (typeof data === 'number' || !data.variants) return
         let prices: number[] = []
         let discounts: number[] = []
-        if (typeof data.variants[0] === 'number') {
+        if (data.variants.length === 0) {
+          prices = []
+          discounts = []
+        } else if (typeof data.variants[0] !== 'object') {
           const { docs: variants } = await payload.find({
             collection: 'product-variants',
             where: { id: { in: data.variants }, status: { not_equals: 'PRIVATE' } },
@@ -53,14 +56,15 @@ export const Products: CollectionConfig = {
             .filter((v) => v.status !== 'STOPPED')
             .map((v) => calculateDiscountPercentage(v.originalPrice, v.price))
         } else {
-          prices = data.variants.map((v: any) => v.price)
-          discounts = data.variants
+          const activeVariants = data.variants.filter((v: any) => v.status !== 'PRIVATE')
+          prices = activeVariants.map((v: any) => v.price)
+          discounts = activeVariants
             .filter((v: any) => v.status !== 'STOPPED')
             .map((v: any) => calculateDiscountPercentage(v.originalPrice, v.price))
         }
-        const minPrice = Math.min(...prices)
-        const maxPrice = Math.max(...prices)
-        const maxDiscount = Math.max(...discounts)
+        const minPrice = prices.length ? Math.min(...prices) : 0
+        const maxPrice = prices.length ? Math.max(...prices) : 0
+        const maxDiscount = discounts.length ? Math.max(...discounts) : 0
         data.minPrice = minPrice
         data.maxPrice = maxPrice
         data.maxDiscount = maxDiscount

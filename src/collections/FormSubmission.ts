@@ -12,7 +12,8 @@ export const FormSubmissions: CollectionConfig = {
     read: ({ req: { user } }) => {
       const test = userHasRole(user, ['admin', 'staff'])
       if (test) return true
-      return { user: { equals: user?.id } }
+      if (!user?.id) return false
+      return { user: { equals: user.id } }
     },
     update: hasRole(['admin', 'staff']),
   },

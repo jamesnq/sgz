@@ -256,6 +256,10 @@ export interface CategoryGroup {
    */
   title: string;
   /**
+   * URL-safe identifier (vd: game, topup, service). KHÔNG đổi sau khi tạo.
+   */
+  slug: string;
+  /**
    * Icon identifier from https://lucide.dev/icons/
    */
   icon: string;
@@ -263,6 +267,26 @@ export interface CategoryGroup {
    * Categories in this group
    */
   categories?: (number | Category)[] | null;
+  /**
+   * Hiển thị section này trên trang chủ
+   */
+  showOnHomepage?: boolean | null;
+  /**
+   * Mô tả ngắn dưới tiêu đề section
+   */
+  homepageSubtitle?: string | null;
+  /**
+   * Thứ tự hiển thị (số nhỏ = trước)
+   */
+  sortOrder?: number | null;
+  /**
+   * Cách sắp xếp sản phẩm trong section
+   */
+  sortProducts?: ('-sold' | '-createdAt' | '-updatedAt') | null;
+  /**
+   * Số sản phẩm tối đa trên homepage
+   */
+  homepageLimit?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -328,13 +352,6 @@ export interface User {
   hash?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
   password?: string | null;
   collection: 'users';
 }
@@ -1264,8 +1281,14 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface CategoryGroupsSelect<T extends boolean = true> {
   title?: T;
+  slug?: T;
   icon?: T;
   categories?: T;
+  showOnHomepage?: T;
+  homepageSubtitle?: T;
+  sortOrder?: T;
+  sortProducts?: T;
+  homepageLimit?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1313,13 +1336,6 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

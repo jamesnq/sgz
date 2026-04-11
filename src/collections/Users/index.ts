@@ -258,8 +258,8 @@ export const Users: CollectionConfig = {
       },
       hooks: {
         beforeChange: [
-          ({ req, value, operation }) => {
-            if (operation === 'create' && !hasRole(['admin'])({ req })) {
+          async ({ req, value, operation }) => {
+            if (operation === 'create' && !(await hasRole(['admin'])({ req }))) {
               return ['user']
             }
             return value

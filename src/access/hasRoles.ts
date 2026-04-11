@@ -9,7 +9,7 @@ export const hasRole =
       return false
     }
 
-    if (typeof req.user === 'object' && !req.user.roles) {
+    if (typeof req.user === 'object' && (!req.user.roles || req.user.roles.length === 0)) {
       try {
         const fullUser = await req.payload.find({
           collection: 'users',
@@ -19,8 +19,8 @@ export const hasRole =
           limit: 1,
           showHiddenFields: true
         });
-        if (fullUser.docs.length > 0 && fullUser.docs[0]?.roles) {
-           req.user.roles = fullUser.docs[0]?.roles;
+        if (fullUser.docs.length > 0 && fullUser.docs[0]?.roles && fullUser.docs[0].roles.length > 0) {
+           req.user.roles = fullUser.docs[0].roles;
         }
       } catch (e) {
         console.error('[hasRole] Failed to hydrate user roles:', e)

@@ -27,9 +27,9 @@ import { autoProcessOrderHook } from '@/services/orderProcessing'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 const orderByOrAdmin: Access = async ({ req }) => {
-  // allow read to admin and staff or orderedBy
   if (await hasRole(['admin', 'staff'])({ req })) return true
-  return { orderedBy: { equals: req.user?.id } }
+  if (!req.user?.id) return false
+  return { orderedBy: { equals: req.user.id } }
 }
 
 // hooks
