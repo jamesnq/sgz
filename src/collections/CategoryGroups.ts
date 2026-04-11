@@ -55,7 +55,6 @@ export const CategoryGroups: CollectionConfig = {
       type: 'relationship',
       relationTo: 'categories',
       hasMany: true,
-      unique: true,
       admin: { description: 'Categories in this group' },
     },
     {
