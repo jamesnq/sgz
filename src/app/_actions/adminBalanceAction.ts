@@ -2,7 +2,8 @@
 import { userHasRole } from '@/access/hasRoles'
 import { config } from '@/config'
 import { transactions, users } from '@/payload-generated-schema'
-import { authActionClient } from '@/utilities/safe-action'
+import { checkRateLimit, RATE_LIMITS } from '@/utilities/rateLimit'
+import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
 import { getPayload } from 'payload'
@@ -18,6 +19,11 @@ export const adminBalanceAction = authActionClient
 
     if (!userHasRole(user, ['admin'])) {
       return
+    }
+
+    const rl = checkRateLimit(user.id, RATE_LIMITS.adminBalance)
+    if (!rl.allowed) {
+      throw new ServerNotification(`Bạn thao tác quá nhanh, vui lòng thử lại sau ${Math.ceil(rl.retryAfterMs / 1000)}s`)
     }
     const payload = await getPayload({ config: payloadConfig })
     const db = payload.db.drizzle
@@ -37,11 +43,15 @@ export const adminBalanceAction = authActionClient
       return { newUser }
     })
     after(async () => {
-      await discordWebhook({
-        subject: `Admin ${amount > 0 ? 'Nạp' : 'Trừ'} tiền`,
-        message: `${newUser.email} \nSố tiền: **${formatPrice(amount)}** ${note ? `\nLý do: **${note}**` : ''}`,
-        color: amount > 0 ? '#00FF00' : '#FF0000',
-        channel: 'activities',
-      })
+      try {
+        await discordWebhook({
+          subject: `Admin ${amount > 0 ? 'Nạp' : 'Trừ'} tiền`,
+          message: `${newUser.email} \nSố tiền: **${formatPrice(amount)}** ${note ? `\nLý do: **${note}**` : ''}`,
+          color: amount > 0 ? '#00FF00' : '#FF0000',
+          channel: 'activities',
+        })
+      } catch (e) {
+        console.error('[adminBalanceAction] Discord webhook failed:', e)
+      }
     })
   })

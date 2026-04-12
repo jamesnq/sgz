@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
     .where(and(...conditions))
 
   // Get order list with pagination
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '20')
+  const page = Math.max(parseInt(searchParams.get('page') || '1'), 1)
+  const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '20'), 1), 100)
   const offset = (page - 1) * limit
 
   const orderList = await db

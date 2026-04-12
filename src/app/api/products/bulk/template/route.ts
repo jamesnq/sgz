@@ -1,8 +1,20 @@
+import { userHasRole } from '@/access/hasRoles'
 import ExcelJS from 'exceljs'
+import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
 
 export async function GET() {
   try {
+    const payload = await getPayload({ config: configPromise })
+    const reqHeaders = await headers()
+    const { user } = await payload.auth({ headers: reqHeaders })
+
+    if (!user || !userHasRole(user, ['admin'])) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
     const workbook = new ExcelJS.Workbook()
     
     // Sheet 1: Products

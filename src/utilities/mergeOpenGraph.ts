@@ -1,5 +1,5 @@
 import { config } from '@/config'
-import { defaultLogo, SITE_DESCRIPTION } from '@/utilities/constants'
+import { imageFallback, SITE_DESCRIPTION } from '@/utilities/constants'
 import type { Metadata } from 'next'
 import { getServerSideURL } from './getURL'
 
@@ -8,7 +8,7 @@ const defaultOpenGraph: Metadata['openGraph'] = {
   description: `${config.NEXT_PUBLIC_SITE_NAME} - ${SITE_DESCRIPTION}`,
   images: [
     {
-      url: `${getServerSideURL()}${defaultLogo}`,
+      url: imageFallback.startsWith('http') ? imageFallback : `${getServerSideURL()}${imageFallback}`,
     },
   ],
   siteName: config.NEXT_PUBLIC_SITE_NAME,

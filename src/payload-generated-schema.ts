@@ -23,6 +23,11 @@ import {
   pgEnum,
 } from '@payloadcms/db-postgres/drizzle/pg-core'
 import { sql, relations } from '@payloadcms/db-postgres/drizzle'
+export const enum_category_groups_sort_products = pgEnum('enum_category_groups_sort_products', [
+  '-sold',
+  '-createdAt',
+  '-updatedAt',
+])
 export const enum_users_roles = pgEnum('enum_users_roles', ['admin', 'staff', 'user'])
 export const enum_products_status = pgEnum('enum_products_status', ['PRIVATE', 'PUBLIC', 'STOPPED'])
 export const enum_product_variants_status = pgEnum('enum_product_variants_status', [
@@ -33,6 +38,7 @@ export const enum_product_variants_status = pgEnum('enum_product_variants_status
 ])
 export const enum_product_variants_auto_process = pgEnum('enum_product_variants_auto_process', [
   'key',
+  'direct',
 ])
 export const enum_orders_status = pgEnum('enum_orders_status', [
   'IN_QUEUE',
@@ -74,11 +80,17 @@ export const enum_payload_jobs_task_slug = pgEnum('enum_payload_jobs_task_slug',
   'inline',
   'schedulePublish',
 ])
+export const enum_ai_configuration_provider = pgEnum('enum_ai_configuration_provider', [
+  'openai',
+  'gemini',
+  'custom',
+])
 
 export const media = pgTable(
   'media',
   {
     id: serial('id').primaryKey(),
+    blurDataURL: varchar('blur_data_u_r_l'),
     alt: varchar('alt'),
     caption: jsonb('caption'),
     prefix: varchar('prefix').default('media'),
@@ -127,6 +139,11 @@ export const categories = pgTable(
     id: serial('id').primaryKey(),
     title: varchar('title').notNull(),
     icon: varchar('icon'),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -135,6 +152,7 @@ export const categories = pgTable(
       .notNull(),
   },
   (columns) => [
+    index('categories_meta_meta_image_idx').on(columns.meta_image),
     index('categories_updated_at_idx').on(columns.updatedAt),
     index('categories_created_at_idx').on(columns.createdAt),
   ],
@@ -145,7 +163,18 @@ export const category_groups = pgTable(
   {
     id: serial('id').primaryKey(),
     title: varchar('title').notNull(),
+    slug: varchar('slug').notNull(),
     icon: varchar('icon').notNull().default('box'),
+    showOnHomepage: boolean('show_on_homepage').default(false),
+    homepageSubtitle: varchar('homepage_subtitle'),
+    sortOrder: numeric('sort_order', { mode: 'number' }).default(0),
+    sortProducts: enum_category_groups_sort_products('sort_products').default('-sold'),
+    homepageLimit: numeric('homepage_limit', { mode: 'number' }).default(12),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -154,6 +183,8 @@ export const category_groups = pgTable(
       .notNull(),
   },
   (columns) => [
+    uniqueIndex('category_groups_slug_idx').on(columns.slug),
+    index('category_groups_meta_meta_image_idx').on(columns.meta_image),
     index('category_groups_updated_at_idx').on(columns.updatedAt),
     index('category_groups_created_at_idx').on(columns.createdAt),
   ],
@@ -172,7 +203,7 @@ export const category_groups_rels = pgTable(
     index('category_groups_rels_order_idx').on(columns.order),
     index('category_groups_rels_parent_idx').on(columns.parent),
     index('category_groups_rels_path_idx').on(columns.path),
-    uniqueIndex('category_groups_rels_categories_id_idx').on(columns.categoriesID, columns.path),
+    index('category_groups_rels_categories_id_idx').on(columns.categoriesID),
     foreignKey({
       columns: [columns['parent']],
       foreignColumns: [category_groups.id],
@@ -235,30 +266,6 @@ export const users_roles = pgTable(
       columns: [columns['parent']],
       foreignColumns: [users.id],
       name: 'users_roles_parent_fk',
-    }).onDelete('cascade'),
-  ],
-)
-
-export const users_sessions = pgTable(
-  'users_sessions',
-  {
-    _order: integer('_order').notNull(),
-    _parentID: integer('_parent_id').notNull(),
-    id: varchar('id').primaryKey(),
-    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
-    expiresAt: timestamp('expires_at', {
-      mode: 'string',
-      withTimezone: true,
-      precision: 3,
-    }).notNull(),
-  },
-  (columns) => [
-    index('users_sessions_order_idx').on(columns._order),
-    index('users_sessions_parent_id_idx').on(columns._parentID),
-    foreignKey({
-      columns: [columns['_parentID']],
-      foreignColumns: [users.id],
-      name: 'users_sessions_parent_id_fk',
     }).onDelete('cascade'),
   ],
 )
@@ -372,6 +379,11 @@ export const products = pgTable(
     featured: boolean('featured').default(false),
     slug: varchar('slug'),
     slugLock: boolean('slug_lock').default(true),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -382,6 +394,7 @@ export const products = pgTable(
   (columns) => [
     index('products_image_idx').on(columns.image),
     index('products_slug_idx').on(columns.slug),
+    index('products_meta_meta_image_idx').on(columns.meta_image),
     index('products_updated_at_idx').on(columns.updatedAt),
     index('products_created_at_idx').on(columns.createdAt),
   ],
@@ -462,6 +475,11 @@ export const product_variants = pgTable(
     }),
     autoProcess: enum_product_variants_auto_process('auto_process'),
     metadata: jsonb('metadata'),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -474,6 +492,7 @@ export const product_variants = pgTable(
     index('product_variants_image_idx').on(columns.image),
     index('product_variants_form_idx').on(columns.form),
     index('product_variants_default_supplier_idx').on(columns.defaultSupplier),
+    index('product_variants_meta_meta_image_idx').on(columns.meta_image),
     index('product_variants_updated_at_idx').on(columns.updatedAt),
     index('product_variants_created_at_idx').on(columns.createdAt),
   ],
@@ -907,6 +926,11 @@ export const posts = pgTable(
     publishedAt: timestamp('published_at', { mode: 'string', withTimezone: true, precision: 3 }),
     slug: varchar('slug'),
     slugLock: boolean('slug_lock').default(true),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -918,6 +942,7 @@ export const posts = pgTable(
   (columns) => [
     index('posts_image_idx').on(columns.image),
     index('posts_slug_idx').on(columns.slug),
+    index('posts_meta_meta_image_idx').on(columns.meta_image),
     index('posts_updated_at_idx').on(columns.updatedAt),
     index('posts_created_at_idx').on(columns.createdAt),
     index('posts__status_idx').on(columns._status),
@@ -971,6 +996,11 @@ export const _posts_v = pgTable(
     }),
     version_slug: varchar('version_slug'),
     version_slugLock: boolean('version_slug_lock').default(true),
+    version_meta_title: varchar('version_meta_title'),
+    version_meta_description: varchar('version_meta_description'),
+    version_meta_image: integer('version_meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     version_updatedAt: timestamp('version_updated_at', {
       mode: 'string',
       withTimezone: true,
@@ -995,6 +1025,7 @@ export const _posts_v = pgTable(
     index('_posts_v_parent_idx').on(columns.parent),
     index('_posts_v_version_version_image_idx').on(columns.version_image),
     index('_posts_v_version_version_slug_idx').on(columns.version_slug),
+    index('_posts_v_version_meta_version_meta_image_idx').on(columns.version_meta_image),
     index('_posts_v_version_version_updated_at_idx').on(columns.version_updatedAt),
     index('_posts_v_version_version_created_at_idx').on(columns.version_createdAt),
     index('_posts_v_version_version__status_idx').on(columns.version__status),
@@ -1457,8 +1488,24 @@ export const footer = pgTable('footer', {
   createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
 })
 
+export const ai_configuration = pgTable('ai_configuration', {
+  id: serial('id').primaryKey(),
+  provider: enum_ai_configuration_provider('provider').notNull().default('openai'),
+  baseUrl: varchar('base_url'),
+  apiKey: varchar('api_key').notNull(),
+  model: varchar('model').default('gpt-4o-mini'),
+  updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 }),
+  createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
+})
+
 export const relations_media = relations(media, () => ({}))
-export const relations_categories = relations(categories, () => ({}))
+export const relations_categories = relations(categories, ({ one }) => ({
+  meta_image: one(media, {
+    fields: [categories.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
+}))
 export const relations_category_groups_rels = relations(category_groups_rels, ({ one }) => ({
   parent: one(category_groups, {
     fields: [category_groups_rels.parent],
@@ -1471,7 +1518,12 @@ export const relations_category_groups_rels = relations(category_groups_rels, ({
     relationName: 'categories',
   }),
 }))
-export const relations_category_groups = relations(category_groups, ({ many }) => ({
+export const relations_category_groups = relations(category_groups, ({ one, many }) => ({
+  meta_image: one(media, {
+    fields: [category_groups.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
   _rels: many(category_groups_rels, {
     relationName: '_rels',
   }),
@@ -1490,19 +1542,9 @@ export const relations_users_roles = relations(users_roles, ({ one }) => ({
     relationName: 'roles',
   }),
 }))
-export const relations_users_sessions = relations(users_sessions, ({ one }) => ({
-  _parentID: one(users, {
-    fields: [users_sessions._parentID],
-    references: [users.id],
-    relationName: 'sessions',
-  }),
-}))
 export const relations_users = relations(users, ({ many }) => ({
   roles: many(users_roles, {
     relationName: 'roles',
-  }),
-  sessions: many(users_sessions, {
-    relationName: 'sessions',
   }),
 }))
 export const relations_stocks = relations(stocks, ({ one }) => ({
@@ -1552,6 +1594,11 @@ export const relations_products = relations(products, ({ one, many }) => ({
     references: [media.id],
     relationName: 'image',
   }),
+  meta_image: one(media, {
+    fields: [products.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
   _rels: many(products_rels, {
     relationName: '_rels',
   }),
@@ -1576,6 +1623,11 @@ export const relations_product_variants = relations(product_variants, ({ one }) 
     fields: [product_variants.defaultSupplier],
     references: [suppliers.id],
     relationName: 'defaultSupplier',
+  }),
+  meta_image: one(media, {
+    fields: [product_variants.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
   }),
 }))
 export const relations_product_variant_supplies = relations(
@@ -1754,6 +1806,11 @@ export const relations_posts = relations(posts, ({ one, many }) => ({
     references: [media.id],
     relationName: 'image',
   }),
+  meta_image: one(media, {
+    fields: [posts.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
   _rels: many(posts_rels, {
     relationName: '_rels',
   }),
@@ -1780,6 +1837,11 @@ export const relations__posts_v = relations(_posts_v, ({ one, many }) => ({
     fields: [_posts_v.version_image],
     references: [media.id],
     relationName: 'version_image',
+  }),
+  version_meta_image: one(media, {
+    fields: [_posts_v.version_meta_image],
+    references: [media.id],
+    relationName: 'version_meta_image',
   }),
   _rels: many(_posts_v_rels, {
     relationName: '_rels',
@@ -1962,8 +2024,10 @@ export const relations_payload_preferences = relations(payload_preferences, ({ m
 export const relations_payload_migrations = relations(payload_migrations, () => ({}))
 export const relations_header = relations(header, () => ({}))
 export const relations_footer = relations(footer, () => ({}))
+export const relations_ai_configuration = relations(ai_configuration, () => ({}))
 
 type DatabaseSchema = {
+  enum_category_groups_sort_products: typeof enum_category_groups_sort_products
   enum_users_roles: typeof enum_users_roles
   enum_products_status: typeof enum_products_status
   enum_product_variants_status: typeof enum_product_variants_status
@@ -1979,13 +2043,13 @@ type DatabaseSchema = {
   enum_payload_jobs_log_task_slug: typeof enum_payload_jobs_log_task_slug
   enum_payload_jobs_log_state: typeof enum_payload_jobs_log_state
   enum_payload_jobs_task_slug: typeof enum_payload_jobs_task_slug
+  enum_ai_configuration_provider: typeof enum_ai_configuration_provider
   media: typeof media
   categories: typeof categories
   category_groups: typeof category_groups
   category_groups_rels: typeof category_groups_rels
   accounts: typeof accounts
   users_roles: typeof users_roles
-  users_sessions: typeof users_sessions
   users: typeof users
   stocks: typeof stocks
   transactions: typeof transactions
@@ -2024,13 +2088,13 @@ type DatabaseSchema = {
   payload_migrations: typeof payload_migrations
   header: typeof header
   footer: typeof footer
+  ai_configuration: typeof ai_configuration
   relations_media: typeof relations_media
   relations_categories: typeof relations_categories
   relations_category_groups_rels: typeof relations_category_groups_rels
   relations_category_groups: typeof relations_category_groups
   relations_accounts: typeof relations_accounts
   relations_users_roles: typeof relations_users_roles
-  relations_users_sessions: typeof relations_users_sessions
   relations_users: typeof relations_users
   relations_stocks: typeof relations_stocks
   relations_transactions: typeof relations_transactions
@@ -2069,6 +2133,7 @@ type DatabaseSchema = {
   relations_payload_migrations: typeof relations_payload_migrations
   relations_header: typeof relations_header
   relations_footer: typeof relations_footer
+  relations_ai_configuration: typeof relations_ai_configuration
 }
 
 declare module '@payloadcms/db-postgres' {

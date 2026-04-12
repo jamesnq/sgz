@@ -11,8 +11,8 @@ import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
-import { ArticleStructuredData } from '@/components/Schema/ArticleStructuredData'
-import { BreadcrumbStructuredData } from '@/components/Schema/BreadcrumbStructuredData'
+import { ArticleStructuredData } from '@/components/SEO/ArticleStructuredData'
+import { BreadcrumbStructuredData } from '@/components/SEO/BreadcrumbStructuredData'
 import { TableOfContents } from '@/components/TableOfContents'
 import { Routes } from '@/utilities/routes'
 
@@ -30,7 +30,7 @@ const getPost = async (slug: string) => {
         collection: 'posts',
         depth: 1,
         limit: 1,
-        overrideAccess: false,
+        overrideAccess: true,
         where: {
           slug: { equals: slug },
           _status: { equals: 'published' },
@@ -52,7 +52,7 @@ const getRelatedPosts = async (currentPostId: string | number, tagIds: number[])
         collection: 'posts',
         depth: 1,
         limit: 20, // Load more to sort by relevance in memory
-        overrideAccess: false,
+        overrideAccess: true,
         where: {
           and: [
             {
@@ -109,9 +109,41 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     }
   }
 
+  const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'https://subgamezone.com'
+  const url = `${serverUrl}/posts/${post.slug}`
+
+  // Get image URL for OG tags
+  let imageUrl = ''
+  if (post.image && typeof post.image === 'object' && 'url' in post.image && post.image.url) {
+    const ogUrl = post.image.sizes?.og?.url || post.image.url
+    imageUrl = ogUrl ? `${serverUrl}${ogUrl}` : `${serverUrl}${post.image.url}`
+  }
+
+  const title = `${post.title} | Sub Game Zone`
+  const description = post.excerpt || undefined
+
   return {
-    title: `${post.title} | Sub Game Zone`,
-    description: post.excerpt || undefined,
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      url,
+      siteName: config.NEXT_PUBLIC_SITE_NAME,
+      ...(imageUrl ? { images: [{ url: imageUrl }] } : {}),
+      ...(post.publishedAt ? { publishedTime: post.publishedAt } : {}),
+      ...(post.updatedAt ? { modifiedTime: post.updatedAt } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: description || '',
+      ...(imageUrl ? { images: [imageUrl] } : {}),
+    },
   }
 }
 

@@ -1,5 +1,6 @@
 'use server'
 import { Product } from '@/payload-types'
+import { checkRateLimit, RATE_LIMITS } from '@/utilities/rateLimit'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import {
   validateVoucher,
@@ -11,15 +12,21 @@ import { getPayload } from 'payload'
 import { z } from 'zod'
 
 const ValidateVoucherSchema = z.object({
-  voucherCode: z.string().min(1),
+  voucherCode: z.string().min(1).max(50),
   totalPrice: z.coerce.number().min(0),
-  productVariantId: z.coerce.number(),
+  productVariantId: z.coerce.number().int().positive(),
 })
 
 export const validateVoucherAction = authActionClient
   .schema(ValidateVoucherSchema)
   .action(async ({ parsedInput: { voucherCode, totalPrice, productVariantId }, ctx }) => {
     const { user } = ctx
+
+    const rl = checkRateLimit(user.id, RATE_LIMITS.validateVoucher)
+    if (!rl.allowed) {
+      throw new ServerNotification(`Bạn thao tác quá nhanh, vui lòng thử lại sau ${Math.ceil(rl.retryAfterMs / 1000)}s`)
+    }
+
     const payload = await getPayload({ config: payloadConfig })
 
     const { docs: vouchers } = await payload.find({

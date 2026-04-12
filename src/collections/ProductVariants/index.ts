@@ -3,7 +3,7 @@ import { hasRole, userHasRole } from '@/access/hasRoles'
 import { ProductVariant } from '@/payload-types'
 import { mediaGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
-import { FieldHook, type CollectionAfterChangeHook, type CollectionConfig } from 'payload'
+import { FieldHook, type CollectionAfterChangeHook, type CollectionAfterDeleteHook, type CollectionConfig } from 'payload'
 import { revalidateProductPath, updateProductPriceRange } from '../Products/hooks/revalidateProduct'
 
 const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
@@ -13,40 +13,6 @@ const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
   await revalidateProductPath(payload, productId)
 }
-
-// export const updateProductPriceRange = async (
-//   payload: Payload,
-//   productId: number,
-//   productVariant?: ProductVariant,
-// ) => {
-//   const product = await payload.findByID({
-//     collection: 'products',
-//     id: productId,
-//     overrideAccess: true,
-//     depth: 1,
-//     select: { variants: true, minPrice: true, maxPrice: true },
-//   })
-//   if (!product || !product.variants) return
-//   if (productVariant) {
-//     product.variants = product.variants.filter((v: any) => v.id !== productVariant.id)
-//     product.variants.push(productVariant)
-//   }
-//   const prices = product.variants.map((v: any) => v.price).filter((p) => typeof p === 'number')
-//   const minPrice = Math.min(...prices)
-//   const maxPrice = Math.max(...prices)
-//   if (prices.length > 0 && (product.minPrice !== minPrice || product.maxPrice !== maxPrice)) {
-//     // use drizzle to avoid update loop
-//     const db = payload.db.drizzle
-//     await db
-//       .update(products)
-//       .set({
-//         minPrice: minPrice.toString(),
-//         maxPrice: maxPrice.toString(),
-//       })
-//       .where(eq(products.id, productId))
-//   }
-// }
-
 export const ProductVariants: CollectionConfig = {
   slug: 'product-variants',
   access: {
@@ -66,15 +32,90 @@ export const ProductVariants: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      async ({ previousDoc, doc, req: { payload } }) => {
+      async ({ previousDoc, doc, req }) => {
+        const payload = req.payload
+        const oldProductId = previousDoc.product ? (typeof previousDoc.product === 'object' ? previousDoc.product.id : previousDoc.product) : null
+        const newProductId = typeof doc.product === 'object' ? doc.product.id : doc.product
+        const productChanged = oldProductId !== newProductId
+
         // update product price range
         if (
+          !productChanged &&
           previousDoc.price == doc.price &&
           previousDoc.originalPrice == doc.originalPrice &&
           previousDoc.status == doc.status
         ) {
           return
         }
+
+        // Detach from previous product if transferred
+        if (productChanged && oldProductId) {
+          const oldProduct = await payload.findByID({
+            collection: 'products',
+            id: oldProductId,
+            overrideAccess: true,
+            depth: 1,
+            select: { variants: true },
+            req,
+          })
+          if (oldProduct) {
+            const oldVariantIds = (oldProduct.variants || []).map((v: any) => v.id)
+            if (oldVariantIds.includes(doc.id)) {
+              await payload.update({
+                collection: 'products',
+                id: oldProductId,
+                data: {
+                  variants: oldVariantIds.filter((id: number) => id !== doc.id),
+                },
+                req,
+              })
+            }
+          }
+        }
+
+        const productId = newProductId
+        const product = await payload.findByID({
+          collection: 'products',
+          id: productId,
+          overrideAccess: true,
+          depth: 1,
+          select: { variants: true },
+          req,
+        })
+        if (!product) return
+        
+        const currentVariants = product.variants || []
+        const existingVariantIds = currentVariants.map((v: any) => v.id)
+        
+        // Ensure variant relationship is officially bound to the Product array!
+        if (!existingVariantIds.includes(doc.id)) {
+          await payload.update({
+            collection: 'products',
+            id: productId,
+            data: {
+              variants: [...existingVariantIds, doc.id],
+            },
+            req,
+          })
+          return // payload.update implicitly triggers Products.beforeChange which fully calculates the price.
+        }
+
+        let newVariants = currentVariants.filter((v: any) => v.id !== doc.id)
+        newVariants.push(doc)
+        newVariants = newVariants.filter((v: any) => v.status !== 'PRIVATE')
+        await updateProductPriceRange(
+          payload,
+          productId,
+          newVariants as { price: number; originalPrice: number; status: string }[],
+          req,
+        )
+      },
+      revalidateProduct,
+    ] as CollectionAfterChangeHook<ProductVariant>[],
+    afterDelete: [
+      async ({ doc, req }) => {
+        if (req.context?.isProductDeleting) return
+        const payload = req.payload
         const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
         const product = await payload.findByID({
           collection: 'products',
@@ -82,19 +123,26 @@ export const ProductVariants: CollectionConfig = {
           overrideAccess: true,
           depth: 1,
           select: { variants: true },
+          req,
         })
-        if (!product || !product.variants || !product.variants.length) return
+        if (!product || !product.variants) return
+        
         product.variants = product.variants.filter((v: any) => v.id !== doc.id)
-        product.variants.push(doc)
         product.variants = product.variants.filter((v: any) => v.status !== 'PRIVATE')
+        
         await updateProductPriceRange(
           payload,
           productId,
           product.variants as { price: number; originalPrice: number; status: string }[],
+          req,
         )
       },
-      revalidateProduct,
-    ] as CollectionAfterChangeHook<ProductVariant>[],
+      async ({ doc, req }) => {
+        if (req.context?.isProductDeleting) return
+        const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
+        await revalidateProductPath(req.payload, productId as number)
+      },
+    ] as CollectionAfterDeleteHook<ProductVariant>[],
     beforeRead: [
       async ({ req: { user, payload }, doc }) => {
         const hasRole = userHasRole(user, ['admin', 'staff'])
@@ -113,6 +161,7 @@ export const ProductVariants: CollectionConfig = {
             where: {
               productVariant: { equals: doc.id },
               orderedBy: { equals: user.id },
+              status: { equals: 'COMPLETED' },
             },
           })
           if (paid.docs.length <= 0) {
@@ -330,6 +379,16 @@ export const ProductVariants: CollectionConfig = {
         read: hasRole(['admin']),
         update: hasRole(['admin']),
         create: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'aiGeneratorButton',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/AI/AiGenerateButton#AiGenerateButton',
+        },
+        position: 'sidebar',
       },
     },
   ],

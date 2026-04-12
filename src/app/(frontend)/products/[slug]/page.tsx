@@ -4,7 +4,7 @@ import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 
-import { BreadcrumbStructuredData } from '@/components/Schema/BreadcrumbStructuredData'
+import { BreadcrumbStructuredData } from '@/components/SEO/BreadcrumbStructuredData'
 import { ProductStructuredData } from '@/components/SEO/ProductStructuredData'
 import { Spinner } from '@/components/ui/spinner'
 import { Product, ProductVariant } from '@/payload-types'
@@ -15,8 +15,7 @@ import { Suspense } from 'react'
 import Notification from '../../notification'
 import PageClient from './page.client'
 
-// export const revalidate = 3600
-export const dynamic = 'force-dynamic'
+// Product detail uses ISR via unstable_cache with revalidate: 3600
 
 export async function generateStaticParams() {
   try {
@@ -44,7 +43,9 @@ export async function generateStaticParams() {
     })
 
     return params
-  } catch {}
+  } catch (err) {
+    console.error('Error generating static params for products:', err)
+  }
 
   return []
 }
@@ -74,7 +75,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       />
       <Suspense
         fallback={
-          <div className="flex items-center justify-center mt-16 mb-mt-16">
+          <div className="flex items-center justify-center mt-16 mb-16">
             <Spinner className="text-highlight" size={100} variant="ring" />
           </div>
         }
@@ -87,13 +88,12 @@ export default async function Page({ params: paramsPromise }: Args) {
 
 export async function generateMetadata({
   params: paramsPromise,
-  searchParams,
 }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
-  const { variant } = await searchParams
 
   const product = await queryProductBySlug({ slug })
-  const meta = await generateMeta({ doc: product, variant: Number(variant) })
+  // Static pages cache by URL path, not search params. Ignore variant.
+  const meta = await generateMeta({ doc: product, variant: 0 })
   return meta
 }
 
@@ -130,7 +130,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
             meta: true,
           },
           req: {
-            transactionID: undefined,
+            headers: new Headers(),
           },
         })
 
@@ -163,7 +163,11 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
                maxPrice: true,
                maxDiscount: true,
                sold: true,
-             }
+             },
+             req: {
+               // Prevent accessing headers() in unstable_cache
+               headers: new Headers(),
+             },
            })
            product.relatedProducts = relatedResult.docs
         } else {
@@ -216,6 +220,9 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
               },
             },
             depth: 0,
+            req: {
+              headers: new Headers(),
+            },
           })
 
           product.variants.forEach((variant) => {
@@ -252,6 +259,9 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
               },
             },
             depth: 1,
+            req: {
+              headers: new Headers(),
+            },
           })
 
           product.variants.forEach((variant) => {

@@ -6,7 +6,7 @@ const SITE_URL =
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
   siteUrl: SITE_URL,
-  generateRobotsTxt: true,
+  generateRobotsTxt: false,
   changefreq: 'daily',
   priority: 0.7,
   sitemapSize: 5000,

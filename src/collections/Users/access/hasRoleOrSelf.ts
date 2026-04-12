@@ -5,6 +5,7 @@ const hasRoleOrSelf =
   (roles: User['roles']) =>
   async ({ req }: { req: PayloadRequest } | AccessArgs): Promise<boolean | any> => {
     if (await hasRole(roles)({ req })) return true
-    return { id: { equals: req.user?.id } }
+    if (!req.user?.id) return false
+    return { id: { equals: req.user.id } }
   }
 export default hasRoleOrSelf

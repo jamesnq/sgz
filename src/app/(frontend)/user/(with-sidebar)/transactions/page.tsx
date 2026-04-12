@@ -52,10 +52,10 @@ async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }
   if (!user) {
     return null
   }
-  let queryWhere: any = { user: { equals: Number(user.id) } }
+  let queryWhere: any = { user: { equals: user.id } }
   if (query) {
     queryWhere.and = [
-      { user: { equals: Number(user.id) } },
+      { user: { equals: user.id } },
       { description: { like: query } },
     ]
   }

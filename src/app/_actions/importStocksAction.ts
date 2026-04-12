@@ -36,42 +36,60 @@ export const importStocksAction = authActionClient
     }
 
     const db = payload.db.drizzle
-    await db.insert(stocks).values(
-      input.map((item) => ({
-        productVariant: productVariantId,
-        data: item,
-      })),
-    )
-    const count = await payload.count({
-      collection: 'stocks',
-      where: {
-        productVariant: {
-          equals: productVariantId,
-        },
-        order: {
-          equals: null,
-        },
-      },
-    })
-    await payload.update({
-      collection: 'product-variants',
-      id: productVariantId,
-      data: {
-        max: count.totalDocs,
-        status: 'AVAILABLE',
-      },
-    })
+    const transactionID = await payload.db.beginTransaction()
+    if (!transactionID) {
+      throw new ServerNotification('Lỗi hệ thống: không thể bắt đầu transaction')
+    }
 
+    let committed = false
     try {
+      await db.insert(stocks).values(
+        input.map((item) => ({
+          productVariant: productVariantId,
+          data: item,
+        })),
+      )
+      const count = await payload.count({
+        collection: 'stocks',
+        where: {
+          productVariant: {
+            equals: productVariantId,
+          },
+          order: {
+            equals: null,
+          },
+        },
+        req: { transactionID },
+      })
+      await payload.update({
+        collection: 'product-variants',
+        id: productVariantId,
+        data: {
+          max: count.totalDocs,
+          status: 'AVAILABLE',
+        },
+        req: { transactionID },
+      })
+
+      await payload.db.commitTransaction(transactionID)
+      committed = true
+
       return {
         success: true,
         message: 'Đã nhập hàng',
       }
     } catch (error) {
       console.error(`Error in importStocksAction for product variant ${productVariantId}:`, error)
-
       throw new ServerNotification(
         error instanceof Error ? error.message : 'Lỗi không xác định khi nhập hàng',
       )
+    } finally {
+      if (!committed) {
+        try {
+          await payload.db.rollbackTransaction(transactionID)
+        } catch (e) {
+          console.error('[importStocksAction] Failed to rollback transaction:', e)
+        }
+      }
     }
   })

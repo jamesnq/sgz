@@ -1,7 +1,7 @@
 'use client'
 import { User } from '@/payload-types'
 import { usePathname, useRouter } from 'next/navigation'
-import { getCurrentUser } from 'payload-auth-plugin/client/hooks'
+
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 type ResetPassword = (args: { password: string; token: string }) => Promise<void>
@@ -122,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchMe = useCallback(async () => {
     try {
-      // 1. Check standard Payload session (for email/password logins)
       const standardRes = await fetch('/api/users/me', {
         headers: { 'Content-Type': 'application/json' },
       })
@@ -135,23 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // 2. Fallback to payload-auth-plugin session (for OAuth logins)
-      // We do a manual fetch instead of getCurrentUser to guarantee the query string is formatted correctly
-      const oauthSessionRes = await fetch(
-        '/api/app/session?fields[0]=id&fields[1]=email&fields[2]=name&fields[3]=roles&fields[4]=balance&fields[5]=picture',
-        { headers: { 'Content-Type': 'application/json' } },
-      )
-      if (oauthSessionRes.ok) {
-        const oauthData = await oauthSessionRes.json()
-        if (oauthData?.data?.isAuthenticated) {
-          const oauthUser = oauthData.data as User
-          setUser(oauthUser)
-          setStatus('loggedIn')
-          return
-        }
-      }
-
-      throw new Error('An error occurred while fetching your account.')
+      throw new Error('Not authenticated')
     } catch {
       setUser(null)
       setStatus('loggedOut')

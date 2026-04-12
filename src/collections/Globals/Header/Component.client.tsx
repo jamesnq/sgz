@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useEffect, useState } from 'react'
 
 import type { Header } from '@/payload-types'
 
@@ -32,12 +32,22 @@ import { cn } from '@/utilities/ui'
 import { useRouter } from 'next/navigation'
 
 interface AuthDropdownProps
-  extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>, ButtonProps {
-  isAffiliate?: boolean
-}
+  extends React.ComponentPropsWithRef<typeof DropdownMenuTrigger>, ButtonProps {}
 
-export function AuthDropdown({ className, isAffiliate, ...props }: AuthDropdownProps) {
+export function AuthDropdown({ className, ...props }: AuthDropdownProps) {
   const { user, logout } = useAuth()
+  const [isAffiliate, setIsAffiliate] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      setIsAffiliate(false)
+      return
+    }
+    fetch('/api/affiliate/status')
+      .then((res) => res.json())
+      .then((data) => setIsAffiliate(!!data?.isAffiliate))
+      .catch(() => setIsAffiliate(false))
+  }, [user])
 
   if (!user) {
     return <AuthDialog></AuthDialog>
@@ -129,10 +139,9 @@ export function AuthDropdown({ className, isAffiliate, ...props }: AuthDropdownP
 
 interface HeaderClientProps {
   data: Header
-  isAffiliate?: boolean
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data, isAffiliate }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
     <header className="bg-sgz-dark/90 backdrop-blur-xl font-sans antialiased shadow-[0_10px_40px_-15px_rgba(139,92,246,0.15)] sticky top-0 z-50 transition-all duration-300 border-b border-sgz-border min-h-[80px]">
       <div className="flex justify-between items-center w-full px-6 lg:px-12 h-20 max-w-[1440px] mx-auto gap-4">
@@ -150,9 +159,9 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, isAffiliate })
             <HeaderSearch />
             <UserBalanceWidget />
             <NovuInbox />
-            <AuthDropdown isAffiliate={isAffiliate} />
+            <AuthDropdown />
           </div>
-          <MobileNav data={data} isAffiliate={isAffiliate} />
+          <MobileNav data={data} />
         </div>
       </div>
     </header>

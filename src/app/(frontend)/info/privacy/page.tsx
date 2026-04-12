@@ -1,8 +1,11 @@
 import { config } from '@/config'
 import { Metadata } from 'next'
 
+import { getServerSideURL } from '@/utilities/getURL'
+
 const siteName = config.NEXT_PUBLIC_SITE_NAME
-const domain = typeof window !== 'undefined' ? window.location.hostname : siteName
+const serverUrlStr = getServerSideURL()
+const domain = serverUrlStr.replace(/^https?:\/\//, '')
 
 const metaText = 'Chính sách bảo mật'
 export const metadata: Metadata = {

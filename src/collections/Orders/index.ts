@@ -27,9 +27,9 @@ import { autoProcessOrderHook } from '@/services/orderProcessing'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 const orderByOrAdmin: Access = async ({ req }) => {
-  // allow read to admin and staff or orderedBy
   if (await hasRole(['admin', 'staff'])({ req })) return true
-  return { orderedBy: { equals: req.user?.id } }
+  if (!req.user?.id) return false
+  return { orderedBy: { equals: req.user.id } }
 }
 
 // hooks
@@ -120,7 +120,7 @@ const refundHook: FieldHook<Order> = async ({
   value,
   previousValue,
   operation,
-  req: { payload },
+  req,
 }) => {
   if (operation !== 'update' || !previousValue || !data || previousValue === value) return value
   if (previousValue === 'REFUND' && value !== 'REFUND')
@@ -130,29 +130,34 @@ const refundHook: FieldHook<Order> = async ({
     if (!orderBy) throw new ConflictsError('Không tìm thấy người dùng')
     if (!data.totalPrice) throw new ConflictsError('Không tìm thấy giá trị đơn hàng')
 
-    const { newUser } = await payload.db.drizzle.transaction(async (tx) => {
-      const [newUser] = await tx
-        .update(users)
-        .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
-        .where(eq(users.id, orderBy as number))
-        .returning({ balance: users.balance, email: users.email })
-      if (!newUser || !newUser.balance) throw new ConflictsError('Không tìm thấy người dùng')
+    // Use Payload's own transaction context so balance update is atomic with the order save.
+    // If the order save fails later, this balance credit will also be rolled back.
+    const db = (req as any).transaction || req.payload.db.drizzle
+    const [newUser] = await db
+      .update(users)
+      .set({ balance: sql`${users.balance} + ${data.totalPrice}` })
+      .where(eq(users.id, orderBy as number))
+      .returning({ balance: users.balance, email: users.email })
+    if (!newUser || !newUser.balance) throw new ConflictsError('Không tìm thấy người dùng')
 
-      await tx.insert(transactions).values({
-        amount: data.totalPrice as number,
-        user: orderBy as number,
-        description: `Hoàn trả đơn hàng #${data.id}`,
-        balance: newUser.balance,
-      })
-      return { newUser }
+    await db.insert(transactions).values({
+      amount: data.totalPrice as number,
+      user: orderBy as number,
+      description: `Hoàn trả đơn hàng #${data.id}`,
+      balance: newUser.balance,
     })
+
     after(async () => {
-      await discordWebhook({
-        subject: `Hoàn Trả Đơn Hàng`,
-        message: `${newUser.email} \nĐơn hàng: **#${data.id}** \nSố tiền: **${formatPrice(data.totalPrice as number)}**`,
-        color: '#FF0000',
-        channel: 'activities',
-      })
+      try {
+        await discordWebhook({
+          subject: `Hoàn Trả Đơn Hàng`,
+          message: `${newUser.email} \nĐơn hàng: **#${data.id}** \nSố tiền: **${formatPrice(data.totalPrice as number)}**`,
+          color: '#FF0000',
+          channel: 'activities',
+        })
+      } catch (e) {
+        console.error('[refundHook] Discord webhook failed:', e)
+      }
     })
   }
 

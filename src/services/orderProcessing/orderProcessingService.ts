@@ -8,7 +8,6 @@ import { createRichTextWithTable } from '@/utilities/RichTextHelper'
 import payloadConfig from '@payload-config'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { BasePayload, getPayload } from 'payload'
-import { SteamWalletProcessor } from './processors/SteamWalletProcessor'
 import { BaseMetadataSchema, OrderProcessor, ProcessResult } from './types'
 
 export class OrderProcessingService {
@@ -16,7 +15,6 @@ export class OrderProcessingService {
 
   constructor() {
     // Register processors for different product types
-    this.registerProcessor('steam_wallet', new SteamWalletProcessor())
   }
 
   /**
@@ -49,6 +47,7 @@ export class OrderProcessingService {
       }
     }
 
+    let committed = false;
     try {
       // Fetch the order with its related product variant
       const order = await this.fetchOrder(payload, orderId, transactionID)
@@ -59,17 +58,15 @@ export class OrderProcessingService {
         return {
           success: false,
           message: 'Product variant not populated or is only an ID reference',
-          transactionID,
         }
       }
 
       // Check if variant is available for auto-processing
       if (productVariant.status !== 'AVAILABLE') {
-        console.log(`[OrderProcessingService] Variant ${productVariant.id} status is ${productVariant.status}, skipping auto-process.`)
+        // Variant not in AVAILABLE status, cannot auto-process
         return {
           success: false,
           message: `Product variant status is ${productVariant.status}, only AVAILABLE products can be auto-processed`,
-          transactionID,
         }
       }
 
@@ -87,11 +84,11 @@ export class OrderProcessingService {
         })
 
         await payload.db.commitTransaction(transactionID)
+        committed = true;
         await sendOrderCompletedNotification(order)
         return {
           success: true,
           message: 'Fixed stock delivered successfully',
-          transactionID,
         }
       }
 
@@ -108,6 +105,10 @@ export class OrderProcessingService {
         // If it was supposed to be handled by autoProcess (e.g. 'key'), return the result immediately
         // handleAutoProcess returns null only if the autoProcess type is not recognised
         if (result !== null) {
+          if (result.success) {
+            await payload.db.commitTransaction(transactionID)
+            committed = true;
+          }
           return result
         }
       }
@@ -121,14 +122,23 @@ export class OrderProcessingService {
         transactionID,
       )
 
+      if (typeResult.success) {
+        await payload.db.commitTransaction(transactionID)
+        committed = true;
+      }
       return typeResult
     } catch (error) {
-      // Rollback transaction on error
-      await payload.db.rollbackTransaction(transactionID)
       return {
         success: false,
         message: `Failed to process order: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        transactionID,
+      }
+    } finally {
+      if (!committed) {
+        try {
+          await payload.db.rollbackTransaction(transactionID)
+        } catch (e) {
+          console.error(`[OrderProcessingService] Failed to rollback transaction ${transactionID}:`, e)
+        }
       }
     }
   }
@@ -179,12 +189,12 @@ export class OrderProcessingService {
         req: { transactionID },
       })
 
-      await payload.db.commitTransaction(transactionID)
+      // Send notification before returning
       await sendOrderCompletedNotification(order)
+      
       return {
         success: true,
         message: 'Order completed directly',
-        transactionID,
       }
     }
 
@@ -204,7 +214,6 @@ export class OrderProcessingService {
         return {
           success: false,
           message: 'Not enough stocks available',
-          transactionID,
         }
       }
 
@@ -217,11 +226,9 @@ export class OrderProcessingService {
         transactionID,
       )
 
-      await payload.db.commitTransaction(transactionID)
       return {
         success: true,
         message: 'Stocks processed successfully',
-        transactionID,
       }
     }
 
@@ -362,7 +369,6 @@ export class OrderProcessingService {
       return {
         success: false,
         message: 'Invalid metadata: missing or invalid type field',
-        transactionID,
       }
     }
 
@@ -372,7 +378,6 @@ export class OrderProcessingService {
       return {
         success: false,
         message: `No processor registered for product type: ${type}`,
-        transactionID,
       }
     }
 
@@ -390,8 +395,6 @@ export class OrderProcessingService {
       })
     }
 
-    // Commit the transaction and return the result
-    await payload.db.commitTransaction(transactionID)
     return processorResult
   }
 }
