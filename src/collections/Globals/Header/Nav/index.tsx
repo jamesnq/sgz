@@ -61,12 +61,22 @@ import AuthDialog from '../AuthDialog'
 import { useAuth } from '@/providers/Auth'
 import { LogOut } from 'lucide-react'
 
-export const MobileNav: React.FC<{ data: HeaderType; isAffiliate?: boolean }> = ({
-  isAffiliate,
-}) => {
+export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const { user, logout } = useAuth()
+  const [isAffiliate, setIsAffiliate] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      setIsAffiliate(false)
+      return
+    }
+    fetch('/api/affiliate/status')
+      .then((res) => res.json())
+      .then((data) => setIsAffiliate(!!data?.isAffiliate))
+      .catch(() => setIsAffiliate(false))
+  }, [user])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

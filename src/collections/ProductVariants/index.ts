@@ -13,40 +13,6 @@ const revalidateProduct: CollectionAfterChangeHook<ProductVariant> = async ({
   const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
   await revalidateProductPath(payload, productId)
 }
-
-// export const updateProductPriceRange = async (
-//   payload: Payload,
-//   productId: number,
-//   productVariant?: ProductVariant,
-// ) => {
-//   const product = await payload.findByID({
-//     collection: 'products',
-//     id: productId,
-//     overrideAccess: true,
-//     depth: 1,
-//     select: { variants: true, minPrice: true, maxPrice: true },
-//   })
-//   if (!product || !product.variants) return
-//   if (productVariant) {
-//     product.variants = product.variants.filter((v: any) => v.id !== productVariant.id)
-//     product.variants.push(productVariant)
-//   }
-//   const prices = product.variants.map((v: any) => v.price).filter((p) => typeof p === 'number')
-//   const minPrice = Math.min(...prices)
-//   const maxPrice = Math.max(...prices)
-//   if (prices.length > 0 && (product.minPrice !== minPrice || product.maxPrice !== maxPrice)) {
-//     // use drizzle to avoid update loop
-//     const db = payload.db.drizzle
-//     await db
-//       .update(products)
-//       .set({
-//         minPrice: minPrice.toString(),
-//         maxPrice: maxPrice.toString(),
-//       })
-//       .where(eq(products.id, productId))
-//   }
-// }
-
 export const ProductVariants: CollectionConfig = {
   slug: 'product-variants',
   access: {
@@ -148,6 +114,7 @@ export const ProductVariants: CollectionConfig = {
     ] as CollectionAfterChangeHook<ProductVariant>[],
     afterDelete: [
       async ({ doc, req }) => {
+        if (req.context?.isProductDeleting) return
         const payload = req.payload
         const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
         const product = await payload.findByID({
@@ -171,6 +138,7 @@ export const ProductVariants: CollectionConfig = {
         )
       },
       async ({ doc, req }) => {
+        if (req.context?.isProductDeleting) return
         const productId = typeof doc.product === 'number' ? doc.product : doc.product.id
         await revalidateProductPath(req.payload, productId as number)
       },
@@ -411,6 +379,16 @@ export const ProductVariants: CollectionConfig = {
         read: hasRole(['admin']),
         update: hasRole(['admin']),
         create: hasRole(['admin']),
+      },
+    },
+    {
+      name: 'aiGeneratorButton',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/AI/AiGenerateButton#AiGenerateButton',
+        },
+        position: 'sidebar',
       },
     },
   ],

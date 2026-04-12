@@ -1,5 +1,5 @@
 import { config } from '@/config'
-import { transactions, users } from '@/payload-generated-schema'
+import { recharges, transactions, users } from '@/payload-generated-schema'
 import { formatPrice } from '@/utilities/formatPrice'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
@@ -29,26 +29,15 @@ export class PaymentService {
   }
 
   async createPaymentLink(data: z.infer<typeof CreatePaymentLinkSchema>) {
-    console.log('[PaymentService] Creating payment link with data:', data)
     const { amount, currency, userId } = CreatePaymentLinkSchema.parse(data)
-    console.log('[PaymentService] Parsed data:', { amount, currency, userId })
 
     let attempt = 0
     const maxAttempts = 3
     let result: CheckoutResponseDataType | undefined = undefined
     while (!result && attempt < maxAttempts) {
       try {
-        console.log(`[PaymentService] Attempt ${attempt + 1}/${maxAttempts}`)
         if (currency === 'VND') {
           const orderCode = getRandomInt(1000, Number.MAX_SAFE_INTEGER)
-          console.log('[PaymentService] Generated orderCode:', orderCode)
-          console.log('[PaymentService] PayOS config:', {
-            cancelUrl: config.PAYOS_CANCEL_URL,
-            returnUrl: config.PAYOS_RETURN_URL,
-            hasClientKey: !!config.PAYOS_CLIENT_KEY,
-            hasApiKey: !!config.PAYOS_API_KEY,
-            hasChecksumKey: !!config.PAYOS_CHECKSUM_KEY,
-          })
 
           const r = await this.payos.createPaymentLink({
             orderCode,
@@ -57,7 +46,6 @@ export class PaymentService {
             returnUrl: config.PAYOS_RETURN_URL,
             description: 'SGZ',
           })
-          console.log('[PaymentService] PayOS response:', r)
           result = r
         } else {
           console.error('[PaymentService] Unsupported currency:', currency)
@@ -73,8 +61,7 @@ export class PaymentService {
         })
         if (attempt >= maxAttempts) {
           throw new Error(
-            // @ts-expect-error tsmissmatch
-            `Failed to create payment link after ${maxAttempts} attempts: ${error.message}`,
+            `Failed to create payment link after ${maxAttempts} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`,
           )
         }
       }
@@ -114,39 +101,53 @@ export class PaymentService {
       throw new Error('Recharge not found')
     }
 
-    if (recharge.status === 'SUCCESS') {
-      return 'Recharge already success'
-    }
-    await payload.update({
-      collection: 'recharges',
-      where: { id: { equals: recharge.id } },
-      data: { status: 'SUCCESS' },
-      depth: 0,
-    })
-
     const { user } = await payload.db.drizzle.transaction(async (tx) => {
+      const [lockedRecharge] = await tx
+        .select({ id: recharges.id, status: recharges.status })
+        .from(recharges)
+        .where(eq(recharges.id, recharge.id))
+        .for('update')
+        
+      if (!lockedRecharge) throw new Error('Recharge not found')
+
+      if (lockedRecharge.status === 'SUCCESS') {
+        throw new Error('Recharge already success')
+      }
+      
+      await tx
+        .update(recharges)
+        .set({ status: 'SUCCESS' })
+        .where(eq(recharges.id, recharge.id))
+
       const [user] = await tx
         .update(users)
         .set({ balance: sql`${users.balance} + ${paymentData.amount}` })
         .where(eq(users.id, recharge.user as number))
         .returning({ balance: users.balance, email: users.email })
+      
       if (!user || user.balance === null) throw new Error('User not found')
 
-      const _transaction = await tx.insert(transactions).values({
+      await tx.insert(transactions).values({
         amount: paymentData.amount,
         user: recharge.user as number,
         description: `Nạp tiền qua ngân hàng mã nạp #${recharge.orderCode}`,
         balance: user.balance,
       })
+      
       return { user }
     })
+
     after(async () => {
-      await discordWebhook({
-        subject: `Nạp Tiền Qua Ngân Hàng`,
-        message: `Người dùng: ${user.email} \nSố tiền: **${formatPrice(paymentData.amount)}** \nMã nạp: **#${recharge.orderCode}**`,
-        color: '#00FF00',
-        channel: 'activities',
-      })
+      try {
+        await discordWebhook({
+          subject: `Nạp Tiền Qua Ngân Hàng`,
+          message: `Người dùng: ${user.email} \nSố tiền: **${formatPrice(paymentData.amount)}** \nMã nạp: **#${recharge.orderCode}**`,
+          color: '#00FF00',
+          channel: 'activities',
+        })
+      } catch (e) {
+        payload.logger.error({ err: e, message: 'Failed to send discord webhook for PayOS recharge' })
+      }
     })
 
     return 'ok'

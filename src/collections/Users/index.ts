@@ -35,10 +35,16 @@ async function createNovuSubscriberAndSendWelcome({
       email: data.email,
     })
     after(async () => {
-      await sendWelcomeNotification(subscriberId)
+      try {
+        await sendWelcomeNotification(subscriberId)
+      } catch (e) {
+        console.error('[Users] Failed to send welcome notification:', e)
+      }
     })
     return result
-  } catch {}
+  } catch (e) {
+    console.error('[Users] Failed to create Novu subscriber:', e)
+  }
 
   return null
 }
@@ -179,7 +185,7 @@ export const Users: CollectionConfig = {
         return `Yêu cầu đặt lại mật khẩu`
       },
       // @ts-expect-error ts missmatch
-      generateEmailHTML: ({ token }) => {
+      generateEmailHTML: ({ token }: { token: string }) => {
         const resetPasswordURL = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/reset-password?token=${token}`
 
         return `

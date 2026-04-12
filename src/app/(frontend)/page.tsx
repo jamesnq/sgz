@@ -4,7 +4,7 @@ import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 import HomePageClient from './home-page.client'
-import { WebSiteSchema } from '@/components/Schema/WebSiteSchema'
+import { WebSiteSchema } from '@/components/SEO/WebSiteSchema'
 
 export const metadata = defaultMetadata()
 
@@ -24,7 +24,7 @@ const getPosts = unstable_cache(
       collection: 'posts',
       depth: 1,
       limit: 6,
-      overrideAccess: false,
+      overrideAccess: true,
       where: { _status: { equals: 'published' } },
       sort: '-publishedAt',
     })
@@ -43,7 +43,7 @@ const getHomepageSections = unstable_cache(
       where: { showOnHomepage: { equals: true } },
       sort: 'sortOrder',
       depth: 1,
-      overrideAccess: false,
+      overrideAccess: true,
     })
 
     const sections = await Promise.all(
@@ -58,7 +58,7 @@ const getHomepageSections = unstable_cache(
           collection: 'products',
           depth: 1,
           limit: group.homepageLimit || 12,
-          overrideAccess: false,
+          overrideAccess: true,
           where: {
             status: { equals: 'PUBLIC' },
             categories: { in: categoryIds },
@@ -83,7 +83,7 @@ const getFeaturedProducts = unstable_cache(
       collection: 'products',
       depth: 1,
       limit: 15,
-      overrideAccess: false,
+      overrideAccess: true,
       where: {
         status: { equals: 'PUBLIC' },
         featured: { equals: true },

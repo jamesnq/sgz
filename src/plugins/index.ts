@@ -8,7 +8,10 @@ import { adminAuthPlugin } from 'payload-auth-plugin'
 import { GoogleAuthProvider } from 'payload-auth-plugin/providers'
 import { env } from 'process'
 
+import { seo } from './seo'
+
 export const plugins: Plugin[] = [
+  seo,
   fieldsSelect(),
   s3Storage({
     collections: {

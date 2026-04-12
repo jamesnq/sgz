@@ -130,10 +130,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'ai-configuration': AiConfiguration;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'ai-configuration': AiConfigurationSelect<false> | AiConfigurationSelect<true>;
   };
   locale: null;
   widgets: {
@@ -177,6 +179,7 @@ export interface UserAuthOperations {
  */
 export interface Media {
   id: number;
+  blurDataURL?: string | null;
   /**
    * Alternative text for accessibility
    */
@@ -240,6 +243,14 @@ export interface Category {
   id: number;
   title: string;
   icon?: string | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -287,6 +298,14 @@ export interface CategoryGroup {
    * Số sản phẩm tối đa trên homepage
    */
   homepageLimit?: number | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -556,6 +575,14 @@ export interface ProductVariant {
     | number
     | boolean
     | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -597,6 +624,14 @@ export interface Product {
   categories?: (number | Category)[] | null;
   slug?: string | null;
   slugLock?: boolean | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -969,6 +1004,14 @@ export interface Post {
   publishedAt?: string | null;
   slug?: string | null;
   slugLock?: boolean | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1226,6 +1269,7 @@ export interface PayloadMigration {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  blurDataURL?: T;
   alt?: T;
   caption?: T;
   prefix?: T;
@@ -1272,6 +1316,13 @@ export interface MediaSelect<T extends boolean = true> {
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
   icon?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1289,6 +1340,13 @@ export interface CategoryGroupsSelect<T extends boolean = true> {
   sortOrder?: T;
   sortProducts?: T;
   homepageLimit?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1381,6 +1439,13 @@ export interface ProductsSelect<T extends boolean = true> {
   categories?: T;
   slug?: T;
   slugLock?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1406,6 +1471,13 @@ export interface ProductVariantsSelect<T extends boolean = true> {
   defaultSupplier?: T;
   autoProcess?: T;
   metadata?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1600,6 +1672,13 @@ export interface PostsSelect<T extends boolean = true> {
   publishedAt?: T;
   slug?: T;
   slugLock?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1727,6 +1806,30 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
+ * Configure AI Provider logic for Auto-Generating Meta Descriptions
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-configuration".
+ */
+export interface AiConfiguration {
+  id: number;
+  provider: 'openai' | 'gemini' | 'custom';
+  /**
+   * Leave empty for default OpenAI or Gemini. Use for proxy or custom LLM setups.
+   */
+  baseUrl?: string | null;
+  /**
+   * Provide your secret API Key.
+   */
+  apiKey: string;
+  /**
+   * e.g. gpt-4o-mini, gemini-1.5-flash
+   */
+  model?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -1740,6 +1843,19 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-configuration_select".
+ */
+export interface AiConfigurationSelect<T extends boolean = true> {
+  provider?: T;
+  baseUrl?: T;
+  apiKey?: T;
+  model?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

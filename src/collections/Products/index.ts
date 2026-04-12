@@ -76,10 +76,15 @@ export const Products: CollectionConfig = {
     beforeDelete: [
       async ({ req, id }) => {
         if (!id) return
+        req.context = {
+          ...req.context,
+          isProductDeleting: true,
+        }
         await req.payload.delete({
           collection: 'product-variants',
           where: { product: { equals: id } },
           overrideAccess: true,
+          req,
         })
       },
       revalidateDelete,
@@ -236,5 +241,15 @@ export const Products: CollectionConfig = {
     //   ],
     // },
     ...slugField(),
+    {
+      name: 'aiGeneratorButton',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/AI/AiGenerateButton#AiGenerateButton',
+        },
+        position: 'sidebar',
+      },
+    },
   ],
 }

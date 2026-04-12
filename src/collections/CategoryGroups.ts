@@ -6,8 +6,8 @@ import { mediaGroup } from '@/utilities/constants'
 import { anyone } from '../access/anyone'
 
 const invalidateHomepageCache = () => {
-  revalidateTag('homepage-sections', 'default')
-  revalidateTag('products-list', 'default')
+  revalidateTag('homepage-sections', 'max')
+  revalidateTag('products-list', 'max')
 }
 
 export const CategoryGroups: CollectionConfig = {

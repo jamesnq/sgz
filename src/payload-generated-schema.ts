@@ -17,8 +17,8 @@ import {
   jsonb,
   timestamp,
   numeric,
-  boolean,
   integer,
+  boolean,
   text,
   pgEnum,
 } from '@payloadcms/db-postgres/drizzle/pg-core'
@@ -80,11 +80,17 @@ export const enum_payload_jobs_task_slug = pgEnum('enum_payload_jobs_task_slug',
   'inline',
   'schedulePublish',
 ])
+export const enum_ai_configuration_provider = pgEnum('enum_ai_configuration_provider', [
+  'openai',
+  'gemini',
+  'custom',
+])
 
 export const media = pgTable(
   'media',
   {
     id: serial('id').primaryKey(),
+    blurDataURL: varchar('blur_data_u_r_l'),
     alt: varchar('alt'),
     caption: jsonb('caption'),
     prefix: varchar('prefix').default('media'),
@@ -133,6 +139,11 @@ export const categories = pgTable(
     id: serial('id').primaryKey(),
     title: varchar('title').notNull(),
     icon: varchar('icon'),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -141,6 +152,7 @@ export const categories = pgTable(
       .notNull(),
   },
   (columns) => [
+    index('categories_meta_meta_image_idx').on(columns.meta_image),
     index('categories_updated_at_idx').on(columns.updatedAt),
     index('categories_created_at_idx').on(columns.createdAt),
   ],
@@ -158,6 +170,11 @@ export const category_groups = pgTable(
     sortOrder: numeric('sort_order', { mode: 'number' }).default(0),
     sortProducts: enum_category_groups_sort_products('sort_products').default('-sold'),
     homepageLimit: numeric('homepage_limit', { mode: 'number' }).default(12),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -167,6 +184,7 @@ export const category_groups = pgTable(
   },
   (columns) => [
     uniqueIndex('category_groups_slug_idx').on(columns.slug),
+    index('category_groups_meta_meta_image_idx').on(columns.meta_image),
     index('category_groups_updated_at_idx').on(columns.updatedAt),
     index('category_groups_created_at_idx').on(columns.createdAt),
   ],
@@ -361,6 +379,11 @@ export const products = pgTable(
     featured: boolean('featured').default(false),
     slug: varchar('slug'),
     slugLock: boolean('slug_lock').default(true),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -371,6 +394,7 @@ export const products = pgTable(
   (columns) => [
     index('products_image_idx').on(columns.image),
     index('products_slug_idx').on(columns.slug),
+    index('products_meta_meta_image_idx').on(columns.meta_image),
     index('products_updated_at_idx').on(columns.updatedAt),
     index('products_created_at_idx').on(columns.createdAt),
   ],
@@ -451,6 +475,11 @@ export const product_variants = pgTable(
     }),
     autoProcess: enum_product_variants_auto_process('auto_process'),
     metadata: jsonb('metadata'),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -463,6 +492,7 @@ export const product_variants = pgTable(
     index('product_variants_image_idx').on(columns.image),
     index('product_variants_form_idx').on(columns.form),
     index('product_variants_default_supplier_idx').on(columns.defaultSupplier),
+    index('product_variants_meta_meta_image_idx').on(columns.meta_image),
     index('product_variants_updated_at_idx').on(columns.updatedAt),
     index('product_variants_created_at_idx').on(columns.createdAt),
   ],
@@ -896,6 +926,11 @@ export const posts = pgTable(
     publishedAt: timestamp('published_at', { mode: 'string', withTimezone: true, precision: 3 }),
     slug: varchar('slug'),
     slugLock: boolean('slug_lock').default(true),
+    meta_title: varchar('meta_title'),
+    meta_description: varchar('meta_description'),
+    meta_image: integer('meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
       .notNull(),
@@ -907,6 +942,7 @@ export const posts = pgTable(
   (columns) => [
     index('posts_image_idx').on(columns.image),
     index('posts_slug_idx').on(columns.slug),
+    index('posts_meta_meta_image_idx').on(columns.meta_image),
     index('posts_updated_at_idx').on(columns.updatedAt),
     index('posts_created_at_idx').on(columns.createdAt),
     index('posts__status_idx').on(columns._status),
@@ -960,6 +996,11 @@ export const _posts_v = pgTable(
     }),
     version_slug: varchar('version_slug'),
     version_slugLock: boolean('version_slug_lock').default(true),
+    version_meta_title: varchar('version_meta_title'),
+    version_meta_description: varchar('version_meta_description'),
+    version_meta_image: integer('version_meta_image_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
     version_updatedAt: timestamp('version_updated_at', {
       mode: 'string',
       withTimezone: true,
@@ -984,6 +1025,7 @@ export const _posts_v = pgTable(
     index('_posts_v_parent_idx').on(columns.parent),
     index('_posts_v_version_version_image_idx').on(columns.version_image),
     index('_posts_v_version_version_slug_idx').on(columns.version_slug),
+    index('_posts_v_version_meta_version_meta_image_idx').on(columns.version_meta_image),
     index('_posts_v_version_version_updated_at_idx').on(columns.version_updatedAt),
     index('_posts_v_version_version_created_at_idx').on(columns.version_createdAt),
     index('_posts_v_version_version__status_idx').on(columns.version__status),
@@ -1446,8 +1488,24 @@ export const footer = pgTable('footer', {
   createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
 })
 
+export const ai_configuration = pgTable('ai_configuration', {
+  id: serial('id').primaryKey(),
+  provider: enum_ai_configuration_provider('provider').notNull().default('openai'),
+  baseUrl: varchar('base_url'),
+  apiKey: varchar('api_key').notNull(),
+  model: varchar('model').default('gpt-4o-mini'),
+  updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 }),
+  createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
+})
+
 export const relations_media = relations(media, () => ({}))
-export const relations_categories = relations(categories, () => ({}))
+export const relations_categories = relations(categories, ({ one }) => ({
+  meta_image: one(media, {
+    fields: [categories.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
+}))
 export const relations_category_groups_rels = relations(category_groups_rels, ({ one }) => ({
   parent: one(category_groups, {
     fields: [category_groups_rels.parent],
@@ -1460,7 +1518,12 @@ export const relations_category_groups_rels = relations(category_groups_rels, ({
     relationName: 'categories',
   }),
 }))
-export const relations_category_groups = relations(category_groups, ({ many }) => ({
+export const relations_category_groups = relations(category_groups, ({ one, many }) => ({
+  meta_image: one(media, {
+    fields: [category_groups.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
   _rels: many(category_groups_rels, {
     relationName: '_rels',
   }),
@@ -1531,6 +1594,11 @@ export const relations_products = relations(products, ({ one, many }) => ({
     references: [media.id],
     relationName: 'image',
   }),
+  meta_image: one(media, {
+    fields: [products.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
   _rels: many(products_rels, {
     relationName: '_rels',
   }),
@@ -1555,6 +1623,11 @@ export const relations_product_variants = relations(product_variants, ({ one }) 
     fields: [product_variants.defaultSupplier],
     references: [suppliers.id],
     relationName: 'defaultSupplier',
+  }),
+  meta_image: one(media, {
+    fields: [product_variants.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
   }),
 }))
 export const relations_product_variant_supplies = relations(
@@ -1733,6 +1806,11 @@ export const relations_posts = relations(posts, ({ one, many }) => ({
     references: [media.id],
     relationName: 'image',
   }),
+  meta_image: one(media, {
+    fields: [posts.meta_image],
+    references: [media.id],
+    relationName: 'meta_image',
+  }),
   _rels: many(posts_rels, {
     relationName: '_rels',
   }),
@@ -1759,6 +1837,11 @@ export const relations__posts_v = relations(_posts_v, ({ one, many }) => ({
     fields: [_posts_v.version_image],
     references: [media.id],
     relationName: 'version_image',
+  }),
+  version_meta_image: one(media, {
+    fields: [_posts_v.version_meta_image],
+    references: [media.id],
+    relationName: 'version_meta_image',
   }),
   _rels: many(_posts_v_rels, {
     relationName: '_rels',
@@ -1941,6 +2024,7 @@ export const relations_payload_preferences = relations(payload_preferences, ({ m
 export const relations_payload_migrations = relations(payload_migrations, () => ({}))
 export const relations_header = relations(header, () => ({}))
 export const relations_footer = relations(footer, () => ({}))
+export const relations_ai_configuration = relations(ai_configuration, () => ({}))
 
 type DatabaseSchema = {
   enum_category_groups_sort_products: typeof enum_category_groups_sort_products
@@ -1959,6 +2043,7 @@ type DatabaseSchema = {
   enum_payload_jobs_log_task_slug: typeof enum_payload_jobs_log_task_slug
   enum_payload_jobs_log_state: typeof enum_payload_jobs_log_state
   enum_payload_jobs_task_slug: typeof enum_payload_jobs_task_slug
+  enum_ai_configuration_provider: typeof enum_ai_configuration_provider
   media: typeof media
   categories: typeof categories
   category_groups: typeof category_groups
@@ -2003,6 +2088,7 @@ type DatabaseSchema = {
   payload_migrations: typeof payload_migrations
   header: typeof header
   footer: typeof footer
+  ai_configuration: typeof ai_configuration
   relations_media: typeof relations_media
   relations_categories: typeof relations_categories
   relations_category_groups_rels: typeof relations_category_groups_rels
@@ -2047,6 +2133,7 @@ type DatabaseSchema = {
   relations_payload_migrations: typeof relations_payload_migrations
   relations_header: typeof relations_header
   relations_footer: typeof relations_footer
+  relations_ai_configuration: typeof relations_ai_configuration
 }
 
 declare module '@payloadcms/db-postgres' {

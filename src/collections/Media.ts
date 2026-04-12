@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import { hasRole } from '@/access/hasRoles'
 import { anyone } from '../access/anyone'
 import { mediaGroup } from '@/utilities/constants'
+import sharp from 'sharp'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -29,7 +30,34 @@ export const Media: CollectionConfig = {
     defaultColumns: ['filename', 'width', 'height', 'filesize'],
     description: 'Media files management',
   },
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (req.file?.data) {
+          try {
+            const { data: blurData } = await sharp(req.file.data)
+              .resize(10, 10, { fit: 'inside' })
+              .toFormat('webp', { quality: 20 })
+              .toBuffer({ resolveWithObject: true })
+            
+            data.blurDataURL = `data:image/webp;base64,${blurData.toString('base64')}`
+          } catch (err) {
+            req.payload.logger.error({ err, msg: 'Error generating blurDataURL' })
+          }
+        }
+        return data
+      }
+    ]
+  },
   fields: [
+    {
+      name: 'blurDataURL',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
+    },
     {
       name: 'alt',
       type: 'text',

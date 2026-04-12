@@ -20,13 +20,13 @@ const revalidatePost: CollectionAfterChangeHook<Post> = ({
     if (doc._status === 'published') {
       payload.logger.info(`Revalidating post at path: /posts/${doc.slug}`)
       revalidatePath(`/posts/${doc.slug}`)
-      revalidateTag('posts-list', 'default')
+      revalidateTag('posts-list', 'max')
     }
 
     if (previousDoc?._status === 'published' && doc._status !== 'published') {
       payload.logger.info(`Revalidating old post at path: /posts/${previousDoc.slug}`)
       revalidatePath(`/posts/${previousDoc.slug}`)
-      revalidateTag('posts-list', 'default')
+      revalidateTag('posts-list', 'max')
     }
   }
   return doc
@@ -35,7 +35,7 @@ const revalidatePost: CollectionAfterChangeHook<Post> = ({
 const revalidateDelete: CollectionBeforeDeleteHook = ({ req: { payload, context } }) => {
   if (!context.disableRevalidate) {
     payload.logger.info(`Revalidating posts list after delete`)
-    revalidateTag('posts-list', 'default')
+    revalidateTag('posts-list', 'max')
   }
 }
 
@@ -123,5 +123,15 @@ export const Posts: CollectionConfig = {
       },
     },
     ...slugField(),
+    {
+      name: 'aiGeneratorButton',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/AI/AiGenerateButton#AiGenerateButton',
+        },
+        position: 'sidebar',
+      },
+    },
   ],
 }

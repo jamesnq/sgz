@@ -208,8 +208,8 @@ export async function sendOrderUpdateRequiredNotification(
   orderId: number | string,
   subscriberId: string,
 ): Promise<void> {
-  try {
-    after(async () => {
+  after(async () => {
+    try {
       await novu.trigger({
         workflowId: 'order-update',
         to: {
@@ -221,10 +221,10 @@ export async function sendOrderUpdateRequiredNotification(
           redirect: Routes.order(orderId),
         },
       })
-    })
-  } catch (error) {
-    console.error('Error sending order update notification:', error)
-  }
+    } catch (error) {
+      console.error('Error sending order update notification:', error)
+    }
+  })
 }
 
 /**

@@ -17,3 +17,4 @@ public/sitemap*.xml
 playwright-report/
 test-results/
 next-env.d.ts
+.env.production

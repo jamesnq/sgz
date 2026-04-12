@@ -1,6 +1,7 @@
 import type { Product } from '@/payload-types'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
+import { unstable_cache } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,26 +13,24 @@ interface SitemapEntry {
   images: Array<{ url: string; title: string; caption: string }>
 }
 
-export async function GET(): Promise<Response> {
-  const payload = await getPayload({ config: configPromise })
-  const siteUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const getSitemapEntries = unstable_cache(
+  async (siteUrl: string) => {
+    const payload = await getPayload({ config: configPromise })
 
-  // Fetch all published products with their media
-  const productsResponse = await payload.find({
-    collection: 'products',
-    where: {
-      status: {
-        not_equals: 'PRIVATE',
+    // Fetch all published products with their media
+    const productsResponse = await payload.find({
+      collection: 'products',
+      where: {
+        status: {
+          not_equals: 'PRIVATE',
+        },
       },
-    },
-    depth: 1, // To get media relations
-    limit: 1000,
-    req: {
-      transactionID: undefined,
-    },
-  })
+      depth: 1,
+      limit: 1000,
+      overrideAccess: true,
+    })
 
-  const products = productsResponse.docs || []
+    const products = productsResponse.docs || []
 
   // Create sitemap entries for products with image data
   const productEntries = products.map((product: Product) => {
@@ -50,22 +49,10 @@ export async function GET(): Promise<Response> {
       product.image.url
 
     if (hasProductImage) {
-      let imageUrl = ''
+      let imageUrl = (product.image as any).url as string || ''
 
-      if (
-        hasProductImage &&
-        product.image &&
-        typeof product.image === 'object' &&
-        'url' in product.image
-      ) {
-        imageUrl = product.image.url as string
-      } else if (
-        hasProductImage &&
-        product.image &&
-        typeof product.image === 'object' &&
-        'url' in product.image
-      ) {
-        imageUrl = product.image.url as string
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        imageUrl = `${siteUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
       }
 
       const title = product.name || 'Product Image'
@@ -81,28 +68,37 @@ export async function GET(): Promise<Response> {
     return entry
   })
 
-  // // Fetch categories
-  // const categoriesResponse = await payload.find({
-  //   collection: 'categories',
-  //   depth: 0,
-  //   limit: 500,
-  //   req: {
-  //     transactionID: undefined,
-  //   },
-  // })
+  // Fetch posts
+  const postsResponse = await payload.find({
+    collection: 'posts',
+    where: { _status: { equals: 'published' } },
+    depth: 1,
+    limit: 500,
+    overrideAccess: true,
+  })
 
-  // const categories = categoriesResponse.docs || []
+  const postEntries = (postsResponse.docs || []).map((post: any) => {
+    const entry: SitemapEntry = {
+      url: `${siteUrl}/posts/${post.slug}`,
+      lastModified: new Date(post.updatedAt || post.createdAt).toISOString(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      images: [],
+    }
 
-  // // Create sitemap entries for categories
-  // const categoryEntries = categories.map((category: any) => {
-  //   return {
-  //     url: `${siteUrl}/categories/${category.slug || ''}`,
-  //     lastModified: new Date(category.updatedAt || category.createdAt).toISOString(),
-  //     changeFrequency: 'weekly',
-  //     priority: 0.7,
-  //     images: [],
-  //   } as SitemapEntry
-  // })
+    if (post.image && typeof post.image === 'object' && post.image.url) {
+      let imageUrl = post.image.url
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        imageUrl = `${siteUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
+      }
+      entry.images.push({
+        url: imageUrl,
+        title: post.title || 'Post Image',
+        caption: '',
+      })
+    }
+    return entry
+  })
 
   // Add static pages with appropriate priorities
   const staticPages: SitemapEntry[] = [
@@ -114,28 +110,28 @@ export async function GET(): Promise<Response> {
       images: [],
     },
     {
-      url: `${siteUrl}/about`,
+      url: `${siteUrl}/info/about`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'monthly',
       priority: 0.6,
       images: [],
     },
     {
-      url: `${siteUrl}/contact`,
+      url: `${siteUrl}/info/contact`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'monthly',
       priority: 0.5,
       images: [],
     },
     {
-      url: `${siteUrl}/terms`,
+      url: `${siteUrl}/info/terms`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'yearly',
       priority: 0.4,
       images: [],
     },
     {
-      url: `${siteUrl}/privacy`,
+      url: `${siteUrl}/info/privacy`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'yearly',
       priority: 0.4,
@@ -144,7 +140,7 @@ export async function GET(): Promise<Response> {
   ]
 
   // Combine all entries
-  const entries = [...staticPages, ...productEntries]
+  const entries = [...staticPages, ...productEntries, ...postEntries]
 
   // Generate the XML with image support
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -173,6 +169,16 @@ export async function GET(): Promise<Response> {
     })
     .join('')}
 </urlset>`
+
+    return xml
+  },
+  ['server-sitemap-xml'],
+  { revalidate: 3600, tags: ['products', 'posts-list'] },
+)
+
+export async function GET(): Promise<Response> {
+  const siteUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const xml = await getSitemapEntries(siteUrl)
 
   return new Response(xml, {
     headers: {

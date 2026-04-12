@@ -3,7 +3,7 @@ import type { Config, Media, Product, ProductVariant } from '../payload-types'
 
 import { config } from '@/config'
 import calculateDiscountPercentage from './calculateDiscountPercentage'
-import { defaultLogo, imageFallback, SITE_DESCRIPTION } from './constants'
+import { imageFallback, SITE_DESCRIPTION } from './constants'
 import { formatPrice } from './formatPrice'
 import { getServerSideURL } from './getURL'
 import { mergeOpenGraph } from './mergeOpenGraph'
@@ -16,7 +16,7 @@ import { textOnly } from '@/components/RichText/textOnly'
  */
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null): string => {
   const serverUrl = getServerSideURL()
-  const fallbackUrl = serverUrl + defaultLogo
+  const fallbackUrl = imageFallback.startsWith('http') ? imageFallback : serverUrl + imageFallback
 
   if (!image) {
     return fallbackUrl
@@ -25,7 +25,8 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null): stri
   if (typeof image === 'object' && 'url' in image) {
     // Prefer the optimized OG image if available
     const ogUrl = image.sizes?.og?.url || image.url
-    return ogUrl ? serverUrl + ogUrl : serverUrl + image.url
+    if (!ogUrl) return fallbackUrl
+    return ogUrl.startsWith('http') ? ogUrl : serverUrl + ogUrl
   }
 
   return fallbackUrl
@@ -37,7 +38,7 @@ const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null): stri
  */
 export const defaultMetadata = (): Metadata => {
   const serverUrl = getServerSideURL()
-  const defaultImage = serverUrl + imageFallback
+  const defaultImage = imageFallback.startsWith('http') ? imageFallback : serverUrl + imageFallback
   const title = config.NEXT_PUBLIC_SITE_NAME
   const description = SITE_DESCRIPTION
 
@@ -102,28 +103,53 @@ export const generateMeta = async ({ doc, variant }: GenerateMetaArgs): Promise<
     variant > 0 ? (doc.variants?.find((v: any) => v.id == variant) as ProductVariant) : undefined
 
   // Determine the appropriate image to use
-  const ogImage = getImageURL(productVariant?.image || doc.image)
+  // Payload CMS SEO plugin allows a custom image override in `meta.image`
+  const ogImage = getImageURL(productVariant?.meta?.image || doc.meta?.image || productVariant?.image || doc.image)
 
   // Determine the title
-  const title = `${productVariant?.name || doc.name || ''} | ${config.NEXT_PUBLIC_SITE_NAME}`
+  let title = `${productVariant?.name || doc.name || ''} | ${config.NEXT_PUBLIC_SITE_NAME}`
+  if (productVariant?.meta?.title) {
+    title = productVariant.meta.title
+  } else if (doc.meta?.title) {
+    title = productVariant && !doc.meta.title.toLowerCase().includes(productVariant.name.toLowerCase())
+      ? `${productVariant.name} - ${doc.meta.title}` 
+      : doc.meta.title
+  }
 
   // Generate description based on whether we have a variant or not
-  const description = productVariant
+  let description = productVariant
     ? generateVariantDescription(productVariant, textOnly(doc.description))
     : textOnly(doc.description)
+    
+  if (productVariant?.meta?.description) {
+    description = productVariant.meta.description
+  } else if (doc.meta?.description && !productVariant) {
+    description = doc.meta.description
+  } else if (doc.meta?.description && productVariant) {
+    description = generateVariantDescription(productVariant, doc.meta.description)
+  }
+
+  if (description && description.length > 160) {
+    description = description.substring(0, 157) + '...'
+  }
 
   // Generate the URL path
   const urlPath = Array.isArray(doc.slug) ? doc.slug.join('/') : doc.slug || ''
-  const url = `${serverUrl}/products/${urlPath}${variant > 0 ? `?variant=${variant}` : ''}`
+  const canonicalUrl = `${serverUrl}/products/${urlPath}`
+  const pageUrl = `${canonicalUrl}${variant > 0 ? `?variant=${variant}` : ''}`
 
   return {
     title,
     description,
+    alternates: {
+      canonical: pageUrl,
+    },
     ...mergeOpenGraph({
       title,
       description,
       images: ogImage ? [{ url: ogImage }] : undefined,
-      url,
+      url: pageUrl,
     }),
   }
 }
+

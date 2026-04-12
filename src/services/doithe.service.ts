@@ -1,5 +1,5 @@
 import { config } from '@/config'
-import { transactions, users } from '@/payload-generated-schema'
+import { recharges, transactions, users } from '@/payload-generated-schema'
 import { formatPrice } from '@/utilities/formatPrice'
 import payloadConfig from '@payload-config'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
@@ -453,53 +453,78 @@ export class DoiThe {
         newStatus = 'CANCEL'
       }
 
-      // Update the recharge record
-      await payload.update({
-        collection: 'recharges',
-        where: { id: { equals: recharge.id } },
-        data: {
-          status: newStatus as 'PENDING' | 'CANCEL' | 'SUCCESS' | 'REFUND',
-          data: {
-            ...(typeof recharge.data === 'object' && recharge.data !== null ? recharge.data : {}),
-            callbackData,
-          },
-        },
-        depth: 0,
-      })
-
-      // If the recharge is successful, update user balance and create transaction
-      if (newStatus === 'SUCCESS') {
-        const amount = callbackData.amount || callbackData.value || 0
-        const user = await payload.db.drizzle.transaction(async (tx) => {
-          const [user] = await tx
-            .update(users)
-            .set({ balance: sql`${users.balance} + ${amount}` })
-            .where(eq(users.id, recharge.user as number))
-            .returning({ email: users.email, balance: users.balance })
-
-          if (!user || user.balance === null) {
-            console.error('User not found:', recharge.user)
-            throw new Error('User not found')
+      let userForDiscord: any = null;
+      let discordAmount = 0;
+      
+      try {
+        await payload.db.drizzle.transaction(async (tx) => {
+          const [lockedRecharge] = await tx
+            .select({ id: recharges.id, status: recharges.status, data: recharges.data })
+            .from(recharges)
+            .where(eq(recharges.id, recharge.id))
+            .for('update')
+            
+          if (!lockedRecharge) throw new Error('Recharge not found')
+          if (lockedRecharge.status === 'SUCCESS') {
+            throw new Error('ALREADY_SUCCESS')
           }
 
-          await tx.insert(transactions).values({
-            amount: amount,
-            user: recharge.user as number,
-            description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT ? 'phạt 50% sai mệnh giá' : ''}`,
-            balance: user.balance,
-          })
-          return user
-        })
+          const rechargeDataObj = typeof lockedRecharge.data === 'object' && lockedRecharge.data !== null 
+            ? lockedRecharge.data as Record<string, unknown> 
+            : {}
 
+          await tx.update(recharges).set({
+            status: newStatus as 'PENDING' | 'CANCEL' | 'SUCCESS' | 'REFUND',
+            data: {
+              ...rechargeDataObj,
+              callbackData,
+            }
+          }).where(eq(recharges.id, recharge.id))
+
+          if (newStatus === 'SUCCESS') {
+            const amount = callbackData.amount || callbackData.value || 0
+            discordAmount = amount
+            const [user] = await tx
+              .update(users)
+              .set({ balance: sql`${users.balance} + ${amount}` })
+              .where(eq(users.id, recharge.user as number))
+              .returning({ email: users.email, balance: users.balance })
+
+            if (!user || user.balance === null) {
+              throw new Error('User not found')
+            }
+            
+            userForDiscord = user;
+
+            await tx.insert(transactions).values({
+              amount: amount,
+              user: recharge.user as number,
+              description: `Nạp thẻ ${callbackData.telco} serial #${callbackData.serial} ${callbackData.status == CardStatus.WRONG_AMOUNT ? 'phạt 50% sai mệnh giá' : ''}`,
+              balance: user.balance,
+            })
+          }
+        })
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message === 'ALREADY_SUCCESS') {
+          return { message: 'Recharge already success' }
+        }
+        throw err;
+      }
+
+      if (newStatus === 'SUCCESS' && userForDiscord) {
         after(async () => {
-          await discordWebhook({
-            subject: `Nạp Thẻ ${callbackData.telco}`,
-            message: `Người dùng: ${user.email} \nSố tiền: **${formatPrice(amount)}** \nSerial: **${callbackData.serial}** ${
-              callbackData.status == CardStatus.WRONG_AMOUNT ? '\n**Phạt 50% sai mệnh giá**' : ''
-            }`,
-            color: '#00FF00',
-            channel: 'activities',
-          })
+          try {
+            await discordWebhook({
+              subject: `Nạp Thẻ ${callbackData.telco}`,
+              message: `Người dùng: ${userForDiscord.email} \nSố tiền: **${formatPrice(discordAmount)}** \nSerial: **${callbackData.serial}** ${
+                callbackData.status == CardStatus.WRONG_AMOUNT ? '\n**Phạt 50% sai mệnh giá**' : ''
+              }`,
+              color: '#00FF00',
+              channel: 'activities',
+            })
+          } catch (e) {
+            payload.logger.error({ err: e, message: 'Failed to send discord webhook for DoiThe recharge' })
+          }
         })
       }
 

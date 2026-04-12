@@ -7,49 +7,91 @@ export function markdownToLexical(markdown: string) {
     const tokens = marked.lexer(markdown);
     const children: any[] = [];
 
-    const processTextTokens = (textTokens: any[]) => {
+    let isUnderlineContext = false;
+
+    const processTextTokens = (textTokens: any[], inheritedFormat: number = 0) => {
       const textNodes: any[] = [];
       if (!textTokens) return textNodes;
 
       textTokens.forEach((token) => {
-        if (token.type === 'strong') {
-          textNodes.push({
-            detail: 0,
-            format: 1, // 1 is bold
-            mode: 'normal',
-            style: '',
-            text: token.text,
-            type: 'text',
-            version: 1,
-          });
+        if (token.type === 'html') {
+          const lower = (token.raw || token.text || '').toLowerCase();
+          if (lower === '<u>') {
+            isUnderlineContext = true;
+          } else if (lower === '</u>') {
+            isUnderlineContext = false;
+          } else {
+            // Keep other HTML tags as text
+            textNodes.push({
+              detail: 0,
+              format: inheritedFormat | (isUnderlineContext ? 8 : 0),
+              mode: 'normal',
+              style: '',
+              text: token.raw || token.text,
+              type: 'text',
+              version: 1,
+            });
+          }
+        } else if (token.type === 'strong') {
+          if (token.tokens && token.tokens.length > 0) {
+            textNodes.push(...processTextTokens(token.tokens, inheritedFormat | 1));
+          } else {
+            textNodes.push({
+              detail: 0,
+              format: (inheritedFormat | 1) | (isUnderlineContext ? 8 : 0),
+              mode: 'normal',
+              style: '',
+              text: token.text || token.raw,
+              type: 'text',
+              version: 1,
+            });
+          }
         } else if (token.type === 'em') {
-          textNodes.push({
-            detail: 0,
-            format: 2, // 2 is italic
-            mode: 'normal',
-            style: '',
-            text: token.text,
-            type: 'text',
-            version: 1,
-          });
+          if (token.tokens && token.tokens.length > 0) {
+            textNodes.push(...processTextTokens(token.tokens, inheritedFormat | 2));
+          } else {
+            textNodes.push({
+              detail: 0,
+              format: (inheritedFormat | 2) | (isUnderlineContext ? 8 : 0),
+              mode: 'normal',
+              style: '',
+              text: token.text || token.raw,
+              type: 'text',
+              version: 1,
+            });
+          }
         } else if (token.type === 'text' || token.type === 'escape') {
           textNodes.push({
             detail: 0,
-            format: 0,
+            format: inheritedFormat | (isUnderlineContext ? 8 : 0),
             mode: 'normal',
             style: '',
             text: token.raw || token.text,
             type: 'text',
             version: 1,
           });
+        } else if (token.type === 'link') {
+          textNodes.push({
+            type: 'link',
+            fields: {
+              url: token.href,
+              newTab: true,
+              linkType: 'custom',
+            },
+            format: '',
+            indent: 0,
+            version: 2,
+            children: processTextTokens(token.tokens || [{ type: 'text', raw: token.text, text: token.text }], inheritedFormat),
+            direction: 'ltr',
+          });
         } else {
           // Fallback
           textNodes.push({
             detail: 0,
-            format: 0,
+            format: inheritedFormat | (isUnderlineContext ? 8 : 0),
             mode: 'normal',
             style: '',
-            text: token.raw,
+            text: token.raw || token.text || '',
             type: 'text',
             version: 1,
           });

@@ -18,6 +18,27 @@ export const revalidateProductsPage = () => {
   }
 }
 
+/**
+ * Helper to invalidate all product-related caches in one place (DRY).
+ * Optionally invalidates slug-specific caches if a slug is provided.
+ */
+function invalidateProductCaches(slug?: string) {
+  try {
+    if (slug) {
+      revalidatePath(Routes.product(slug))
+      revalidateTag(`products-${slug}`, 'max')
+      revalidateTag('product-detail', 'max')
+    }
+    revalidateProductsPage()
+    revalidatePath('/')
+    revalidateTag('products-list', 'max')
+    revalidateTag('homepage-sections', 'max')
+    revalidateTag('products-sitemap', 'max')
+  } catch (e) {
+    console.error(`Failed to invalidate product caches:`, e)
+  }
+}
+
 export const updateProductPriceRange = async (
   payload: Payload,
   productId: number,
@@ -64,25 +85,13 @@ export const revalidateProductPath = async (payload: Payload, productId: number)
   try {
     await updateSearchProducts([product])
   } catch (e) {
-    payload.logger.error({ err: e, message: `Failed to update search products for id: ${productId}` })
+    payload.logger.error({
+      err: e,
+      message: `Failed to update search products for id: ${productId}`,
+    })
   }
 
-  const path = Routes.product(product.slug)
-  payload.logger.info(`Revalidating product at path: ${path}`)
-  try {
-    revalidatePath(path)
-  } catch (e) {
-    payload.logger.error({ err: e, message: `Failed to revalidate product path: ${path}` })
-  }
-  
-  revalidateProductsPage()
-  try {
-    revalidatePath('/')
-    revalidateTag('products-list', 'default')
-    revalidateTag('homepage-sections', 'default')
-  } catch (e) {
-    payload.logger.error({ err: e, message: `Failed to revalidate /` })
-  }
+  invalidateProductCaches(product.slug)
 }
 
 export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
@@ -95,7 +104,7 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
   } catch (e) {
     payload.logger.error({ err: e, message: `Failed to update search products for id: ${doc.id}` })
   }
-  
+
   try {
     if (previousDoc && previousDoc.slug && previousDoc.slug !== doc.slug) {
       const oldPath = Routes.product(previousDoc.slug)
@@ -103,17 +112,7 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
       revalidatePath(oldPath)
     }
 
-    if (doc && doc.slug) {
-      const newPath = Routes.product(doc.slug)
-      payload.logger.info(`Revalidating product at path: ${newPath}`)
-      revalidatePath(newPath)
-    }
-
-    revalidateProductsPage()
-    revalidatePath('/')
-    revalidateTag('products-list', 'default')
-    revalidateTag('homepage-sections', 'default')
-    revalidateTag('products-sitemap', 'default')
+    invalidateProductCaches(doc?.slug ?? undefined)
   } catch (e) {
     payload.logger.error({ err: e, message: `Failed to revalidate paths for product: ${doc.id}` })
   }
@@ -121,10 +120,18 @@ export const revalidateProduct: CollectionAfterChangeHook<Product> = async ({
   return doc
 }
 
+import { meiliSearchServer } from '@/utilities/meiliSearchServer'
+
 export const revalidateDelete: CollectionBeforeDeleteHook = async ({
   id,
   req: { context, payload },
 }) => {
+  try {
+    await meiliSearchServer.index('products').deleteDocument(String(id))
+  } catch (err) {
+    payload.logger.error({ err, message: `Failed to remove product ${id} from MeiliSearch upon deletion` })
+  }
+
   const doc = await payload.findByID({
     collection: 'products',
     id,
@@ -134,13 +141,8 @@ export const revalidateDelete: CollectionBeforeDeleteHook = async ({
 
   if (!doc || !doc.slug) return doc
   if (!context.disableRevalidate) {
-    const path = Routes.product(doc?.slug)
-
-    revalidatePath(path)
-    revalidateProductsPage()
-    revalidateTag('products-list', 'default')
-    revalidateTag('homepage-sections', 'default')
-    revalidateTag('products-sitemap', 'default')
+    invalidateProductCaches(doc.slug)
   }
   return doc
 }
+

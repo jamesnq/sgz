@@ -207,7 +207,7 @@ function RechargeCard() {
   const form = useForm<z.infer<typeof RechargeDoiTheSchema>>({
     resolver: zodResolver(RechargeDoiTheSchema as any),
     defaultValues: {
-      telco: '',
+      telco: undefined as any,
       code: '',
       serial: '',
       amount: 0,
@@ -270,7 +270,7 @@ function RechargeCard() {
 
   const handleTelcoChange = (telco: string) => {
     setSelectedTelco(telco)
-    form.setValue('telco', telco)
+    form.setValue('telco', telco as any)
 
     // Get denominations for the selected telco
     const denominations = feeData.filter((item) => item.telco === telco).map((item) => item.value)

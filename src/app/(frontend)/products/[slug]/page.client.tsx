@@ -261,6 +261,7 @@ function Head() {
         resource={currentVariant?.image || product.image}
         imgClassName="w-full h-auto object-cover aspect-video lg:aspect-auto max-h-[500px]"
         size="(max-width: 1024px) 100vw, 50vw"
+        priority={true}
       />
     </section>
   )
@@ -849,8 +850,10 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
   const currentVariant = useProductPageContext((state) => state.currentVariant)
   const [vouchers, setVouchers] = React.useState<AvailableVoucher[]>([])
   const [loading, setLoading] = React.useState(true)
-  const scrollRef = React.useRef<HTMLDivElement>(null)
   const { executeAsync } = useActionWarper(getAvailableVouchersAction)
+
+  const [itemsPerPage, setItemsPerPage] = React.useState(2)
+  const [currentPage, setCurrentPage] = React.useState(0)
 
   React.useEffect(() => {
     let cancelled = false
@@ -868,72 +871,181 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id, currentVariant?.id])
 
+  React.useEffect(() => {
+    const handleResize = () => {
+      // 1 item on mobile, 2 items on pc/tablet
+      setItemsPerPage(window.innerWidth < 768 ? 1 : 2)
+    }
+    
+    // Set initial
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const totalPages = Math.ceil(vouchers.length / itemsPerPage)
+  
+  // reset page if resize makes current page out of bounds
+  React.useEffect(() => {
+    if (currentPage >= totalPages && totalPages > 0) {
+       setCurrentPage(Math.max(0, totalPages - 1))
+    }
+  }, [totalPages, currentPage])
+
+  const handlePrev = React.useCallback(() => {
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages)
+  }, [totalPages])
+
+  const handleNext = React.useCallback(() => {
+    setCurrentPage((prev) => (prev + 1) % totalPages)
+  }, [totalPages])
+
+  // To support swipe on mobile without triggering re-renders on every pixel move
+  const touchStartX = React.useRef<number | null>(null)
+  const touchEndX = React.useRef<number | null>(null)
+
   if (loading || vouchers.length === 0) return null
 
+  const pages = []
+  for (let i = 0; i < vouchers.length; i += itemsPerPage) {
+    pages.push(vouchers.slice(i, i + itemsPerPage))
+  }
+
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null
+    const touch = e.targetTouches?.[0] || e.touches?.[0]
+    if (touch) {
+      touchStartX.current = touch.clientX
+    }
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const touch = e.targetTouches?.[0] || e.touches?.[0]
+    if (touch) {
+      touchEndX.current = touch.clientX
+    }
+  }
+
+  const onTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return
+    const distance = touchStartX.current - touchEndX.current
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe) {
+      handleNext()
+    } else if (isRightSwipe) {
+      handlePrev()
+    }
+    
+    touchStartX.current = null
+    touchEndX.current = null
+  }
+
   return (
-    <div className="mt-2">
-      <div
-        ref={scrollRef}
-        className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1"
-        style={{ scrollSnapType: 'x mandatory' }}
+    <div className="mt-3 relative group w-full">
+      <div 
+        className="overflow-hidden w-full"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        {vouchers.map((voucher) => (
-          <div
-            key={voucher.code}
-            className="snap-start shrink-0 w-[200px] bg-[#0f0f13] border border-white/10 rounded-xl p-3 flex flex-col justify-between gap-2 hover:border-[#8b5cf6]/40 transition-colors"
-          >
-            <div className="flex flex-col gap-1.5">
-              {/* Voucher code */}
-              <div className="flex items-center gap-1.5">
-                <Tag className="w-3 h-3 text-[#8b5cf6] shrink-0" />
-                <span className="text-xs font-bold text-white tracking-wide truncate">
-                  {voucher.code}
-                </span>
+        <div
+          className="flex transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${currentPage * 100}%)` }}
+        >
+          {pages.map((pageVouchers, pageIndex) => (
+            <div key={pageIndex} className="w-full shrink-0">
+              <div 
+                className={cn(
+                  "grid gap-3", 
+                  itemsPerPage === 1 ? "grid-cols-1" : "grid-cols-2"
+                )}
+              >
+                {pageVouchers.map((voucher) => (
+                  <div
+                    key={voucher.code}
+                    className="bg-[#0f0f13] border border-white/10 rounded-xl p-3 flex flex-col justify-between gap-3 hover:border-[#8b5cf6]/40 transition-colors h-full"
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      {/* Voucher code */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Tag className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
+                          <span className="text-sm font-bold text-white tracking-wide truncate">
+                            {voucher.code}
+                          </span>
+                        </div>
+                        <span className="text-sm font-bold text-[#8b5cf6]">
+                          {formatVoucherDiscount(voucher)}
+                        </span>
+                      </div>
+
+                      {/* Optional info */}
+                      {(voucher.remainingUses !== null || voucher.expirationDate) && (
+                        <div className="flex flex-col gap-1 mt-1">
+                          {voucher.remainingUses !== null && (
+                            <span className="text-xs text-gray-400">
+                              Còn {voucher.remainingUses} lượt
+                            </span>
+                          )}
+                          {voucher.expirationDate && (
+                            <span className={cn('text-xs flex items-center gap-1', getExpirationDisplay(voucher.expirationDate).className)}>
+                              <Clock className="w-3 h-3" />
+                              {getExpirationDisplay(voucher.expirationDate).text}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Apply button */}
+                    <button
+                      onClick={() => onApply(voucher.code)}
+                      className="w-full text-xs font-bold py-2 rounded-lg bg-[#8b5cf6]/15 text-[#8b5cf6] hover:bg-[#8b5cf6]/25 transition-colors border border-[#8b5cf6]/20 mt-1"
+                    >
+                      Áp dụng
+                    </button>
+                  </div>
+                ))}
               </div>
-
-              {/* Discount value - always shown */}
-              <span className="text-sm font-bold text-[#8b5cf6]">
-                {formatVoucherDiscount(voucher)}
-              </span>
-
-              {/* Optional info - only render if data exists */}
-              {(voucher.remainingUses !== null || voucher.expirationDate) && (
-                <div className="flex flex-col gap-0.5">
-                  {voucher.remainingUses !== null && (
-                    <span className="text-[10px] text-gray-400">
-                      Còn {voucher.remainingUses} lượt
-                    </span>
-                  )}
-                  {voucher.expirationDate && (
-                    <span className={cn('text-[10px] flex items-center gap-1', getExpirationDisplay(voucher.expirationDate).className)}>
-                      <Clock className="w-2.5 h-2.5" />
-                      {getExpirationDisplay(voucher.expirationDate).text}
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
-
-            {/* Apply button */}
-            <button
-              onClick={() => onApply(voucher.code)}
-              className="w-full text-[10px] font-bold py-1.5 rounded-lg bg-[#8b5cf6]/15 text-[#8b5cf6] hover:bg-[#8b5cf6]/25 transition-colors border border-[#8b5cf6]/20"
-            >
-              Áp dụng
-            </button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Scroll hint dots */}
-      {vouchers.length > 1 && (
-        <div className="flex justify-center mt-1.5 gap-1">
-          {vouchers.map((v, i) => (
-            <div
-              key={v.code}
-              className="h-1 w-1 rounded-full bg-gray-600"
-            />
-          ))}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center mt-4 gap-4">
+          <button
+            onClick={handlePrev}
+            className="w-8 h-8 rounded-full bg-[#16161e] border border-white/10 hover:bg-[#8b5cf6] hover:border-[#8b5cf6] flex items-center justify-center text-white transition-colors shadow-sm"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          
+          <div className="flex justify-center gap-1.5">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  currentPage === i ? 'w-6 bg-[#8b5cf6]' : 'w-1.5 bg-gray-600 hover:bg-gray-400',
+                )}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={handleNext}
+            className="w-8 h-8 rounded-full bg-[#16161e] border border-white/10 hover:bg-[#8b5cf6] hover:border-[#8b5cf6] flex items-center justify-center text-white transition-colors shadow-sm"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>

@@ -5,6 +5,7 @@ import { Form, Product } from '@/payload-types'
 import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
 import { formatPrice } from '@/utilities/formatPrice'
+import { checkRateLimit, RATE_LIMITS } from '@/utilities/rateLimit'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
 import {
   validateVoucher,
@@ -23,6 +24,12 @@ export const checkoutAction = authActionClient
   .action(
     async ({ parsedInput: { productVariantId, quantity, shippingFields, voucherCode }, ctx }) => {
       const { user } = ctx
+
+      const rl = checkRateLimit(user.id, RATE_LIMITS.checkout)
+      if (!rl.allowed) {
+        throw new ServerNotification(`Bạn thao tác quá nhanh, vui lòng thử lại sau ${Math.ceil(rl.retryAfterMs / 1000)}s`)
+      }
+
       const payload = await getPayload({ config: payloadConfig })
       const pv = await payload.findByID({
         collection: 'product-variants',
@@ -61,67 +68,6 @@ export const checkoutAction = authActionClient
       let totalPrice = quantity * pv.price
       let totalDiscount = subTotal - totalPrice
 
-      // Voucher validation and discount calculation
-      let voucherId: number | undefined = undefined
-      let voucherDiscountAmount = 0
-      let affiliateUserId: number | undefined = undefined
-      let affiliateCommission = 0
-
-      if (voucherCode) {
-        const { docs: vouchers } = await payload.find({
-          collection: 'vouchers',
-          where: { code: { equals: voucherCode.toUpperCase().trim() } },
-          limit: 1,
-          depth: 0,
-          overrideAccess: true,
-        })
-        const voucher = vouchers[0]
-        if (!voucher) {
-          throw new ServerNotification('Mã voucher không hợp lệ')
-        }
-
-        try {
-          validateVoucher(voucher, totalPrice)
-          validateVoucherScope(
-            voucher,
-            typeof pv.product === 'object' ? pv.product.id : pv.product,
-            pv.id,
-          )
-
-          // Prevent self-referral for affiliate vouchers
-          if (voucher.affiliateUser) {
-            const affiliateId =
-              typeof voucher.affiliateUser === 'object'
-                ? voucher.affiliateUser.id
-                : voucher.affiliateUser
-            if (affiliateId === user.id) {
-              throw new Error('Bạn không thể sử dụng mã voucher affiliate của chính mình')
-            }
-          }
-        } catch (e) {
-          throw new ServerNotification((e as Error).message)
-        }
-
-        voucherDiscountAmount = calculateVoucherDiscount(voucher, totalPrice)
-        totalPrice = totalPrice - voucherDiscountAmount
-        totalDiscount = totalDiscount + voucherDiscountAmount
-        voucherId = voucher.id
-
-        // --- Affiliate commission calculation ---
-        // Commission is calculated on the ORIGINAL price (subTotal), not the discounted price
-        if (voucher.affiliateUser && voucher.commissionType && voucher.commissionValue) {
-          affiliateUserId =
-            typeof voucher.affiliateUser === 'object'
-              ? voucher.affiliateUser.id
-              : voucher.affiliateUser
-          if (voucher.commissionType === 'percentage') {
-            affiliateCommission = Math.round((subTotal * voucher.commissionValue) / 100)
-          } else {
-            affiliateCommission = voucher.commissionValue * quantity
-          }
-        }
-      }
-
       let formSubmissionId: any = undefined
       try {
         if (pv.form) {
@@ -137,11 +83,81 @@ export const checkoutAction = authActionClient
         }
       } catch (e) {
         console.log(e)
-        throw new ServerNotification('Vui lòng điển đầy đủ thông tin giao hàng')
+        throw new ServerNotification('Vui lòng điền đầy đủ thông tin giao hàng')
       }
 
+      let voucherDiscountAmount = 0
       const db = payload.db.drizzle
       const order = await db.transaction(async (tx) => {
+        // --- Voucher validation with row-level lock ---
+        let voucherId: number | undefined = undefined
+        let affiliateUserId: number | undefined = undefined
+        let affiliateCommission = 0
+
+        if (voucherCode) {
+          // Lock the voucher row to prevent race conditions (e.g. maxUses bypass)
+          const [lockedVoucher] = await tx
+            .select({ id: vouchers.id })
+            .from(vouchers)
+            .where(eq(vouchers.code, voucherCode.toUpperCase().trim()))
+            .for('update')
+
+          if (!lockedVoucher) {
+            throw new ServerNotification('Mã voucher không hợp lệ')
+          }
+
+          const { docs: fetchedVouchers } = await payload.find({
+            collection: 'vouchers',
+            where: { id: { equals: lockedVoucher.id } },
+            limit: 1,
+            depth: 0,
+            overrideAccess: true,
+          })
+          const voucher = fetchedVouchers[0]
+          if (!voucher) {
+            throw new ServerNotification('Mã voucher không hợp lệ')
+          }
+
+          try {
+            validateVoucher(voucher, totalPrice)
+            validateVoucherScope(
+              voucher,
+              typeof pv.product === 'object' ? pv.product.id : pv.product,
+              pv.id,
+            )
+
+            // Prevent self-referral for affiliate vouchers
+            if (voucher.affiliateUser) {
+              const affiliateId =
+                typeof voucher.affiliateUser === 'object'
+                  ? voucher.affiliateUser.id
+                  : voucher.affiliateUser
+              if (affiliateId === user.id) {
+                throw new Error('Bạn không thể sử dụng mã voucher affiliate của chính mình')
+              }
+            }
+          } catch (e) {
+            throw new ServerNotification((e as Error).message)
+          }
+
+          voucherDiscountAmount = calculateVoucherDiscount(voucher, totalPrice)
+          totalPrice = totalPrice - voucherDiscountAmount
+          totalDiscount = totalDiscount + voucherDiscountAmount
+          voucherId = voucher.id
+
+          // Affiliate commission calculation
+          if (voucher.affiliateUser && voucher.commissionType && voucher.commissionValue) {
+            affiliateUserId =
+              typeof voucher.affiliateUser === 'object'
+                ? voucher.affiliateUser.id
+                : voucher.affiliateUser
+            if (voucher.commissionType === 'percentage') {
+              affiliateCommission = Math.round((subTotal * voucher.commissionValue) / 100)
+            } else {
+              affiliateCommission = voucher.commissionValue * quantity
+            }
+          }
+        }
         const [newUser] = await tx
           .update(users)
           .set({ balance: sql`${users.balance} - ${totalPrice}` })
@@ -197,38 +213,41 @@ export const checkoutAction = authActionClient
       })
 
       after(async () => {
-        await Promise.all([
-          // update supplier
-          (async () => {
-            const defaultSupplierId =
-              pv.defaultSupplier && typeof pv.defaultSupplier === 'object'
-                ? pv.defaultSupplier.id
-                : pv.defaultSupplier
-            await payload.update({
-              collection: 'orders',
-              where: { id: { equals: order.id } },
-              data: { supplier: defaultSupplierId },
-              user: config.AUTO_PROCESS_USER_ID,
-              limit: 1,
-            })
-          })(),
-          // update product and product_variant sold
-          db
-            .update(products)
-            .set({ sold: sql`${products.sold} + ${quantity}` })
-            .where(eq(products.id, typeof pv.product === 'object' ? pv.product.id : pv.product)),
-          db
-            .update(product_variants)
-            .set({ sold: sql`${product_variants.sold} + ${quantity}` })
-            .where(eq(product_variants.id, pv.id)),
-          // sendNewOrderNotification(order.id, order.orderedBy.toString(), new Date(order.createdAt)),
-          discordWebhook({
-            subject: `Thanh Toán Đơn Hàng`,
-            message: `Người dùng: ${user.email} \nĐơn hàng: **#${order.id}** \nSản phẩm: **${pv.name}** x${quantity} \nSố tiền: **${formatPrice(totalPrice)}**${voucherDiscountAmount > 0 ? ` \nVoucher giảm: **${formatPrice(voucherDiscountAmount)}**` : ''}`,
-            color: '#00FF00',
-            channel: 'activities',
-          }),
-        ])
+        try {
+          await Promise.all([
+            // update supplier
+            (async () => {
+              const defaultSupplierId =
+                pv.defaultSupplier && typeof pv.defaultSupplier === 'object'
+                  ? pv.defaultSupplier.id
+                  : pv.defaultSupplier
+              await payload.update({
+                collection: 'orders',
+                where: { id: { equals: order.id } },
+                data: { supplier: defaultSupplierId },
+                user: config.AUTO_PROCESS_USER_ID,
+                limit: 1,
+              })
+            })(),
+            // update product and product_variant sold
+            db
+              .update(products)
+              .set({ sold: sql`${products.sold} + ${quantity}` })
+              .where(eq(products.id, typeof pv.product === 'object' ? pv.product.id : pv.product)),
+            db
+              .update(product_variants)
+              .set({ sold: sql`${product_variants.sold} + ${quantity}` })
+              .where(eq(product_variants.id, pv.id)),
+            discordWebhook({
+              subject: `Thanh Toán Đơn Hàng`,
+              message: `Người dùng: ${user.email} \nĐơn hàng: **#${order.id}** \nSản phẩm: **${pv.name}** x${quantity} \nSố tiền: **${formatPrice(totalPrice)}**${voucherDiscountAmount > 0 ? ` \nVoucher giảm: **${formatPrice(voucherDiscountAmount)}**` : ''}`,
+              color: '#00FF00',
+              channel: 'activities',
+            }),
+          ])
+        } catch (e) {
+          payload.logger.error({ err: e, message: `Failed to execute after() callbacks for order #${order.id}` })
+        }
       })
       const result = await autoProcessOrder(order.id)
       if (!result?.success) {

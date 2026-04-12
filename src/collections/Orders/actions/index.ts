@@ -20,8 +20,7 @@ export const createOrder = async (data: {
   if (!product) {
     throw new Error('Product not found')
   }
-  // @ts-expect-error ignore
-  if (product.form && !data.formSubmission.length) {
+  if ((product as any).form && !data.formSubmission.length) {
     throw new Error('Form submission is required')
   }
 }

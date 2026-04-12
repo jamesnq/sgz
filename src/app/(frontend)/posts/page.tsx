@@ -6,9 +6,20 @@ import PostsPageClient from './page.client'
 
 export const revalidate = 300
 
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { getServerSideURL } from '@/utilities/getURL'
+
 export const metadata = {
   title: 'Bài viết | Sub Game Zone',
   description: 'Tin tức và hướng dẫn game mới nhất từ Sub Game Zone',
+  alternates: {
+    canonical: `${getServerSideURL()}/posts`,
+  },
+  ...mergeOpenGraph({
+    title: 'Bài viết | Sub Game Zone',
+    description: 'Tin tức và hướng dẫn game mới nhất từ Sub Game Zone',
+    url: `${getServerSideURL()}/posts`,
+  }),
 }
 
 const getPosts = unstable_cache(
@@ -47,8 +58,6 @@ const getTags = unstable_cache(
 
 export default async function PostsPage() {
   const [posts, tags] = await Promise.all([getPosts(), getTags()])
-
-  console.log("Recompiling PostsPage to clear stale cache that wraps it in Shell")
 
   return <PostsPageClient posts={posts} tags={tags} />
 }
