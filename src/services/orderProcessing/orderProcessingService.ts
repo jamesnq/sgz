@@ -71,7 +71,7 @@ export class OrderProcessingService {
       }
 
       // 1. Handle Fixed Stock (Direct Delivery)
-      if (hasText(productVariant.fixedStock)) {
+      if (productVariant.fixedStock && hasText(productVariant.fixedStock)) {
         await payload.update({
           collection: 'orders',
           id: orderId,
@@ -81,6 +81,7 @@ export class OrderProcessingService {
           },
           user: config.AUTO_PROCESS_USER_ID,
           req: { transactionID },
+          context: { isAutoProcess: true },
         })
 
         await payload.db.commitTransaction(transactionID)
@@ -392,6 +393,7 @@ export class OrderProcessingService {
         data: processorResult.data,
         user: config.AUTO_PROCESS_USER_ID,
         req: { transactionID },
+        context: { isAutoProcess: true },
       })
     }
 

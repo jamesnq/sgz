@@ -103,14 +103,19 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
     ) {
       await sendOrderUserUpdatedStaffNotification(doc.id)
     }
+    // Determine if the action is done by the system's AUTO_PROCESS_USER (passed via context in Local API)
+    const isAutoProcessUser = req.context?.isAutoProcess === true
+
     // Send notification to Discord staff when order is completed
     if (
       doc.status === 'COMPLETED' &&
-      previousDoc.status !== 'COMPLETED' &&
-      // handle duplicate with auto completed
-      previousDoc.status !== 'IN_QUEUE'
+      previousDoc.status !== 'COMPLETED'
     ) {
-      await sendOrderCompletedStaffNotification(doc)
+      // Auto-processes invoke sendOrderCompletedNotification manually,
+      // so we only notify if it was manually updated by a human staff.
+      if (!isAutoProcessUser) {
+        await sendOrderCompletedStaffNotification(doc)
+      }
     }
   }
 }
