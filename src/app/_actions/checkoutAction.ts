@@ -152,7 +152,7 @@ export const checkoutAction = authActionClient
                 ? voucher.affiliateUser.id
                 : voucher.affiliateUser
             if (voucher.commissionType === 'percentage') {
-              affiliateCommission = Math.round((subTotal * voucher.commissionValue) / 100)
+              affiliateCommission = Math.round((quantity * pv.price * voucher.commissionValue) / 100)
             } else {
               affiliateCommission = voucher.commissionValue * quantity
             }
