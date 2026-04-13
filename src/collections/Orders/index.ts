@@ -33,13 +33,15 @@ const orderByOrAdmin: Access = async ({ req }) => {
 }
 
 // hooks
-const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, req, operation }) => {
+const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, originalDoc, req, operation }) => {
   const user = req.user
   if (operation !== 'update' || !data || !user) return data
   const userId = typeof user === 'object' ? user.id : user
 
-  if (userHasRole(user, ['admin', 'staff']) && !(data.handlers as number[]).includes(userId)) {
-    data.handlers = Array.from(new Set([...(data.handlers as number[]), userId]))
+  const currentHandlers = (data.handlers as number[]) || (originalDoc?.handlers as number[]) || []
+
+  if (userHasRole(user, ['admin', 'staff']) && !currentHandlers.includes(userId)) {
+    data.handlers = Array.from(new Set([...currentHandlers, userId]))
   }
   return data
 }
@@ -48,17 +50,28 @@ const calculateAnalysisHook: CollectionBeforeChangeHook<Order> = async ({
   data,
   originalDoc,
   req: { payload },
+  operation,
 }) => {
   if (!data) return data
-  if (!data.supplier) {
-    data.revenue = data.totalPrice
+
+  // If the supplier field is explicitly being removed or not present on creation
+  if (data.supplier === null || (operation === 'create' && !data.supplier)) {
+    if (data.totalPrice !== undefined) data.revenue = data.totalPrice
     data.cost = 0
     return data
   }
-  if (originalDoc?.supplier != data.supplier && data.supplier) {
+
+  // If the supplier field is explicitly being changed to a new supplier
+  if (data.supplier && data.supplier !== originalDoc?.supplier) {
     const supplierId = typeof data.supplier === 'object' ? data.supplier.id : data.supplier
+    
+    // Fallback to originalDoc for fields not within the patch request
+    const productVariantPayload = data.productVariant ?? originalDoc?.productVariant
     const productVariantId =
-      typeof data.productVariant === 'object' ? data.productVariant.id : data.productVariant
+      typeof productVariantPayload === 'object' ? productVariantPayload.id : productVariantPayload
+    
+    if (!productVariantId) return data;
+
     const { docs: variantSupplies } = await payload.find({
       collection: 'product-variant-supplies',
       where: {
@@ -71,11 +84,14 @@ const calculateAnalysisHook: CollectionBeforeChangeHook<Order> = async ({
     })
     const variantSupply = variantSupplies[0]
     if (!variantSupply) throw new ConflictsError('Product not found from the supplier')
-    if (data.supplierPaid === null) {
+    if (data.supplierPaid === null || data.supplierPaid === undefined) {
       data.supplierPaid = variantSupply.prepaid
     }
-    data.cost = variantSupply.cost * Number(data.quantity)
-    data.revenue = Number(data.totalPrice) - data.cost
+    const currentQuantity = data.quantity ?? originalDoc?.quantity ?? 1
+    const currentTotalPrice = data.totalPrice ?? originalDoc?.totalPrice ?? 0
+
+    data.cost = variantSupply.cost * Number(currentQuantity)
+    data.revenue = Number(currentTotalPrice) - data.cost
     return data
   }
 
