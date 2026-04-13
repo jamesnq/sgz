@@ -157,6 +157,7 @@ export class OrderProcessingService {
       id: orderId,
       user: config.AUTO_PROCESS_USER_ID,
       depth: 1,
+      overrideAccess: true, // Guarantees all relation fields like fixedStock are unconditionally surfaced
       req: { transactionID },
     })
   }
