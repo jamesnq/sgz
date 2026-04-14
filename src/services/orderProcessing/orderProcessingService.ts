@@ -82,6 +82,7 @@ export class OrderProcessingService {
           user: config.AUTO_PROCESS_USER_ID,
           req: { transactionID },
           context: { isAutoProcess: true },
+          overrideAccess: true,
         })
 
         await payload.db.commitTransaction(transactionID)
@@ -189,6 +190,8 @@ export class OrderProcessingService {
         data: { status: 'COMPLETED' },
         user: config.AUTO_PROCESS_USER_ID,
         req: { transactionID },
+        context: { isAutoProcess: true },
+        overrideAccess: true,
       })
 
       // Send notification before returning
@@ -283,6 +286,7 @@ export class OrderProcessingService {
         order: order.id,
       },
       req: { transactionID },
+      overrideAccess: true,
     })
 
     // Update product variant stock count and status
@@ -295,6 +299,8 @@ export class OrderProcessingService {
       data: { deliveryContent, status: 'COMPLETED' },
       user: config.AUTO_PROCESS_USER_ID,
       req: { transactionID },
+      context: { isAutoProcess: true },
+      overrideAccess: true,
     })
 
     await sendOrderCompletedNotification(order)
@@ -337,6 +343,7 @@ export class OrderProcessingService {
         status: remainingStocksCount === 0 ? 'STOPPED' : undefined,
       },
       req: { transactionID },
+      overrideAccess: true,
     })
 
     // Send notification to admin channel if product is out of stock
@@ -395,6 +402,7 @@ export class OrderProcessingService {
         user: config.AUTO_PROCESS_USER_ID,
         req: { transactionID },
         context: { isAutoProcess: true },
+        overrideAccess: true,
       })
     }
 
