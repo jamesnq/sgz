@@ -74,15 +74,20 @@ export class OrderProcessingService {
       if (productVariant.fixedStock && hasText(productVariant.fixedStock)) {
         await payload.update({
           collection: 'orders',
-          id: orderId,
+          where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
           data: {
             deliveryContent: productVariant.fixedStock,
             status: 'COMPLETED',
           },
           user: config.AUTO_PROCESS_USER_ID,
-          req: { transactionID },
+          req: { 
+            transactionID,
+            user: config.AUTO_PROCESS_USER_ID as any 
+          },
           context: { isAutoProcess: true },
           overrideAccess: true,
+          limit: 1,
+          depth: 0,
         })
 
         await payload.db.commitTransaction(transactionID)
@@ -293,15 +298,24 @@ export class OrderProcessingService {
     await this.updateProductVariantStockStatus(payload, productVariant, transactionID)
 
     // Update order with delivery content and mark as completed
-    await payload.update({
-      collection: 'orders',
-      id: orderId,
-      data: { deliveryContent, status: 'COMPLETED' },
-      user: config.AUTO_PROCESS_USER_ID,
-      req: { transactionID },
-      context: { isAutoProcess: true },
-      overrideAccess: true,
-    })
+    const { docs } = await payload.update({
+        collection: 'orders',
+        where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
+        data: {
+          deliveryContent: deliveryContent,
+          status: 'COMPLETED',
+        },
+        user: config.AUTO_PROCESS_USER_ID,
+        req: { 
+          transactionID,
+          user: config.AUTO_PROCESS_USER_ID as any
+        },
+        context: { isAutoProcess: true },
+        overrideAccess: true,
+        limit: 1,
+        depth: 0,
+      })
+      const updatedOrder = docs[0]
 
     await sendOrderCompletedNotification(order)
   }
@@ -395,15 +409,21 @@ export class OrderProcessingService {
 
     // Update the order with processor result data if successful
     if (processorResult.success && processorResult.data) {
-      await payload.update({
+      const { docs } = await payload.update({
         collection: 'orders',
-        id: orderId,
+        where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
         data: processorResult.data,
         user: config.AUTO_PROCESS_USER_ID,
-        req: { transactionID },
+        req: { 
+          transactionID,
+          user: config.AUTO_PROCESS_USER_ID as any
+        },
         context: { isAutoProcess: true },
         overrideAccess: true,
+        limit: 1,
+        depth: 0,
       })
+      const updatedOrder = docs[0]
     }
 
     return processorResult
