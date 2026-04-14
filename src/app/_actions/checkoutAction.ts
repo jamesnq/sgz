@@ -268,20 +268,23 @@ export const checkoutAction = authActionClient
           payload.logger.error({ err: e, message: `Failed to execute after() callbacks for order #${order.id}` })
         }
       })
+      let updatedOrder = order as any
       const result = await autoProcessOrder(order.id)
       if (!result?.success) {
         await sendNewOrderStaffNotification(order)
+      } else {
+        try {
+          const dbOrder = await payload.findByID({
+            collection: 'orders',
+            id: order.id,
+            overrideAccess: true,
+          })
+          updatedOrder = { ...order, ...dbOrder }
+        } catch (e) {
+          console.error('[checkoutAction] Failed to fetch updated order status:', e)
+        }
       }
 
-      // if (
-      //   pv.metadata &&
-      //   typeof pv.metadata === 'object' &&
-      //   'isAuto' in pv.metadata &&
-      //   pv.metadata.isAuto &&
-      //   'type' in pv.metadata
-      // ) {
-      //   const result = await autoProcessOrder(order.id)
-      // }
-      return { order }
+      return { order: updatedOrder }
     },
   )
