@@ -47,11 +47,18 @@ export class OrderProcessingService {
       }
     }
 
-    let committed = false;
+    let committed = false
     try {
       // Fetch the order with its related product variant
       const order = await this.fetchOrder(payload, orderId, transactionID)
       const productVariant = order.productVariant
+
+      if (order.status !== 'IN_QUEUE') {
+        return {
+          success: false,
+          message: `Order status is ${order.status}, only IN_QUEUE orders can be auto-processed`,
+        }
+      }
 
       // Validate the product variant
       if (!productVariant || typeof productVariant === 'number') {
@@ -71,31 +78,22 @@ export class OrderProcessingService {
       }
 
       // 1. Handle Fixed Stock (Direct Delivery)
-      if (productVariant.fixedStock && hasText(productVariant.fixedStock)) {
-        await payload.update({
-          collection: 'orders',
-          where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
-          data: {
-            deliveryContent: productVariant.fixedStock,
-            status: 'COMPLETED',
-          },
-          user: config.AUTO_PROCESS_USER_ID,
-          req: { 
-            transactionID,
-            user: config.AUTO_PROCESS_USER_ID as any 
-          },
-          context: { isAutoProcess: true },
-          overrideAccess: true,
-          limit: 1,
-          depth: 0,
-        })
+      if (productVariant.fixedStock !== undefined) {
+        const result = await this.handleFixedStock(
+          payload,
+          order,
+          productVariant,
+          orderId,
+          transactionID,
+        )
 
-        await payload.db.commitTransaction(transactionID)
-        committed = true;
-        await sendOrderCompletedNotification(order)
-        return {
-          success: true,
-          message: 'Fixed stock delivered successfully',
+        if (result !== null) {
+          if (result.success) {
+            await payload.db.commitTransaction(transactionID)
+            committed = true
+          }
+
+          return result
         }
       }
 
@@ -114,7 +112,7 @@ export class OrderProcessingService {
         if (result !== null) {
           if (result.success) {
             await payload.db.commitTransaction(transactionID)
-            committed = true;
+            committed = true
           }
           return result
         }
@@ -131,7 +129,7 @@ export class OrderProcessingService {
 
       if (typeResult.success) {
         await payload.db.commitTransaction(transactionID)
-        committed = true;
+        committed = true
       }
       return typeResult
     } catch (error) {
@@ -168,6 +166,60 @@ export class OrderProcessingService {
     })
   }
 
+  private async handleFixedStock(
+    payload: BasePayload,
+    order: Order,
+    productVariant: ProductVariant,
+    orderId: number,
+    transactionID: string | number,
+  ): Promise<ProcessResult | null> {
+    if (!productVariant.fixedStock || !hasText(productVariant.fixedStock)) {
+      return {
+        success: false,
+        message: 'Product variant is AVAILABLE but has no fixed stock content',
+      }
+    }
+
+    const { docs } = await payload.update({
+      collection: 'orders',
+      where: {
+        and: [{ id: { equals: orderId } }, { status: { equals: 'IN_QUEUE' } }],
+      },
+      data: {
+        deliveryContent: productVariant.fixedStock,
+        status: 'COMPLETED',
+      },
+      user: config.AUTO_PROCESS_USER_ID,
+      req: {
+        transactionID,
+        user: config.AUTO_PROCESS_USER_ID as any,
+      },
+      context: { isAutoProcess: true },
+      overrideAccess: true,
+      limit: 1,
+      depth: 0,
+    })
+
+    if (!docs.length) {
+      return {
+        success: false,
+        message: 'Order is no longer IN_QUEUE, auto-processing skipped',
+      }
+    }
+
+    const updatedOrder = await this.fetchOrder(payload, orderId, transactionID)
+    await sendOrderCompletedNotification(updatedOrder)
+
+    return {
+      success: true,
+      message: 'Fixed stock delivered successfully',
+      data: {
+        status: 'COMPLETED',
+        deliveryContent: productVariant.fixedStock,
+      },
+    }
+  }
+
   /**
    * Handle orders with autoProcess setting
    * Currently supports 'key' type auto processing which assigns stock items to the order
@@ -201,7 +253,7 @@ export class OrderProcessingService {
 
       // Send notification before returning
       await sendOrderCompletedNotification(order)
-      
+
       return {
         success: true,
         message: 'Order completed directly',
@@ -299,23 +351,23 @@ export class OrderProcessingService {
 
     // Update order with delivery content and mark as completed
     const { docs } = await payload.update({
-        collection: 'orders',
-        where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
-        data: {
-          deliveryContent: deliveryContent,
-          status: 'COMPLETED',
-        },
-        user: config.AUTO_PROCESS_USER_ID,
-        req: { 
-          transactionID,
-          user: config.AUTO_PROCESS_USER_ID as any
-        },
-        context: { isAutoProcess: true },
-        overrideAccess: true,
-        limit: 1,
-        depth: 0,
-      })
-      const updatedOrder = docs[0]
+      collection: 'orders',
+      where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
+      data: {
+        deliveryContent: deliveryContent,
+        status: 'COMPLETED',
+      },
+      user: config.AUTO_PROCESS_USER_ID,
+      req: {
+        transactionID,
+        user: config.AUTO_PROCESS_USER_ID as any,
+      },
+      context: { isAutoProcess: true },
+      overrideAccess: true,
+      limit: 1,
+      depth: 0,
+    })
+    const updatedOrder = docs[0]
 
     await sendOrderCompletedNotification(order)
   }
@@ -414,9 +466,9 @@ export class OrderProcessingService {
         where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
         data: processorResult.data,
         user: config.AUTO_PROCESS_USER_ID,
-        req: { 
+        req: {
           transactionID,
-          user: config.AUTO_PROCESS_USER_ID as any
+          user: config.AUTO_PROCESS_USER_ID as any,
         },
         context: { isAutoProcess: true },
         overrideAccess: true,
