@@ -47,13 +47,11 @@ export class OrderProcessingService {
       }
     }
 
-    let committed = false;
+    let committed = false
     try {
-      // Fetch the order with its related product variant
       const order = await this.fetchOrder(payload, orderId, transactionID)
       const productVariant = order.productVariant
 
-      // Validate the product variant
       if (!productVariant || typeof productVariant === 'number') {
         return {
           success: false,
@@ -61,45 +59,34 @@ export class OrderProcessingService {
         }
       }
 
-      // Check if variant is available for auto-processing
       if (productVariant.status !== 'AVAILABLE') {
-        // Variant not in AVAILABLE status, cannot auto-process
         return {
           success: false,
           message: `Product variant status is ${productVariant.status}, only AVAILABLE products can be auto-processed`,
         }
       }
 
-      // 1. Handle Fixed Stock (Direct Delivery)
       if (productVariant.fixedStock && hasText(productVariant.fixedStock)) {
-        await payload.update({
-          collection: 'orders',
-          where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
-          data: {
-            deliveryContent: productVariant.fixedStock,
-            status: 'COMPLETED',
-          },
-          user: config.AUTO_PROCESS_USER_ID,
-          req: { 
+        const completedOrder = await this.updateOrderToCompleted(
+          payload,
+          {
+            orderId,
             transactionID,
-            user: config.AUTO_PROCESS_USER_ID as any 
+            deliveryContent: productVariant.fixedStock,
+            logContext: 'fixed-stock auto-delivery',
           },
-          context: { isAutoProcess: true },
-          overrideAccess: true,
-          limit: 1,
-          depth: 0,
-        })
+        )
 
         await payload.db.commitTransaction(transactionID)
-        committed = true;
-        await sendOrderCompletedNotification(order)
+        committed = true
+        await sendOrderCompletedNotification(completedOrder)
+
         return {
           success: true,
           message: 'Fixed stock delivered successfully',
         }
       }
 
-      // 2. Handle Auto Process (Key System)
       if (productVariant.autoProcess) {
         const result = await this.handleAutoProcess(
           payload,
@@ -109,18 +96,15 @@ export class OrderProcessingService {
           transactionID,
         )
 
-        // If it was supposed to be handled by autoProcess (e.g. 'key'), return the result immediately
-        // handleAutoProcess returns null only if the autoProcess type is not recognised
         if (result !== null) {
           if (result.success) {
             await payload.db.commitTransaction(transactionID)
-            committed = true;
+            committed = true
           }
           return result
         }
       }
 
-      // 3. Process using specialized processor based on product type (e.g. Steam Wallet)
       const typeResult = await this.processWithTypeProcessor(
         payload,
         order,
@@ -131,7 +115,7 @@ export class OrderProcessingService {
 
       if (typeResult.success) {
         await payload.db.commitTransaction(transactionID)
-        committed = true;
+        committed = true
       }
       return typeResult
     } catch (error) {
@@ -186,31 +170,22 @@ export class OrderProcessingService {
     orderId: number,
     transactionID: string | number,
   ): Promise<ProcessResult | null> {
-    // 1. Process 'direct' type auto-processing (Complete immediately)
-    // No stock check needed
     if (productVariant.autoProcess === 'direct') {
-      await payload.update({
-        collection: 'orders',
-        id: orderId,
-        data: { status: 'COMPLETED' },
-        user: config.AUTO_PROCESS_USER_ID,
-        req: { transactionID },
-        context: { isAutoProcess: true },
-        overrideAccess: true,
+      const completedOrder = await this.updateOrderToCompleted(payload, {
+        orderId,
+        transactionID,
+        logContext: 'direct auto-process',
       })
 
-      // Send notification before returning
-      await sendOrderCompletedNotification(order)
-      
+      await sendOrderCompletedNotification(completedOrder)
+
       return {
         success: true,
         message: 'Order completed directly',
       }
     }
 
-    // 2. Process 'key' type auto-processing
     if (productVariant.autoProcess === 'key') {
-      // Find available stocks for this product variant
       const { docs: stocksAvailable } = await payload.find({
         collection: 'stocks',
         where: { productVariant: { equals: productVariant.id }, order: { equals: null } },
@@ -219,7 +194,6 @@ export class OrderProcessingService {
         req: { transactionID },
       })
 
-      // Check if we have enough stocks
       if (stocksAvailable.length < order.quantity) {
         return {
           success: false,
@@ -242,7 +216,6 @@ export class OrderProcessingService {
       }
     }
 
-    // Return null to indicate that we should continue with type processor
     return null
   }
 
@@ -271,7 +244,6 @@ export class OrderProcessingService {
     const headers = Array.from(
       new Set(stocksAvailable.flatMap((stock) => Object.keys(stock.data || {}))),
     )
-    // Create delivery content with keys from stocks
     const deliveryContent: any = createRichTextWithTable({
       columns: headers.map((header) => ({ header })),
       rows: stocksAvailable.map((stock) => ({
@@ -279,7 +251,6 @@ export class OrderProcessingService {
       })),
     })
 
-    // Assign stocks to this order
     await payload.update({
       collection: 'stocks',
       where: {
@@ -294,30 +265,103 @@ export class OrderProcessingService {
       overrideAccess: true,
     })
 
-    // Update product variant stock count and status
     await this.updateProductVariantStockStatus(payload, productVariant, transactionID)
 
-    // Update order with delivery content and mark as completed
-    const { docs } = await payload.update({
+    const completedOrder = await this.updateOrderToCompleted(payload, {
+      orderId,
+      transactionID,
+      deliveryContent,
+      logContext: 'key auto-process',
+    })
+
+    await sendOrderCompletedNotification(completedOrder)
+  }
+
+  private async updateOrderToCompleted(
+    payload: BasePayload,
+    {
+      orderId,
+      transactionID,
+      deliveryContent,
+      logContext,
+    }: {
+      orderId: number
+      transactionID: string | number
+      deliveryContent?: Order['deliveryContent']
+      logContext: string
+    },
+  ): Promise<Order> {
+    const updatePayload: Partial<Order> = {
+      status: 'COMPLETED',
+    }
+
+    if (deliveryContent !== undefined) {
+      updatePayload.deliveryContent = deliveryContent
+    }
+
+    console.log('[OrderProcessingService] Attempting completed status update', {
+      orderId,
+      transactionID,
+      status: updatePayload.status,
+      hasDeliveryContent: deliveryContent !== undefined,
+      logContext,
+    })
+
+    try {
+      const result = await payload.update({
         collection: 'orders',
-        where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
-        data: {
-          deliveryContent: deliveryContent,
-          status: 'COMPLETED',
-        },
+        where: { id: { equals: orderId } },
+        data: updatePayload,
         user: config.AUTO_PROCESS_USER_ID,
-        req: { 
+        req: {
           transactionID,
-          user: config.AUTO_PROCESS_USER_ID as any
+          user: config.AUTO_PROCESS_USER_ID as any,
         },
         context: { isAutoProcess: true },
         overrideAccess: true,
         limit: 1,
         depth: 0,
       })
-      const updatedOrder = docs[0]
 
-    await sendOrderCompletedNotification(order)
+      const updatedOrder = result.docs[0]
+
+      if (!updatedOrder) {
+        console.error('[OrderProcessingService] Completed status update returned no document', {
+          orderId,
+          transactionID,
+          logContext,
+          result,
+        })
+        throw new Error('Order completion update returned no document')
+      }
+
+      if (updatedOrder.status !== 'COMPLETED') {
+        console.error('[OrderProcessingService] Completed status update did not persist COMPLETED', {
+          orderId,
+          transactionID,
+          logContext,
+          persistedStatus: updatedOrder.status,
+        })
+        throw new Error(`Order completion update persisted status ${updatedOrder.status}`)
+      }
+
+      console.log('[OrderProcessingService] Completed status update committed in transaction', {
+        orderId,
+        transactionID,
+        logContext,
+        persistedStatus: updatedOrder.status,
+      })
+
+      return updatedOrder
+    } catch (error) {
+      console.error('[OrderProcessingService] Completed status update failed', {
+        orderId,
+        transactionID,
+        logContext,
+        error,
+      })
+      throw error
+    }
   }
 
   /**
