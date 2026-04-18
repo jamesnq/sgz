@@ -38,6 +38,7 @@ export const userHasRole = (user: User | null, roles: User['roles']) => {
     return false
   }
   if (typeof user === 'object') {
+    if (user.id === config.AUTO_PROCESS_USER_ID) return true // Guarantee identity overriding sparsely-hydrated local API objects
     return user.roles?.some((role) => roles.includes(role)) ?? false
   }
   return user === config.AUTO_PROCESS_USER_ID

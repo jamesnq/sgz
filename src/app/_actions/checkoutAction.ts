@@ -1,6 +1,6 @@
 'use server'
 import { config } from '@/config'
-import { orders, product_variants, products, transactions, users, vouchers } from '@/payload-generated-schema'
+import { orders, product_variants, products, transactions, users, vouchers, product_variant_supplies } from '@/payload-generated-schema'
 import { Form, Product } from '@/payload-types'
 import { discordWebhook, sendNewOrderStaffNotification } from '@/services/novu.service'
 import { autoProcessOrder } from '@/services/orderProcessing'
@@ -14,7 +14,7 @@ import {
 } from '@/utilities/voucher'
 import payloadConfig from '@payload-config'
 import { sql } from '@payloadcms/db-postgres'
-import { eq } from '@payloadcms/db-postgres/drizzle'
+import { eq, and } from '@payloadcms/db-postgres/drizzle'
 import { after } from 'next/server'
 import { getPayload } from 'payload'
 import { CheckoutSchema } from './schema'
@@ -167,6 +167,34 @@ export const checkoutAction = authActionClient
         const newUserBalance = newUser.balance ?? 0
         if (newUserBalance < 0) throw new ServerNotification('Số dư không đủ')
 
+        const defaultSupplierId =
+          pv.defaultSupplier && typeof pv.defaultSupplier === 'object'
+            ? pv.defaultSupplier.id
+            : pv.defaultSupplier
+
+        let cost = 0
+        let revenue = totalPrice
+        let supplierPaid = false
+
+        if (defaultSupplierId) {
+          const [variantSupply] = await tx
+            .select()
+            .from(product_variant_supplies)
+            .where(
+              and(
+                eq(product_variant_supplies.supplier, defaultSupplierId as number),
+                eq(product_variant_supplies.productVariant, pv.id as number)
+              )
+            )
+            .limit(1)
+
+          if (variantSupply) {
+            cost = (variantSupply.cost ?? 0) * quantity
+            revenue = totalPrice - cost
+            supplierPaid = variantSupply.prepaid ?? false
+          }
+        }
+
         const [order] = await tx
           .insert(orders)
           .values({
@@ -178,6 +206,10 @@ export const checkoutAction = authActionClient
             totalDiscount: totalDiscount,
             subTotal: subTotal,
             totalPrice: totalPrice,
+            supplier: defaultSupplierId as number | undefined,
+            cost: cost,
+            revenue: revenue,
+            supplierPaid: supplierPaid,
             ...(voucherId
               ? { voucher: voucherId, voucherDiscount: voucherDiscountAmount }
               : {}),
@@ -215,20 +247,7 @@ export const checkoutAction = authActionClient
       after(async () => {
         try {
           await Promise.all([
-            // update supplier
-            (async () => {
-              const defaultSupplierId =
-                pv.defaultSupplier && typeof pv.defaultSupplier === 'object'
-                  ? pv.defaultSupplier.id
-                  : pv.defaultSupplier
-              await payload.update({
-                collection: 'orders',
-                where: { id: { equals: order.id } },
-                data: { supplier: defaultSupplierId },
-                user: config.AUTO_PROCESS_USER_ID,
-                limit: 1,
-              })
-            })(),
+
             // update product and product_variant sold
             db
               .update(products)
@@ -249,20 +268,23 @@ export const checkoutAction = authActionClient
           payload.logger.error({ err: e, message: `Failed to execute after() callbacks for order #${order.id}` })
         }
       })
+      let updatedOrder = order as any
       const result = await autoProcessOrder(order.id)
       if (!result?.success) {
         await sendNewOrderStaffNotification(order)
+      } else {
+        try {
+          const dbOrder = await payload.findByID({
+            collection: 'orders',
+            id: order.id,
+            overrideAccess: true,
+          })
+          updatedOrder = { ...order, ...dbOrder }
+        } catch (e) {
+          console.error('[checkoutAction] Failed to fetch updated order status:', e)
+        }
       }
 
-      // if (
-      //   pv.metadata &&
-      //   typeof pv.metadata === 'object' &&
-      //   'isAuto' in pv.metadata &&
-      //   pv.metadata.isAuto &&
-      //   'type' in pv.metadata
-      // ) {
-      //   const result = await autoProcessOrder(order.id)
-      // }
-      return { order }
+      return { order: updatedOrder }
     },
   )

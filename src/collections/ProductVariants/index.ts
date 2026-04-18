@@ -147,27 +147,6 @@ export const ProductVariants: CollectionConfig = {
       async ({ req: { user, payload }, doc }) => {
         const hasRole = userHasRole(user, ['admin', 'staff'])
         if (hasRole) return doc
-        if (doc.fixedStock) {
-          if (!user || typeof user !== 'object') {
-            delete doc.fixedStock
-            return doc
-          }
-          const paid = await payload.find({
-            collection: 'orders',
-            depth: 0,
-            limit: 1,
-            pagination: false,
-            select: {},
-            where: {
-              productVariant: { equals: doc.id },
-              orderedBy: { equals: user.id },
-              status: { equals: 'COMPLETED' },
-            },
-          })
-          if (paid.docs.length <= 0) {
-            delete doc.fixedStock
-          }
-        }
 
         return doc
       },
@@ -313,7 +292,24 @@ export const ProductVariants: CollectionConfig = {
       editor: defaultLexicalEditor,
       label: 'Fixed Stock',
       access: {
-        read: anyone, // handle in before read hook
+        read: async ({ req: { user, payload }, id, doc }) => {
+          if (userHasRole(user, ['admin', 'staff'])) return true
+          if (!user || typeof user !== 'object') return false
+          const docId = id || doc?.id
+          if (!docId) return false
+          const paid = await payload.find({
+            collection: 'orders',
+            depth: 0,
+            limit: 1,
+            pagination: false,
+            where: {
+              productVariant: { equals: docId },
+              orderedBy: { equals: user.id },
+              status: { equals: 'COMPLETED' },
+            },
+          })
+          return paid.docs.length > 0
+        },
         update: hasRole(['admin']),
         create: hasRole(['admin']),
       },
