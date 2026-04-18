@@ -52,6 +52,13 @@ export class OrderProcessingService {
       const order = await this.fetchOrder(payload, orderId, transactionID)
       const productVariant = order.productVariant
 
+      if (order.status !== 'IN_QUEUE') {
+        return {
+          success: false,
+          message: `Order status is ${order.status}, only IN_QUEUE orders can be auto-processed`,
+        }
+      }
+
       if (!productVariant || typeof productVariant === 'number') {
         return {
           success: false,
@@ -150,6 +157,60 @@ export class OrderProcessingService {
       overrideAccess: true, // Guarantees all relation fields like fixedStock are unconditionally surfaced
       req: { transactionID },
     })
+  }
+
+  private async handleFixedStock(
+    payload: BasePayload,
+    order: Order,
+    productVariant: ProductVariant,
+    orderId: number,
+    transactionID: string | number,
+  ): Promise<ProcessResult | null> {
+    if (!productVariant.fixedStock || !hasText(productVariant.fixedStock)) {
+      return {
+        success: false,
+        message: 'Product variant is AVAILABLE but has no fixed stock content',
+      }
+    }
+
+    const { docs } = await payload.update({
+      collection: 'orders',
+      where: {
+        and: [{ id: { equals: orderId } }, { status: { equals: 'IN_QUEUE' } }],
+      },
+      data: {
+        deliveryContent: productVariant.fixedStock,
+        status: 'COMPLETED',
+      },
+      user: config.AUTO_PROCESS_USER_ID,
+      req: {
+        transactionID,
+        user: config.AUTO_PROCESS_USER_ID as any,
+      },
+      context: { isAutoProcess: true },
+      overrideAccess: true,
+      limit: 1,
+      depth: 0,
+    })
+
+    if (!docs.length) {
+      return {
+        success: false,
+        message: 'Order is no longer IN_QUEUE, auto-processing skipped',
+      }
+    }
+
+    const updatedOrder = await this.fetchOrder(payload, orderId, transactionID)
+    await sendOrderCompletedNotification(updatedOrder)
+
+    return {
+      success: true,
+      message: 'Fixed stock delivered successfully',
+      data: {
+        status: 'COMPLETED',
+        deliveryContent: productVariant.fixedStock,
+      },
+    }
   }
 
   /**
@@ -458,9 +519,9 @@ export class OrderProcessingService {
         where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
         data: processorResult.data,
         user: config.AUTO_PROCESS_USER_ID,
-        req: { 
+        req: {
           transactionID,
-          user: config.AUTO_PROCESS_USER_ID as any
+          user: config.AUTO_PROCESS_USER_ID as any,
         },
         context: { isAutoProcess: true },
         overrideAccess: true,
