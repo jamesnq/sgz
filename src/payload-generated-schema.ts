@@ -19,6 +19,7 @@ import {
   numeric,
   integer,
   boolean,
+  type AnyPgColumn,
   text,
   pgEnum,
 } from '@payloadcms/db-postgres/drizzle/pg-core'
@@ -550,9 +551,12 @@ export const orders = pgTable(
       .references(() => product_variants.id, {
         onDelete: 'set null',
       }),
-    formSubmission: integer('form_submission_id').references(() => form_submissions.id, {
-      onDelete: 'set null',
-    }),
+    formSubmission: integer('form_submission_id').references(
+      (): AnyPgColumn => form_submissions.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
     subTotal: numeric('sub_total', { mode: 'number' }).notNull(),
     totalDiscount: numeric('total_discount', { mode: 'number' }).notNull(),
     totalPrice: numeric('total_price', { mode: 'number' }).notNull(),
@@ -858,6 +862,14 @@ export const form_submissions = pgTable(
       .references(() => forms.id, {
         onDelete: 'set null',
       }),
+    completedOrder: integer('completed_order_id').references((): AnyPgColumn => orders.id, {
+      onDelete: 'set null',
+    }),
+    completedAt: timestamp('completed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    completedBy: integer('completed_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    orderStatusAtCompletion: varchar('order_status_at_completion'),
     submissionData: jsonb('submission_data').notNull(),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
@@ -869,6 +881,8 @@ export const form_submissions = pgTable(
   (columns) => [
     index('form_submissions_user_idx').on(columns.user),
     index('form_submissions_form_idx').on(columns.form),
+    index('form_submissions_completed_order_idx').on(columns.completedOrder),
+    index('form_submissions_completed_by_idx').on(columns.completedBy),
     index('form_submissions_updated_at_idx').on(columns.updatedAt),
     index('form_submissions_created_at_idx').on(columns.createdAt),
   ],
@@ -1784,6 +1798,16 @@ export const relations_form_submissions = relations(form_submissions, ({ one }) 
     fields: [form_submissions.form],
     references: [forms.id],
     relationName: 'form',
+  }),
+  completedOrder: one(orders, {
+    fields: [form_submissions.completedOrder],
+    references: [orders.id],
+    relationName: 'completedOrder',
+  }),
+  completedBy: one(users, {
+    fields: [form_submissions.completedBy],
+    references: [users.id],
+    relationName: 'completedBy',
   }),
 }))
 export const relations_novu_channels = relations(novu_channels, () => ({}))

@@ -38,6 +38,7 @@ describe('OrderProcessingService fixed-stock processing', () => {
     const rollbackTransaction = vi.fn().mockResolvedValue(undefined)
     const findByID = vi.fn().mockResolvedValue({
       id: 42,
+      status: 'IN_QUEUE',
       quantity: 1,
       productVariant: {
         id: 7,

@@ -70,6 +70,44 @@ export const FormSubmissions: CollectionConfig = {
       },
     },
     {
+      name: 'completedOrder',
+      type: 'relationship',
+      relationTo: 'orders',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Order that completed this submission',
+      },
+    },
+    {
+      name: 'completedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'When the related order became completed',
+      },
+    },
+    {
+      name: 'completedBy',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'User who completed the order when available',
+      },
+    },
+    {
+      name: 'orderStatusAtCompletion',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Order status recorded at the time completion audit was written',
+      },
+    },
+    {
       name: 'submissionData',
       type: 'json',
       required: true,
