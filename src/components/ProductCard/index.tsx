@@ -11,16 +11,24 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const discount = product.maxDiscount || 0
   const salePrice = product.minPrice || 0
   const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
+  const productHref = product.slug ? Routes.product(product.slug) : '#'
 
   return (
-    <div className="group cursor-pointer flex flex-col h-full">
-      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-sgz-surface shrink-0">
-        <Media
-          resource={product.image}
-          className="w-full h-full"
-          imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          size="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-        />
+    <div className="group flex flex-col h-full">
+      <div className="relative mb-4 aspect-video shrink-0 overflow-hidden rounded-xl bg-sgz-surface">
+        <Link
+          href={productHref}
+          aria-label={`View ${product.name}`}
+          className="block h-full w-full cursor-pointer"
+        >
+          <Media
+            resource={product.image}
+            alt={product.name}
+            className="w-full h-full"
+            imgClassName="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:opacity-95"
+            size="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          />
+        </Link>
         {discount > 0 && (
           <div className="absolute top-3 left-3 bg-[#ff97b5] text-[#380018] font-bold px-2 py-1 rounded text-xs z-10">
             -{discount.toFixed(0)}%
@@ -28,14 +36,15 @@ export const ProductCard = ({ product }: { product: Product }) => {
         )}
         <div className="absolute bottom-3 right-3 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-20">
           <Link
-            href={product.slug ? Routes.product(product.slug) : '#'}
+            href={productHref}
+            aria-label={`View ${product.name}`}
             className="bg-sgz-primary text-sgz-textDark p-3 rounded-xl shadow-xl flex hover:bg-white transition-colors"
           >
             <ShoppingCart className="w-5 h-5 leading-none" />
           </Link>
         </div>
       </div>
-      <Link href={product.slug ? Routes.product(product.slug) : '#'} className="mb-1">
+      <Link href={productHref} className="mb-1">
         <h3 className="font-bold text-white line-clamp-1 group-hover:text-sgz-primary transition-colors">
           {product.name}
         </h3>
