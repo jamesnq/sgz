@@ -14,7 +14,7 @@ export function buildOrderCompleteEmailMessage(args: { order: Order; orderUrl?: 
   const productName = typeof productVariant === 'object' ? productVariant.name : `Đơn hàng #${args.order.id}`
 
   return createOrderCompleteDeliveryEmail({
-    customerName: user.name,
+    customerName: user.email,
     email: user.email,
     orderId: args.order.id,
     productName,

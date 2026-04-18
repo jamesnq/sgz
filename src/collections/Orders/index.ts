@@ -148,7 +148,8 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
         }
 
         try {
-          const actorId = typeof req.user === 'object' ? req.user.id : undefined
+          const currentUser = req.user
+          const actorId = currentUser && typeof currentUser === 'object' ? currentUser.id : undefined
           const auditUpdate = buildCompletionAuditUpdate(doc, actorId)
 
           if (auditUpdate) {
