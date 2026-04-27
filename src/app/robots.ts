@@ -1,10 +1,18 @@
 import type { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'https://subgamezone.com'
+  const siteUrl = (process.env.NEXT_PUBLIC_SERVER_URL || 'https://subgamezone.com').replace(
+    /\/$/,
+    '',
+  )
+  const siteHost = new URL(siteUrl).host
 
   return {
     rules: [
+      {
+        userAgent: ['facebookexternalhit', 'Facebot', 'Twitterbot', 'LinkedInBot', 'Discordbot'],
+        allow: '/',
+      },
       {
         userAgent: '*',
         allow: '/',
@@ -31,9 +39,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: [
-      `${siteUrl}/server-sitemap.xml`,
-    ],
-    host: siteUrl,
+    sitemap: [`${siteUrl}/server-sitemap.xml`],
+    host: siteHost,
   }
 }
