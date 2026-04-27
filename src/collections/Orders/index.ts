@@ -7,7 +7,7 @@ import {
 } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
-import { hasRole, userHasRole } from '@/access/hasRoles'
+import { hasRole, isAutoProcessActor, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
@@ -44,9 +44,12 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, originalDo
   if (operation !== 'update' || !data || !user) return data
   const userId = typeof user === 'object' ? user.id : user
 
-  const currentHandlers = (data.handlers as number[]) || (originalDoc?.handlers as number[]) || []
+  const currentHandlers = ((data.handlers as Order['handlers']) || originalDoc?.handlers || []).map(
+    (handler) => (typeof handler === 'object' ? handler.id : handler),
+  )
+  const shouldTrackHandler = userHasRole(user, ['admin', 'staff']) || isAutoProcessActor(req)
 
-  if (userHasRole(user, ['admin', 'staff']) && !currentHandlers.includes(userId)) {
+  if (shouldTrackHandler && !currentHandlers.includes(userId)) {
     data.handlers = Array.from(new Set([...currentHandlers, userId]))
   }
   return data
