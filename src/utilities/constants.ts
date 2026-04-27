@@ -1,8 +1,8 @@
 export const novuChannels = ['admin', 'staff']
 
 export const defaultLogo = '/logo-full.svg'
-export const ogDefaultImage = '/logo-full.svg'
-export const imageFallback = ogDefaultImage
+export const ogDefaultImage = '/og-default.png'
+export const imageFallback = defaultLogo
 export const mediaGroup = 'Media'
 export const managerGroup = 'Manager'
 export const STOCK_SEPARATOR = '\n'
