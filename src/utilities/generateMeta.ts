@@ -18,6 +18,10 @@ type MetadataImage = {
   height?: number
 }
 
+const isUnsupportedSocialImage = (url?: string | null, type?: string | null) => {
+  return type === 'image/avif' || Boolean(url?.toLowerCase().endsWith('.avif'))
+}
+
 /**
  * Extracts a valid image URL from a Media object or returns a fallback URL
  * @param image - The image object or ID to process
@@ -42,20 +46,34 @@ const getImage = (image?: Media | Config['db']['defaultIDType'] | null): Metadat
   }
 
   if (typeof image === 'object' && 'url' in image) {
-    // Prefer the optimized OG image if available
-    const ogUrl = image.sizes?.og?.url || image.url
-    if (!ogUrl) return fallbackImage
+    const candidates = [
+      {
+        url: image.sizes?.og?.url,
+        width: image.sizes?.og?.width || 1200,
+        height: image.sizes?.og?.height || 630,
+        type: image.sizes?.og?.mimeType,
+      },
+      {
+        url: image.url,
+        width: image.width || 1200,
+        height: image.height || 630,
+        type: image.mimeType,
+      },
+    ]
 
-    const imageUrl = ogUrl.startsWith('http') ? ogUrl : serverUrl + ogUrl
-    const isOptimizedOG = Boolean(image.sizes?.og?.url)
+    const candidate = candidates.find(
+      ({ type, url }) => url && !isUnsupportedSocialImage(url, type),
+    )
+    if (!candidate?.url) return fallbackImage
 
+    const imageUrl = candidate.url.startsWith('http') ? candidate.url : serverUrl + candidate.url
     return {
       url: imageUrl,
       secureUrl: imageUrl,
-      width: isOptimizedOG ? image.sizes?.og?.width || 1200 : image.width || 1200,
-      height: isOptimizedOG ? image.sizes?.og?.height || 630 : image.height || 630,
+      width: candidate.width,
+      height: candidate.height,
       alt: image.alt || config.NEXT_PUBLIC_SITE_NAME,
-      type: image.sizes?.og?.mimeType || image.mimeType || undefined,
+      type: candidate.type || undefined,
     }
   }
 
