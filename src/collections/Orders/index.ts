@@ -7,10 +7,16 @@ import {
 } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
-import { hasRole, userHasRole } from '@/access/hasRoles'
+import { hasRole, isAutoProcessActor, userHasRole } from '@/access/hasRoles'
 import { noOne } from '@/access/noOne'
 import { transactions, users } from '@/payload-generated-schema'
 import { Order } from '@/payload-types'
+import {
+  buildCompletionAuditUpdate,
+  createDefaultResendEmailProvider,
+  createResilientEmailService,
+  sendOrderCompletedUserEmail,
+} from '@/services/email'
 import {
   discordWebhook,
   sendOrderCompletedStaffNotification,
@@ -38,9 +44,12 @@ const trackHandlersHook: CollectionBeforeChangeHook<Order> = ({ data, originalDo
   if (operation !== 'update' || !data || !user) return data
   const userId = typeof user === 'object' ? user.id : user
 
-  const currentHandlers = (data.handlers as number[]) || (originalDoc?.handlers as number[]) || []
+  const currentHandlers = ((data.handlers as Order['handlers']) || originalDoc?.handlers || []).map(
+    (handler) => (typeof handler === 'object' ? handler.id : handler),
+  )
+  const shouldTrackHandler = userHasRole(user, ['admin', 'staff']) || isAutoProcessActor(req)
 
-  if (userHasRole(user, ['admin', 'staff']) && !currentHandlers.includes(userId)) {
+  if (shouldTrackHandler && !currentHandlers.includes(userId)) {
     data.handlers = Array.from(new Set([...currentHandlers, userId]))
   }
   return data
@@ -98,6 +107,35 @@ const calculateAnalysisHook: CollectionBeforeChangeHook<Order> = async ({
   return data
 }
 
+const orderCompletionEmailService = createResilientEmailService({
+  provider: createDefaultResendEmailProvider(),
+  enqueueRetry: async () => undefined,
+})
+
+const scheduleOrderAfter = (
+  req: Parameters<CollectionAfterChangeHook<Order>>[0]['req'],
+  message: string,
+  task: () => Promise<void>,
+) => {
+  try {
+    after(async () => {
+      try {
+        await task()
+      } catch (error) {
+        req.payload.logger.error({
+          err: error,
+          message,
+        })
+      }
+    })
+  } catch (error) {
+    req.payload.logger.error({
+      err: error,
+      message: `Failed to schedule after() callback: ${message}`,
+    })
+  }
+}
+
 const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   previousDoc,
   doc,
@@ -119,16 +157,52 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
     ) {
       await sendOrderUserUpdatedStaffNotification(doc.id)
     }
-    // Determine if the action is done by the system's AUTO_PROCESS_USER (passed via context in Local API)
     const isAutoProcessUser = req.context?.isAutoProcess === true
+    const firstCompletedTransition = previousDoc.status !== 'COMPLETED' && doc.status === 'COMPLETED'
 
-    // Send notification to Discord staff when order is completed
-    if (
-      doc.status === 'COMPLETED' &&
-      previousDoc.status !== 'COMPLETED'
-    ) {
-      // Auto-processes invoke sendOrderCompletedNotification manually,
-      // so we only notify if it was manually updated by a human staff.
+    if (firstCompletedTransition) {
+      scheduleOrderAfter(
+        req,
+        `Failed to run completion side effects for order #${doc.id}`,
+        async () => {
+          try {
+            await sendOrderCompletedUserEmail({
+              order: doc,
+              send: (message) => orderCompletionEmailService.send(message),
+            })
+          } catch (error) {
+            req.payload.logger.error({
+              err: error,
+              message: `Failed to send completion email for order #${doc.id}`,
+            })
+          }
+
+          try {
+            const currentUser = req.user
+            const actorId = currentUser && typeof currentUser === 'object' ? currentUser.id : undefined
+            const auditUpdate = buildCompletionAuditUpdate(doc, actorId)
+
+            if (auditUpdate) {
+              await req.payload.update({
+                collection: 'form-submissions',
+                where: { id: { equals: auditUpdate.formSubmissionId } },
+                data: auditUpdate.data,
+                overrideAccess: true,
+                depth: 0,
+                limit: 1,
+              })
+            }
+          } catch (error) {
+            req.payload.logger.error({
+              err: error,
+              message: `Failed to update form submission audit for order #${doc.id}`,
+            })
+          }
+        },
+      )
+    }
+
+    if (doc.status === 'COMPLETED' && previousDoc.status !== 'COMPLETED') {
       if (!isAutoProcessUser) {
         await sendOrderCompletedStaffNotification(doc)
       }

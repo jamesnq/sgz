@@ -843,6 +843,22 @@ export interface FormSubmission {
    */
   form: number | Form;
   /**
+   * Order that completed this submission
+   */
+  completedOrder?: (number | null) | Order;
+  /**
+   * When the related order became completed
+   */
+  completedAt?: string | null;
+  /**
+   * User who completed the order when available
+   */
+  completedBy?: (number | null) | User;
+  /**
+   * Order status recorded at the time completion audit was written
+   */
+  orderStatusAtCompletion?: string | null;
+  /**
    * Form submission data
    */
   submissionData:
@@ -1633,6 +1649,10 @@ export interface FormsSelect<T extends boolean = true> {
 export interface FormSubmissionsSelect<T extends boolean = true> {
   user?: T;
   form?: T;
+  completedOrder?: T;
+  completedAt?: T;
+  completedBy?: T;
+  orderStatusAtCompletion?: T;
   submissionData?: T;
   updatedAt?: T;
   createdAt?: T;

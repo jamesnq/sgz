@@ -11,6 +11,8 @@ declare global {
       S3_BUCKET: string
       S3_REGION: string
       RESEND_API_KEY: string
+      EMAIL_FROM_ADDRESS: string
+      EMAIL_FROM_NAME: string
       NEXT_PUBLIC_VERCEL_URL: string
       NEXT_PUBLIC_VERCEL_URL: string
       RESEND_API_KEY: string

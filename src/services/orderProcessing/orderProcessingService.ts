@@ -7,8 +7,59 @@ import {
 import { createRichTextWithTable } from '@/utilities/RichTextHelper'
 import payloadConfig from '@payload-config'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
-import { BasePayload, getPayload } from 'payload'
+import { BasePayload, getPayload, type PayloadRequest } from 'payload'
 import { BaseMetadataSchema, OrderProcessor, ProcessResult } from './types'
+
+const AUTO_PROCESS_SKIPPED_MESSAGE = 'Order is no longer IN_QUEUE, auto-processing skipped'
+
+type InternalProcessResult = ProcessResult & {
+  completedOrder?: Order
+}
+
+type AutoProcessUser = {
+  id: number
+  collection: 'users'
+}
+
+type PayloadUpdateError = {
+  id?: number | string
+  isPublic?: boolean
+  message?: string
+}
+
+const getAutoProcessUser = (): AutoProcessUser => ({
+  id: config.AUTO_PROCESS_USER_ID,
+  collection: 'users',
+})
+
+const getAutoProcessReq = (transactionID: string | number, user = getAutoProcessUser()) => {
+  return {
+    transactionID,
+    user: user as unknown as PayloadRequest['user'],
+  } as Partial<PayloadRequest>
+}
+
+const serializePayloadUpdateErrors = (errors: unknown): PayloadUpdateError[] => {
+  if (!Array.isArray(errors)) return []
+
+  return errors.map((error) => {
+    if (error && typeof error === 'object') {
+      const payloadError = error as PayloadUpdateError
+      return {
+        id: payloadError.id,
+        isPublic: payloadError.isPublic,
+        message: payloadError.message || JSON.stringify(error),
+      }
+    }
+
+    return {
+      message: String(error),
+    }
+  })
+}
+
+const formatPayloadUpdateErrorMessage = (errors: PayloadUpdateError[]): string =>
+  errors.map((error) => error.message || 'Unknown Payload update error').join('; ')
 
 export class OrderProcessingService {
   private processors: Map<string, OrderProcessor> = new Map()
@@ -74,15 +125,19 @@ export class OrderProcessingService {
       }
 
       if (productVariant.fixedStock && hasText(productVariant.fixedStock)) {
-        const completedOrder = await this.updateOrderToCompleted(
-          payload,
-          {
-            orderId,
-            transactionID,
-            deliveryContent: productVariant.fixedStock,
-            logContext: 'fixed-stock auto-delivery',
-          },
-        )
+        const completedOrder = await this.updateOrderToCompleted(payload, {
+          orderId,
+          transactionID,
+          deliveryContent: productVariant.fixedStock,
+          logContext: 'fixed-stock auto-delivery',
+        })
+
+        if (!completedOrder) {
+          return {
+            success: false,
+            message: AUTO_PROCESS_SKIPPED_MESSAGE,
+          }
+        }
 
         await payload.db.commitTransaction(transactionID)
         committed = true
@@ -107,8 +162,11 @@ export class OrderProcessingService {
           if (result.success) {
             await payload.db.commitTransaction(transactionID)
             committed = true
+            if (result.completedOrder) {
+              await sendOrderCompletedNotification(result.completedOrder)
+            }
           }
-          return result
+          return this.toProcessResult(result)
         }
       }
 
@@ -123,8 +181,11 @@ export class OrderProcessingService {
       if (typeResult.success) {
         await payload.db.commitTransaction(transactionID)
         committed = true
+        if (typeResult.completedOrder) {
+          await sendOrderCompletedNotification(typeResult.completedOrder)
+        }
       }
-      return typeResult
+      return this.toProcessResult(typeResult)
     } catch (error) {
       return {
         success: false,
@@ -141,6 +202,11 @@ export class OrderProcessingService {
     }
   }
 
+  private toProcessResult(result: InternalProcessResult): ProcessResult {
+    const { completedOrder: _completedOrder, ...processResult } = result
+    return processResult
+  }
+
   /**
    * Fetch an order from the database with necessary related data
    * @param payload - Payload CMS instance
@@ -149,68 +215,17 @@ export class OrderProcessingService {
    * @returns The order object with populated relations
    */
   private async fetchOrder(payload: BasePayload, orderId: number, transactionID: string | number) {
+    const autoProcessUser = getAutoProcessUser()
+
     return await payload.findByID({
       collection: 'orders',
       id: orderId,
-      user: config.AUTO_PROCESS_USER_ID,
+      user: autoProcessUser as any,
       depth: 1,
       overrideAccess: true, // Guarantees all relation fields like fixedStock are unconditionally surfaced
-      req: { transactionID },
-    })
-  }
-
-  private async handleFixedStock(
-    payload: BasePayload,
-    order: Order,
-    productVariant: ProductVariant,
-    orderId: number,
-    transactionID: string | number,
-  ): Promise<ProcessResult | null> {
-    if (!productVariant.fixedStock || !hasText(productVariant.fixedStock)) {
-      return {
-        success: false,
-        message: 'Product variant is AVAILABLE but has no fixed stock content',
-      }
-    }
-
-    const { docs } = await payload.update({
-      collection: 'orders',
-      where: {
-        and: [{ id: { equals: orderId } }, { status: { equals: 'IN_QUEUE' } }],
-      },
-      data: {
-        deliveryContent: productVariant.fixedStock,
-        status: 'COMPLETED',
-      },
-      user: config.AUTO_PROCESS_USER_ID,
-      req: {
-        transactionID,
-        user: config.AUTO_PROCESS_USER_ID as any,
-      },
+      req: getAutoProcessReq(transactionID, autoProcessUser),
       context: { isAutoProcess: true },
-      overrideAccess: true,
-      limit: 1,
-      depth: 0,
     })
-
-    if (!docs.length) {
-      return {
-        success: false,
-        message: 'Order is no longer IN_QUEUE, auto-processing skipped',
-      }
-    }
-
-    const updatedOrder = await this.fetchOrder(payload, orderId, transactionID)
-    await sendOrderCompletedNotification(updatedOrder)
-
-    return {
-      success: true,
-      message: 'Fixed stock delivered successfully',
-      data: {
-        status: 'COMPLETED',
-        deliveryContent: productVariant.fixedStock,
-      },
-    }
   }
 
   /**
@@ -230,7 +245,7 @@ export class OrderProcessingService {
     productVariant: ProductVariant,
     orderId: number,
     transactionID: string | number,
-  ): Promise<ProcessResult | null> {
+  ): Promise<InternalProcessResult | null> {
     if (productVariant.autoProcess === 'direct') {
       const completedOrder = await this.updateOrderToCompleted(payload, {
         orderId,
@@ -238,11 +253,17 @@ export class OrderProcessingService {
         logContext: 'direct auto-process',
       })
 
-      await sendOrderCompletedNotification(completedOrder)
+      if (!completedOrder) {
+        return {
+          success: false,
+          message: AUTO_PROCESS_SKIPPED_MESSAGE,
+        }
+      }
 
       return {
         success: true,
         message: 'Order completed directly',
+        completedOrder,
       }
     }
 
@@ -262,7 +283,7 @@ export class OrderProcessingService {
         }
       }
 
-      await this.processKeyType(
+      const completedOrder = await this.processKeyType(
         payload,
         order,
         productVariant,
@@ -271,9 +292,17 @@ export class OrderProcessingService {
         transactionID,
       )
 
+      if (!completedOrder) {
+        return {
+          success: false,
+          message: AUTO_PROCESS_SKIPPED_MESSAGE,
+        }
+      }
+
       return {
         success: true,
         message: 'Stocks processed successfully',
+        completedOrder,
       }
     }
 
@@ -297,7 +326,7 @@ export class OrderProcessingService {
     stocksAvailable: Stock[],
     orderId: number,
     transactionID: string | number,
-  ): Promise<void> {
+  ): Promise<Order | null> {
     if (stocksAvailable.length < order.quantity) {
       throw new Error('Not enough stocks available')
     }
@@ -312,6 +341,7 @@ export class OrderProcessingService {
       })),
     })
 
+    const autoProcessUser = getAutoProcessUser()
     await payload.update({
       collection: 'stocks',
       where: {
@@ -322,20 +352,20 @@ export class OrderProcessingService {
       data: {
         order: order.id,
       },
-      req: { transactionID },
+      user: autoProcessUser as any,
+      req: getAutoProcessReq(transactionID, autoProcessUser),
+      context: { isAutoProcess: true },
       overrideAccess: true,
     })
 
     await this.updateProductVariantStockStatus(payload, productVariant, transactionID)
 
-    const completedOrder = await this.updateOrderToCompleted(payload, {
+    return await this.updateOrderToCompleted(payload, {
       orderId,
       transactionID,
       deliveryContent,
       logContext: 'key auto-process',
     })
-
-    await sendOrderCompletedNotification(completedOrder)
   }
 
   private async updateOrderToCompleted(
@@ -351,7 +381,7 @@ export class OrderProcessingService {
       deliveryContent?: Order['deliveryContent']
       logContext: string
     },
-  ): Promise<Order> {
+  ): Promise<Order | null> {
     const updatePayload: Partial<Order> = {
       status: 'COMPLETED',
     }
@@ -369,31 +399,41 @@ export class OrderProcessingService {
     })
 
     try {
+      const autoProcessUser = getAutoProcessUser()
       const result = await payload.update({
         collection: 'orders',
-        where: { id: { equals: orderId } },
-        data: updatePayload,
-        user: config.AUTO_PROCESS_USER_ID,
-        req: {
-          transactionID,
-          user: config.AUTO_PROCESS_USER_ID as any,
+        where: {
+          and: [{ id: { equals: orderId } }, { status: { equals: 'IN_QUEUE' } }],
         },
+        data: updatePayload,
+        user: autoProcessUser as any,
+        req: getAutoProcessReq(transactionID, autoProcessUser),
         context: { isAutoProcess: true },
         overrideAccess: true,
         limit: 1,
         depth: 0,
       })
 
-      const updatedOrder = result.docs[0]
-
-      if (!updatedOrder) {
-        console.error('[OrderProcessingService] Completed status update returned no document', {
+      const updateErrors = serializePayloadUpdateErrors((result as { errors?: unknown }).errors)
+      if (updateErrors.length > 0) {
+        console.error('[OrderProcessingService] Completed status update returned Payload errors', {
           orderId,
           transactionID,
           logContext,
-          result,
+          errors: updateErrors,
         })
-        throw new Error('Order completion update returned no document')
+        throw new Error(`Order completion update failed: ${formatPayloadUpdateErrorMessage(updateErrors)}`)
+      }
+
+      const updatedOrder = result.docs[0]
+
+      if (!updatedOrder) {
+        console.warn('[OrderProcessingService] Completed status update skipped', {
+          orderId,
+          transactionID,
+          logContext,
+        })
+        return null
       }
 
       if (updatedOrder.status !== 'COMPLETED') {
@@ -452,6 +492,7 @@ export class OrderProcessingService {
     const isGoingOutOfStock = remainingStocksCount === 0 && productVariant.status !== 'STOPPED'
 
     // Update product variant max quantity and status
+    const autoProcessUser = getAutoProcessUser()
     await payload.update({
       collection: 'product-variants',
       where: {
@@ -461,7 +502,9 @@ export class OrderProcessingService {
         max: remainingStocksCount,
         status: remainingStocksCount === 0 ? 'STOPPED' : undefined,
       },
-      req: { transactionID },
+      user: autoProcessUser as any,
+      req: getAutoProcessReq(transactionID, autoProcessUser),
+      context: { isAutoProcess: true },
       overrideAccess: true,
     })
 
@@ -487,7 +530,7 @@ export class OrderProcessingService {
     productVariant: ProductVariant,
     orderId: number,
     transactionID: string | number,
-  ): Promise<ProcessResult> {
+  ): Promise<InternalProcessResult> {
     // Extract and validate product type from metadata
     let type: string
     try {
@@ -514,21 +557,52 @@ export class OrderProcessingService {
 
     // Update the order with processor result data if successful
     if (processorResult.success && processorResult.data) {
-      const { docs } = await payload.update({
+      const isCompletionUpdate = processorResult.data.status === 'COMPLETED'
+      const autoProcessUser = getAutoProcessUser()
+      const updateResult = await payload.update({
         collection: 'orders',
-        where: { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
+        where: isCompletionUpdate
+          ? {
+              and: [
+                { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
+                { status: { equals: 'IN_QUEUE' } },
+              ],
+            }
+          : { id: { equals: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId } },
         data: processorResult.data,
-        user: config.AUTO_PROCESS_USER_ID,
-        req: {
-          transactionID,
-          user: config.AUTO_PROCESS_USER_ID as any,
-        },
+        user: autoProcessUser as any,
+        req: getAutoProcessReq(transactionID, autoProcessUser),
         context: { isAutoProcess: true },
         overrideAccess: true,
         limit: 1,
         depth: 0,
       })
+      const updateErrors = serializePayloadUpdateErrors(
+        (updateResult as { errors?: unknown }).errors,
+      )
+      if (updateErrors.length > 0) {
+        return {
+          success: false,
+          message: `Order update failed: ${formatPayloadUpdateErrorMessage(updateErrors)}`,
+        }
+      }
+
+      const { docs } = updateResult
       const updatedOrder = docs[0]
+
+      if (isCompletionUpdate && !updatedOrder) {
+        return {
+          success: false,
+          message: AUTO_PROCESS_SKIPPED_MESSAGE,
+        }
+      }
+
+      if (updatedOrder?.status === 'COMPLETED') {
+        return {
+          ...processorResult,
+          completedOrder: updatedOrder,
+        }
+      }
     }
 
     return processorResult

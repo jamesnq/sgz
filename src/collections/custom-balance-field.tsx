@@ -45,6 +45,8 @@ export const CustomBalanceField: NumberFieldClientComponent = ({ path, field, ..
     if (!inputValue) return
 
     const amount = Number(inputValue)
+    if (!Number.isFinite(amount)) return
+
     const userId = getUserIdFromPath()
 
     if (!userId) {
@@ -52,11 +54,20 @@ export const CustomBalanceField: NumberFieldClientComponent = ({ path, field, ..
       return
     }
 
-    await adminBalanceAction({
+    const result = await adminBalanceAction({
       userId,
       amount,
       note: noteValue || '',
     })
+
+    if (result?.serverError) {
+      console.error('[CustomBalanceField] Failed to adjust balance:', result.serverError)
+      return
+    }
+
+    if (typeof result?.data?.balance === 'number') {
+      setValue(result.data.balance)
+    }
 
     handleClosePopup()
   }
