@@ -1120,11 +1120,16 @@ const MemoizedCheckout = React.memo(
         </div>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-3 w-full">
+          <div
+            className={cn(
+              'grid gap-3 w-full',
+              variants?.length > 0 && currentVariant.max > 1
+                ? 'grid-cols-[minmax(0,1fr)_112px]'
+                : 'grid-cols-1',
+            )}
+          >
             {variants?.length > 0 && (
-              <div
-                className={`space-y-1.5 ${currentVariant.max > 1 ? 'col-span-3' : 'col-span-4'}`}
-              >
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap">
                   Phiên bản
                 </label>
@@ -1152,7 +1157,9 @@ const MemoizedCheckout = React.memo(
             )}
 
             {currentVariant.max > 1 && (
-              <div className={`space-y-1.5 ${variants?.length > 0 ? 'col-span-1' : 'col-span-4'}`}>
+              <div
+                className={cn('space-y-1.5', variants?.length > 0 && 'min-w-[112px]')}
+              >
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap text-center">
                   Số lượng
                 </label>
@@ -1170,7 +1177,7 @@ const MemoizedCheckout = React.memo(
                     type="number"
                     inputMode="numeric"
                     min={1}
-                    className="w-full min-w-0 px-1 text-sm font-bold text-center text-white bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none"
+                    className="w-full min-w-[2.25rem] px-1 text-sm font-bold text-center text-white bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none"
                     value={editingQuantity !== undefined ? editingQuantity : quantity}
                     onFocus={() => setEditingQuantity(quantity)}
                     onChange={handleQuantityChange}
