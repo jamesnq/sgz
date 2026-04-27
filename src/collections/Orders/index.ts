@@ -109,6 +109,30 @@ const orderCompletionEmailService = createResilientEmailService({
   enqueueRetry: async () => undefined,
 })
 
+const scheduleOrderAfter = (
+  req: Parameters<CollectionAfterChangeHook<Order>>[0]['req'],
+  message: string,
+  task: () => Promise<void>,
+) => {
+  try {
+    after(async () => {
+      try {
+        await task()
+      } catch (error) {
+        req.payload.logger.error({
+          err: error,
+          message,
+        })
+      }
+    })
+  } catch (error) {
+    req.payload.logger.error({
+      err: error,
+      message: `Failed to schedule after() callback: ${message}`,
+    })
+  }
+}
+
 const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   previousDoc,
   doc,
@@ -134,41 +158,45 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
     const firstCompletedTransition = previousDoc.status !== 'COMPLETED' && doc.status === 'COMPLETED'
 
     if (firstCompletedTransition) {
-      after(async () => {
-        try {
-          await sendOrderCompletedUserEmail({
-            order: doc,
-            send: (message) => orderCompletionEmailService.send(message),
-          })
-        } catch (error) {
-          req.payload.logger.error({
-            err: error,
-            message: `Failed to send completion email for order #${doc.id}`,
-          })
-        }
-
-        try {
-          const currentUser = req.user
-          const actorId = currentUser && typeof currentUser === 'object' ? currentUser.id : undefined
-          const auditUpdate = buildCompletionAuditUpdate(doc, actorId)
-
-          if (auditUpdate) {
-            await req.payload.update({
-              collection: 'form-submissions',
-              where: { id: { equals: auditUpdate.formSubmissionId } },
-              data: auditUpdate.data,
-              overrideAccess: true,
-              depth: 0,
-              limit: 1,
+      scheduleOrderAfter(
+        req,
+        `Failed to run completion side effects for order #${doc.id}`,
+        async () => {
+          try {
+            await sendOrderCompletedUserEmail({
+              order: doc,
+              send: (message) => orderCompletionEmailService.send(message),
+            })
+          } catch (error) {
+            req.payload.logger.error({
+              err: error,
+              message: `Failed to send completion email for order #${doc.id}`,
             })
           }
-        } catch (error) {
-          req.payload.logger.error({
-            err: error,
-            message: `Failed to update form submission audit for order #${doc.id}`,
-          })
-        }
-      })
+
+          try {
+            const currentUser = req.user
+            const actorId = currentUser && typeof currentUser === 'object' ? currentUser.id : undefined
+            const auditUpdate = buildCompletionAuditUpdate(doc, actorId)
+
+            if (auditUpdate) {
+              await req.payload.update({
+                collection: 'form-submissions',
+                where: { id: { equals: auditUpdate.formSubmissionId } },
+                data: auditUpdate.data,
+                overrideAccess: true,
+                depth: 0,
+                limit: 1,
+              })
+            }
+          } catch (error) {
+            req.payload.logger.error({
+              err: error,
+              message: `Failed to update form submission audit for order #${doc.id}`,
+            })
+          }
+        },
+      )
     }
 
     if (doc.status === 'COMPLETED' && previousDoc.status !== 'COMPLETED') {

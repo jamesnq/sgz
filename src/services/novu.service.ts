@@ -80,6 +80,20 @@ export async function discordWebhook({
 // Initialize Novu client
 export const novu = new Novu({ secretKey: config.NOVU_SECRET_KEY })
 
+const scheduleNotificationAfter = (errorMessage: string, task: () => Promise<void>): void => {
+  try {
+    after(async () => {
+      try {
+        await task()
+      } catch (error) {
+        console.error(errorMessage, error)
+      }
+    })
+  } catch (error) {
+    console.error(`${errorMessage} Failed to schedule after() callback:`, error)
+  }
+}
+
 /**
  * Creates a subscriber hash for Novu authentication
  * @param subscriberId - The subscriber ID to hash
@@ -264,7 +278,7 @@ export async function sendOrderUserUpdatedStaffNotification(
  * @param order - The completed order
  */
 export async function sendOrderCompletedStaffNotification(order: Order): Promise<void> {
-  after(async () => {
+  scheduleNotificationAfter('Error sending order completed notification:', async () => {
     const payload = {
       subject: `Đơn hàng #${order.id} đã hoàn thành`,
       message: ``,
@@ -296,7 +310,7 @@ export async function sendOrderCompletedStaffNotification(order: Order): Promise
  * @param productVariantName - The name of the product variant
  */
 export async function sendOrderCompletedNotification(order: Order): Promise<void> {
-  after(async () => {
+  scheduleNotificationAfter('Error sending order completed notification:', async () => {
     try {
       const productVariant = order.productVariant
       if (typeof productVariant !== 'object') {
@@ -328,7 +342,7 @@ export async function sendOrderCompletedNotification(order: Order): Promise<void
 export async function sendProductOutOfStockNotification(
   productVariant: ProductVariant,
 ): Promise<void> {
-  after(async () => {
+  scheduleNotificationAfter('Error sending out of stock notification:', async () => {
     try {
       if (typeof productVariant !== 'object') {
         return

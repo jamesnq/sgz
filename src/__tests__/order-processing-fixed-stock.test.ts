@@ -60,7 +60,7 @@ function makeFixedStock() {
 
 describe('orderProcessingService fixed stock processing', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
 
     mocks.beginTransaction.mockResolvedValue('tx-1')
     mocks.commitTransaction.mockResolvedValue(undefined)
@@ -96,7 +96,7 @@ describe('orderProcessingService fixed stock processing', () => {
       deliveryContent: fixedStock,
     }
 
-    mocks.findByID.mockResolvedValueOnce(initialOrder).mockResolvedValueOnce(updatedOrder)
+    mocks.findByID.mockResolvedValueOnce(initialOrder)
     mocks.update.mockResolvedValueOnce({ docs: [updatedOrder] })
 
     const result = await orderProcessingService.processOrder(42)
@@ -104,10 +104,6 @@ describe('orderProcessingService fixed stock processing', () => {
     expect(result).toEqual({
       success: true,
       message: 'Fixed stock delivered successfully',
-      data: {
-        status: 'COMPLETED',
-        deliveryContent: fixedStock,
-      },
     })
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -119,19 +115,44 @@ describe('orderProcessingService fixed stock processing', () => {
           deliveryContent: fixedStock,
           status: 'COMPLETED',
         },
+        user: expect.objectContaining({
+          id: 1,
+          collection: 'users',
+        }),
+        req: {
+          transactionID: 'tx-1',
+          user: expect.objectContaining({
+            id: 1,
+            collection: 'users',
+          }),
+        },
         context: { isAutoProcess: true },
         overrideAccess: true,
       }),
     )
     expect(mocks.findByID).toHaveBeenNthCalledWith(
-      2,
+      1,
       expect.objectContaining({
         collection: 'orders',
         id: 42,
+        user: expect.objectContaining({
+          id: 1,
+          collection: 'users',
+        }),
+        req: {
+          transactionID: 'tx-1',
+          user: expect.objectContaining({
+            id: 1,
+            collection: 'users',
+          }),
+        },
       }),
     )
     expect(mocks.sendOrderCompletedNotification).toHaveBeenCalledWith(updatedOrder)
     expect(mocks.commitTransaction).toHaveBeenCalledWith('tx-1')
+    expect(mocks.sendOrderCompletedNotification.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      mocks.commitTransaction.mock.invocationCallOrder[0]!,
+    )
     expect(mocks.rollbackTransaction).not.toHaveBeenCalled()
   })
 
@@ -159,7 +180,7 @@ describe('orderProcessingService fixed stock processing', () => {
     expect(mocks.rollbackTransaction).toHaveBeenCalledWith('tx-1')
   })
 
-  it('fails when fixed stock is missing for an AVAILABLE variant', async () => {
+  it('fails when fixed stock is missing and no product metadata processor can be selected', async () => {
     mocks.findByID.mockResolvedValueOnce({
       id: 42,
       status: 'IN_QUEUE',
@@ -177,7 +198,7 @@ describe('orderProcessingService fixed stock processing', () => {
 
     expect(result).toEqual({
       success: false,
-      message: 'Product variant is AVAILABLE but has no fixed stock content',
+      message: 'Invalid metadata: missing or invalid type field',
     })
     expect(mocks.update).not.toHaveBeenCalled()
     expect(mocks.commitTransaction).not.toHaveBeenCalled()

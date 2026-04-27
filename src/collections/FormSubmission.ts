@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { noOne } from '@/access/noOne'
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { managerGroup } from '@/utilities/constants'
+import { normalizeFormSubmissionData } from '@/utilities/formSubmission'
 
 export const FormSubmissions: CollectionConfig = {
   slug: 'form-submissions',
@@ -132,13 +133,7 @@ export const FormSubmissions: CollectionConfig = {
           return 'Form has no fields'
         }
 
-        const formFieldNames = new Set(form.fields?.map((f: any) => f.name) || [])
-
-        for (const key of Object.keys(submissionData)) {
-          if (!formFieldNames.has(key)) {
-            delete submissionData[key]
-          }
-        }
+        ;(data as any).submissionData = normalizeFormSubmissionData(form, submissionData)
 
         // const requiredFields = form.fields.filter((f: any) => f.required).map((f: any) => f.name)
         // for (const field of requiredFields) {
