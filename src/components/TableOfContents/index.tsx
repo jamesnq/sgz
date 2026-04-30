@@ -70,15 +70,15 @@ export const TableOfContents = ({ data }: { data: any }) => {
   if (headings.length === 0) return null
 
   return (
-    <div className="bg-card/50 rounded-xl p-6 border border-white/5">
-      <h3 className="text-lg font-bold text-white mb-4">Nội dung bài viết</h3>
-      <ul className="space-y-3 items-start flex flex-col">
+    <div className="bg-card/50 rounded-xl p-5 border border-white/5">
+      <h3 className="text-base font-bold text-white mb-4">Nội dung bài viết</h3>
+      <ul className="space-y-2.5 items-start flex flex-col">
         {headings.map((heading, index) => (
           <li
             key={`${heading.id}-${index}`}
             className={cn(
-              'text-sm transition-colors duration-200 text-left w-full',
-              heading.tag === 'h3' ? 'ml-4' : '',
+              'text-sm leading-relaxed transition-colors duration-200 text-left w-full',
+              heading.tag === 'h3' ? 'ml-3' : '',
               activeId === heading.id ? 'text-highlight font-medium' : 'text-gray-400 hover:text-white'
             )}
           >
