@@ -178,13 +178,13 @@ export default async function PostDetailPage({ params }: Args) {
           {/* Main Content Area (Left Column) */}
           <div className="flex-1 w-full flex flex-col gap-8 lg:gap-12">
             {/* Main Article */}
-            <article className="w-full bg-card border border-border rounded-2xl p-6 lg:p-12 shadow-2xl relative overflow-hidden">
+            <article className="w-full bg-card border border-border rounded-2xl p-5 sm:p-6 lg:p-8 shadow-2xl relative overflow-hidden">
             
             {/* subtle background glow */}
-            <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-sgz-primary/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-sgz-primary/[0.03] rounded-full blur-[100px] pointer-events-none" />
 
             {/* Back link */}
-            <div className="mb-10 relative z-10 flex items-center justify-between">
+            <div className="mb-7 relative z-10 flex items-center justify-between">
               <Link
                 href="/posts"
                 className="inline-flex items-center gap-2 text-muted-foreground hover:text-sgz-primary transition-colors font-medium border border-border bg-secondary hover:border-sgz-primary/50 px-4 py-2 rounded-xl"
@@ -195,10 +195,10 @@ export default async function PostDetailPage({ params }: Args) {
             </div>
 
             {/* Header */}
-            <header className="mb-10 relative z-10">
+            <header className="mb-8 relative z-10">
               {/* Tags */}
               {tags && tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 mb-5">
                   {tags.map((tag: any) => (
                     <span
                       key={tag.id || tag}
@@ -211,11 +211,11 @@ export default async function PostDetailPage({ params }: Args) {
               )}
 
               {/* Title */}
-              <h1 className="text-3xl lg:text-5xl font-bold mb-6 text-white leading-[1.2] font-headline">{post.title}</h1>
+              <h1 className="text-3xl lg:text-4xl font-bold mb-5 text-white leading-[1.18] font-headline max-w-[860px]">{post.title}</h1>
 
               {/* Meta */}
               {post.publishedAt && (
-                <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium border-t border-border pt-6 mt-6">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium border-t border-border pt-5 mt-5">
                   <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border">
                     <span className="text-sgz-primary font-bold text-xs">{config.NEXT_PUBLIC_SITE_NAME?.charAt(0) || 'S'}</span>
                   </div>
@@ -228,7 +228,7 @@ export default async function PostDetailPage({ params }: Args) {
             </header>
 
             {/* Featured Image */}
-            <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-12 shadow-lg ring-1 ring-white/10 group z-10">
+            <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-8 shadow-lg ring-1 ring-white/10 group z-10">
               <Media
                 resource={post.image}
                 className="w-full h-full"
@@ -239,15 +239,15 @@ export default async function PostDetailPage({ params }: Args) {
             <div className="relative z-10">
               {/* Excerpt */}
               {post.excerpt && (
-                <div className="mb-12">
-                  <p className="text-xl text-muted-foreground italic font-medium leading-relaxed border-l-4 border-sgz-primary pl-6 py-2 bg-sgz-primary/5 rounded-r-2xl">
+                <div className="mb-8 max-w-[820px]">
+                  <p className="text-lg text-muted-foreground italic font-medium leading-relaxed border-l-4 border-sgz-primary pl-5 py-2 bg-sgz-primary/5 rounded-r-2xl">
                     {post.excerpt}
                   </p>
                 </div>
               )}
 
               {/* Content */}
-              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-headings:font-bold prose-h2:text-3xl prose-h3:text-2xl prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-sgz-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-white prose-ul:text-muted-foreground prose-ol:text-muted-foreground marker:text-sgz-primary prose-blockquote:border-sgz-primary prose-blockquote:text-muted-foreground prose-blockquote:bg-secondary prose-blockquote:px-6 prose-blockquote:py-2 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-img:rounded-xl prose-img:border prose-img:border-border w-full">
+              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-headings:font-bold prose-h2:text-2xl lg:prose-h2:text-[28px] prose-h3:text-xl lg:prose-h3:text-2xl prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-sgz-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-white prose-ul:text-muted-foreground prose-ol:text-muted-foreground marker:text-sgz-primary prose-blockquote:border-sgz-primary prose-blockquote:text-muted-foreground prose-blockquote:bg-secondary prose-blockquote:px-5 prose-blockquote:py-2 prose-blockquote:rounded-r-2xl prose-blockquote:not-italic prose-img:rounded-xl prose-img:border prose-img:border-border w-full">
                 <RichText data={post.content} />
               </div>
             </div>
@@ -256,8 +256,8 @@ export default async function PostDetailPage({ params }: Args) {
           </div>
 
           {/* Sidebar (Right Column) */}
-          <aside className="w-full lg:w-[35%] lg:sticky lg:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-secondary [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-secondary/80 transition-all">
-            <div className="flex flex-col gap-8 pb-12">
+          <aside className="w-full lg:w-[360px] lg:shrink-0 lg:sticky lg:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-secondary [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-secondary/80 transition-all">
+            <div className="flex flex-col gap-6 pb-12">
               {post.content && <TableOfContents data={post.content} />}
             </div>
           </aside>
