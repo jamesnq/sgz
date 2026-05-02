@@ -1,6 +1,6 @@
 'use client'
 
-import React, { FormEvent, useRef, useState } from 'react'
+import React, { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
@@ -13,7 +13,7 @@ import { Routes } from '@/utilities/routes'
 import { Product } from '@/payload-types'
 import { Media } from '@/components/Media'
 
-function AutocompleteDropdown() {
+function AutocompleteDropdown({ onNavigate }: { onNavigate?: () => void }) {
   const { hits } = useHits()
   const { query, refine } = useSearchBox()
   const router = useRouter()
@@ -23,6 +23,7 @@ function AutocompleteDropdown() {
     e.preventDefault()
     if (query.trim()) {
       setIsOpen(false)
+      onNavigate?.()
       router.push(`${Routes.PRODUCTS}?q=${encodeURIComponent(query.trim())}`)
     }
   }
@@ -56,7 +57,10 @@ function AutocompleteDropdown() {
                 key={hit.objectID}
                 href={product.slug ? Routes.product(product.slug) : '#'}
                 className="flex items-center gap-3 p-2 hover:bg-sgz-surfaceHover rounded-lg transition-colors cursor-pointer"
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false)
+                  onNavigate?.()
+                }}
               >
                 <div className="h-10 w-10 shrink-0 bg-sgz-dark rounded-md overflow-hidden relative flex items-center justify-center">
                   {product.image ? (
@@ -81,15 +85,21 @@ function AutocompleteDropdown() {
   )
 }
 
-export const HeaderSearch = ({ className }: { className?: string }) => {
+export const HeaderSearch = ({
+  className,
+  onNavigate,
+}: {
+  className?: string
+  onNavigate?: () => void
+}) => {
   return (
-    <div className={className || "hidden md:flex w-[200px] lg:w-[260px]"}>
+    <div className={className || 'hidden md:flex w-[200px] lg:w-[260px]'}>
       <InstantSearch
         indexName={productIndex}
         searchClient={instantSearchClient.searchClient as any}
       >
         <Configure hitsPerPage={5} filters="status = 'PUBLIC'" />
-        <AutocompleteDropdown />
+        <AutocompleteDropdown onNavigate={onNavigate} />
       </InstantSearch>
     </div>
   )

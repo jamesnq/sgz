@@ -8,7 +8,14 @@ import type { Header as HeaderType } from '@/payload-types'
 import { Routes } from '@/utilities/routes'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { HeaderSearch } from '../HeaderSearch.client'
 import { Logo } from '@/components/Logo/Logo'
 
@@ -85,7 +92,11 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6">
+      <SheetContent
+        side="right"
+        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <SheetHeader className="pb-6 border-b border-sgz-border text-left">
           <SheetTitle asChild>
             <Link href={Routes.HOME} onClick={() => setOpen(false)} className="inline-block">
@@ -95,7 +106,7 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
           <SheetDescription className="hidden">Menu</SheetDescription>
         </SheetHeader>
         <div className="py-6 flex flex-col gap-6 flex-1">
-          <HeaderSearch className="w-full flex" />
+          <HeaderSearch className="w-full flex" onNavigate={() => setOpen(false)} />
           <nav className="flex flex-col gap-4">
             {navItems.map((item, i) => {
               let isActive = false
@@ -172,4 +183,3 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
     </Sheet>
   )
 }
-
