@@ -71,6 +71,7 @@ import { LogOut } from 'lucide-react'
 export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const sheetContentRef = React.useRef<HTMLDivElement>(null)
   const { user, logout } = useAuth()
   const [isAffiliate, setIsAffiliate] = useState(false)
 
@@ -93,9 +94,14 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
         </Button>
       </SheetTrigger>
       <SheetContent
+        ref={sheetContentRef}
         side="right"
+        tabIndex={-1}
         className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6"
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault()
+          sheetContentRef.current?.focus({ preventScroll: true })
+        }}
       >
         <SheetHeader className="pb-6 border-b border-sgz-border text-left">
           <SheetTitle asChild>
