@@ -9,7 +9,6 @@ import { AdminBar } from '@/components/AdminBar'
 import Footer from '@/components/footer'
 import { config } from '@/config'
 import { Providers } from '@/providers'
-import { InitTheme } from '@/providers/Theme/InitTheme'
 import { SITE_DESCRIPTION } from '@/utilities/constants'
 import './globals.css'
 
@@ -25,10 +24,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" suppressHydrationWarning className="scroll-smooth">
-      <head>
-        <InitTheme />
-      </head>
+    <html lang="vi" data-theme="dark" suppressHydrationWarning className="scroll-smooth">
       <body className={`${beVietnamPro.variable} ${beVietnamPro.className} antialiased`}>
         <a
           href="#main-content"

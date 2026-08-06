@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { Providers } from '@/providers'
-import { InitTheme } from '@/providers/Theme/InitTheme'
 
 import { userHasRole } from '@/access/hasRoles'
 import { Header } from '@/collections/Globals/Header/Component'
@@ -17,9 +16,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     return redirect(Routes.HOME)
   }
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
-        <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
