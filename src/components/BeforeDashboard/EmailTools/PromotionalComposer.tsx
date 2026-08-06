@@ -35,7 +35,9 @@ export const PromotionalComposer: React.FC = () => {
   const payload = { ...form, deals }
 
   const updateDeal = (index: number, key: keyof Deal, value: string) => {
-    setDeals((current) => current.map((deal, dealIndex) => dealIndex === index ? { ...deal, [key]: value } : deal))
+    setDeals((current) =>
+      current.map((deal, dealIndex) => (dealIndex === index ? { ...deal, [key]: value } : deal)),
+    )
   }
 
   const handlePreview = async () => {
@@ -82,32 +84,62 @@ export const PromotionalComposer: React.FC = () => {
         {(['subject', 'previewText', 'title', 'intro', 'testEmail'] as const).map((key) => (
           <label className="email-tools__field" key={key}>
             <span>{key}</span>
-            <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+            <input
+              value={form[key]}
+              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+            />
           </label>
         ))}
         <label className="email-tools__field email-tools__field--wide">
           <span>unsubscribeUrl</span>
-          <input value={form.unsubscribeUrl} onChange={(e) => setForm({ ...form, unsubscribeUrl: e.target.value })} />
+          <input
+            value={form.unsubscribeUrl}
+            onChange={(e) => setForm({ ...form, unsubscribeUrl: e.target.value })}
+          />
         </label>
       </div>
 
       <div className="email-tools__deals">
         {deals.map((deal, index) => (
           <div className="email-tools__deal" key={index}>
-            <input value={deal.title} onChange={(e) => updateDeal(index, 'title', e.target.value)} placeholder="Deal title" />
-            <input value={deal.description} onChange={(e) => updateDeal(index, 'description', e.target.value)} placeholder="Description" />
-            <input value={deal.ctaLabel} onChange={(e) => updateDeal(index, 'ctaLabel', e.target.value)} placeholder="CTA label" />
-            <input value={deal.ctaUrl} onChange={(e) => updateDeal(index, 'ctaUrl', e.target.value)} placeholder="CTA URL" />
+            <input
+              value={deal.title}
+              onChange={(e) => updateDeal(index, 'title', e.target.value)}
+              placeholder="Deal title"
+            />
+            <input
+              value={deal.description}
+              onChange={(e) => updateDeal(index, 'description', e.target.value)}
+              placeholder="Description"
+            />
+            <input
+              value={deal.ctaLabel}
+              onChange={(e) => updateDeal(index, 'ctaLabel', e.target.value)}
+              placeholder="CTA label"
+            />
+            <input
+              value={deal.ctaUrl}
+              onChange={(e) => updateDeal(index, 'ctaUrl', e.target.value)}
+              placeholder="CTA URL"
+            />
           </div>
         ))}
-        <button type="button" className="email-tools__secondary" onClick={() => setDeals([...deals, { ...defaultDeal }])}>
+        <button
+          type="button"
+          className="email-tools__secondary"
+          onClick={() => setDeals([...deals, { ...defaultDeal }])}
+        >
           Add deal
         </button>
       </div>
 
       <div className="email-tools__actions">
-        <Button onClick={handlePreview} disabled={loading}>{loading ? 'Đang tải...' : 'Preview email khuyến mãi'}</Button>
-        <Button onClick={handleSend} disabled={!form.testEmail}>Gửi email test</Button>
+        <Button onClick={handlePreview} disabled={loading}>
+          {loading ? 'Đang tải...' : 'Preview email khuyến mãi'}
+        </Button>
+        <Button onClick={handleSend} disabled={!form.testEmail}>
+          Gửi email test
+        </Button>
       </div>
 
       {preview && (
@@ -115,7 +147,13 @@ export const PromotionalComposer: React.FC = () => {
           <div className="email-tools__preview-card">
             <p className="email-tools__preview-label">Subject</p>
             <strong>{preview.subject}</strong>
-            <iframe title="Promotional email preview" srcDoc={preview.html} className="email-tools__iframe" />
+            <iframe
+              title="Promotional email preview"
+              srcDoc={preview.html}
+              sandbox=""
+              referrerPolicy="no-referrer"
+              className="email-tools__iframe"
+            />
           </div>
           <div className="email-tools__preview-card">
             <p className="email-tools__preview-label">Text version</p>

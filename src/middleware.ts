@@ -1,16 +1,25 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+const AUTH_COOKIE = 'payload-token'
+
 /**
- * Middleware is intentionally a no-op pass-through.
- * The adminAuthPlugin handles cookie setting (payload-token) natively via PayloadSession.
- * No session sync middleware is needed.
+ * Fast route gate. This only checks that the HttpOnly Payload cookie exists; protected layouts
+ * still validate the signed token and roles on the server before returning any private data.
  */
-export function middleware(_request: NextRequest) {
+export function middleware(request: NextRequest) {
+  if (!request.cookies.get(AUTH_COOKIE)?.value) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/'
+    loginUrl.search = ''
+    loginUrl.searchParams.set('authRequired', '1')
+    loginUrl.searchParams.set('redirect', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+    return NextResponse.redirect(loginUrl)
+  }
+
   return NextResponse.next()
 }
 
-// Only match a path that will never exist to effectively disable middleware
 export const config = {
-  matcher: [],
+  matcher: ['/user/:path*', '/workspace/:path*', '/stocks/:path*'],
 }

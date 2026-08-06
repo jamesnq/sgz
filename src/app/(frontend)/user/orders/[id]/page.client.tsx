@@ -38,7 +38,9 @@ export function OrderCard({ order, className }: { order: Order; className?: stri
               <span className="md:hidden text-muted-foreground">Mã DH:</span>
               <span>#{order.id}</span>
             </div>
-            <div>{getOrderStatus(order.status)}</div>
+            <div role="status" aria-live="polite" aria-atomic="true">
+              Trạng thái đơn hàng: {getOrderStatus(order.status)}
+            </div>
           </div>
         </div>
       </CardHeader>

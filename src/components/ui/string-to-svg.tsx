@@ -17,7 +17,6 @@ const StringToSVG = memo(
   ({ svgString, fallback, inheritColor = true, ...props }: StringToSVGProps) => {
     // State to track if we're in the browser
     const [isMounted, setIsMounted] = useState(false)
-    const [hasError, setHasError] = useState(false)
 
     // Set mounted state when component mounts (client-side only)
     useEffect(() => {
@@ -25,24 +24,23 @@ const StringToSVG = memo(
     }, [])
 
     // Memoize the SVG parsing to avoid unnecessary re-processing on every render
-    const { attributesObj, innerContent } = useMemo(() => {
+    const { attributesObj, innerContent, hasError } = useMemo(() => {
       // Handle empty or invalid SVG strings
       if (!svgString || typeof svgString !== 'string') {
-        return { attributesObj: {}, innerContent: '' }
+        return { attributesObj: {}, innerContent: '', hasError: false }
       }
 
       try {
         // Server-side or initial render - use regex-based sanitization
         if (!isMounted) {
-          return regexBasedSanitize(svgString, inheritColor)
+          return { ...regexBasedSanitize(svgString, inheritColor), hasError: false }
         }
 
         // Client-side - use DOM-based sanitization
-        return domBasedSanitize(svgString, inheritColor)
+        return { ...domBasedSanitize(svgString, inheritColor), hasError: false }
       } catch (error) {
         console.error('Error sanitizing SVG:', error)
-        setHasError(true)
-        return { attributesObj: {}, innerContent: '' }
+        return { attributesObj: {}, innerContent: '', hasError: true }
       }
     }, [svgString, isMounted, inheritColor]) // Re-run if svgString, isMounted, or inheritColor changes
 
@@ -85,7 +83,7 @@ StringToSVG.displayName = 'StringToSVG'
  * List of allowed SVG attributes that are considered safe
  */
 const ALLOWED_ATTRIBUTES = [
-  'viewBox',
+  'viewbox',
   'xmlns',
   'width',
   'height',
@@ -102,7 +100,6 @@ const ALLOWED_ATTRIBUTES = [
   'x',
   'y',
   'transform',
-  'style',
   'text-anchor',
   'font-size',
   'font-family',
@@ -128,8 +125,8 @@ const ALLOWED_ATTRIBUTES = [
   'marker-end',
   'filter',
   'clip-rule',
-  'pathLength',
-  'preserveAspectRatio',
+  'pathlength',
+  'preserveaspectratio',
   'overflow', // Add overflow attribute to allowed list
 ]
 
@@ -151,79 +148,43 @@ const ALLOWED_TAGS = [
   // 'title',
   'desc',
   'defs',
-  'linearGradient',
-  'radialGradient',
+  'lineargradient',
+  'radialgradient',
   'stop',
-  'clipPath',
+  'clippath',
   'mask',
   'pattern',
-  'use',
   'symbol',
   'marker',
-  'filter',
-  'feGaussianBlur',
-  'feOffset',
-  'feBlend',
-  'feColorMatrix',
-  'feComponentTransfer',
-  'feComposite',
-  'feConvolveMatrix',
-  'feDiffuseLighting',
-  'feDisplacementMap',
-  'feDistantLight',
-  'feDropShadow',
-  'feFlood',
-  'feFuncA',
-  'feFuncB',
-  'feFuncG',
-  'feFuncR',
-  'feImage',
-  'feMerge',
-  'feMergeNode',
-  'feMorphology',
-  'fePointLight',
-  'feSpecularLighting',
-  'feSpotLight',
-  'feTile',
-  'feTurbulence',
 ]
 
 /**
  * Checks if an attribute is safe to use
  */
 function isSafeAttribute(name: string, value: string): boolean {
+  const normalizedName = name.toLowerCase()
+  const normalizedValue = value.trim().toLowerCase()
+
   // Check if the attribute name is in our whitelist
-  if (!ALLOWED_ATTRIBUTES.includes(name)) {
+  if (!ALLOWED_ATTRIBUTES.includes(normalizedName)) {
     return false
   }
 
   // Extra check for potentially dangerous values
   if (
-    value.includes('javascript:') ||
-    value.includes('data:') ||
-    value.includes('vbscript:') ||
-    value.includes('expression(') ||
-    /url\s*\(\s*['"]?\s*data:/i.test(value)
+    normalizedValue.includes('javascript:') ||
+    normalizedValue.includes('data:') ||
+    normalizedValue.includes('vbscript:') ||
+    normalizedValue.includes('expression(') ||
+    normalizedValue.includes('@import') ||
+    (/url\s*\(/i.test(value) && !/^url\(#[a-z0-9_-]+\)$/i.test(value))
   ) {
     return false
   }
 
   // Check for event handlers (on*)
-  if (name.startsWith('on')) {
+  if (normalizedName.startsWith('on')) {
     return false
-  }
-
-  // Special handling for style attribute to prevent CSS-based attacks
-  if (name === 'style') {
-    // Check for potentially dangerous CSS
-    if (
-      value.includes('expression') ||
-      value.includes('url(') ||
-      value.includes('@import') ||
-      value.includes('behavior')
-    ) {
-      return false
-    }
   }
 
   return true
@@ -232,7 +193,7 @@ function isSafeAttribute(name: string, value: string): boolean {
 /**
  * Sanitizes an SVG string using regex (safe for server-side rendering)
  */
-function regexBasedSanitize(svgString: string, inheritColor = false) {
+export function regexBasedSanitize(svgString: string, inheritColor = false) {
   try {
     // Extract the SVG tag and its attributes using regex
     const svgTagMatch = svgString.match(/<svg[^>]*>/i)
@@ -315,6 +276,12 @@ function regexBasedSanitize(svgString: string, inheritColor = false) {
     if (contentMatch && contentMatch[1]) {
       innerContent = contentMatch[1]
 
+      // Remove executable and externally-referencing content before processing allowed shapes.
+      innerContent = innerContent
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<(script|style|foreignObject|iframe)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+        .replace(/\s(?:on[a-z]+|href|xlink:href|style)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+
       // Apply color inheritance to inner elements if enabled
       if (inheritColor) {
         // Replace fill and stroke attributes with currentColor
@@ -364,7 +331,8 @@ function domBasedSanitize(svgString: string, inheritColor = false) {
   const attributesObj: Record<string, string> = {}
   Array.from(svgElement.attributes).forEach((attr) => {
     if (isSafeAttribute(attr.name, attr.value)) {
-      attributesObj[attr.name] = attr.value
+      const reactName = attr.name.toLowerCase() === 'viewbox' ? 'viewBox' : attr.name
+      attributesObj[reactName] = attr.value
     }
   })
 
@@ -412,6 +380,15 @@ function domBasedSanitize(svgString: string, inheritColor = false) {
       if (element.parentNode) {
         element.parentNode.removeChild(element)
       }
+      continue
+    }
+
+    if (element) {
+      Array.from(element.attributes).forEach((attribute) => {
+        if (!isSafeAttribute(attribute.name, attribute.value)) {
+          element.removeAttribute(attribute.name)
+        }
+      })
     }
   }
 

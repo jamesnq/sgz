@@ -8,7 +8,14 @@ import type { Header as HeaderType } from '@/payload-types'
 import { Routes } from '@/utilities/routes'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetDescription,
+} from '@/components/ui/sheet'
 import { HeaderSearch } from '../HeaderSearch.client'
 import { Logo } from '@/components/Logo/Logo'
 
@@ -19,11 +26,9 @@ export const navItems = [
   { label: 'Liên hệ', href: '#footer', sectionId: 'footer' },
 ]
 
-
-
 export const HeaderNav: React.FC<{ data: HeaderType }> = ({}) => {
   const pathname = usePathname()
-  
+
   const navItemsRef = navItems
 
   return (
@@ -81,11 +86,19 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden shrink-0 text-white hover:bg-sgz-surface hover:text-sgz-primary">
-          <Menu className="h-6 w-6" />
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Mở menu chính"
+          className="lg:hidden shrink-0 text-white hover:bg-sgz-surface hover:text-sgz-primary"
+        >
+          <Menu aria-hidden="true" className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6">
+      <SheetContent
+        side="right"
+        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6"
+      >
         <SheetHeader className="pb-6 border-b border-sgz-border text-left">
           <SheetTitle asChild>
             <Link href={Routes.HOME} onClick={() => setOpen(false)} className="inline-block">
@@ -135,8 +148,17 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
                   <span className="text-white font-semibold text-sm">Tài khoản</span>
                   <span className="text-sgz-textMuted text-xs truncate w-full">{user.email}</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => { logout(); setOpen(false) }} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shrink-0">
-                  <LogOut className="h-5 w-5" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Đăng xuất"
+                  onClick={() => {
+                    logout()
+                    setOpen(false)
+                  }}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shrink-0"
+                >
+                  <LogOut aria-hidden="true" className="h-5 w-5" />
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-2">
@@ -172,4 +194,3 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
     </Sheet>
   )
 }
-

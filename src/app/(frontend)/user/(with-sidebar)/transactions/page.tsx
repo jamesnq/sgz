@@ -8,7 +8,6 @@ import {
   TransactionTableHeaderSkeleton,
 } from '@/components/skeletons'
 import { CardContent } from '@/components/ui/card'
-import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import { z } from 'zod'
 import PageClient from './page.client'
@@ -52,12 +51,9 @@ async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }
   if (!user) {
     return null
   }
-  let queryWhere: any = { user: { equals: user.id } }
+  const queryWhere: any = { user: { equals: user.id } }
   if (query) {
-    queryWhere.and = [
-      { user: { equals: user.id } },
-      { description: { like: query } },
-    ]
+    queryWhere.and = [{ user: { equals: user.id } }, { description: { like: query } }]
   }
   const res = await payload.find({
     collection: 'transactions',

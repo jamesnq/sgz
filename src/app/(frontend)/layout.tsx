@@ -30,17 +30,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <InitTheme />
       </head>
       <body className={`${beVietnamPro.variable} ${beVietnamPro.className} antialiased`}>
+        <a
+          href="#main-content"
+          className="sr-only z-[100] rounded bg-white px-4 py-2 text-black focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        >
+          Bỏ qua điều hướng
+        </a>
         <Providers>
           <AdminBar />
           <Header />
-          {children}
+          <main id="main-content" tabIndex={-1}>
+            {children}
+          </main>
           <Footer />
         </Providers>
       </body>
     </html>
   )
 }
-
 
 export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),

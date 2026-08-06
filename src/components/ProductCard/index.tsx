@@ -7,11 +7,18 @@ import { formatPrice } from '@/utilities/formatPrice'
 import { formatSold } from '@/utilities/formatSold'
 import { Routes } from '@/utilities/routes'
 
-export const ProductCard = ({ product }: { product: Product }) => {
+export const ProductCard = ({
+  product,
+  headingLevel = 'h3',
+}: {
+  product: Product
+  headingLevel?: 'h2' | 'h3'
+}) => {
   const discount = product.maxDiscount || 0
   const salePrice = product.minPrice || 0
   const originalPrice = discount > 0 ? Math.round(salePrice / (1 - discount / 100)) : salePrice
   const productHref = product.slug ? Routes.product(product.slug) : '#'
+  const Heading = headingLevel
 
   return (
     <div className="group flex flex-col h-full">
@@ -45,9 +52,9 @@ export const ProductCard = ({ product }: { product: Product }) => {
         </div>
       </div>
       <Link href={productHref} className="mb-1">
-        <h3 className="font-bold text-white line-clamp-1 group-hover:text-sgz-primary transition-colors">
+        <Heading className="font-bold text-white line-clamp-1 group-hover:text-sgz-primary transition-colors">
           {product.name}
-        </h3>
+        </Heading>
       </Link>
 
       <div className="text-[11px] text-[#acaab0] mb-2 mt-0.5 flex items-center gap-1.5 font-medium">
@@ -74,7 +81,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
             {formatPrice(originalPrice)}
           </span>
         )}
-        <span className="text-sgz-primary font-bold">{formatPrice(salePrice)}</span>
+        <span className="font-bold text-[#a78bfa]">{formatPrice(salePrice)}</span>
       </div>
     </div>
   )

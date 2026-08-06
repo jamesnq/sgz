@@ -5,7 +5,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { FieldProps, FieldWrapper, isProcessRequired } from '../common/FieldWrapper'
+import {
+  FieldProps,
+  FieldWrapper,
+  getFieldDescribedBy,
+  getFieldInputId,
+  isProcessRequired,
+} from '../common/FieldWrapper'
 
 export function SelectField({ className, field, onChange, disabled }: FieldProps) {
   return (
@@ -18,7 +24,13 @@ export function SelectField({ className, field, onChange, disabled }: FieldProps
         }}
         disabled={disabled}
       >
-        <SelectTrigger className="rounded-xl text-xs">
+        <SelectTrigger
+          id={getFieldInputId(field)}
+          aria-describedby={getFieldDescribedBy(field)}
+          aria-invalid={isProcessRequired(field) || undefined}
+          aria-required={field.required || undefined}
+          className="rounded-xl text-xs"
+        >
           <SelectValue placeholder={field.placeholder} />
         </SelectTrigger>
         <SelectContent className="rounded-xl">

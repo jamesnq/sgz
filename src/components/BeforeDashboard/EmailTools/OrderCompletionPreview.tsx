@@ -54,7 +54,13 @@ export const OrderCompletionPreview: React.FC = () => {
           <div className="email-tools__preview-card">
             <p className="email-tools__preview-label">Subject</p>
             <strong>{preview.subject}</strong>
-            <iframe title="Order completion email preview" srcDoc={preview.html} className="email-tools__iframe" />
+            <iframe
+              title="Order completion email preview"
+              srcDoc={preview.html}
+              sandbox=""
+              referrerPolicy="no-referrer"
+              className="email-tools__iframe"
+            />
           </div>
           <div className="email-tools__preview-card">
             <p className="email-tools__preview-label">Text version</p>

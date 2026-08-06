@@ -276,7 +276,10 @@ export const OrderItem = memo(({ order, handleDragStart, dropOnly }: OrderItemPr
                     <DialogContent className="w-full max-w-4xl h-[80vh] p-0">
                       <div className="flex-1 h-full">
                         <iframe
+                          title={`Chỉnh sửa đơn hàng ${order.id}`}
                           src={`/admin/collections/orders/${order.id}`}
+                          sandbox="allow-forms allow-same-origin allow-scripts"
+                          referrerPolicy="same-origin"
                           className="w-full h-full border-0"
                         />
                       </div>

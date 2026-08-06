@@ -22,13 +22,6 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg role="img" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <title>X</title>
-    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-  </svg>
-)
-
 interface FooterLink {
   name: string
   Icon: LucideIcon | React.FC<React.SVGProps<SVGSVGElement>>
@@ -63,7 +56,7 @@ const FooterComponent = React.forwardRef<HTMLDivElement, FooterProps>(
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0">
             <div className="lg:col-span-4 flex flex-col items-start">
               <Link className="flex items-center mb-6" href="/">
-                <Logo className="h-20 md:h-24 w-auto" />
+                <Logo width={80} height={80} className="h-20 w-20 md:h-24 md:w-24" />
               </Link>
               <p className="text-sgz-textMuted max-w-sm leading-relaxed">{brand.description}</p>
             </div>

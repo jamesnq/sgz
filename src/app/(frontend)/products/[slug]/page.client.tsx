@@ -8,13 +8,15 @@ import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
 import { checkoutAction } from '@/app/_actions/checkoutAction'
-import { getAvailableVouchersAction, type AvailableVoucher } from '@/app/_actions/getAvailableVouchersAction'
+import {
+  getAvailableVouchersAction,
+  type AvailableVoucher,
+} from '@/app/_actions/getAvailableVouchersAction'
 import { validateVoucherAction } from '@/app/_actions/validateVoucherAction'
 import { fields } from '@/blocks/Form/fields'
 import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import RichText from '@/components/RichText'
 import { DisplayProductStatus } from '@/components/display-product-status'
-import { Shell } from '@/components/shell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -28,6 +30,16 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +55,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { config } from '@/config'
 import { getProductCardStyles } from '@/lib/product-card-styles'
 import { useAuth } from '@/providers/Auth'
 import calculateDiscountPercentage from '@/utilities/calculateDiscountPercentage'
@@ -687,28 +698,88 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   const shippingInfo = useProductPageContext((state) => state.shippingInfo)
   const isFormValid = useProductPageContext((state) => state.isFormValid)
   const voucherCode = useProductPageContext((state) => state.voucherCode)
+  const calc = useProductPageContext((state) => state.calc)
+  const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
+  const [open, setOpen] = React.useState(false)
+  const [announcement, setAnnouncement] = React.useState('')
 
-  const checkout = React.useCallback(() => {
-    executeAsync({
+  const checkout = React.useCallback(async () => {
+    setAnnouncement('Đang tạo đơn hàng, vui lòng chờ.')
+    const result = await executeAsync({
       quantity,
       productVariantId: currentVariant.id,
       shippingFields: shippingInfo,
       voucherCode: voucherCode || undefined,
-    }).then((x: any) => {
-      if (!x?.data?.order) return
-      router.push(Routes.order(x.data.order.id))
     })
+
+    if (!result?.data?.order) {
+      setAnnouncement('Không thể tạo đơn hàng. Vui lòng kiểm tra thông tin và thử lại.')
+      return
+    }
+
+    setAnnouncement('Tạo đơn hàng thành công. Đang chuyển đến trang chi tiết đơn hàng.')
+    setOpen(false)
+    router.push(Routes.order(result.data.order.id))
   }, [executeAsync, quantity, currentVariant.id, shippingInfo, voucherCode, router])
 
+  const finalPrice = Math.max(0, calc.totalPrice - appliedVoucherDiscount)
+
   return (
-    <button
-      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
-      disabled={isExecuting || !isFormValid}
-      onClick={checkout}
-    >
-      {isExecuting && <Loader2 className="animate-spin mr-2" />}
-      Thanh toán
-    </button>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-center rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
+            disabled={isExecuting || !isFormValid}
+            aria-describedby={!isFormValid ? 'checkout-form-error' : undefined}
+          >
+            Thanh toán
+          </button>
+        </DialogTrigger>
+        <DialogContent className="border-white/10 bg-[#16161e] text-white">
+          <DialogHeader>
+            <DialogTitle>Xác nhận thanh toán</DialogTitle>
+            <DialogDescription>
+              Kiểm tra lần cuối trước khi tạo đơn hàng. Bạn có thể nhấn Escape để quay lại.
+            </DialogDescription>
+          </DialogHeader>
+          <dl className="space-y-3 rounded-lg border border-white/10 p-4 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt>Số lượng</dt>
+              <dd className="font-semibold">{quantity}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>Phương thức</dt>
+              <dd className="font-semibold">Số dư tài khoản</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>Tổng thanh toán</dt>
+              <dd className="font-semibold text-sgz-primary">{formatPrice(finalPrice, 'VND')}</dd>
+            </div>
+          </dl>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={isExecuting}>
+                Quay lại
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={checkout} disabled={isExecuting}>
+              {isExecuting && <Loader2 aria-hidden="true" className="mr-2 animate-spin" />}
+              Xác nhận thanh toán
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {!isFormValid && (
+        <p id="checkout-form-error" className="mt-2 text-sm text-red-400">
+          Vui lòng điền đầy đủ các trường bắt buộc trước khi thanh toán.
+        </p>
+      )}
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </p>
+    </>
   )
 })
 
@@ -730,20 +801,23 @@ function VoucherInput() {
   const [applied, setApplied] = React.useState(false)
   const pendingAutoApplyRef = React.useRef(false)
 
-  const handleApply = React.useCallback(async (codeOverride?: string) => {
-    const code = codeOverride || voucherCode
-    if (!code.trim()) return
-    setError(null)
-    const result = await executeAsync({
-      voucherCode: code.trim(),
-      totalPrice: calc.totalPrice,
-      productVariantId: currentVariant.id,
-    })
-    if (result?.data) {
-      setAppliedVoucherDiscount(result.data.discountAmount)
-      setApplied(true)
-    }
-  }, [voucherCode, calc.totalPrice, currentVariant.id, executeAsync, setAppliedVoucherDiscount])
+  const handleApply = React.useCallback(
+    async (codeOverride?: string) => {
+      const code = codeOverride || voucherCode
+      if (!code.trim()) return
+      setError(null)
+      const result = await executeAsync({
+        voucherCode: code.trim(),
+        totalPrice: calc.totalPrice,
+        productVariantId: currentVariant.id,
+      })
+      if (result?.data) {
+        setAppliedVoucherDiscount(result.data.discountAmount)
+        setApplied(true)
+      }
+    },
+    [voucherCode, calc.totalPrice, currentVariant.id, executeAsync, setAppliedVoucherDiscount],
+  )
 
   // Auto-apply when voucher code is set from slideshow
   React.useEffect(() => {
@@ -761,16 +835,19 @@ function VoucherInput() {
   }, [setVoucherCode, setAppliedVoucherDiscount])
 
   // Expose auto-apply trigger via a callback that slideshow can use
-  const handleAutoApply = React.useCallback((code: string) => {
-    if (applied) {
-      // Clear current voucher first
-      setAppliedVoucherDiscount(0)
-      setApplied(false)
-      setError(null)
-    }
-    setVoucherCode(code)
-    pendingAutoApplyRef.current = true
-  }, [applied, setVoucherCode, setAppliedVoucherDiscount])
+  const handleAutoApply = React.useCallback(
+    (code: string) => {
+      if (applied) {
+        // Clear current voucher first
+        setAppliedVoucherDiscount(0)
+        setApplied(false)
+        setError(null)
+      }
+      setVoucherCode(code)
+      pendingAutoApplyRef.current = true
+    },
+    [applied, setVoucherCode, setAppliedVoucherDiscount],
+  )
 
   return (
     <div className="space-y-1.5 w-full">
@@ -867,8 +944,10 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
       }
       if (!cancelled) setLoading(false)
     })
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id, currentVariant?.id])
 
   React.useEffect(() => {
@@ -876,7 +955,7 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
       // 1 item on mobile, 2 items on pc/tablet
       setItemsPerPage(window.innerWidth < 768 ? 1 : 2)
     }
-    
+
     // Set initial
     handleResize()
 
@@ -885,11 +964,11 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
   }, [])
 
   const totalPages = Math.ceil(vouchers.length / itemsPerPage)
-  
+
   // reset page if resize makes current page out of bounds
   React.useEffect(() => {
     if (currentPage >= totalPages && totalPages > 0) {
-       setCurrentPage(Math.max(0, totalPages - 1))
+      setCurrentPage(Math.max(0, totalPages - 1))
     }
   }, [totalPages, currentPage])
 
@@ -940,14 +1019,14 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
     } else if (isRightSwipe) {
       handlePrev()
     }
-    
+
     touchStartX.current = null
     touchEndX.current = null
   }
 
   return (
     <div className="mt-3 relative group w-full">
-      <div 
+      <div
         className="overflow-hidden w-full"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -959,12 +1038,7 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
         >
           {pages.map((pageVouchers, pageIndex) => (
             <div key={pageIndex} className="w-full shrink-0">
-              <div 
-                className={cn(
-                  "grid gap-3", 
-                  itemsPerPage === 1 ? "grid-cols-1" : "grid-cols-2"
-                )}
-              >
+              <div className={cn('grid gap-3', itemsPerPage === 1 ? 'grid-cols-1' : 'grid-cols-2')}>
                 {pageVouchers.map((voucher) => (
                   <div
                     key={voucher.code}
@@ -993,7 +1067,12 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
                             </span>
                           )}
                           {voucher.expirationDate && (
-                            <span className={cn('text-xs flex items-center gap-1', getExpirationDisplay(voucher.expirationDate).className)}>
+                            <span
+                              className={cn(
+                                'text-xs flex items-center gap-1',
+                                getExpirationDisplay(voucher.expirationDate).className,
+                              )}
+                            >
                               <Clock className="w-3 h-3" />
                               {getExpirationDisplay(voucher.expirationDate).text}
                             </span>
@@ -1025,7 +1104,7 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          
+
           <div className="flex justify-center gap-1.5">
             {Array.from({ length: totalPages }).map((_, i) => (
               <button
@@ -1053,209 +1132,223 @@ function VoucherSlideshow({ onApply }: { onApply: (code: string) => void }) {
 }
 
 // Memoized checkout component
-const MemoizedCheckout = React.memo(
-  function CheckoutInner({ className }: { className?: string }) {
-    const user = useAuth().user
-    const product = useProductPageContext((state) => state.product)
-    const variants = product.variants as ProductVariant[]
-    const currentVariant = useProductPageContext((state) => state.currentVariant)
-    const setCurrentVariant = useProductPageContext((state) => state.setCurrentVariant)
-    const quantity = useProductPageContext((state) => state.quantity)
-    const incQuantity = useProductPageContext((state) => state.incQuantity)
-    const decQuantity = useProductPageContext((state) => state.decQuantity)
-    const setQuantity = useProductPageContext((state) => state.setQuantity)
-    const calc = useProductPageContext((state) => state.calc)
-    const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
+const MemoizedCheckout = React.memo(function CheckoutInner({ className }: { className?: string }) {
+  const user = useAuth().user
+  const product = useProductPageContext((state) => state.product)
+  const variants = product.variants as ProductVariant[]
+  const currentVariant = useProductPageContext((state) => state.currentVariant)
+  const setCurrentVariant = useProductPageContext((state) => state.setCurrentVariant)
+  const quantity = useProductPageContext((state) => state.quantity)
+  const incQuantity = useProductPageContext((state) => state.incQuantity)
+  const decQuantity = useProductPageContext((state) => state.decQuantity)
+  const setQuantity = useProductPageContext((state) => state.setQuantity)
+  const calc = useProductPageContext((state) => state.calc)
+  const [editingQuantity, setEditingQuantity] = useState<number | undefined>(undefined)
 
-    const handleQuantityChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseInt(e.target.value, 10)
-      if (!isNaN(value)) {
-        setEditingQuantity(value)
-      }
-    }, [])
+  const handleQuantityChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10)
+    if (!isNaN(value)) {
+      setEditingQuantity(value)
+    }
+  }, [])
 
-    const handleQuantityBlur = React.useCallback(
-      (e: React.FocusEvent<HTMLInputElement>) => {
-        const parsedValue = Math.min(
-          Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
-          currentVariant.max,
-        )
-        setQuantity(parsedValue)
-        setEditingQuantity(undefined)
-      },
-      [currentVariant.max, currentVariant.min, setQuantity],
-    )
+  const handleQuantityBlur = React.useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const parsedValue = Math.min(
+        Math.max(parseInt(e.target.value, 10) || currentVariant.min, currentVariant.min),
+        currentVariant.max,
+      )
+      setQuantity(parsedValue)
+      setEditingQuantity(undefined)
+    },
+    [currentVariant.max, currentVariant.min, setQuantity],
+  )
 
-    const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
-    const finalPrice = Math.max(0, calc.totalPrice - appliedVoucherDiscount)
+  const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
+  const finalPrice = Math.max(0, calc.totalPrice - appliedVoucherDiscount)
 
-    const productTitle = currentVariant?.name || product.name
-    const discountPercentage =
-      calc.totalOriginalPrice > 0
-        ? ((calc.totalDiscountPrice / calc.totalOriginalPrice) * 100).toFixed(0)
-        : 0
+  const productTitle = currentVariant?.name || product.name
+  const discountPercentage =
+    calc.totalOriginalPrice > 0
+      ? ((calc.totalDiscountPrice / calc.totalOriginalPrice) * 100).toFixed(0)
+      : 0
 
-    return (
-      <div
-        id="checkout"
-        style={{ scrollMarginTop: '100px' }}
-        className={cn('bg-[#16161e] border border-white/10 rounded-2xl p-6 shadow-xl', className)}
-      >
-        <h1 className="text-xl font-bold text-white mb-2 leading-tight">{productTitle}</h1>
+  return (
+    <div
+      id="checkout"
+      style={{ scrollMarginTop: '100px' }}
+      className={cn('bg-[#16161e] border border-white/10 rounded-2xl p-6 shadow-xl', className)}
+    >
+      <h1 className="text-xl font-bold text-white mb-2 leading-tight">{productTitle}</h1>
 
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-2xl font-bold text-[#8b5cf6]">
-            {formatPrice(finalPrice, 'VND')}
-          </span>
-          {calc.totalDiscountPrice > 0 && (
-            <>
-              <span className="text-sm text-gray-500 line-through">
-                {formatPrice(calc.totalOriginalPrice, 'VND')}
-              </span>
-              <span className="bg-[#8b5cf6]/20 text-[#8b5cf6] text-xs font-bold px-2 py-0.5 rounded">
-                -{discountPercentage}%
-              </span>
-            </>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div
-            className={cn(
-              'grid gap-3 w-full',
-              variants?.length > 0 && currentVariant.max > 1
-                ? 'grid-cols-[minmax(0,1fr)_112px]'
-                : 'grid-cols-1',
-            )}
-          >
-            {variants?.length > 0 && (
-              <div className="space-y-1.5 min-w-0">
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap">
-                  Phiên bản
-                </label>
-                <Select
-                  value={String(currentVariant.id)}
-                  onValueChange={(val) => {
-                    const selected = variants.find((v) => String(v.id) === val)
-                    if (selected) {
-                      setCurrentVariant(selected)
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full bg-[#0f0f13] border-white/10 rounded-lg text-sm text-white focus:ring-[#8b5cf6] focus:border-[#8b5cf6] h-[42px]">
-                    <SelectValue placeholder="Chọn phiên bản" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {variants.map((v) => (
-                      <SelectItem key={v.id} value={String(v.id)}>
-                        {v.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {currentVariant.max > 1 && (
-              <div
-                className={cn('space-y-1.5', variants?.length > 0 && 'min-w-[112px]')}
-              >
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap text-center">
-                  Số lượng
-                </label>
-                <div className="flex items-center justify-between bg-[#0f0f13] border border-white/10 rounded-lg p-1 w-full h-[42px]">
-                  <button
-                    id={`decrement-quantity`}
-                    disabled={quantity <= currentVariant.min}
-                    type="button"
-                    className="w-7 h-7 flex shrink-0 items-center justify-center hover:bg-white/5 rounded text-white disabled:opacity-50"
-                    onClick={() => decQuantity()}
-                  >
-                    <MinusIcon className="size-3" aria-hidden="true" />
-                  </button>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    className="w-full min-w-[2.25rem] px-1 text-sm font-bold text-center text-white bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none"
-                    value={editingQuantity !== undefined ? editingQuantity : quantity}
-                    onFocus={() => setEditingQuantity(quantity)}
-                    onChange={handleQuantityChange}
-                    onBlur={handleQuantityBlur}
-                  />
-                  <button
-                    id={`increment-quantity`}
-                    disabled={quantity >= currentVariant.max}
-                    type="button"
-                    className="w-7 h-7 flex shrink-0 items-center justify-center hover:bg-white/5 rounded text-white disabled:opacity-50"
-                    onClick={() => incQuantity()}
-                  >
-                    <PlusIcon className="size-3" aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <ImportantNotice />
-
-          {currentVariant.status !== 'STOPPED' && <VoucherInput />}
-
-          <div className="pt-6 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-400">Tổng thanh toán:</span>
-            <div className="flex flex-col items-end gap-1 text-right">
-              {appliedVoucherDiscount > 0 && currentVariant.status !== 'STOPPED' && (
-                <span className="text-sm text-green-500">
-                  Khuyến mãi: -{formatPrice(appliedVoucherDiscount, 'VND')}
-                </span>
-              )}
-              <span className="text-xl font-bold text-white">{formatPrice(currentVariant.status === 'STOPPED' ? calc.totalPrice : finalPrice, 'VND')}</span>
-            </div>
-          </div>
-
-          {currentVariant.status === 'STOPPED' && (
-            <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex flex-col gap-3 mt-4">
-              <div className="flex items-center gap-2 text-orange-400">
-                <TriangleAlert className="h-5 w-5 shrink-0" />
-                <span className="font-bold text-sm">Sản phẩm hiện đang hết hàng!</span>
-              </div>
-              <p className="text-orange-200/90 text-xs leading-relaxed">
-                Mọi thông tin chi tiết vui lòng liên hệ qua Fanpage để kiểm tra giá và biết tình trạng hiện tại của sản phẩm.
-              </p>
-              <a
-                href="https://www.facebook.com/subgamezoneoffical"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166FE5] text-white py-2.5 px-4 rounded-lg font-semibold transition-colors w-full text-sm"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                Liên hệ Fanpage
-              </a>
-            </div>
-          )}
-
-          {currentVariant.status === 'ORDER' && workingTime}
-          {currentVariant.status === 'AVAILABLE' && instantDelivery}
-          {currentVariant.status === 'STOPPED' ? (
-            <button disabled className="w-full bg-gray-600/50 text-gray-400 py-4 flex justify-center items-center rounded-xl font-bold cursor-not-allowed mt-2">
-              Hết hàng
-            </button>
-          ) : user ? (
-            <CheckoutButton />
-          ) : (
-            <AuthDialog>
-              <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
-                Đăng nhập để thanh toán
-              </button>
-            </AuthDialog>
-          )}
-        </div>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-2xl font-bold text-[#8b5cf6]">{formatPrice(finalPrice, 'VND')}</span>
+        {calc.totalDiscountPrice > 0 && (
+          <>
+            <span className="text-sm text-gray-500 line-through">
+              {formatPrice(calc.totalOriginalPrice, 'VND')}
+            </span>
+            <span className="bg-[#8b5cf6]/20 text-[#8b5cf6] text-xs font-bold px-2 py-0.5 rounded">
+              -{discountPercentage}%
+            </span>
+          </>
+        )}
       </div>
-    )
-  },
-)
+
+      <div className="space-y-4">
+        <div
+          className={cn(
+            'grid gap-3 w-full',
+            variants?.length > 0 && currentVariant.max > 1
+              ? 'grid-cols-[minmax(0,1fr)_112px]'
+              : 'grid-cols-1',
+          )}
+        >
+          {variants?.length > 0 && (
+            <div className="space-y-1.5 min-w-0">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap">
+                Phiên bản
+              </label>
+              <Select
+                value={String(currentVariant.id)}
+                onValueChange={(val) => {
+                  const selected = variants.find((v) => String(v.id) === val)
+                  if (selected) {
+                    setCurrentVariant(selected)
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full bg-[#0f0f13] border-white/10 rounded-lg text-sm text-white focus:ring-[#8b5cf6] focus:border-[#8b5cf6] h-[42px]">
+                  <SelectValue placeholder="Chọn phiên bản" />
+                </SelectTrigger>
+                <SelectContent>
+                  {variants.map((v) => (
+                    <SelectItem key={v.id} value={String(v.id)}>
+                      {v.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {currentVariant.max > 1 && (
+            <div className={cn('space-y-1.5', variants?.length > 0 && 'min-w-[112px]')}>
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block whitespace-nowrap text-center">
+                Số lượng
+              </label>
+              <div className="flex items-center justify-between bg-[#0f0f13] border border-white/10 rounded-lg p-1 w-full h-[42px]">
+                <button
+                  id={`decrement-quantity`}
+                  disabled={quantity <= currentVariant.min}
+                  type="button"
+                  className="w-7 h-7 flex shrink-0 items-center justify-center hover:bg-white/5 rounded text-white disabled:opacity-50"
+                  onClick={() => decQuantity()}
+                >
+                  <MinusIcon className="size-3" aria-hidden="true" />
+                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  className="w-full min-w-[2.25rem] px-1 text-sm font-bold text-center text-white bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none"
+                  value={editingQuantity !== undefined ? editingQuantity : quantity}
+                  onFocus={() => setEditingQuantity(quantity)}
+                  onChange={handleQuantityChange}
+                  onBlur={handleQuantityBlur}
+                />
+                <button
+                  id={`increment-quantity`}
+                  disabled={quantity >= currentVariant.max}
+                  type="button"
+                  className="w-7 h-7 flex shrink-0 items-center justify-center hover:bg-white/5 rounded text-white disabled:opacity-50"
+                  onClick={() => incQuantity()}
+                >
+                  <PlusIcon className="size-3" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <ImportantNotice />
+
+        {currentVariant.status !== 'STOPPED' && <VoucherInput />}
+
+        <div className="pt-6 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
+          <span className="text-sm font-medium text-gray-400">Tổng thanh toán:</span>
+          <div className="flex flex-col items-end gap-1 text-right">
+            {appliedVoucherDiscount > 0 && currentVariant.status !== 'STOPPED' && (
+              <span className="text-sm text-green-500">
+                Khuyến mãi: -{formatPrice(appliedVoucherDiscount, 'VND')}
+              </span>
+            )}
+            <span className="text-xl font-bold text-white">
+              {formatPrice(
+                currentVariant.status === 'STOPPED' ? calc.totalPrice : finalPrice,
+                'VND',
+              )}
+            </span>
+          </div>
+        </div>
+
+        {currentVariant.status === 'STOPPED' && (
+          <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex flex-col gap-3 mt-4">
+            <div className="flex items-center gap-2 text-orange-400">
+              <TriangleAlert className="h-5 w-5 shrink-0" />
+              <span className="font-bold text-sm">Sản phẩm hiện đang hết hàng!</span>
+            </div>
+            <p className="text-orange-200/90 text-xs leading-relaxed">
+              Mọi thông tin chi tiết vui lòng liên hệ qua Fanpage để kiểm tra giá và biết tình trạng
+              hiện tại của sản phẩm.
+            </p>
+            <a
+              href="https://www.facebook.com/subgamezoneoffical"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166FE5] text-white py-2.5 px-4 rounded-lg font-semibold transition-colors w-full text-sm"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
+              Liên hệ Fanpage
+            </a>
+          </div>
+        )}
+
+        {currentVariant.status === 'ORDER' && workingTime}
+        {currentVariant.status === 'AVAILABLE' && instantDelivery}
+        {currentVariant.status !== 'STOPPED' && (
+          <fieldset className="rounded-xl border border-white/10 p-3">
+            <legend className="px-1 text-sm font-medium text-gray-300">
+              Phương thức thanh toán
+            </legend>
+            <label className="flex items-center gap-2 text-sm text-white">
+              <input type="radio" name="payment-method" value="balance" checked readOnly />
+              Số dư tài khoản
+            </label>
+          </fieldset>
+        )}
+        {currentVariant.status === 'STOPPED' ? (
+          <button
+            disabled
+            className="w-full bg-gray-600/50 text-gray-400 py-4 flex justify-center items-center rounded-xl font-bold cursor-not-allowed mt-2"
+          >
+            Hết hàng
+          </button>
+        ) : user ? (
+          <CheckoutButton />
+        ) : (
+          <AuthDialog>
+            <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+              Đăng nhập để thanh toán
+            </button>
+          </AuthDialog>
+        )}
+      </div>
+    </div>
+  )
+})
 
 function Checkout({ className }: { className?: string }) {
   return <MemoizedCheckout className={className} />
@@ -1293,9 +1386,22 @@ function GridProductCard({ product }: { product: Product }) {
           {product.name}
         </h3>
       </Link>
-      
+
       <div className="text-[10px] text-gray-500 mb-2 mt-0.5 flex items-center gap-1.5 font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-flame text-orange-500/80 fill-orange-500/20"
+        >
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+        </svg>
         Đã bán {formatSold(product.sold || 0)}
       </div>
 
@@ -1322,8 +1428,6 @@ function ProductRelated({ className }: { className?: string }) {
 
   const [currentPage, setCurrentPage] = useState(0)
 
-  if (relatedProducts.length <= 0) return null
-
   const itemsPerPage = 4
   const totalPages = Math.ceil(relatedProducts.length / itemsPerPage)
 
@@ -1334,6 +1438,8 @@ function ProductRelated({ className }: { className?: string }) {
   const handleNext = React.useCallback(() => {
     setCurrentPage((prev) => (prev + 1) % totalPages)
   }, [totalPages])
+
+  if (relatedProducts.length <= 0) return null
 
   const pages = []
   for (let i = 0; i < relatedProducts.length; i += itemsPerPage) {
@@ -1504,7 +1610,7 @@ const ProductDescription = React.memo(function ProductDescription() {
 })
 
 // Product Variants Filter Component for Desktop
-const DesktopVariantsFilter = React.memo(function DesktopVariantsFilter() {
+const _DesktopVariantsFilter = React.memo(function DesktopVariantsFilter() {
   const variants = useProductPageContext((state) => state.product.variants) as ProductVariant[]
 
   return (
@@ -1515,7 +1621,7 @@ const DesktopVariantsFilter = React.memo(function DesktopVariantsFilter() {
 })
 
 // Mobile Variants Drawer Component
-const MobileVariantsDrawer = React.memo(function MobileVariantsDrawer() {
+const _MobileVariantsDrawer = React.memo(function MobileVariantsDrawer() {
   const variants = useProductPageContext((state) => state.product.variants) as ProductVariant[]
 
   if (!variants || variants.length <= 1) return null
@@ -1524,18 +1630,14 @@ const MobileVariantsDrawer = React.memo(function MobileVariantsDrawer() {
 })
 
 // Product Form Component
-const ProductForm = React.memo(
-  function ProductForm() {
-    const form = useProductPageContext((state) => state.currentVariant?.form) as Form | null
-    const status = useProductPageContext((state) => state.currentVariant?.status)
+const ProductForm = React.memo(function ProductForm() {
+  const form = useProductPageContext((state) => state.currentVariant?.form) as Form | null
+  const status = useProductPageContext((state) => state.currentVariant?.status)
 
-    if (!form || status === 'STOPPED') return null
+  if (!form || status === 'STOPPED') return null
 
-    return <ShippingForm form={form} />
-  },
-)
-
-
+  return <ShippingForm form={form} />
+})
 
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
