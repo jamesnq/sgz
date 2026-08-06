@@ -1,19 +1,20 @@
-# Hướng dẫn chạy và chấm Assignment 3–6 trên SGZ
+# Báo cáo bài thực hành Assignment 3 đến Assignment 6 trên dự án SGZ
 
-Tài liệu này mô tả chính xác phần đã làm cho bốn đề trong bốn ảnh được giao. Tất cả thay đổi được áp dụng vào luồng thật của SGZ, không phải một trang demo tách rời.
+Trong bài này, em áp dụng các nội dung đã học về performance, accessibility, security và production toolchain vào dự án Next.js SGZ hiện tại. Em thực hiện trực tiếp trên các luồng thật của dự án thay vì tạo trang demo riêng.
 
-## Đối chiếu ảnh và assignment
+Tài liệu gồm hai mục đích:
 
-| Thứ tự ảnh | Assignment | Tên đề trong ảnh | Phần thực hành trên SGZ |
-| --- | --- | --- | --- |
-| Ảnh 1 | **Assignment 3** | Optimize a Next.js Product Listing Page | Performance trang chủ và `/products` |
-| Ảnh 2 | **Assignment 4** | Make a Next.js Checkout Flow Accessible | Accessibility luồng `/products/[slug]` và trạng thái đơn hàng |
-| Ảnh 3 | **Assignment 5 (Optional)** | Harden a Next.js Login & Dashboard App | Security cho authentication, protected routes, headers và dependencies |
-| Ảnh 4 | **Assignment 6 (Optional)** | Build a Production-Ready Next.js Toolchain | pnpm workspace, shared packages, quality gate, environment và CI |
+1. Báo cáo những thay đổi em đã thực hiện cho từng assignment.
+2. Cung cấp từng bước để người chấm có thể chạy lại và kiểm tra kết quả.
 
-Người chấm có thể chấm từng assignment độc lập theo bảng “Đối chiếu yêu cầu” ở đầu mỗi phần, sau đó làm theo mục “Cách chấm”.
+Thông tin bài nộp:
 
-## Chuẩn bị môi trường
+- Repository: `jamesnq/sgz`.
+- Branch: `assignment`.
+- Framework: Next.js 16, React 19 và Payload CMS 3.
+- Package manager: pnpm.
+
+## Chuẩn bị môi trường để chấm bài
 
 Yêu cầu:
 
@@ -31,38 +32,42 @@ pnpm build
 pnpm dev
 ```
 
-Kết quả tham chiếu tại thời điểm nộp bài:
+Kết quả em ghi nhận tại thời điểm nộp bài:
 
 - `pnpm typecheck`: pass.
 - `pnpm test:unit`: 12 file, 66 test pass (gồm 3 test XSS sanitizer mới).
 - `pnpm lint`: 0 error; còn 48 warning legacy không nằm trong luồng bài tập.
 - `pnpm build`: pass, 40 trang được generate.
-- Shell dùng để làm bài là Node 22.9 nên pnpm in cảnh báo engine; build vẫn pass. Người chấm nên dùng Node 24 để đúng CI.
+- Môi trường local em dùng Node 22.9 nên pnpm có cảnh báo engine, tuy nhiên build vẫn pass. Người chấm nên dùng Node 24 để đúng với cấu hình CI.
 
-## Assignment 3 (Ảnh 1) — Optimize a Next.js Product Listing Page
+## Assignment 3: Optimize a Next.js Product Listing Page
+
+### Mục tiêu
+
+Mục tiêu của assignment này là đo performance ban đầu của trang danh sách sản phẩm, tối ưu LCP và layout shift, tách bundle, giảm số lượng product node trong DOM và kiểm tra lại kết quả sau tối ưu.
 
 ### Đối chiếu yêu cầu Assignment 3
 
-| Yêu cầu trong ảnh | Trạng thái | Phần đã làm trên SGZ | File minh chứng chính |
+| Yêu cầu của assignment | Kết quả | Phần em đã thực hiện | File minh chứng chính |
 | --- | --- | --- | --- |
-| Step 1 — Measure baseline bằng Lighthouse, ghi LCP/CLS/Performance và đo 3 lần | **Đã làm** | Đã audit production `/products`, lưu bảng baseline và kết quả sau tối ưu ở mục Lighthouse bên dưới. TBT được dùng thay cho INP vì Lighthouse navigation lab không tạo tương tác thực để đo INP. | Tài liệu này, mục Lighthouse |
-| Step 2 — Tối ưu hero/LCP bằng `next/image`, priority, width/height và `sizes` | **Đã làm** | Hero mobile dùng `next/image` với `priority`, `fetchPriority="high"`, `sizes`, kích thước ổn định; video desktop có poster và tải trì hoãn. Product image cũng dùng `next/image` qua component `Media`. | `src/components/home/HeroSection/index.tsx`, `src/components/Media/ImageMedia/index.tsx`, `src/components/ProductCard/index.tsx` |
-| Step 3 — Code splitting component nặng bằng `next/dynamic` và loading fallback | **Đã làm** | Tách `ProductFilters`, `MobileProductFilters` và `VirtualizedProductGrid` khỏi bundle ban đầu; có skeleton/loading fallback. | `src/app/(frontend)/products/page.client.tsx`, `src/app/(frontend)/products/ProductFilters.tsx` |
-| Step 4 — Virtualize product grid, chỉ giữ item nhìn thấy trong DOM | **Đã làm** | Dùng `react-window` v2, grid responsive 2/3/4 cột, overscan một hàng và tự tải batch tiếp theo khi gần cuối. | `src/app/(frontend)/products/VirtualizedProductGrid.tsx` |
-| Step 5 — Bundle analyzer và xác định ba dependency lớn nhất | **Đã làm** | Cấu hình `@next/bundle-analyzer`, thêm script `pnpm analyze`, đã ghi ba dependency lớn nhất ở mục Bundle analyzer. | `next.config.js`, `package.json` |
-| Step 6 — Caching strategy (optional) | **Đã làm** | Dữ liệu public dùng `unstable_cache` với revalidate phù hợp; dữ liệu user/order không public-cache. | `src/app/(frontend)/page.tsx`, `src/app/(frontend)/products/[slug]/page.tsx` |
+| Step 1: Đo baseline bằng Lighthouse, ghi LCP, INP, CLS, Performance và đo 3 lần | **Hoàn thành** | Em đã audit production route `/products`, sau đó lưu bảng baseline và kết quả sau tối ưu ở phần Lighthouse. Lighthouse navigation lab không tạo tương tác thực nên INP không có dữ liệu; em dùng TBT làm chỉ số phản ánh main-thread blocking trong lần đo lab. | Báo cáo này, phần Lighthouse |
+| Step 2: Tối ưu hero và LCP bằng `next/image`, priority, width, height và `sizes` | **Hoàn thành** | Em dùng `next/image` cho hero mobile với `priority`, `fetchPriority="high"`, `sizes` và kích thước ổn định. Video desktop có poster và được tải trì hoãn. Product image cũng dùng `next/image` qua component `Media`. | `src/components/home/HeroSection/index.tsx`, `src/components/Media/ImageMedia/index.tsx`, `src/components/ProductCard/index.tsx` |
+| Step 3: Code splitting component nặng bằng `next/dynamic` và loading fallback | **Hoàn thành** | Em tách `ProductFilters`, `MobileProductFilters` và `VirtualizedProductGrid` khỏi bundle ban đầu. Các component dynamic có skeleton hoặc loading fallback. | `src/app/(frontend)/products/page.client.tsx`, `src/app/(frontend)/products/ProductFilters.tsx` |
+| Step 4: Virtualize product grid và chỉ giữ item nhìn thấy trong DOM | **Hoàn thành** | Em dùng `react-window` v2 với grid responsive 2, 3 hoặc 4 cột, overscan một hàng và tự tải batch tiếp theo khi gần cuối. | `src/app/(frontend)/products/VirtualizedProductGrid.tsx` |
+| Step 5: Dùng bundle analyzer và xác định ba dependency lớn nhất | **Hoàn thành** | Em cấu hình `@next/bundle-analyzer`, thêm script `pnpm analyze` và ghi lại ba dependency lớn nhất ở phần Bundle analyzer. | `next.config.js`, `package.json` |
+| Step 6: Thêm caching strategy | **Hoàn thành** | Em dùng `unstable_cache` với thời gian revalidate phù hợp cho dữ liệu public. Em không public-cache dữ liệu user và order. | `src/app/(frontend)/page.tsx`, `src/app/(frontend)/products/[slug]/page.tsx` |
 
-### Chi tiết phần đã triển khai
+### Báo cáo phần em đã thực hiện
 
-1. Hero trang chủ dùng `next/image`, `priority`, `fetchPriority="high"`, `sizes` và kích thước ổn định. Video nền trì hoãn 1,5 giây và mobile dùng ảnh poster.
-2. Bộ lọc desktop/mobile được tách khỏi bundle ban đầu bằng `next/dynamic` trong `products/page.client.tsx`.
-3. Danh sách dùng `react-window` v2 tại `products/VirtualizedProductGrid.tsx`. Grid responsive 2/3/4 cột, cao 720 px, overscan 1 hàng và gọi `showMore()` khi gần cuối.
-4. Tiêu đề trang và vùng giữ chỗ được server-render trong `products/page.tsx`, tránh footer nhảy khi InstantSearch hydrate.
-5. Ảnh product dùng `next/image` thông qua `Media`, có `sizes`, width/height hoặc `fill` trong container có aspect ratio.
-6. Dữ liệu homepage đã dùng `unstable_cache`: post/product revalidate 60 giây và stats 3600 giây. Dữ liệu user/order không cache công khai.
-7. Bundle analyzer được cấu hình bằng `@next/bundle-analyzer`. Script ép webpack vì analyzer cũ không đọc được Turbopack build.
+1. Em dùng `next/image`, `priority`, `fetchPriority="high"`, `sizes` và kích thước ổn định cho hero trang chủ. Video nền được trì hoãn 1,5 giây và phiên bản mobile dùng poster tĩnh.
+2. Em tách bộ lọc desktop và mobile khỏi bundle ban đầu bằng `next/dynamic` trong `products/page.client.tsx`.
+3. Em dùng `react-window` v2 tại `products/VirtualizedProductGrid.tsx`. Grid hỗ trợ 2, 3 hoặc 4 cột, cao 720 px, overscan 1 hàng và gọi `showMore()` khi gần cuối.
+4. Em server-render tiêu đề trang và vùng giữ chỗ trong `products/page.tsx` để tránh footer bị nhảy khi InstantSearch hydrate.
+5. Em dùng `next/image` thông qua `Media` cho ảnh sản phẩm, có `sizes`, width, height hoặc `fill` trong container có aspect ratio.
+6. Em dùng `unstable_cache` cho dữ liệu homepage. Post và product revalidate sau 60 giây, stats revalidate sau 3600 giây. Dữ liệu user và order không được cache công khai.
+7. Em cấu hình `@next/bundle-analyzer`. Script analyze dùng webpack vì bundle analyzer hiện tại không đọc được Turbopack build.
 
-### Cách chấm virtualization và code splitting
+### Hướng dẫn kiểm tra virtualization và code splitting
 
 1. Mở `http://localhost:3000/products`.
 2. DevTools > Elements, tìm `[data-testid="virtualized-product-grid"]`.
@@ -114,19 +119,23 @@ Ba dependency lớn nhất trên toàn client treemap ở lần đo hiện tại
 
 Hai dependency đầu không phải initial chunk của `/products`; route splitting giữ chúng khỏi storefront listing. Báo cáo HTML sinh tại `.next/analyze/{client,nodejs,edge}.html` và không commit vì `.next` là build artifact.
 
-## Assignment 4 (Ảnh 2) — Make a Next.js Checkout Flow Accessible
+## Assignment 4: Make a Next.js Checkout Flow Accessible
+
+### Mục tiêu
+
+Mục tiêu của assignment này là làm cho luồng checkout có thể sử dụng bằng bàn phím và screen reader, đồng thời sửa các vấn đề semantic HTML, ARIA, focus management và thông báo trạng thái.
 
 ### Đối chiếu yêu cầu Assignment 4
 
-| Yêu cầu trong ảnh | Trạng thái | Phần đã làm trên SGZ | File minh chứng chính |
+| Yêu cầu của assignment | Kết quả | Phần em đã thực hiện | File minh chứng chính |
 | --- | --- | --- | --- |
-| 1 — Audit bằng Lighthouse và axe, ghi lại issue | **Đã làm** | Có Playwright + axe chặn violation mức serious/critical; Lighthouse Accessibility tham chiếu đạt 100 trên `/products`; issue before/after được liệt kê bên dưới. | `e2e/accessibility.spec.ts`, tài liệu này |
-| 2 — Sửa semantic HTML/ARIA, label và linked errors | **Đã làm** | Đồng bộ `label`/`id`; thêm `required`, `aria-required`, `aria-invalid`, `aria-describedby`; payment selector dùng `fieldset`/`legend`. | `src/blocks/Form/common/FieldWrapper.tsx`, `src/blocks/Form/{Text,Number,Select,Textarea,Checkbox}/index.tsx`, `src/app/(frontend)/products/[slug]/page.client.tsx` |
-| 3 — Focus trap và focus restoration cho confirmation modal | **Đã làm** | Confirmation modal dùng Radix Dialog: trap focus, đóng bằng Escape và trả focus về nút trigger. | `src/app/(frontend)/products/[slug]/page.client.tsx`, `src/components/ui/dialog.tsx` |
-| 4 — `aria-live` cho cập nhật trạng thái đơn hàng | **Đã làm** | Thêm live region cho trạng thái checkout và order status refresh. | `src/app/(frontend)/products/[slug]/page.client.tsx`, `src/app/(frontend)/user/orders/[id]/page.client.tsx` |
-| 5 — Test keyboard-only và screen reader | **Đã làm** | Có quy trình keyboard/VoiceOver/NVDA bên dưới và test axe tự động; modal được kiểm tra Tab, Shift+Tab, Enter và Escape. | `e2e/accessibility.spec.ts`, mục Chấm bằng keyboard |
+| 1: Audit bằng Lighthouse và axe, ghi lại issue | **Hoàn thành** | Em thêm Playwright và axe để chặn violation mức serious hoặc critical. Lighthouse Accessibility tham chiếu đạt 100 trên `/products`. Danh sách issue trước và sau được ghi bên dưới. | `e2e/accessibility.spec.ts`, báo cáo này |
+| 2: Sửa semantic HTML, ARIA, label và linked errors | **Hoàn thành** | Em đồng bộ `label` và `id`, thêm `required`, `aria-required`, `aria-invalid`, `aria-describedby`. Payment selector dùng `fieldset` và `legend`. | `src/blocks/Form/common/FieldWrapper.tsx`, `src/blocks/Form/{Text,Number,Select,Textarea,Checkbox}/index.tsx`, `src/app/(frontend)/products/[slug]/page.client.tsx` |
+| 3: Focus trap và focus restoration cho confirmation modal | **Hoàn thành** | Em dùng Radix Dialog cho confirmation modal để trap focus, hỗ trợ đóng bằng Escape và trả focus về nút trigger. | `src/app/(frontend)/products/[slug]/page.client.tsx`, `src/components/ui/dialog.tsx` |
+| 4: Thêm `aria-live` cho cập nhật trạng thái đơn hàng | **Hoàn thành** | Em thêm live region cho trạng thái checkout và order status refresh. | `src/app/(frontend)/products/[slug]/page.client.tsx`, `src/app/(frontend)/user/orders/[id]/page.client.tsx` |
+| 5: Test keyboard-only và screen reader | **Hoàn thành** | Em viết quy trình kiểm tra bằng bàn phím, VoiceOver hoặc NVDA và thêm test axe tự động. Modal được kiểm tra với Tab, Shift+Tab, Enter và Escape. | `e2e/accessibility.spec.ts`, phần hướng dẫn kiểm tra bằng bàn phím |
 
-### Before/after issue list
+### Báo cáo vấn đề trước và sau khi sửa
 
 | Trước | Sau |
 | --- | --- |
@@ -139,7 +148,7 @@ Hai dependency đầu không phải initial chunk của `/products`; route split
 | Trạng thái order refresh 10 giây nhưng không được đọc | Order status là live region |
 | Trang thiếu main landmark/skip link | Layout có skip link và `<main id="main-content">` |
 
-### Chấm bằng keyboard
+### Hướng dẫn kiểm tra bằng bàn phím
 
 1. Đăng nhập, mở một `/products/[slug]` đang bán.
 2. Chỉ dùng Tab/Shift+Tab. Focus phải nhìn thấy được và đi qua form theo thứ tự hợp lý.
@@ -164,19 +173,23 @@ Test listing chặn axe violation mức serious/critical. Test checkout cần `E
 
 Lighthouse Accessibility tham chiếu của `/products` sau fix: `100/100`.
 
-## Assignment 5 (Ảnh 3, Optional) — Harden a Next.js Login & Dashboard App
+## Assignment 5 (Optional): Harden a Next.js Login & Dashboard App
+
+### Mục tiêu
+
+Mục tiêu của assignment này là audit các rủi ro bảo mật phía frontend, xử lý XSS, thêm security headers, bảo vệ route, sử dụng cookie an toàn và kiểm tra dependency vulnerabilities.
 
 ### Đối chiếu yêu cầu Assignment 5
 
-| Yêu cầu trong ảnh | Trạng thái | Phần đã làm trên SGZ | File minh chứng chính |
+| Yêu cầu của assignment | Kết quả | Phần em đã thực hiện | File minh chứng chính |
 | --- | --- | --- | --- |
-| OWASP Top 10 frontend assessment, tìm ít nhất 5 issue | **Đã làm** | Đã xác định và xử lý 6 nhóm rủi ro: security headers, route gate, image allowlist, SVG XSS, iframe sandbox và dependency vulnerabilities. | Bảng OWASP bên dưới |
-| Fix XSS do unsafe HTML rendering | **Đã làm** | SVG/HTML đầu vào được sanitize bằng allowlist tag/attribute; loại event handler, `href`, style và protocol nguy hiểm; có unit test payload XSS. | `src/components/ui/string-to-svg.tsx`, `src/components/ui/__tests__/string-to-svg.test.ts` |
-| Thêm CSP headers | **Đã làm** | Cấu hình CSP cùng HSTS, nosniff, referrer policy và permissions policy cho toàn bộ route. | `next.config.js` |
-| Protect routes bằng Next.js middleware | **Đã làm** | Middleware gate `/user`, `/workspace`, `/stocks`; server layout tiếp tục verify token và role. | `src/middleware.ts`, `src/app/(workspace)/layout.tsx` |
-| Thay token storage bằng secure HttpOnly cookie | **Đã làm** | Login dùng Payload cookie với `credentials: include`; không lưu token ở localStorage/sessionStorage; session được kiểm tra server-side. | `src/collections/Users/index.ts`, `src/hooks/getServerSession.ts` |
-| Clickjacking protection bằng `frame-ancestors` hoặc `X-Frame-Options` | **Đã làm** | CSP có `frame-ancestors 'none'` và header `X-Frame-Options: DENY`; iframe preview được sandbox. | `next.config.js`, `src/components/BeforeDashboard/EmailTools/{OrderCompletionPreview,PromotionalComposer}.tsx` |
-| Dependency scan bằng npm audit/Snyk/Socket | **Đã làm** | Chạy `pnpm audit --prod --audit-level=high`; kết quả sau fix không còn high/critical. | `package.json`, `pnpm-lock.yaml`, mục Dependency scan |
+| OWASP Top 10 frontend assessment, tìm ít nhất 5 issue | **Hoàn thành** | Em xác định và xử lý 6 nhóm rủi ro gồm security headers, route gate, image allowlist, SVG XSS, iframe sandbox và dependency vulnerabilities. | Bảng OWASP bên dưới |
+| Fix XSS do unsafe HTML rendering | **Hoàn thành** | Em sanitize SVG và HTML đầu vào bằng allowlist tag và attribute. Sanitizer loại event handler, `href`, style và protocol nguy hiểm. Em cũng thêm unit test với payload XSS. | `src/components/ui/string-to-svg.tsx`, `src/components/ui/__tests__/string-to-svg.test.ts` |
+| Thêm CSP headers | **Hoàn thành** | Em cấu hình CSP cùng HSTS, nosniff, referrer policy và permissions policy cho toàn bộ route. | `next.config.js` |
+| Protect routes bằng Next.js middleware | **Hoàn thành** | Em dùng middleware để gate `/user`, `/workspace` và `/stocks`. Server layout vẫn tiếp tục verify token và role. | `src/middleware.ts`, `src/app/(workspace)/layout.tsx` |
+| Thay token storage bằng secure HttpOnly cookie | **Hoàn thành** | Em dùng Payload cookie với `credentials: include` cho login, không lưu token ở localStorage hoặc sessionStorage và kiểm tra session ở server. | `src/collections/Users/index.ts`, `src/hooks/getServerSession.ts` |
+| Clickjacking protection bằng `frame-ancestors` hoặc `X-Frame-Options` | **Hoàn thành** | Em thêm `frame-ancestors 'none'`, header `X-Frame-Options: DENY` và sandbox cho iframe preview. | `next.config.js`, `src/components/BeforeDashboard/EmailTools/{OrderCompletionPreview,PromotionalComposer}.tsx` |
+| Dependency scan bằng npm audit, Snyk hoặc Socket | **Hoàn thành** | Em chạy `pnpm audit --prod --audit-level=high`. Kết quả sau khi sửa không còn vulnerability mức high hoặc critical. | `package.json`, `pnpm-lock.yaml`, phần Dependency scan |
 
 ### OWASP frontend audit và remediation
 
@@ -223,20 +236,24 @@ CSP production không cho `unsafe-eval`. Theme bootstrap script đã được lo
 pnpm audit --prod --audit-level=high
 ```
 
-- Before: 186 vulnerability — 3 critical, 87 high, 79 moderate, 17 low.
-- After: 5 vulnerability — 0 critical, 0 high, 4 moderate, 1 low.
+- Before: 186 vulnerability, gồm 3 critical, 87 high, 79 moderate và 17 low.
+- After: 5 vulnerability, gồm 0 critical, 0 high, 4 moderate và 1 low.
 - Lệnh trả exit code 0 ở threshold high.
 
-## Assignment 6 (Ảnh 4, Optional) — Build a Production-Ready Next.js Toolchain
+## Assignment 6 (Optional): Build a Production-Ready Next.js Toolchain
+
+### Mục tiêu
+
+Mục tiêu của assignment này là xây dựng cấu trúc workspace có shared packages, thiết lập quality gate cho local và CI, phân tách environment configuration và hỗ trợ bundle analysis trong quy trình build.
 
 ### Đối chiếu yêu cầu Assignment 6
 
-| Yêu cầu trong ảnh | Trạng thái | Phần đã làm trên SGZ | File minh chứng chính |
+| Yêu cầu của assignment | Kết quả | Phần em đã thực hiện | File minh chứng chính |
 | --- | --- | --- | --- |
-| 1 — pnpm + Turborepo monorepo, shared `ui`, `tsconfig`, `eslint-config`, path aliases/package boundaries | **Đã làm** | Giữ app SGZ ở root để không phá deploy nhưng chuyển root thành pnpm workspace/Turborepo; tạo đủ ba shared package và app import thật `@sgz/ui`. | `pnpm-workspace.yaml`, `turbo.json`, `packages/ui`, `packages/tsconfig`, `packages/eslint-config` |
-| 2 — ESLint flat config, Prettier, Husky, lint-staged và `tsc --noEmit` | **Đã làm** | ESLint 9 flat config; format scripts; pre-commit chỉ kiểm tra staged files; `pnpm typecheck` chạy `tsc --noEmit`. | `eslint.config.mjs`, `package.json`, `.husky/pre-commit` |
-| 3 — Environment development/staging/production; public vs server-only; image domains, headers, analyzer | **Đã làm** | Tạo ba file env example, ghi rõ quy tắc `NEXT_PUBLIC_*`; cấu hình image allowlist, security headers và bundle analyzer. | `.env.development.example`, `.env.staging.example`, `.env.production.example`, `next.config.js` |
-| 4 — CI install, lint, typecheck, test, build; cache pnpm/Next; analyze main | **Đã làm** | GitHub Actions có đủ quality stages, cache pnpm store + `.next/cache` + `.turbo`, và upload bundle report trên main. | `.github/workflows/ci.yml` |
+| 1: pnpm và Turborepo monorepo, shared `ui`, `tsconfig`, `eslint-config`, path aliases và package boundaries | **Hoàn thành** | Em giữ app SGZ ở root để không phá quy trình deploy hiện tại, sau đó chuyển root thành pnpm workspace và Turborepo. Em tạo đủ ba shared package và dùng `@sgz/ui` trong app. | `pnpm-workspace.yaml`, `turbo.json`, `packages/ui`, `packages/tsconfig`, `packages/eslint-config` |
+| 2: ESLint flat config, Prettier, Husky, lint-staged và `tsc --noEmit` | **Hoàn thành** | Em cấu hình ESLint 9 flat config, format scripts và pre-commit hook chỉ kiểm tra staged files. `pnpm typecheck` chạy `tsc --noEmit`. | `eslint.config.mjs`, `package.json`, `.husky/pre-commit` |
+| 3: Environment development, staging, production, public và server-only variables, image domains, headers, analyzer | **Hoàn thành** | Em tạo ba file env example, ghi rõ quy tắc `NEXT_PUBLIC_*`, cấu hình image allowlist, security headers và bundle analyzer. | `.env.development.example`, `.env.staging.example`, `.env.production.example`, `next.config.js` |
+| 4: CI install, lint, typecheck, test, build, cache pnpm và Next, analyze main | **Hoàn thành** | Em tạo GitHub Actions có đủ quality stages, cache pnpm store, `.next/cache`, `.turbo` và upload bundle report trên main. | `.github/workflows/ci.yml` |
 
 ### Monorepo/workspace
 
@@ -311,7 +328,13 @@ CI dùng Node 24. Build cần `DATABASE_URI` và `PAYLOAD_SECRET` trong GitHub r
 - [ ] Workspace có ba shared package và app import `@sgz/ui`.
 - [ ] Husky/lint-staged và GitHub Actions đúng các quality gate.
 
-## Giới hạn đã biết
+## Kết luận
+
+Em đã hoàn thành bốn assignment trên cùng dự án SGZ và giữ các thay đổi trong branch `assignment`. Kết quả chính gồm trang product listing được tối ưu và virtualize, checkout có semantic và focus management tốt hơn, ứng dụng có thêm các lớp bảo vệ security, cùng với workspace và CI quality gate có thể chạy lại.
+
+Người chấm có thể dùng bảng đối chiếu của từng assignment để xem file minh chứng, sau đó dùng phần hướng dẫn kiểm tra và checklist tổng để xác nhận kết quả.
+
+## Giới hạn em ghi nhận
 
 - Next 16 cảnh báo convention `middleware.ts` sẽ đổi thành `proxy.ts`. Bài assignment yêu cầu middleware và hiện build vẫn tạo Proxy thành công; có thể rename trong migration Next tiếp theo.
 - LCP mobile còn biến động do InstantSearch/MeiliSearch và global providers. Tiêu đề đã server-render, CLS đã xử lý; tối ưu tiếp theo là tách thêm provider/chat widget theo interaction.
