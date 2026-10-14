@@ -22,16 +22,21 @@ export interface DiscordEmbedField {
   inline?: boolean
 }
 
+export interface QuickCopyItem {
+  label: string
+  value: string
+}
+
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
 
-export function formatFormSubmissionToDiscordFields(
+export function extractRawFormItems(
   form: Form | null | undefined,
   submissionData: Record<string, unknown> | null | undefined,
-): DiscordEmbedField[] {
+): QuickCopyItem[] {
   if (!submissionData || typeof submissionData !== 'object') return []
 
-  const fields: DiscordEmbedField[] = []
+  const items: QuickCopyItem[] = []
   const formFields = form?.fields || []
 
   if (formFields.length > 0) {
@@ -52,10 +57,9 @@ export function formatFormSubmissionToDiscordFields(
         }
       }
 
-      fields.push({
-        name: field.label || field.name,
-        value: `\`\`\`\n${displayVal}\n\`\`\``,
-        inline: false,
+      items.push({
+        label: field.label || field.name,
+        value: displayVal,
       })
     }
   } else {
@@ -64,15 +68,67 @@ export function formatFormSubmissionToDiscordFields(
       const stringVal = String(val).trim()
       if (!stringVal) continue
 
-      fields.push({
-        name: key,
-        value: `\`\`\`\n${stringVal}\n\`\`\``,
-        inline: false,
+      items.push({
+        label: key,
+        value: stringVal,
       })
     }
   }
 
-  return fields
+  return items
+}
+
+export function formatFormSubmissionToDiscordFields(
+  form: Form | null | undefined,
+  submissionData: Record<string, unknown> | null | undefined,
+): DiscordEmbedField[] {
+  const items = extractRawFormItems(form, submissionData)
+  return items.map((item) => ({
+    name: item.label,
+    value: `\`\`\`\n${item.value}\n\`\`\``,
+    inline: false,
+  }))
+}
+
+/**
+ * Sends separate plain-text messages for each field via Discord webhook.
+ * On Discord Mobile, users can long-press any of these messages and tap "Copy Text"
+ * to cleanly copy ONLY the value without markdown, labels, or backticks.
+ */
+export async function sendDiscordQuickCopyMessages({
+  channel = 'staff',
+  orderId,
+  items,
+}: {
+  channel?: keyof typeof webhookChannels
+  orderId: number | string
+  items: QuickCopyItem[]
+}): Promise<void> {
+  if (!items || items.length === 0) return
+  const channelConfig = webhookChannels[channel]
+  if (!channelConfig?.webhook) return
+
+  for (const item of items) {
+    const rawVal = String(item.value || '').trim()
+    if (!rawVal) continue
+
+    try {
+      await fetch(channelConfig.webhook, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: `${item.label} (#${orderId})`.slice(0, 80),
+          content: rawVal,
+        }),
+      })
+      // Small pause to prevent hitting Discord rate limits
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    } catch (err) {
+      console.error(`Failed to send quick copy message for ${item.label}:`, err)
+    }
+  }
 }
 
 export async function discordWebhook({
@@ -259,7 +315,7 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
           ? order.productVariant?.name
           : undefined
       let quantity = typeof order === 'object' ? order.quantity : undefined
-      let fields: DiscordEmbedField[] = []
+      let rawItems: QuickCopyItem[] = []
 
       try {
         const payload = await getPayload({ config: payloadConfig })
@@ -280,12 +336,18 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
             const formSubmission = dbOrder.formSubmission as FormSubmission
             const form = formSubmission.form as Form
             const submissionData = formSubmission.submissionData as Record<string, unknown>
-            fields = formatFormSubmissionToDiscordFields(form, submissionData)
+            rawItems = extractRawFormItems(form, submissionData)
           }
         }
       } catch (err) {
         console.error('Error fetching order details for discord notification:', err)
       }
+
+      const fields: DiscordEmbedField[] = rawItems.map((item) => ({
+        name: item.label,
+        value: `\`\`\`\n${item.value}\n\`\`\``,
+        inline: false,
+      }))
 
       const payload = {
         subject: `Có đơn hàng mới #${orderId}`,
@@ -298,6 +360,15 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
         channel: 'staff',
         fields,
       })
+
+      // Gửi các tin nhắn phụ plain-text để copy 1 chạm trên mobile
+      if (rawItems.length > 0) {
+        await sendDiscordQuickCopyMessages({
+          channel: 'staff',
+          orderId,
+          items: rawItems,
+        })
+      }
     } catch (error) {
       console.error('Error sending staff notification:', error)
     }
@@ -335,11 +406,11 @@ export async function sendOrderUpdateRequiredNotification(
 /**
  * Sends a notification to staff when a user updates their order
  * @param orderId - The order ID
- * @param updatedFields - Optional list of updated fields to display
+ * @param updatedItems - Optional list of updated raw items to display and copy
  */
 export async function sendOrderUserUpdatedStaffNotification(
   orderId: number | string,
-  updatedFields?: DiscordEmbedField[],
+  updatedItems?: QuickCopyItem[],
 ): Promise<void> {
   after(async () => {
     const payload = {
@@ -348,8 +419,8 @@ export async function sendOrderUserUpdatedStaffNotification(
       redirect: Routes.WORKSPACE,
     }
     try {
-      let fields = updatedFields
-      if (!fields || fields.length === 0) {
+      let items = updatedItems
+      if (!items || items.length === 0) {
         try {
           const payloadInstance = await getPayload({ config: payloadConfig })
           const dbOrder = await payloadInstance.findByID({
@@ -361,12 +432,18 @@ export async function sendOrderUserUpdatedStaffNotification(
             const formSubmission = dbOrder.formSubmission as FormSubmission
             const form = formSubmission.form as Form
             const submissionData = formSubmission.submissionData as Record<string, unknown>
-            fields = formatFormSubmissionToDiscordFields(form, submissionData)
+            items = extractRawFormItems(form, submissionData)
           }
         } catch (err) {
           console.error('Error fetching order form details for staff notification:', err)
         }
       }
+
+      const fields: DiscordEmbedField[] = (items || []).map((item) => ({
+        name: `🔹 ${item.label}`,
+        value: `\`\`\`\n${item.value}\n\`\`\``,
+        inline: false,
+      }))
 
       await discordWebhook({
         ...payload,
@@ -375,6 +452,15 @@ export async function sendOrderUserUpdatedStaffNotification(
         isMention: true,
         fields,
       })
+
+      // Gửi các tin nhắn phụ plain-text để copy 1 chạm trên mobile
+      if (items && items.length > 0) {
+        await sendDiscordQuickCopyMessages({
+          channel: 'staff',
+          orderId,
+          items,
+        })
+      }
     } catch (error) {
       console.error('Error sending staff notification:', error)
     }

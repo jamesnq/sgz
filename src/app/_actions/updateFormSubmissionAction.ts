@@ -1,7 +1,7 @@
 'use server'
 import { Form, Order } from '@/payload-types'
 import {
-  DiscordEmbedField,
+  QuickCopyItem,
   sendOrderUserUpdatedStaffNotification,
 } from '@/services/novu.service'
 import { authActionClient, ServerNotification } from '@/utilities/safe-action'
@@ -46,7 +46,7 @@ export const updateOrderAction = authActionClient
       })
     }
     if (shippingFields) {
-      const updatedDiscordFields: DiscordEmbedField[] = []
+      const updatedItems: QuickCopyItem[] = []
       if (order.formSubmission) {
         try {
           const formSubmissionId =
@@ -85,10 +85,9 @@ export const updateOrderAction = authActionClient
                     const opt = field.options.find((o: any) => o.value === val)
                     if (opt?.label) displayVal = opt.label
                   }
-                  updatedDiscordFields.push({
-                    name: field.label || field.name,
-                    value: `\`\`\`\n${displayVal}\n\`\`\``,
-                    inline: false,
+                  updatedItems.push({
+                    label: field.label || field.name,
+                    value: displayVal,
                   })
                 }
               }
@@ -111,7 +110,7 @@ export const updateOrderAction = authActionClient
         throw new ServerNotification('Cập nhật thông tin thất bại')
       }
 
-      await sendOrderUserUpdatedStaffNotification(order.id, updatedDiscordFields)
+      await sendOrderUserUpdatedStaffNotification(order.id, updatedItems)
     }
 
     return { message: 'Cập nhật thông tin thành công' }
