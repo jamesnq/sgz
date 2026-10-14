@@ -13,7 +13,7 @@ import { Routes } from '@/utilities/routes'
 import { Product } from '@/payload-types'
 import { Media } from '@/components/Media'
 
-function AutocompleteDropdown() {
+function AutocompleteDropdown({ inputTabIndex }: { inputTabIndex?: number }) {
   const { hits } = useHits()
   const { query, refine } = useSearchBox()
   const router = useRouter()
@@ -32,6 +32,7 @@ function AutocompleteDropdown() {
       <form onSubmit={handleSearch} className="relative w-full">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sgz-textMuted" />
         <Input
+          tabIndex={inputTabIndex}
           value={query}
           onChange={(e) => {
             refine(e.target.value)
@@ -81,7 +82,13 @@ function AutocompleteDropdown() {
   )
 }
 
-export const HeaderSearch = ({ className }: { className?: string }) => {
+export const HeaderSearch = ({
+  className,
+  inputTabIndex,
+}: {
+  className?: string
+  inputTabIndex?: number
+}) => {
   return (
     <div className={className || "hidden md:flex w-[200px] lg:w-[260px]"}>
       <InstantSearch
@@ -89,7 +96,7 @@ export const HeaderSearch = ({ className }: { className?: string }) => {
         searchClient={instantSearchClient.searchClient as any}
       >
         <Configure hitsPerPage={5} filters="status = 'PUBLIC'" />
-        <AutocompleteDropdown />
+        <AutocompleteDropdown inputTabIndex={inputTabIndex} />
       </InstantSearch>
     </div>
   )

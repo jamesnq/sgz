@@ -87,8 +87,13 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6"
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        tabIndex={-1}
+        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6 outline-none focus:outline-none"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          const container = (e.currentTarget || e.target) as HTMLElement | null
+          container?.focus()
+        }}
       >
         <SheetHeader className="pb-6 border-b border-sgz-border text-left">
           <SheetTitle asChild>
@@ -99,7 +104,7 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
           <SheetDescription className="hidden">Menu</SheetDescription>
         </SheetHeader>
         <div className="py-6 flex flex-col gap-6 flex-1">
-          <HeaderSearch className="w-full flex" />
+          <HeaderSearch className="w-full flex" inputTabIndex={-1} />
           <nav className="flex flex-col gap-4">
             {navItems.map((item, i) => {
               let isActive = false
