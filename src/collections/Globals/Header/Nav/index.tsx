@@ -85,7 +85,11 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6">
+      <SheetContent
+        side="right"
+        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <SheetHeader className="pb-6 border-b border-sgz-border text-left">
           <SheetTitle asChild>
             <Link href={Routes.HOME} onClick={() => setOpen(false)} className="inline-block">

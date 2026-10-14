@@ -1551,8 +1551,8 @@ const MemoizedScreen = React.memo(function ScreenInner() {
           data-purpose="checkout-sidebar"
         >
           <div className="space-y-6 lg:sticky lg:top-24">
-            <ProductForm />
             <Checkout />
+            <ProductForm />
           </div>
         </aside>
 
