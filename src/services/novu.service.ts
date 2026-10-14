@@ -1,19 +1,80 @@
 import { config } from '@/config'
-import { Order, ProductVariant } from '@/payload-types'
+import { Form, FormSubmission, Order, ProductVariant } from '@/payload-types'
 import { formatOrderDate } from '@/utilities/formatOrderDate'
 import { orderStatusColors } from '@/utilities/getOrderStatus'
 import { getServerSideURL } from '@/utilities/getURL'
 import { Routes } from '@/utilities/routes'
 import { Novu } from '@novu/api'
+import payloadConfig from '@payload-config'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
+import { getPayload } from 'payload'
+
 const webhookChannels = {
   admin: { webhook: config.DISCORD_ADMIN_WEBHOOK_URL, mentions: [config.DISCORD_ADMIN_ROLE_ID] },
   staff: { webhook: config.DISCORD_STAFF_WEBHOOK_URL, mentions: [config.DISCORD_STAFF_ROLE_ID] },
   activities: { webhook: config.DISCORD_ACTIVITIES_WEBHOOK_URL, mentions: [] },
 } as const
+
+export interface DiscordEmbedField {
+  name: string
+  value: string
+  inline?: boolean
+}
+
 // Novu channels for staff notifications
 export const novuChannels = ['admin', 'staff']
+
+export function formatFormSubmissionToDiscordFields(
+  form: Form | null | undefined,
+  submissionData: Record<string, unknown> | null | undefined,
+): DiscordEmbedField[] {
+  if (!submissionData || typeof submissionData !== 'object') return []
+
+  const fields: DiscordEmbedField[] = []
+  const formFields = form?.fields || []
+
+  if (formFields.length > 0) {
+    for (const field of formFields) {
+      if (!('name' in field) || !field.name) continue
+
+      const val = submissionData[field.name]
+      if (val === undefined || val === null || typeof val === 'object') continue
+
+      const stringVal = String(val).trim()
+      if (!stringVal) continue
+
+      let displayVal = stringVal
+      if (field.blockType === 'select' && 'options' in field && Array.isArray(field.options)) {
+        const option = field.options.find((opt: any) => opt.value === val)
+        if (option?.label) {
+          displayVal = option.label
+        }
+      }
+
+      fields.push({
+        name: field.label || field.name,
+        value: `\`\`\`\n${displayVal}\n\`\`\``,
+        inline: false,
+      })
+    }
+  } else {
+    for (const [key, val] of Object.entries(submissionData)) {
+      if (val === undefined || val === null || typeof val === 'object') continue
+      const stringVal = String(val).trim()
+      if (!stringVal) continue
+
+      fields.push({
+        name: key,
+        value: `\`\`\`\n${stringVal}\n\`\`\``,
+        inline: false,
+      })
+    }
+  }
+
+  return fields
+}
+
 export async function discordWebhook({
   subject,
   message,
@@ -21,6 +82,7 @@ export async function discordWebhook({
   color,
   channel,
   isMention = true,
+  fields,
 }: {
   subject: string
   message?: string
@@ -28,6 +90,7 @@ export async function discordWebhook({
   color?: string | null
   channel?: keyof typeof webhookChannels
   isMention?: boolean
+  fields?: DiscordEmbedField[]
 }) {
   if (process.env.NODE_ENV === 'development') {
     isMention = false
@@ -60,6 +123,7 @@ export async function discordWebhook({
                     : getServerSideURL() + redirect
                   : undefined,
                 color: color ? parseInt(color.replace('#', ''), 16) : undefined,
+                fields: fields && fields.length > 0 ? fields : undefined,
               },
             ],
           }),
@@ -184,28 +248,55 @@ export async function sendNewOrderNotification(
 
 /**
  * Sends a notification to staff about a new order
- * @param orderId - The order ID
+ * @param order - The order object or order ID
  */
 export async function sendNewOrderStaffNotification(order: any): Promise<void> {
   after(async () => {
     try {
+      const orderId = typeof order === 'object' ? order.id : order
+      let pvName =
+        typeof order === 'object' && typeof order.productVariant === 'object'
+          ? order.productVariant?.name
+          : undefined
+      let quantity = typeof order === 'object' ? order.quantity : undefined
+      let fields: DiscordEmbedField[] = []
+
+      try {
+        const payload = await getPayload({ config: payloadConfig })
+        const dbOrder = await payload.findByID({
+          collection: 'orders',
+          id: orderId,
+          depth: 2,
+        })
+
+        if (dbOrder) {
+          if (!pvName && typeof dbOrder.productVariant === 'object') {
+            pvName = dbOrder.productVariant.name
+          }
+          if (!quantity) {
+            quantity = dbOrder.quantity
+          }
+          if (dbOrder.formSubmission && typeof dbOrder.formSubmission === 'object') {
+            const formSubmission = dbOrder.formSubmission as FormSubmission
+            const form = formSubmission.form as Form
+            const submissionData = formSubmission.submissionData as Record<string, unknown>
+            fields = formatFormSubmissionToDiscordFields(form, submissionData)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching order details for discord notification:', err)
+      }
+
       const payload = {
-        subject: `Có đơn hàng mới #${order.id}`,
-        message: ``,
+        subject: `Có đơn hàng mới #${orderId}`,
+        message: `Đơn hàng #${orderId} **mới ${pvName || 'sản phẩm'} x${quantity || 1}**`,
         redirect: Routes.WORKSPACE,
       }
-      // await novu.trigger({
-      //   workflowId: 'new-order',
-      //   to: {
-      //     subscriberId: 'staff',
-      //   },
-      //   payload,
-      // })
       await discordWebhook({
         ...payload,
-        message: `Đơn hàng #${order.id} **mới ${order.productVariant.name} x${order.quantity}**`,
         color: orderStatusColors.IN_QUEUE,
         channel: 'staff',
+        fields,
       })
     } catch (error) {
       console.error('Error sending staff notification:', error)
@@ -244,28 +335,45 @@ export async function sendOrderUpdateRequiredNotification(
 /**
  * Sends a notification to staff when a user updates their order
  * @param orderId - The order ID
+ * @param updatedFields - Optional list of updated fields to display
  */
 export async function sendOrderUserUpdatedStaffNotification(
   orderId: number | string,
+  updatedFields?: DiscordEmbedField[],
 ): Promise<void> {
   after(async () => {
     const payload = {
-      subject: `Đơn hàng #${orderId} đang đợi xử lý`,
-      message: `Người dùng đã cập nhật đơn hàng #${orderId}`,
+      subject: `⚡ Đơn hàng #${orderId} đang đợi xử lý`,
+      message: `Người dùng đã cập nhật thông tin đơn hàng #${orderId}. Vui lòng xử lý!`,
       redirect: Routes.WORKSPACE,
     }
     try {
-      // await novu.trigger({
-      //   workflowId: 'order-update',
-      //   to: {
-      //     subscriberId: 'staff',
-      //   },
-      //   payload,
-      // })
+      let fields = updatedFields
+      if (!fields || fields.length === 0) {
+        try {
+          const payloadInstance = await getPayload({ config: payloadConfig })
+          const dbOrder = await payloadInstance.findByID({
+            collection: 'orders',
+            id: orderId,
+            depth: 2,
+          })
+          if (dbOrder?.formSubmission && typeof dbOrder.formSubmission === 'object') {
+            const formSubmission = dbOrder.formSubmission as FormSubmission
+            const form = formSubmission.form as Form
+            const submissionData = formSubmission.submissionData as Record<string, unknown>
+            fields = formatFormSubmissionToDiscordFields(form, submissionData)
+          }
+        } catch (err) {
+          console.error('Error fetching order form details for staff notification:', err)
+        }
+      }
+
       await discordWebhook({
         ...payload,
         color: orderStatusColors.USER_UPDATE,
         channel: 'staff',
+        isMention: true,
+        fields,
       })
     } catch (error) {
       console.error('Error sending staff notification:', error)
