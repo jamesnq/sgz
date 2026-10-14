@@ -85,50 +85,9 @@ export function formatFormSubmissionToDiscordFields(
   const items = extractRawFormItems(form, submissionData)
   return items.map((item) => ({
     name: item.label,
-    value: `\`\`\`\n${item.value}\n\`\`\``,
+    value: `\`\n${item.value}\n\``,
     inline: false,
   }))
-}
-
-/**
- * Sends separate plain-text messages for each field via Discord webhook.
- * On Discord Mobile, users can long-press any of these messages and tap "Copy Text"
- * to cleanly copy ONLY the value without markdown, labels, or backticks.
- */
-export async function sendDiscordQuickCopyMessages({
-  channel = 'staff',
-  orderId,
-  items,
-}: {
-  channel?: keyof typeof webhookChannels
-  orderId: number | string
-  items: QuickCopyItem[]
-}): Promise<void> {
-  if (!items || items.length === 0) return
-  const channelConfig = webhookChannels[channel]
-  if (!channelConfig?.webhook) return
-
-  for (const item of items) {
-    const rawVal = String(item.value || '').trim()
-    if (!rawVal) continue
-
-    try {
-      await fetch(channelConfig.webhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: `${item.label} (#${orderId})`.slice(0, 80),
-          content: rawVal,
-        }),
-      })
-      // Small pause to prevent hitting Discord rate limits
-      await new Promise((resolve) => setTimeout(resolve, 200))
-    } catch (err) {
-      console.error(`Failed to send quick copy message for ${item.label}:`, err)
-    }
-  }
 }
 
 export async function discordWebhook({
@@ -360,15 +319,6 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
         channel: 'staff',
         fields,
       })
-
-      // Gửi các tin nhắn phụ plain-text để copy 1 chạm trên mobile
-      if (rawItems.length > 0) {
-        await sendDiscordQuickCopyMessages({
-          channel: 'staff',
-          orderId,
-          items: rawItems,
-        })
-      }
     } catch (error) {
       console.error('Error sending staff notification:', error)
     }
@@ -441,7 +391,7 @@ export async function sendOrderUserUpdatedStaffNotification(
 
       const fields: DiscordEmbedField[] = (items || []).map((item) => ({
         name: `🔹 ${item.label}`,
-        value: `\`\`\`\n${item.value}\n\`\`\``,
+        value: `\`\n${item.value}\n\``,
         inline: false,
       }))
 
@@ -452,15 +402,6 @@ export async function sendOrderUserUpdatedStaffNotification(
         isMention: true,
         fields,
       })
-
-      // Gửi các tin nhắn phụ plain-text để copy 1 chạm trên mobile
-      if (items && items.length > 0) {
-        await sendDiscordQuickCopyMessages({
-          channel: 'staff',
-          orderId,
-          items,
-        })
-      }
     } catch (error) {
       console.error('Error sending staff notification:', error)
     }
