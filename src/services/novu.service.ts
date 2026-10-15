@@ -85,7 +85,7 @@ export function formatFormSubmissionToDiscordFields(
   const items = extractRawFormItems(form, submissionData)
   return items.map((item) => ({
     name: item.label,
-    value: `\`\n${item.value}\n\``,
+    value: `\`${item.value}\``,
     inline: false,
   }))
 }
@@ -304,7 +304,7 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
 
       const fields: DiscordEmbedField[] = rawItems.map((item) => ({
         name: item.label,
-        value: `\`\`\`\n${item.value}\n\`\`\``,
+        value: `\`${item.value}\``,
         inline: false,
       }))
 
@@ -391,7 +391,7 @@ export async function sendOrderUserUpdatedStaffNotification(
 
       const fields: DiscordEmbedField[] = (items || []).map((item) => ({
         name: `🔹 ${item.label}`,
-        value: `\`\n${item.value}\n\``,
+        value: `\`${item.value}\``,
         inline: false,
       }))
 
