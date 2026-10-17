@@ -12,7 +12,7 @@ export const workingTime = (
   <div className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-medium px-4 py-3 rounded-xl flex items-center gap-2">
     <Clock className="h-4 w-4 shrink-0" />
     <span>
-      Xử lý đơn hàng từ <span className="font-bold">8h sáng</span> đến <span className="font-bold">11h đêm</span> hằng ngày
+      Xử lý đơn hàng từ <span className="font-bold">9h30 sáng</span> đến <span className="font-bold">11h đêm</span> hằng ngày
     </span>
   </div>
 )
