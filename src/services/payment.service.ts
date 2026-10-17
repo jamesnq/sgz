@@ -9,7 +9,6 @@ import type { CheckoutResponseDataType } from '@payos/node/lib/type'
 import { after } from 'next/server'
 import { getPayload } from 'payload'
 import { discordWebhook } from './novu.service'
-import { scheduleWebPushToUser } from './webpush.service'
 
 import { z } from 'zod'
 
@@ -241,12 +240,6 @@ export class PaymentService {
           message: `Người dùng: ${user.email} \nSố tiền: **${formatPrice(paymentData.amount)}** \nMã nạp: **#${recharge.orderCode}**`,
           color: '#00FF00',
           channel: 'activities',
-        })
-        scheduleWebPushToUser(recharge.user as number, {
-          title: `Nạp tiền thành công! +${formatPrice(paymentData.amount)}`,
-          body: `Tài khoản của bạn đã được cộng ${formatPrice(paymentData.amount)}. Số dư hiện tại: ${formatPrice(user.balance || 0)}.`,
-          url: '/user/transactions',
-          tag: `recharge-${recharge.orderCode}`,
         })
       } catch (e) {
         payload.logger.error({

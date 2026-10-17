@@ -28,10 +28,8 @@ import { managerGroup } from '@/utilities/constants'
 import { defaultLexicalEditor } from '@/utilities/defaultLexicalEditor'
 import { formatPrice } from '@/utilities/formatPrice'
 import { eq, sql } from '@payloadcms/db-postgres/drizzle'
-import { hasText } from '@payloadcms/richtext-lexical/shared'
 import { after } from 'next/server'
 import { autoProcessOrderHook } from '@/services/orderProcessing'
-import { scheduleWebPushToUser } from '@/services/webpush.service'
 import hasRoleOrOrderBy from './access/hasRoleOrOrderBy'
 
 const orderByOrAdmin: Access = async ({ req }) => {
@@ -148,22 +146,14 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
   const user = req.user
   if (!user) throw new ConflictsError('Not authenticated')
   const userId = typeof user === 'object' ? user.id : user
-  const orderedById = typeof doc.orderedBy === 'object' ? (doc.orderedBy as any).id : doc.orderedBy
-
   if (previousDoc.status != doc.status) {
     if (doc.status === 'USER_UPDATE') {
-      await sendOrderUpdateRequiredNotification(doc.id, orderedById.toString())
-      scheduleWebPushToUser(orderedById, {
-        title: `Yêu cầu cập nhật đơn hàng #${doc.id}`,
-        body: 'Đơn hàng của bạn cần bổ sung thêm thông tin. Nhấn vào để cập nhật ngay!',
-        url: `/user/orders/${doc.id}`,
-        tag: `order-${doc.id}`,
-      })
+      await sendOrderUpdateRequiredNotification(doc.id, doc.orderedBy.toString())
     }
     if (
       previousDoc.status === 'USER_UPDATE' &&
       doc.status != 'USER_UPDATE' &&
-      userId == orderedById
+      userId == doc.orderedBy
     ) {
       await sendOrderUserUpdatedStaffNotification(doc.id)
     }
@@ -171,13 +161,6 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
     const firstCompletedTransition = previousDoc.status !== 'COMPLETED' && doc.status === 'COMPLETED'
 
     if (firstCompletedTransition) {
-      scheduleWebPushToUser(orderedById, {
-        title: `Đơn hàng #${doc.id} đã hoàn thành! 🎉`,
-        body: 'Đơn hàng của bạn đã hoàn thành. Nhấn vào để kiểm tra thông tin nhận hàng!',
-        url: `/user/orders/${doc.id}`,
-        tag: `order-${doc.id}`,
-      })
-
       scheduleOrderAfter(
         req,
         `Failed to run completion side effects for order #${doc.id}`,
@@ -224,53 +207,6 @@ const notificationUpdateHook: CollectionAfterChangeHook<Order> = async ({
         await sendOrderCompletedStaffNotification(doc)
       }
     }
-
-    if (doc.status === 'REFUND' && previousDoc.status !== 'REFUND') {
-      scheduleWebPushToUser(orderedById, {
-        title: `Hoàn tiền đơn hàng #${doc.id}`,
-        body: `Đơn hàng #${doc.id} đã được hoàn tiền ${formatPrice(doc.totalPrice as number)} vào số dư tài khoản.`,
-        url: `/user/orders/${doc.id}`,
-        tag: `order-${doc.id}`,
-      })
-    }
-
-    if (doc.status === 'IN_PROCESS' && previousDoc.status !== 'IN_PROCESS') {
-      scheduleWebPushToUser(orderedById, {
-        title: `Đơn hàng #${doc.id} đang xử lý`,
-        body: 'Nhân viên đang tiếp nhận và xử lý đơn hàng của bạn.',
-        url: `/user/orders/${doc.id}`,
-        tag: `order-${doc.id}`,
-      })
-    }
-  }
-
-  // Push notification when admin/staff adds or updates a message for the customer
-  const isMessageChanged = JSON.stringify(previousDoc.message) !== JSON.stringify(doc.message)
-  if (isMessageChanged && doc.message && hasText(doc.message) && userId !== orderedById) {
-    scheduleWebPushToUser(orderedById, {
-      title: `Lời nhắn mới cho đơn hàng #${doc.id}`,
-      body: 'Người bán vừa gửi một lời nhắn cho đơn hàng của bạn. Nhấn vào để xem chi tiết!',
-      url: `/user/orders/${doc.id}`,
-      tag: `order-msg-${doc.id}`,
-    })
-  }
-
-  // Push notification when delivery content is updated outside of completed transition
-  const isDeliveryChanged =
-    JSON.stringify(previousDoc.deliveryContent) !== JSON.stringify(doc.deliveryContent)
-  if (
-    isDeliveryChanged &&
-    doc.deliveryContent &&
-    hasText(doc.deliveryContent) &&
-    doc.status !== 'COMPLETED' &&
-    userId !== orderedById
-  ) {
-    scheduleWebPushToUser(orderedById, {
-      title: `Cập nhật thông tin giao hàng đơn #${doc.id}`,
-      body: 'Nội dung nhận hàng của bạn vừa được cập nhật. Nhấn vào để kiểm tra!',
-      url: `/user/orders/${doc.id}`,
-      tag: `order-delivery-${doc.id}`,
-    })
   }
 }
 
@@ -304,13 +240,6 @@ const refundHook: FieldHook<Order> = async ({
       user: orderBy as number,
       description: `Hoàn trả đơn hàng #${data.id}`,
       balance: newUser.balance,
-    })
-
-    scheduleWebPushToUser(orderBy as number, {
-      title: `Hoàn tiền đơn hàng #${data.id}`,
-      body: `Đơn hàng #${data.id} đã được hoàn tiền ${formatPrice(data.totalPrice as number)} vào ví tài khoản.`,
-      url: `/user/orders/${data.id}`,
-      tag: `order-${data.id}`,
     })
 
     after(async () => {

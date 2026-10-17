@@ -18,4 +18,3 @@ playwright-report/
 test-results/
 next-env.d.ts
 .env.production
-outputs/

@@ -40,8 +40,6 @@ export const config = createEnv({
     // FACEBOOK_PROVIDER_CLIENT_ID: z.string(),
     // FACEBOOK_PROVIDER_CLIENT_SECRET: z.string(),
     RYUU_AUTH_CODE: z.string(),
-    VAPID_PRIVATE_KEY: z.string().optional(),
-    VAPID_SUBJECT: z.string().optional().default('mailto:admin@subgamezone.com'),
   },
   /*
    * Environment variables available on the client (and server).
@@ -59,7 +57,6 @@ export const config = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: z.string(),
     NEXT_PUBLIC_MEILI_HOST: z.string(),
     NEXT_PUBLIC_MEILI_SEARCH_KEY: z.string(),
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -108,9 +105,6 @@ export const config = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_MEILI_HOST: process.env.NEXT_PUBLIC_MEILI_HOST,
     NEXT_PUBLIC_MEILI_SEARCH_KEY: process.env.NEXT_PUBLIC_MEILI_SEARCH_KEY,
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
-    VAPID_SUBJECT: process.env.VAPID_SUBJECT,
   } /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
    * useful for Docker builds.

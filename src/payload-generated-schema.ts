@@ -622,34 +622,6 @@ export const orders_rels = pgTable(
   ],
 )
 
-export const push_subscriptions = pgTable(
-  'push_subscriptions',
-  {
-    id: serial('id').primaryKey(),
-    user: integer('user_id')
-      .notNull()
-      .references(() => users.id, {
-        onDelete: 'set null',
-      }),
-    endpoint: varchar('endpoint').notNull(),
-    p256dh: varchar('p256dh').notNull(),
-    auth: varchar('auth').notNull(),
-    userAgent: varchar('user_agent'),
-    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
-      .defaultNow()
-      .notNull(),
-    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
-      .defaultNow()
-      .notNull(),
-  },
-  (columns) => [
-    index('push_subscriptions_user_idx').on(columns.user),
-    index('push_subscriptions_endpoint_idx').on(columns.endpoint),
-    index('push_subscriptions_updated_at_idx').on(columns.updatedAt),
-    index('push_subscriptions_created_at_idx').on(columns.createdAt),
-  ],
-)
-
 export const recharges = pgTable(
   'recharges',
   {
@@ -1311,7 +1283,6 @@ export const payload_locked_documents_rels = pgTable(
     'product-variantsID': integer('product_variants_id'),
     'product-variant-suppliesID': integer('product_variant_supplies_id'),
     ordersID: integer('orders_id'),
-    'push-subscriptionsID': integer('push_subscriptions_id'),
     rechargesID: integer('recharges_id'),
     formsID: integer('forms_id'),
     'form-submissionsID': integer('form_submissions_id'),
@@ -1340,9 +1311,6 @@ export const payload_locked_documents_rels = pgTable(
       columns['product-variant-suppliesID'],
     ),
     index('payload_locked_documents_rels_orders_id_idx').on(columns.ordersID),
-    index('payload_locked_documents_rels_push_subscriptions_id_idx').on(
-      columns['push-subscriptionsID'],
-    ),
     index('payload_locked_documents_rels_recharges_id_idx').on(columns.rechargesID),
     index('payload_locked_documents_rels_forms_id_idx').on(columns.formsID),
     index('payload_locked_documents_rels_form_submissions_id_idx').on(
@@ -1412,11 +1380,6 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['ordersID']],
       foreignColumns: [orders.id],
       name: 'payload_locked_documents_rels_orders_fk',
-    }).onDelete('cascade'),
-    foreignKey({
-      columns: [columns['push-subscriptionsID']],
-      foreignColumns: [push_subscriptions.id],
-      name: 'payload_locked_documents_rels_push_subscriptions_fk',
     }).onDelete('cascade'),
     foreignKey({
       columns: [columns['rechargesID']],
@@ -1743,13 +1706,6 @@ export const relations_orders = relations(orders, ({ one, many }) => ({
     relationName: '_rels',
   }),
 }))
-export const relations_push_subscriptions = relations(push_subscriptions, ({ one }) => ({
-  user: one(users, {
-    fields: [push_subscriptions.user],
-    references: [users.id],
-    relationName: 'user',
-  }),
-}))
 export const relations_recharges = relations(recharges, ({ one }) => ({
   user: one(users, {
     fields: [recharges.user],
@@ -2019,11 +1975,6 @@ export const relations_payload_locked_documents_rels = relations(
       references: [orders.id],
       relationName: 'orders',
     }),
-    'push-subscriptionsID': one(push_subscriptions, {
-      fields: [payload_locked_documents_rels['push-subscriptionsID']],
-      references: [push_subscriptions.id],
-      relationName: 'push-subscriptions',
-    }),
     rechargesID: one(recharges, {
       fields: [payload_locked_documents_rels.rechargesID],
       references: [recharges.id],
@@ -2132,7 +2083,6 @@ type DatabaseSchema = {
   product_variant_supplies: typeof product_variant_supplies
   orders: typeof orders
   orders_rels: typeof orders_rels
-  push_subscriptions: typeof push_subscriptions
   recharges: typeof recharges
   forms_blocks_checkbox: typeof forms_blocks_checkbox
   forms_blocks_email: typeof forms_blocks_email
@@ -2178,7 +2128,6 @@ type DatabaseSchema = {
   relations_product_variant_supplies: typeof relations_product_variant_supplies
   relations_orders_rels: typeof relations_orders_rels
   relations_orders: typeof relations_orders
-  relations_push_subscriptions: typeof relations_push_subscriptions
   relations_recharges: typeof relations_recharges
   relations_forms_blocks_checkbox: typeof relations_forms_blocks_checkbox
   relations_forms_blocks_email: typeof relations_forms_blocks_email

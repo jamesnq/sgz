@@ -7,7 +7,6 @@ import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 import { getPayload } from 'payload'
 import { discordWebhook } from './novu.service'
-import { scheduleWebPushToUser } from './webpush.service'
 
 /**
  * Enum for telco providers
@@ -534,12 +533,6 @@ export class DoiThe {
               }`,
               color: '#00FF00',
               channel: 'activities',
-            })
-            scheduleWebPushToUser(recharge.user as number, {
-              title: `Nạp thẻ ${callbackData.telco} thành công! +${formatPrice(discordAmount)}`,
-              body: `Thẻ cào đã được nạp thành công. Số dư hiện tại: ${formatPrice(userForDiscord.balance || 0)}.`,
-              url: '/user/transactions',
-              tag: `recharge-${callbackData.request_id}`,
             })
           } catch (e) {
             payload.logger.error({ err: e, message: 'Failed to send discord webhook for DoiThe recharge' })

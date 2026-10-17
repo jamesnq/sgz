@@ -47,16 +47,3 @@ export const adminBalanceSchema = z.object({
   amount: z.number(),
   note: z.string().optional(),
 })
-
-export const SubscribePushSchema = z.object({
-  endpoint: z.string().min(1),
-  keys: z.object({
-    p256dh: z.string().min(1),
-    auth: z.string().min(1),
-  }),
-  userAgent: z.string().optional(),
-})
-
-export const UnsubscribePushSchema = z.object({
-  endpoint: z.string().min(1),
-})
