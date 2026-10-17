@@ -4,9 +4,38 @@ import { noOne } from '@/access/noOne'
 import { hasRole, userHasRole } from '@/access/hasRoles'
 import { managerGroup } from '@/utilities/constants'
 import { normalizeFormSubmissionData } from '@/utilities/formSubmission'
+import { scheduleWebPushToUser } from '@/services/webpush.service'
 
 export const FormSubmissions: CollectionConfig = {
   slug: 'form-submissions',
+  hooks: {
+    afterChange: [
+      async ({ previousDoc, doc, operation, req }) => {
+        if (operation !== 'update' || !previousDoc) return
+        const updaterId = req.user && typeof req.user === 'object' ? req.user.id : req.user
+        const formUserId = typeof doc.user === 'object' ? (doc.user as any)?.id : doc.user
+
+        // Only notify if submissionData changed and updater is not the owner
+        if (
+          formUserId &&
+          updaterId !== formUserId &&
+          JSON.stringify(previousDoc.submissionData) !== JSON.stringify(doc.submissionData)
+        ) {
+          const orderId =
+            typeof doc.completedOrder === 'object'
+              ? (doc.completedOrder as any)?.id
+              : doc.completedOrder
+
+          scheduleWebPushToUser(formUserId, {
+            title: 'Cập nhật thông tin đơn hàng',
+            body: 'Thông tin biểu mẫu giao hàng của bạn vừa được cập nhật.',
+            url: orderId ? `/user/orders/${orderId}` : '/user/orders',
+            tag: `form-${doc.id}`,
+          })
+        }
+      },
+    ],
+  },
   access: {
     create: noOne,
     delete: noOne,

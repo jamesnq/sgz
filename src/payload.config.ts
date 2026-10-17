@@ -22,6 +22,7 @@ import { PostTags } from './collections/PostTags'
 import { Products } from './collections/Products'
 import { ProductVariants } from './collections/ProductVariants'
 import { ProductVariantSupplies } from './collections/ProductVariantSupplies'
+import { PushSubscriptions } from './collections/PushSubscriptions'
 import { Recharges } from './collections/Recharges'
 import { Stocks } from './collections/Stocks'
 import { Suppliers } from './collections/Suppliers'
@@ -72,6 +73,7 @@ export default buildConfig({
     ProductVariants,
     ProductVariantSupplies,
     Orders,
+    PushSubscriptions,
     Recharges,
     Forms,
     FormSubmissions,

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { SocialSupport } from '@/components/social-support'
+import { WebPushPrompt } from '@/components/WebPush/WebPushPrompt'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 import { AuthProvider } from './Auth'
@@ -22,6 +23,7 @@ export const Providers: React.FC<{
               <HeaderThemeProvider>
                 <ClientProviders>{children}</ClientProviders>
                 <SocialSupport />
+                <WebPushPrompt />
               </HeaderThemeProvider>
             </ThemeProvider>
           </NuqsAdapter>

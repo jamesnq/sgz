@@ -23,6 +23,7 @@ import * as migration_20260412_052437 from './20260412_052437';
 import * as migration_20260412_072005 from './20260412_072005';
 import * as migration_20260412_081913 from './20260412_081913';
 import * as migration_20260418_193344_email_form_submission_completion_audit from './20260418_193344_email_form_submission_completion_audit';
+import * as migration_20261017_110854 from './20261017_110854';
 
 export const migrations = [
   {
@@ -148,6 +149,11 @@ export const migrations = [
   {
     up: migration_20260418_193344_email_form_submission_completion_audit.up,
     down: migration_20260418_193344_email_form_submission_completion_audit.down,
-    name: '20260418_193344_email_form_submission_completion_audit'
+    name: '20260418_193344_email_form_submission_completion_audit',
+  },
+  {
+    up: migration_20261017_110854.up,
+    down: migration_20261017_110854.down,
+    name: '20261017_110854'
   },
 ];

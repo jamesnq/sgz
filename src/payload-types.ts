@@ -78,6 +78,7 @@ export interface Config {
     'product-variants': ProductVariant;
     'product-variant-supplies': ProductVariantSupply;
     orders: Order;
+    'push-subscriptions': PushSubscription;
     recharges: Recharge;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -109,6 +110,7 @@ export interface Config {
     'product-variants': ProductVariantsSelect<false> | ProductVariantsSelect<true>;
     'product-variant-supplies': ProductVariantSuppliesSelect<false> | ProductVariantSuppliesSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    'push-subscriptions': PushSubscriptionsSelect<false> | PushSubscriptionsSelect<true>;
     recharges: RechargesSelect<false> | RechargesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -954,6 +956,22 @@ export interface Transaction {
   createdAt: string;
 }
 /**
+ * Web Push notification subscriptions
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "push-subscriptions".
+ */
+export interface PushSubscription {
+  id: number;
+  user: number | User;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Recharge history
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1205,6 +1223,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'push-subscriptions';
+        value: number | PushSubscription;
       } | null)
     | ({
         relationTo: 'recharges';
@@ -1537,6 +1559,19 @@ export interface OrdersSelect<T extends boolean = true> {
   affiliateUser?: T;
   affiliateCommission?: T;
   affiliatePaid?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "push-subscriptions_select".
+ */
+export interface PushSubscriptionsSelect<T extends boolean = true> {
+  user?: T;
+  endpoint?: T;
+  p256dh?: T;
+  auth?: T;
+  userAgent?: T;
   updatedAt?: T;
   createdAt?: T;
 }
