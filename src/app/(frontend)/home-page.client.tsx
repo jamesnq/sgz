@@ -18,10 +18,6 @@ const ProductGridSection = dynamic(
   () => import('@/components/home/ProductGridSection').then((mod) => mod.ProductGridSection),
   { ssr: true },
 )
-const SocialSupport = dynamic(
-  () => import('@/components/social-support').then((mod) => mod.SocialSupport),
-  { ssr: false },
-)
 
 import { HeroSection } from '@/components/home/HeroSection'
 
@@ -88,7 +84,6 @@ const HomePageClient = ({
           ))}
 
           <PostsSection posts={posts} />
-          <SocialSupport />
         </div>
       </div>
     </>
