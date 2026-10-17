@@ -12,6 +12,7 @@ import { getAvailableVouchersAction, type AvailableVoucher } from '@/app/_action
 import { validateVoucherAction } from '@/app/_actions/validateVoucherAction'
 import { fields } from '@/blocks/Form/fields'
 import AuthDialog from '@/collections/Globals/Header/AuthDialog'
+import { RechargeDialog } from '@/components/recharge-dialog'
 import RichText from '@/components/RichText'
 import { DisplayProductStatus } from '@/components/display-product-status'
 import { Shell } from '@/components/shell'
@@ -687,28 +688,74 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   const shippingInfo = useProductPageContext((state) => state.shippingInfo)
   const isFormValid = useProductPageContext((state) => state.isFormValid)
   const voucherCode = useProductPageContext((state) => state.voucherCode)
+  const calc = useProductPageContext((state) => state.calc)
+  const { user, fetchMe } = useAuth()
+  const [rechargeOpen, setRechargeOpen] = React.useState(false)
+
+  const userBalance = user?.balance ?? 0
+  const totalPrice = calc?.totalPrice ?? 0
+  const missingAmount = Math.max(0, totalPrice - userBalance)
+
+  const handleRechargeOpenChange = React.useCallback(
+    (open: boolean) => {
+      setRechargeOpen(open)
+      if (!open) {
+        fetchMe()
+      }
+    },
+    [fetchMe],
+  )
 
   const checkout = React.useCallback(() => {
+    // Nếu số dư không đủ, mở ngay panel nạp tiền
+    if ((user?.balance ?? 0) < (calc?.totalPrice ?? 0)) {
+      setRechargeOpen(true)
+      return
+    }
+
     executeAsync({
       quantity,
       productVariantId: currentVariant.id,
       shippingFields: shippingInfo,
       voucherCode: voucherCode || undefined,
     }).then((x: any) => {
+      if (
+        x?.serverError?.message?.includes('Số dư không đủ') ||
+        x?.serverError === 'Số dư không đủ'
+      ) {
+        setRechargeOpen(true)
+        return
+      }
       if (!x?.data?.order) return
       router.push(Routes.order(x.data.order.id))
     })
-  }, [executeAsync, quantity, currentVariant.id, shippingInfo, voucherCode, router])
+  }, [
+    user?.balance,
+    calc?.totalPrice,
+    executeAsync,
+    quantity,
+    currentVariant.id,
+    shippingInfo,
+    voucherCode,
+    router,
+  ])
 
   return (
-    <button
-      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
-      disabled={isExecuting || !isFormValid}
-      onClick={checkout}
-    >
-      {isExecuting && <Loader2 className="animate-spin mr-2" />}
-      Thanh toán
-    </button>
+    <>
+      <button
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
+        disabled={isExecuting || !isFormValid}
+        onClick={checkout}
+      >
+        {isExecuting && <Loader2 className="animate-spin mr-2" />}
+        Thanh toán
+      </button>
+      <RechargeDialog
+        open={rechargeOpen}
+        onOpenChange={handleRechargeOpenChange}
+        defaultAmount={missingAmount >= 2000 ? missingAmount : undefined}
+      />
+    </>
   )
 })
 

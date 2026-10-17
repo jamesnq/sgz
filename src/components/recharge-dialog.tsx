@@ -44,17 +44,23 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { z } from 'zod'
 
-function RechargeBank() {
+function RechargeBank({ defaultAmount }: { defaultAmount?: number }) {
   const form = useForm<z.infer<typeof RechargePayosSchema>>({
     resolver: zodResolver(RechargePayosSchema as any),
     defaultValues: {
-      amount: undefined,
+      amount: defaultAmount,
     },
   })
 
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+
+  useEffect(() => {
+    if (defaultAmount && defaultAmount >= 2000) {
+      form.setValue('amount', defaultAmount)
+    }
+  }, [defaultAmount, form])
 
   async function onSubmit(values: z.infer<typeof RechargePayosSchema>) {
     try {
@@ -225,8 +231,8 @@ function RechargeCard() {
         const response = await fetch('/api/doithe/fees')
         const data = await response.json()
 
-        if (data.success && data.data) {
-          setFeeData(data.data.filter((item: FeeData) => item.fees <= 20))
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setFeeData(data.data)
 
           // Calculate min and max fees for each telco - completely restructured to avoid TypeScript errors
           const feeRanges: Record<string, { min: number; max: number }> = {}
@@ -255,11 +261,10 @@ function RechargeCard() {
 
           setTelcoFeeRanges(feeRanges)
         } else {
-          toast.error('Không thể tải thông tin nhà mạng và mệnh giá')
+          console.warn('Fee data is not available from card provider:', data)
         }
       } catch (error) {
-        toast.error('Không thể tải thông tin nhà mạng và mệnh giá')
-        console.error('Error fetching fee data:', error)
+        console.warn('Error fetching fee data from card provider:', error)
       } finally {
         setIsLoading(false)
       }
@@ -353,7 +358,17 @@ function RechargeCard() {
   // Get unique telco providers for the dropdown
   const uniqueTelcos = useMemo(() => {
     // List of Vietnamese telecom providers to prioritize
-    const priorityTelcos = ['VIETTEL', 'MOBIFONE', 'VINAPHONE', 'VIETNAMOBILE', 'GMOBILE']
+    const priorityTelcos = [
+      'VIETTEL',
+      'VINAPHONE',
+      'MOBIFONE',
+      'VNMOBI',
+      'VIETNAMOBILE',
+      'ZING',
+      'GARENA',
+      'GATE',
+      'VCOIN',
+    ]
 
     // Get all unique telcos from the fee data
     const allTelcos = Array.from(new Set(feeData.map((item) => item.telco)))
@@ -395,6 +410,12 @@ function RechargeCard() {
           <div className="flex justify-center p-4">
             <div className="animate-spin h-6 w-6 border-2 border-primary rounded-full border-t-transparent"></div>
           </div>
+        ) : feeData.length === 0 ? (
+          <div className="text-sm text-amber-400/90 bg-[#0f0f13] border border-[#2e2e38] rounded-md p-4 text-center leading-relaxed">
+            Hệ thống nạp thẻ cào đang tạm thời bảo trì hoặc cập nhật cấu hình API mới.
+            <br />
+            Quý khách vui lòng chọn nạp qua <strong className="text-white">Ngân hàng hoặc ví điện tử</strong>.
+          </div>
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex flex-col gap-4">
@@ -414,7 +435,9 @@ function RechargeCard() {
                         {uniqueTelcos.map((telco) => (
                           <SelectItem key={telco} value={telco}>
                             <div className="flex space-x-2 w-full items-center">
-                              <span className="font-medium">{telco}</span>
+                              <span className="font-medium">
+                                {telco === 'VNMOBI' ? 'VIETNAMOBILE' : telco}
+                              </span>
                               {telcoFeeRanges[telco] && (
                                 <div className="text-xs text-amber-500">
                                   Phí: {telcoFeeRanges[telco].min}
@@ -547,26 +570,36 @@ function RechargeCard() {
   )
 }
 
-export function Recharges() {
+export function Recharges({ defaultAmount }: { defaultAmount?: number }) {
   return (
     <Accordion type="single" collapsible defaultValue="item-1" className="w-full space-y-2">
-      <RechargeBank />
+      <RechargeBank defaultAmount={defaultAmount} />
       <RechargeCard />
     </Accordion>
   )
 }
 
-export function RechargeDialog({ trigger }: { trigger?: React.ReactNode }) {
+export function RechargeDialog({
+  trigger,
+  open,
+  onOpenChange,
+  defaultAmount,
+}: {
+  trigger?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  defaultAmount?: number
+}) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-w-[600px] border-[#2e2e38] bg-[#0f0f13] text-white">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">Nạp tiền</DialogTitle>
           <DialogDescription className="text-white/60">Chọn phương thức nạp tiền của bạn.</DialogDescription>
         </DialogHeader>
         <div className="mt-4">
-          <Recharges />
+          <Recharges defaultAmount={defaultAmount} />
         </div>
       </DialogContent>
     </Dialog>

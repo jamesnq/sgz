@@ -9,9 +9,7 @@ export const RechargePayosSchema = z.object({
     .max(50_000_000, 'Số tiền nạp tối đa là 50.000.000 VND'),
 })
 export const RechargeDoiTheSchema = z.object({
-  telco: z.enum(['VIETTEL', 'MOBIFONE', 'VINAPHONE', 'VIETNAMOBILE', 'ZING', 'GATE'], {
-    message: 'Nhà mạng không hợp lệ',
-  }),
+  telco: z.string().min(1, 'Nhà mạng không được để trống').max(30).trim(),
   code: z.string().min(1, 'Mã thẻ không được để trống').max(30).trim(),
   serial: z.string().min(1, 'Số serial không được để trống').max(30).trim(),
   amount: z.coerce

@@ -133,7 +133,7 @@ export interface WebhookResponse {
 export class DoiThe {
   private partnerId: string
   private partnerKey: string
-  private apiUrl: string = 'https://doithe1s.vn/chargingws/v2'
+  private apiUrl: string = process.env.DOITHE_API_URL || 'https://thesieure.com/chargingws/v2'
 
   /**
    * Constructor for DoiThe class
@@ -197,13 +197,14 @@ export class DoiThe {
           },
         })
         const signature = this.generateSignature(code, serial)
+        const normalizedTelco = telco.toUpperCase() === 'VIETNAMOBILE' ? 'VNMOBI' : telco.toUpperCase()
 
         const postData: PostData = {
           request_id: requestId,
           code,
           partner_id: this.partnerId,
           serial,
-          telco,
+          telco: normalizedTelco,
           amount,
           command: 'charging',
           sign: signature,
@@ -253,13 +254,14 @@ export class DoiThe {
   ): Promise<StandardResponse> {
     try {
       const signature = this.generateSignature(code, serial)
+      const normalizedTelco = telco.toUpperCase() === 'VIETNAMOBILE' ? 'VNMOBI' : telco.toUpperCase()
 
       const postData: PostData = {
         request_id: requestId,
         code,
         partner_id: this.partnerId,
         serial,
-        telco,
+        telco: normalizedTelco,
         amount,
         command: 'check',
         sign: signature,
@@ -294,9 +296,16 @@ export class DoiThe {
       const response = await fetch(url, { next: { revalidate: 60 } })
       const data = await response.json()
 
+      let feeList: Array<{ telco: string; value: number; fees: number; penalty: number }> = []
+      if (Array.isArray(data)) {
+        feeList = data
+      } else if (typeof data === 'object' && data !== null) {
+        feeList = Object.values(data).flat() as any[]
+      }
+
       return {
         success: true,
-        data,
+        data: feeList,
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -382,13 +391,16 @@ export class DoiThe {
 
         if (isValid) {
           return {
-            status: callbackData.status,
+            status: Number(callbackData.status),
             message: callbackData.message,
-            request_id: callbackData.request_id,
+            request_id: Number(callbackData.request_id),
             trans_id: callbackData.trans_id,
-            declared_value: callbackData.declared_value,
-            value: callbackData.value,
-            amount: callbackData.amount,
+            declared_value:
+              callbackData.declared_value !== undefined
+                ? Number(callbackData.declared_value)
+                : undefined,
+            value: callbackData.value !== undefined ? Number(callbackData.value) : undefined,
+            amount: callbackData.amount !== undefined ? Number(callbackData.amount) : undefined,
             code: callbackData.code,
             serial: callbackData.serial,
             telco: callbackData.telco,
@@ -482,7 +494,7 @@ export class DoiThe {
           }).where(eq(recharges.id, recharge.id))
 
           if (newStatus === 'SUCCESS') {
-            const amount = callbackData.amount || callbackData.value || 0
+            const amount = Number(callbackData.amount || callbackData.value || 0)
             discordAmount = amount
             const [user] = await tx
               .update(users)
