@@ -9,6 +9,7 @@ import payloadConfig from '@payload-config'
 import CryptoJS from 'crypto-js'
 import { after } from 'next/server'
 import { getPayload } from 'payload'
+import { discordOrderComponents, discordBotEnabled } from './discord/components'
 
 const webhookChannels = {
   admin: { webhook: config.DISCORD_ADMIN_WEBHOOK_URL, mentions: [config.DISCORD_ADMIN_ROLE_ID] },
@@ -98,6 +99,7 @@ export async function discordWebhook({
   channel,
   isMention = true,
   fields,
+  orderId,
 }: {
   subject: string
   message?: string
@@ -106,6 +108,7 @@ export async function discordWebhook({
   channel?: keyof typeof webhookChannels
   isMention?: boolean
   fields?: DiscordEmbedField[]
+  orderId?: number | string
 }) {
   if (process.env.NODE_ENV === 'development') {
     isMention = false
@@ -120,29 +123,40 @@ export async function discordWebhook({
 
     while (attempts < 3) {
       try {
-        return await fetch(channelConfig.webhook, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const useBot = channel === 'staff' && orderId !== undefined && discordBotEnabled()
+        const response = await fetch(
+          useBot
+            ? `https://discord.com/api/v10/channels/${config.DISCORD_STAFF_CHANNEL_ID}/messages`
+            : channelConfig.webhook,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(useBot ? { Authorization: `Bot ${config.DISCORD_BOT_TOKEN}` } : {}),
+            },
+            body: JSON.stringify({
+              content: isMention ? channelConfig.mentions.map((id) => `<@&${id}>`).join(' ') : '',
+              attachments: [],
+              allowed_mentions: { parse: [], roles: isMention ? [...channelConfig.mentions] : [] },
+              components: useBot ? discordOrderComponents(orderId!) : undefined,
+              embeds: [
+                {
+                  title: subject,
+                  description: message,
+                  url: redirect
+                    ? redirect.startsWith('http://') || redirect.startsWith('https://')
+                      ? redirect
+                      : getServerSideURL() + redirect
+                    : undefined,
+                  color: color ? parseInt(color.replace('#', ''), 16) : undefined,
+                  fields: fields && fields.length > 0 ? fields : undefined,
+                },
+              ],
+            }),
           },
-          body: JSON.stringify({
-            content: isMention ? channelConfig.mentions.map((id) => `<@&${id}>`).join(' ') : '',
-            attachments: [],
-            embeds: [
-              {
-                title: subject,
-                description: message,
-                url: redirect
-                  ? redirect.startsWith('http://') || redirect.startsWith('https://')
-                    ? redirect
-                    : getServerSideURL() + redirect
-                  : undefined,
-                color: color ? parseInt(color.replace('#', ''), 16) : undefined,
-                fields: fields && fields.length > 0 ? fields : undefined,
-              },
-            ],
-          }),
-        })
+        )
+        if (!response.ok) throw new Error(`Discord returned HTTP ${response.status}`)
+        return response
       } catch (error) {
         lastError = error
         attempts++
@@ -318,6 +332,7 @@ export async function sendNewOrderStaffNotification(order: any): Promise<void> {
         color: orderStatusColors.IN_QUEUE,
         channel: 'staff',
         fields,
+        orderId,
       })
     } catch (error) {
       console.error('Error sending staff notification:', error)
@@ -362,6 +377,8 @@ export async function sendOrderUserUpdatedStaffNotification(
   orderId: number | string,
   updatedItems?: QuickCopyItem[],
 ): Promise<void> {
+  // Status hooks do not have a field diff. Only the submission action sends this alert.
+  if (!updatedItems?.length) return
   after(async () => {
     const payload = {
       subject: `⚡ Đơn hàng #${orderId} đang đợi xử lý`,
@@ -369,25 +386,7 @@ export async function sendOrderUserUpdatedStaffNotification(
       redirect: Routes.WORKSPACE,
     }
     try {
-      let items = updatedItems
-      if (!items || items.length === 0) {
-        try {
-          const payloadInstance = await getPayload({ config: payloadConfig })
-          const dbOrder = await payloadInstance.findByID({
-            collection: 'orders',
-            id: orderId,
-            depth: 2,
-          })
-          if (dbOrder?.formSubmission && typeof dbOrder.formSubmission === 'object') {
-            const formSubmission = dbOrder.formSubmission as FormSubmission
-            const form = formSubmission.form as Form
-            const submissionData = formSubmission.submissionData as Record<string, unknown>
-            items = extractRawFormItems(form, submissionData)
-          }
-        } catch (err) {
-          console.error('Error fetching order form details for staff notification:', err)
-        }
-      }
+      const items = updatedItems
 
       const fields: DiscordEmbedField[] = (items || []).map((item) => ({
         name: `🔹 ${item.label}`,
@@ -401,6 +400,7 @@ export async function sendOrderUserUpdatedStaffNotification(
         channel: 'staff',
         isMention: true,
         fields,
+        orderId,
       })
     } catch (error) {
       console.error('Error sending staff notification:', error)
