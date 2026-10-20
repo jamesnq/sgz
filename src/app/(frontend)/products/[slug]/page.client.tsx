@@ -57,6 +57,7 @@ import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import {
+  ArrowDown,
   ArrowUpDown,
   Loader2,
   MinusIcon,
@@ -683,7 +684,7 @@ const MemoizedShippingForm = React.memo(
 function FormCheckoutAction() {
   const user = useAuth().user
   return user ? (
-    <CheckoutButton />
+    <CheckoutButton inForm />
   ) : (
     <AuthDialog>
       <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
@@ -698,7 +699,11 @@ function ShippingForm({ form }: { form: Form }) {
 }
 
 // Memoized checkout button component
-const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
+const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
+  inForm = false,
+}: {
+  inForm?: boolean
+}) {
   const router = useRouter()
   const { executeAsync, isExecuting } = useActionWarper(checkoutAction)
   const currentVariant = useProductPageContext((state) => state.currentVariant)
@@ -781,7 +786,18 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
         onClick={checkout}
       >
         {isExecuting && <Loader2 className="animate-spin mr-2" />}
-        Thanh toán
+        {!inForm && !isFormValid ? (
+          <>
+            {/* Mobile: dẫn người dùng xuống form. Desktop: giữ nút Thanh toán (báo lỗi khi bấm) */}
+            <span className="lg:hidden inline-flex items-center gap-2">
+              Nhập thông tin đơn hàng
+              <ArrowDown className="size-4" aria-hidden="true" />
+            </span>
+            <span className="max-lg:hidden">Thanh toán</span>
+          </>
+        ) : (
+          'Thanh toán'
+        )}
       </button>
       <RechargeDialog
         open={rechargeOpen}
@@ -792,8 +808,8 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   )
 })
 
-function CheckoutButton() {
-  return <MemoizedCheckoutButton />
+function CheckoutButton({ inForm }: { inForm?: boolean }) {
+  return <MemoizedCheckoutButton inForm={inForm} />
 }
 
 // Voucher code input component
