@@ -72,6 +72,7 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, useQueryState } from 'nuqs'
+import { toast } from 'react-toastify'
 
 type ProductPageContextType = {
   product: Product
@@ -665,6 +666,10 @@ const MemoizedShippingForm = React.memo(
             )
           })}
         </div>
+        {/* Mobile: nút thanh toán ngay dưới form để không phải kéo lên */}
+        <div className="mt-6 lg:hidden">
+          <FormCheckoutAction />
+        </div>
       </div>
     )
   },
@@ -674,6 +679,19 @@ const MemoizedShippingForm = React.memo(
     return prevProps.form?.id === nextProps.form?.id
   },
 )
+
+function FormCheckoutAction() {
+  const user = useAuth().user
+  return user ? (
+    <CheckoutButton />
+  ) : (
+    <AuthDialog>
+      <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+        Đăng nhập để thanh toán
+      </button>
+    </AuthDialog>
+  )
+}
 
 function ShippingForm({ form }: { form: Form }) {
   return <MemoizedShippingForm form={form} />
@@ -707,6 +725,20 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   )
 
   const checkout = React.useCallback(() => {
+    // Form chưa điền đủ: cuộn tới form và focus ô đầu tiên
+    if (!isFormValid) {
+      const formEl = document.getElementById('shipping-form')
+      if (formEl) {
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const firstInput = formEl.querySelector<HTMLElement>(
+          'input:not([type=hidden]), textarea, select, button[role=combobox]',
+        )
+        window.setTimeout(() => firstInput?.focus({ preventScroll: true }), 400)
+      }
+      toast.warn('Vui lòng điền đầy đủ thông tin đơn hàng trước khi thanh toán')
+      return
+    }
+
     // Nếu số dư không đủ, mở ngay panel nạp tiền
     if ((user?.balance ?? 0) < (calc?.totalPrice ?? 0)) {
       setRechargeOpen(true)
@@ -730,6 +762,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
       router.push(Routes.order(x.data.order.id))
     })
   }, [
+    isFormValid,
     user?.balance,
     calc?.totalPrice,
     executeAsync,
@@ -744,7 +777,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
     <>
       <button
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
-        disabled={isExecuting || !isFormValid}
+        disabled={isExecuting}
         onClick={checkout}
       >
         {isExecuting && <Loader2 className="animate-spin mr-2" />}
