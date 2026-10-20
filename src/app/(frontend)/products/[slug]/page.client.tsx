@@ -740,7 +740,11 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
         )
         window.setTimeout(() => firstInput?.focus({ preventScroll: true }), 400)
       }
-      toast.warn('Vui lòng điền đầy đủ thông tin đơn hàng trước khi thanh toán')
+      // Mobile: nút trên đã ghi "Nhập thông tin đơn hàng" nên chỉ cuộn, không cần cảnh báo
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches
+      if (inForm || isDesktop) {
+        toast.warn('Vui lòng điền đầy đủ thông tin đơn hàng trước khi thanh toán')
+      }
       return
     }
 
@@ -767,6 +771,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
       router.push(Routes.order(x.data.order.id))
     })
   }, [
+    inForm,
     isFormValid,
     user?.balance,
     calc?.totalPrice,
