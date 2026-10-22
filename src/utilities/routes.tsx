@@ -42,6 +42,10 @@ export class Routes {
     return `/user/orders/${id}`
   }
 
+  static payosCheckout(orderCode: string | number): string {
+    return `/checkout/payos?orderCode=${orderCode}`
+  }
+
   static post(slug: string): string {
     return `/posts/${slug}`
   }

@@ -99,7 +99,7 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
         ref={sheetContentRef}
         side="right"
         tabIndex={-1}
-        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6"
+        className="w-[300px] sm:w-[350px] bg-sgz-dark border-l-sgz-border overflow-y-auto flex flex-col p-6 outline-none focus:outline-none"
         onOpenAutoFocus={(event) => {
           event.preventDefault()
           sheetContentRef.current?.focus({ preventScroll: true })
@@ -114,7 +114,11 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({}) => {
           <SheetDescription className="hidden">Menu</SheetDescription>
         </SheetHeader>
         <div className="py-6 flex flex-col gap-6 flex-1">
-          <HeaderSearch className="w-full flex" onNavigate={() => setOpen(false)} />
+          <HeaderSearch
+            className="w-full flex"
+            inputTabIndex={-1}
+            onNavigate={() => setOpen(false)}
+          />
           <nav className="flex flex-col gap-4">
             {navItems.map((item, i) => {
               let isActive = false

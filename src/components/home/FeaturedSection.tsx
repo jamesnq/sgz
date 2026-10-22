@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { Product } from '@/payload-types'
 import { ProductCard } from '@/components/ProductCard'
 
@@ -25,16 +25,16 @@ export const FeaturedSection = ({ products }: { products: Product[] }) => {
   }, [])
 
   useEffect(() => {
-    if (numPages <= 1) return
-    const timer = setInterval(() => {
-      setCurrentPage((prev) => (prev + 1) % numPages)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [numPages])
-
-  useEffect(() => {
     if (currentPage >= numPages) setCurrentPage(0)
   }, [itemsPerPage, numPages, currentPage])
+
+  const handlePrev = () => {
+    setCurrentPage((prev) => (prev - 1 + numPages) % numPages)
+  }
+
+  const handleNext = () => {
+    setCurrentPage((prev) => (prev + 1) % numPages)
+  }
 
   // Early return AFTER all hooks — React Rules of Hooks compliance
   if (!products || products.length === 0 || numPages === 0) return null
@@ -97,6 +97,26 @@ export const FeaturedSection = ({ products }: { products: Product[] }) => {
           </motion.div>
         ))}
       </div>
+      {numPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <button
+            type="button"
+            onClick={handlePrev}
+            className="w-10 h-10 rounded-full bg-sgz-surface border border-white/10 hover:border-amber-500/50 hover:bg-amber-500/10 text-white/70 hover:text-amber-400 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-md hover:shadow-amber-500/10"
+            aria-label="Trang trước"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="w-10 h-10 rounded-full bg-sgz-surface border border-white/10 hover:border-amber-500/50 hover:bg-amber-500/10 text-white/70 hover:text-amber-400 flex items-center justify-center transition-all duration-200 active:scale-95 shadow-md hover:shadow-amber-500/10"
+            aria-label="Trang sau"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </motion.section>
   )
 }

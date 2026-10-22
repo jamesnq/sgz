@@ -9,9 +9,7 @@ export const RechargePayosSchema = z.object({
     .max(50_000_000, 'Số tiền nạp tối đa là 50.000.000 VND'),
 })
 export const RechargeDoiTheSchema = z.object({
-  telco: z.enum(['VIETTEL', 'MOBIFONE', 'VINAPHONE', 'VIETNAMOBILE', 'ZING', 'GATE'], {
-    message: 'Nhà mạng không hợp lệ',
-  }),
+  telco: z.string().min(1, 'Nhà mạng không được để trống').max(30).trim(),
   code: z.string().min(1, 'Mã thẻ không được để trống').max(30).trim(),
   serial: z.string().min(1, 'Số serial không được để trống').max(30).trim(),
   amount: z.coerce
@@ -29,6 +27,12 @@ export const CheckoutSchema = z.object({
     .max(100, 'Số lượng tối đa là 100'),
   shippingFields: z.any(),
   voucherCode: z.string().max(50).optional(),
+})
+export const GetProductsByIdsSchema = z.object({
+  ids: z.array(z.coerce.number().int().positive()).max(20),
+})
+export const PayosCheckoutStatusSchema = z.object({
+  orderCode: z.coerce.number().int().positive(),
 })
 export const UpdateFormSubmissionSchema = z.object({
   id: z.coerce.number().int().positive(),

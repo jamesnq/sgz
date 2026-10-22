@@ -18,12 +18,9 @@ const ProductGridSection = dynamic(
   () => import('@/components/home/ProductGridSection').then((mod) => mod.ProductGridSection),
   { ssr: true },
 )
-const SocialSupport = dynamic(
-  () => import('@/components/social-support').then((mod) => mod.SocialSupport),
-  { ssr: false },
-)
 
 import { HeroSection } from '@/components/home/HeroSection'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
 
 // ─── Helpers ───
 
@@ -77,6 +74,8 @@ const HomePageClient = ({
             <FeaturedSection products={featuredProducts} />
           )}
 
+          <RecentlyViewed />
+
           {sections.map((section) => (
             <ProductGridSection
               key={section.group.id}
@@ -88,7 +87,6 @@ const HomePageClient = ({
           ))}
 
           <PostsSection posts={posts} />
-          <SocialSupport />
         </div>
       </div>
     </>

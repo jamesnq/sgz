@@ -8,10 +8,15 @@ import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
 import { checkoutAction } from '@/app/_actions/checkoutAction'
+import { checkoutPayosAction } from '@/app/_actions/checkoutPayosAction'
+import { InsufficientBalanceDialog } from '@/components/InsufficientBalanceDialog'
 import { getAvailableVouchersAction, type AvailableVoucher } from '@/app/_actions/getAvailableVouchersAction'
 import { validateVoucherAction } from '@/app/_actions/validateVoucherAction'
 import { fields } from '@/blocks/Form/fields'
 import AuthDialog from '@/collections/Globals/Header/AuthDialog'
+import { RechargeDialog } from '@/components/recharge-dialog'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
+import { addRecentlyViewed } from '@/utilities/recentlyViewed'
 import RichText from '@/components/RichText'
 import { DisplayProductStatus } from '@/components/display-product-status'
 import { Shell } from '@/components/shell'
@@ -56,6 +61,7 @@ import { useActionWarper } from '@/utilities/useActionWarper'
 import { validateRequiredFields } from '@/utilities/validateFormFields'
 import { hasText } from '@payloadcms/richtext-lexical/shared'
 import {
+  ArrowDown,
   ArrowUpDown,
   Loader2,
   MinusIcon,
@@ -71,6 +77,7 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { parseAsInteger, useQueryState } from 'nuqs'
+import { toast } from 'react-toastify'
 
 type ProductPageContextType = {
   product: Product
@@ -664,6 +671,10 @@ const MemoizedShippingForm = React.memo(
             )
           })}
         </div>
+        {/* Mobile: nút thanh toán ngay dưới form để không phải kéo lên */}
+        <div className="mt-6 lg:hidden">
+          <FormCheckoutAction />
+        </div>
       </div>
     )
   },
@@ -674,12 +685,29 @@ const MemoizedShippingForm = React.memo(
   },
 )
 
+function FormCheckoutAction() {
+  const user = useAuth().user
+  return user ? (
+    <CheckoutButton inForm />
+  ) : (
+    <AuthDialog>
+      <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 flex justify-center items-center rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+        Đăng nhập để thanh toán
+      </button>
+    </AuthDialog>
+  )
+}
+
 function ShippingForm({ form }: { form: Form }) {
   return <MemoizedShippingForm form={form} />
 }
 
 // Memoized checkout button component
-const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
+const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
+  inForm = false,
+}: {
+  inForm?: boolean
+}) {
   const router = useRouter()
   const { executeAsync, isExecuting } = useActionWarper(checkoutAction)
   const currentVariant = useProductPageContext((state) => state.currentVariant)
@@ -687,33 +715,160 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner() {
   const shippingInfo = useProductPageContext((state) => state.shippingInfo)
   const isFormValid = useProductPageContext((state) => state.isFormValid)
   const voucherCode = useProductPageContext((state) => state.voucherCode)
+  const calc = useProductPageContext((state) => state.calc)
+  const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
+  const { user, fetchMe } = useAuth()
+  const [rechargeOpen, setRechargeOpen] = React.useState(false)
+  const [shortfallOpen, setShortfallOpen] = React.useState(false)
+  const { executeAsync: executePayos, isExecuting: isPayosExecuting } =
+    useActionWarper(checkoutPayosAction)
 
-  const checkout = React.useCallback(() => {
-    executeAsync({
+  const userBalance = user?.balance ?? 0
+  // Server re-prices on checkout; this only decides which dialog to show
+  const totalPrice = Math.max(0, (calc?.totalPrice ?? 0) - (appliedVoucherDiscount || 0))
+  const missingAmount = Math.max(0, totalPrice - userBalance)
+
+  const handleRechargeOpenChange = React.useCallback(
+    (open: boolean) => {
+      setRechargeOpen(open)
+      if (!open) {
+        fetchMe()
+      }
+    },
+    [fetchMe],
+  )
+
+  const checkoutInput = React.useMemo(
+    () => ({
       quantity,
       productVariantId: currentVariant.id,
       shippingFields: shippingInfo,
       voucherCode: voucherCode || undefined,
-    }).then((x: any) => {
+    }),
+    [quantity, currentVariant.id, shippingInfo, voucherCode],
+  )
+
+  const payWithBalance = React.useCallback(() => {
+    executeAsync(checkoutInput).then((x: any) => {
+      if (
+        x?.serverError?.message?.includes('Số dư không đủ') ||
+        x?.serverError === 'Số dư không đủ'
+      ) {
+        fetchMe()
+        setShortfallOpen(true)
+        return
+      }
       if (!x?.data?.order) return
       router.push(Routes.order(x.data.order.id))
     })
-  }, [executeAsync, quantity, currentVariant.id, shippingInfo, voucherCode, router])
+  }, [executeAsync, checkoutInput, fetchMe, router])
+
+  const checkout = React.useCallback(() => {
+    // Form chưa điền đủ: cuộn tới form và focus ô đầu tiên
+    if (!isFormValid) {
+      const formEl = document.getElementById('shipping-form')
+      if (formEl) {
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const firstInput = formEl.querySelector<HTMLElement>(
+          'input:not([type=hidden]), textarea, select, button[role=combobox]',
+        )
+        window.setTimeout(() => firstInput?.focus({ preventScroll: true }), 400)
+      }
+      // Mobile: nút trên đã ghi "Nhập thông tin đơn hàng" nên chỉ cuộn, không cần cảnh báo
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches
+      if (inForm || isDesktop) {
+        toast.warn('Vui lòng điền đầy đủ thông tin đơn hàng trước khi thanh toán')
+      }
+      return
+    }
+
+    // Nếu số dư không đủ: đề xuất thanh toán phần thiếu qua PayOS
+    if (missingAmount > 0) {
+      setShortfallOpen(true)
+      return
+    }
+
+    payWithBalance()
+  }, [inForm, isFormValid, missingAmount, payWithBalance])
+
+  const payNow = React.useCallback(() => {
+    // Open the tab inside the click handler: opening it after the server responds gets popup-blocked
+    const payTab = window.open('', '_blank')
+    if (payTab) {
+      payTab.opener = null
+      payTab.document.title = 'Đang mở trang thanh toán…'
+      payTab.document.body.textContent = 'Đang mở trang thanh toán…'
+    }
+
+    executePayos(checkoutInput).then((x: any) => {
+      const data = x?.data
+      if (!data?.checkoutUrl) payTab?.close()
+      if (!data) return
+      if (data.payWithBalance) {
+        setShortfallOpen(false)
+        fetchMe()
+        payWithBalance()
+        return
+      }
+      if (!data.checkoutUrl) return
+
+      if (payTab && !payTab.closed) {
+        payTab.location.href = data.checkoutUrl
+        // This tab follows the payment and moves on to the order once the webhook lands
+        router.push(Routes.payosCheckout(data.orderCode))
+      } else {
+        // Popup blocked: pay in this tab, PayOS returns to the same status page
+        window.location.href = data.checkoutUrl
+      }
+    })
+  }, [executePayos, checkoutInput, fetchMe, payWithBalance, router])
+
+  const openRecharge = React.useCallback(() => {
+    setShortfallOpen(false)
+    setRechargeOpen(true)
+  }, [])
 
   return (
-    <button
-      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
-      disabled={isExecuting || !isFormValid}
-      onClick={checkout}
-    >
-      {isExecuting && <Loader2 className="animate-spin mr-2" />}
-      Thanh toán
-    </button>
+    <>
+      <button
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
+        disabled={isExecuting}
+        onClick={checkout}
+      >
+        {isExecuting && <Loader2 className="animate-spin mr-2" />}
+        {!inForm && !isFormValid ? (
+          <>
+            {/* Mobile: dẫn người dùng xuống form. Desktop: giữ nút Thanh toán (báo lỗi khi bấm) */}
+            <span className="lg:hidden inline-flex items-center gap-2">
+              Nhập thông tin đơn hàng
+              <ArrowDown className="size-4" aria-hidden="true" />
+            </span>
+            <span className="max-lg:hidden">Thanh toán</span>
+          </>
+        ) : (
+          'Thanh toán'
+        )}
+      </button>
+      <InsufficientBalanceDialog
+        open={shortfallOpen}
+        onOpenChange={setShortfallOpen}
+        totalPrice={totalPrice}
+        balance={userBalance}
+        isPaying={isPayosExecuting}
+        onPayNow={payNow}
+        onRecharge={openRecharge}
+      />
+      <RechargeDialog
+        open={rechargeOpen}
+        onOpenChange={handleRechargeOpenChange}
+        defaultAmount={missingAmount >= 2000 ? missingAmount : undefined}
+      />
+    </>
   )
 })
 
-function CheckoutButton() {
-  return <MemoizedCheckoutButton />
+function CheckoutButton({ inForm }: { inForm?: boolean }) {
+  return <MemoizedCheckoutButton inForm={inForm} />
 }
 
 // Voucher code input component
@@ -1537,6 +1692,17 @@ const ProductForm = React.memo(
 
 
 
+const ProductRecentlyViewed = React.memo(function ProductRecentlyViewed() {
+  const productId = useProductPageContext((state) => state.product.id)
+
+  // Record after reading so the current product is excluded from its own list
+  useEffect(() => {
+    addRecentlyViewed(productId)
+  }, [productId])
+
+  return <RecentlyViewed excludeId={productId} limit={4} className="mt-8" />
+})
+
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
   return (
@@ -1551,8 +1717,8 @@ const MemoizedScreen = React.memo(function ScreenInner() {
           data-purpose="checkout-sidebar"
         >
           <div className="space-y-6 lg:sticky lg:top-24">
-            <ProductForm />
             <Checkout />
+            <ProductForm />
           </div>
         </aside>
 
@@ -1562,6 +1728,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
         >
           <ProductDescription />
           <ProductRelated className="mt-8" />
+          <ProductRecentlyViewed />
         </div>
       </div>
     </main>

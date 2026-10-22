@@ -148,6 +148,15 @@ export default async function TermsPage() {
             ro có thể phát sinh.
           </p>
         </section>
+
+        <section>
+          <h2>8. Quy định về nạp tiền</h2>
+          <p>
+            Mọi khoản tiền đã nạp vào tài khoản trên {siteName} chỉ được sử dụng để mua sắm hàng
+            hóa, dịch vụ trên website và sẽ không được rút ra ngoài dưới bất kỳ hình thức nào. Bằng
+            việc nạp tiền vào tài khoản, quý khách xác nhận đã hiểu rõ và đồng ý với quy định này.
+          </p>
+        </section>
       </div>
     </>
   )
