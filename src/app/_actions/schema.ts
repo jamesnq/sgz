@@ -28,6 +28,12 @@ export const CheckoutSchema = z.object({
   shippingFields: z.any(),
   voucherCode: z.string().max(50).optional(),
 })
+export const GetProductsByIdsSchema = z.object({
+  ids: z.array(z.coerce.number().int().positive()).max(20),
+})
+export const PayosCheckoutStatusSchema = z.object({
+  orderCode: z.coerce.number().int().positive(),
+})
 export const UpdateFormSubmissionSchema = z.object({
   id: z.coerce.number().int().positive(),
   shippingFields: z.any(),

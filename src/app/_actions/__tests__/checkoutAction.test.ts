@@ -65,7 +65,7 @@ vi.mock('@/utilities/safe-action', () => {
   }
 })
 
-import { checkoutWithUser } from '@/app/_actions/checkoutAction'
+import { checkoutWithUser, quoteCheckout } from '@/services/checkout.service'
 import {
   form_submissions,
   orders,
@@ -311,5 +311,84 @@ describe('checkoutWithUser form submission transactionality', () => {
     expect(mocks.sendNewOrderStaffNotification).toHaveBeenCalledWith(
       expect.objectContaining({ id: 777 }),
     )
+  })
+})
+
+describe('checkoutWithUser rate limiting', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.after.mockImplementation(() => undefined)
+    mocks.autoProcessOrder.mockResolvedValue({ success: false })
+    mocks.checkRateLimit.mockReturnValue({ allowed: false, retryAfterMs: 5000 })
+  })
+
+  it('rejects user-initiated checkouts over the limit', async () => {
+    await expect(
+      checkoutWithUser({ parsedInput: checkoutInput, user: checkoutUser }),
+    ).rejects.toThrow('thử lại sau 5s')
+    expect(mocks.getPayload).not.toHaveBeenCalled()
+  })
+
+  it('lets a server-initiated checkout (paid PayOS shortfall) through', async () => {
+    const harness = makeTxHarness()
+    const payload = makePayload(harness.db)
+    payload.findByID.mockResolvedValue(makeProductVariant())
+    mocks.getPayload.mockResolvedValue(payload)
+
+    const result = await checkoutWithUser(
+      { parsedInput: checkoutInput, user: checkoutUser },
+      { skipRateLimit: true },
+    )
+
+    expect(mocks.checkRateLimit).not.toHaveBeenCalled()
+    expect(result.order).toEqual(expect.objectContaining({ id: 777 }))
+  })
+})
+
+describe('quoteCheckout', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.validateVoucher.mockImplementation(() => undefined)
+    mocks.validateVoucherScope.mockImplementation(() => undefined)
+  })
+
+  it('prices the order with the voucher and normalizes shipping fields without writing', async () => {
+    const harness = makeTxHarness()
+    const payload = makePayload(harness.db)
+    payload.findByID.mockResolvedValue({
+      ...makeProductVariant(),
+      product: { id: 11, slug: 'steam-wallet', name: 'Steam' },
+    })
+    payload.find.mockResolvedValue({ docs: [{ id: 5, code: 'SALE', affiliateUser: null }] })
+    mocks.getPayload.mockResolvedValue(payload)
+    mocks.calculateVoucherDiscount.mockReturnValue(300)
+
+    const quote = await quoteCheckout({
+      input: { ...checkoutInput, quantity: 2, voucherCode: 'sale ' },
+      user: checkoutUser,
+    })
+
+    expect(quote).toEqual({
+      totalPrice: 1700,
+      itemName: 'Steam - Steam Wallet',
+      productSlug: 'steam-wallet',
+      shippingFields: { account: 'player-one' },
+    })
+    expect(payload.find).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { code: { equals: 'SALE' } } }),
+    )
+    expect(harness.db.transaction).not.toHaveBeenCalled()
+  })
+
+  it('rejects a self-referral affiliate voucher', async () => {
+    const harness = makeTxHarness()
+    const payload = makePayload(harness.db)
+    payload.findByID.mockResolvedValue(makeProductVariant())
+    payload.find.mockResolvedValue({ docs: [{ id: 5, code: 'AFF', affiliateUser: 12 }] })
+    mocks.getPayload.mockResolvedValue(payload)
+
+    await expect(
+      quoteCheckout({ input: { ...checkoutInput, voucherCode: 'AFF' }, user: checkoutUser }),
+    ).rejects.toThrow('chính mình')
   })
 })

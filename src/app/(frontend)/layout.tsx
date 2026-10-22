@@ -7,6 +7,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { Header } from '@/collections/Globals/Header/Component'
 import { AdminBar } from '@/components/AdminBar'
 import Footer from '@/components/footer'
+import { RecentPurchaseToast } from '@/components/RecentPurchaseToast'
 import { config } from '@/config'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
@@ -35,6 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Header />
           {children}
           <Footer />
+          <RecentPurchaseToast />
         </Providers>
       </body>
     </html>

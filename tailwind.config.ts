@@ -2,12 +2,16 @@ import tailwindcssAnimate from 'tailwindcss-animate'
 import typography from '@tailwindcss/typography'
 import plugin from 'tailwindcss/plugin'
 const config = {
-  content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-  ],
+  content: {
+    // Resolve globs from this file, not the bundler's cwd (git worktrees run with the repo root as cwd)
+    relative: true,
+    files: [
+      './pages/**/*.{ts,tsx}',
+      './components/**/*.{ts,tsx}',
+      './app/**/*.{ts,tsx}',
+      './src/**/*.{ts,tsx}',
+    ],
+  },
   darkMode: ['selector', '[data-theme="dark"]'],
   plugins: [
     tailwindcssAnimate,
