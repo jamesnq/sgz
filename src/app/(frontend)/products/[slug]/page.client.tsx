@@ -712,11 +712,13 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
   const isFormValid = useProductPageContext((state) => state.isFormValid)
   const voucherCode = useProductPageContext((state) => state.voucherCode)
   const calc = useProductPageContext((state) => state.calc)
+  const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
   const { user, fetchMe } = useAuth()
   const [rechargeOpen, setRechargeOpen] = React.useState(false)
 
   const userBalance = user?.balance ?? 0
-  const totalPrice = calc?.totalPrice ?? 0
+  // Same amount the summary shows and the server charges: price after the applied voucher
+  const totalPrice = Math.max(0, (calc?.totalPrice ?? 0) - (appliedVoucherDiscount || 0))
   const missingAmount = Math.max(0, totalPrice - userBalance)
 
   const handleRechargeOpenChange = React.useCallback(
@@ -749,7 +751,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
     }
 
     // Nếu số dư không đủ, mở ngay panel nạp tiền
-    if ((user?.balance ?? 0) < (calc?.totalPrice ?? 0)) {
+    if (missingAmount > 0) {
       setRechargeOpen(true)
       return
     }
@@ -773,8 +775,7 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
   }, [
     inForm,
     isFormValid,
-    user?.balance,
-    calc?.totalPrice,
+    missingAmount,
     executeAsync,
     quantity,
     currentVariant.id,
