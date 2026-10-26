@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     after: vi.fn(),
+    checkoutWithUser: vi.fn(),
     discordWebhook: vi.fn(),
     getPayload: vi.fn(),
     payos,
@@ -47,6 +48,15 @@ vi.mock('@/config', () => ({
 
 vi.mock('@/services/novu.service', () => ({
   discordWebhook: mocks.discordWebhook,
+}))
+
+vi.mock('@payloadcms/db-postgres/drizzle', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
+}))
+
+vi.mock('@/services/checkout.service', () => ({
+  checkoutWithUser: mocks.checkoutWithUser,
 }))
 
 import { PaymentService } from '@/services/payment.service'
@@ -319,5 +329,165 @@ describe('PaymentService PayOS webhook idempotency', () => {
     expect(secondTx.update).not.toHaveBeenCalled()
     expect(secondTx.insert).not.toHaveBeenCalled()
     expect(mocks.after).toHaveBeenCalledTimes(1)
+    expect(mocks.checkoutWithUser).not.toHaveBeenCalled()
+  })
+})
+
+describe('PaymentService PayOS checkout for balance shortfall', () => {
+  const pendingCheckout = {
+    productVariantId: 7,
+    quantity: 2,
+    shippingFields: { account: 'player-one' },
+    voucherCode: 'SALE10',
+    productSlug: 'steam-wallet',
+    itemName: 'Steam Wallet 100k',
+    expectedTotal: 180000,
+  }
+
+  const makeCreditTx = (lockedData: Record<string, unknown>) => {
+    const rechargeSet = vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) }))
+    return {
+      rechargeSet,
+      tx: {
+        insert: vi.fn(() => ({ values: vi.fn().mockResolvedValue(undefined) })),
+        select: makeLockedSelect([{ id: 9, status: 'PENDING', data: lockedData }]).select,
+        update: vi
+          .fn()
+          .mockReturnValueOnce({ set: rechargeSet })
+          .mockReturnValueOnce({
+            set: vi.fn(() => ({
+              where: vi.fn(() => ({
+                returning: vi
+                  .fn()
+                  .mockResolvedValue([{ balance: 200000, email: 'user@example.com' }]),
+              })),
+            })),
+          }),
+      },
+    }
+  }
+
+  const setup = (lockedData: Record<string, unknown>) => {
+    const payload = makePayload()
+    const { tx, rechargeSet } = makeCreditTx(lockedData)
+    const resultWhere = vi.fn().mockResolvedValue(undefined)
+    const resultSet = vi.fn(() => ({ where: resultWhere }))
+    ;(payload.db.drizzle as any).update = vi.fn(() => ({ set: resultSet }))
+
+    payload.find.mockResolvedValue({
+      docs: [{ id: 9, orderCode: '1000', status: 'PENDING', user: 12 }],
+    })
+    payload.db.drizzle.transaction.mockImplementationOnce(async (callback) => callback(tx))
+    mocks.getPayload.mockResolvedValue(payload)
+    mocks.payos.verifyPaymentWebhookData.mockReturnValue(makePayosWebhookData())
+
+    return { payload, rechargeSet, resultSet }
+  }
+
+  // `sql` is mocked to keep its interpolated values, the JSON patch is the string one
+  const storedResult = (resultSet: ReturnType<typeof vi.fn>) => {
+    const { values } = (resultSet.mock.calls[0]![0] as { data: { values: unknown[] } }).data
+    const json = values.find((value) => typeof value === 'string') as string | undefined
+    return json ? JSON.parse(json) : undefined
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.after.mockImplementation(() => undefined)
+  })
+
+  it('stores the pending checkout on the reserved recharge and uses the custom return URLs', async () => {
+    const payload = makePayload()
+    const service = new PaymentService()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    payload.create.mockResolvedValue({ id: 9, data: {} })
+    payload.update.mockResolvedValue({ docs: [{ id: 9 }] })
+    mocks.getPayload.mockResolvedValue(payload)
+    mocks.payos.createPaymentLink.mockResolvedValue(makePayosResponse(1000))
+
+    await service.createPaymentLink({
+      amount: 80000,
+      currency: 'VND',
+      userId: 12,
+      returnUrl: 'https://shop.test/checkout/payos',
+      cancelUrl: 'https://shop.test/checkout/payos?cancel=true',
+      pendingCheckout,
+    })
+
+    expect(payload.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          amount: 80000,
+          data: expect.objectContaining({ pendingCheckout }),
+        }),
+      }),
+    )
+    expect(mocks.payos.createPaymentLink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        returnUrl: 'https://shop.test/checkout/payos',
+        cancelUrl: 'https://shop.test/checkout/payos?cancel=true',
+      }),
+    )
+    vi.restoreAllMocks()
+  })
+
+  it('credits the balance first, then places the order without the user rate limit', async () => {
+    const service = new PaymentService()
+    const { rechargeSet, resultSet } = setup({ pendingCheckout })
+    mocks.checkoutWithUser.mockResolvedValue({ order: { id: 777 } })
+
+    await expect(service.webhookHandle({})).resolves.toBe('ok')
+
+    expect(rechargeSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'SUCCESS',
+        data: expect.objectContaining({ checkoutResult: { status: 'PROCESSING' } }),
+      }),
+    )
+    expect(mocks.checkoutWithUser).toHaveBeenCalledWith(
+      {
+        parsedInput: {
+          productVariantId: 7,
+          quantity: 2,
+          shippingFields: { account: 'player-one' },
+          voucherCode: 'SALE10',
+        },
+        user: { id: 12, email: 'user@example.com' },
+      },
+      { skipRateLimit: true },
+    )
+    expect(storedResult(resultSet)).toEqual({
+      checkoutResult: { status: 'COMPLETED', orderId: 777 },
+    })
+  })
+
+  it('keeps the money in balance and records the reason when the order cannot be placed', async () => {
+    const service = new PaymentService()
+    const { payload, resultSet } = setup({ pendingCheckout })
+    mocks.checkoutWithUser.mockRejectedValue(new Error('Sản phẩm đã ngừng bán'))
+
+    await expect(service.webhookHandle({})).resolves.toBe('ok')
+
+    expect(storedResult(resultSet)).toEqual({
+      checkoutResult: { status: 'FAILED', message: 'Sản phẩm đã ngừng bán' },
+    })
+    expect(payload.logger.error).toHaveBeenCalled()
+    expect(mocks.discordWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ color: '#FF0000' }),
+    )
+  })
+
+  it('does not place an order for a plain top-up', async () => {
+    const service = new PaymentService()
+    const { rechargeSet } = setup({})
+
+    await expect(service.webhookHandle({})).resolves.toBe('ok')
+
+    expect(mocks.checkoutWithUser).not.toHaveBeenCalled()
+    expect(rechargeSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.not.objectContaining({ checkoutResult: expect.anything() }),
+      }),
+    )
   })
 })

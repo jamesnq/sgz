@@ -20,6 +20,7 @@ const ProductGridSection = dynamic(
 )
 
 import { HeroSection } from '@/components/home/HeroSection'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
 
 // ─── Helpers ───
 
@@ -72,6 +73,8 @@ const HomePageClient = ({
           {featuredProducts && featuredProducts.length > 0 && (
             <FeaturedSection products={featuredProducts} />
           )}
+
+          <RecentlyViewed />
 
           {sections.map((section) => (
             <ProductGridSection

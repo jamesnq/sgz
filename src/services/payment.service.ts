@@ -8,6 +8,7 @@ import PayOS from '@payos/node'
 import type { CheckoutResponseDataType } from '@payos/node/lib/type'
 import { after } from 'next/server'
 import { getPayload } from 'payload'
+import { checkoutWithUser, type CheckoutInput } from './checkout.service'
 import { discordWebhook } from './novu.service'
 
 import { z } from 'zod'
@@ -19,7 +20,28 @@ const CreatePaymentLinkSchema = z.object({
   amount: z.number(),
   currency: z.enum(['VND', 'USD']),
   userId: z.number(),
+  returnUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+  /** Checkout to place automatically once this top-up is paid */
+  pendingCheckout: z.custom<PendingCheckout>().optional(),
 })
+
+export type PendingCheckout = CheckoutInput & {
+  productSlug: string | null
+  itemName: string
+  expectedTotal: number
+}
+
+export type PendingCheckoutResult =
+  | { status: 'PROCESSING' }
+  | { status: 'COMPLETED'; orderId: number }
+  | { status: 'FAILED'; message: string }
+
+const getPendingCheckout = (data: unknown): PendingCheckout | null => {
+  const pending = toRecord(data).pendingCheckout
+  if (!pending || typeof pending !== 'object') return null
+  return pending as PendingCheckout
+}
 function getRandomInt(min: number, max: number) {
   const minCeiled = Math.ceil(min)
   const maxFloored = Math.floor(max)
@@ -65,7 +87,8 @@ export class PaymentService {
   }
 
   async createPaymentLink(data: z.infer<typeof CreatePaymentLinkSchema>) {
-    const { amount, currency, userId } = CreatePaymentLinkSchema.parse(data)
+    const { amount, currency, userId, returnUrl, cancelUrl, pendingCheckout } =
+      CreatePaymentLinkSchema.parse(data)
 
     if (currency !== 'VND') {
       console.error('[PaymentService] Unsupported currency:', currency)
@@ -93,6 +116,7 @@ export class PaymentService {
                 orderCode,
                 status: 'RESERVED',
               },
+              ...(pendingCheckout ? { pendingCheckout } : {}),
             },
           },
           overrideAccess: true,
@@ -113,8 +137,8 @@ export class PaymentService {
         result = await this.payos.createPaymentLink({
           orderCode,
           amount,
-          cancelUrl: config.PAYOS_CANCEL_URL,
-          returnUrl: config.PAYOS_RETURN_URL,
+          cancelUrl: cancelUrl ?? config.PAYOS_CANCEL_URL,
+          returnUrl: returnUrl ?? config.PAYOS_RETURN_URL,
           description: 'SGZ',
         })
       } catch (error) {
@@ -198,6 +222,8 @@ export class PaymentService {
         return { alreadySuccess: true as const }
       }
 
+      const pendingCheckout = getPendingCheckout(lockedRecharge.data)
+
       await tx
         .update(recharges)
         .set({
@@ -205,6 +231,9 @@ export class PaymentService {
           data: {
             ...toRecord(lockedRecharge.data),
             webhook: paymentData,
+            ...(pendingCheckout
+              ? { checkoutResult: { status: 'PROCESSING' } satisfies PendingCheckoutResult }
+              : {}),
           },
         })
         .where(eq(recharges.id, recharge.id))
@@ -224,14 +253,24 @@ export class PaymentService {
         balance: user.balance,
       })
 
-      return { alreadySuccess: false as const, user }
+      return { alreadySuccess: false as const, user, pendingCheckout }
     })
 
     if (transactionResult.alreadySuccess) {
       return 'ok'
     }
 
-    const { user } = transactionResult
+    const { user, pendingCheckout } = transactionResult
+
+    // The top-up is committed first: if the order cannot be placed, the money stays in balance
+    if (pendingCheckout) {
+      await this.completePendingCheckout({
+        rechargeId: recharge.id,
+        orderCode: recharge.orderCode,
+        user: { id: recharge.user as number, email: user.email },
+        pendingCheckout,
+      })
+    }
 
     after(async () => {
       try {
@@ -250,6 +289,71 @@ export class PaymentService {
     })
 
     return 'ok'
+  }
+
+  /**
+   * Place the order the user asked for when they chose "pay the shortfall via PayOS".
+   * Never throws: a failed checkout (price changed, sold out, voucher used up) leaves the
+   * paid amount in the user's balance and records why, for the return page and staff.
+   */
+  async completePendingCheckout({
+    rechargeId,
+    orderCode,
+    user,
+    pendingCheckout,
+  }: {
+    rechargeId: number
+    orderCode: string
+    user: { id: number; email?: string | null }
+    pendingCheckout: PendingCheckout
+  }) {
+    const payload = await getPayload({ config: payloadConfig })
+    let result: PendingCheckoutResult
+
+    try {
+      const { order } = await checkoutWithUser(
+        {
+          parsedInput: {
+            productVariantId: pendingCheckout.productVariantId,
+            quantity: pendingCheckout.quantity,
+            shippingFields: pendingCheckout.shippingFields,
+            voucherCode: pendingCheckout.voucherCode,
+          },
+          user,
+        },
+        { skipRateLimit: true },
+      )
+      result = { status: 'COMPLETED', orderId: order.id }
+    } catch (error) {
+      result = {
+        status: 'FAILED',
+        message: error instanceof Error ? error.message : 'Không thể tạo đơn hàng',
+      }
+      payload.logger.error({
+        err: error,
+        message: `PayOS checkout #${orderCode} paid but order creation failed`,
+      })
+      try {
+        await discordWebhook({
+          subject: `Thanh Toán PayOS Không Tạo Được Đơn`,
+          message: `Người dùng: ${user.email} \nMã nạp: **#${orderCode}** \nSản phẩm: **${pendingCheckout.itemName}** x${pendingCheckout.quantity} \nLý do: ${result.message} \nTiền đã được cộng vào số dư.`,
+          color: '#FF0000',
+          channel: 'activities',
+        })
+      } catch (e) {
+        payload.logger.error({ err: e, message: 'Failed to send discord webhook for PayOS checkout' })
+      }
+    }
+
+    // jsonb merge so concurrent writers to other keys are not overwritten
+    await payload.db.drizzle
+      .update(recharges)
+      .set({
+        data: sql`COALESCE(${recharges.data}, '{}'::jsonb) || ${JSON.stringify({ checkoutResult: result })}::jsonb`,
+      })
+      .where(eq(recharges.id, rechargeId))
+
+    return result
   }
 }
 

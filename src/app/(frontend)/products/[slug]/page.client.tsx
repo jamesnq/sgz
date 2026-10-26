@@ -8,11 +8,15 @@ import { Media } from '@/components/Media'
 import { Form, Product, ProductVariant } from '@/payload-types'
 
 import { checkoutAction } from '@/app/_actions/checkoutAction'
+import { checkoutPayosAction } from '@/app/_actions/checkoutPayosAction'
+import { InsufficientBalanceDialog } from '@/components/InsufficientBalanceDialog'
 import { getAvailableVouchersAction, type AvailableVoucher } from '@/app/_actions/getAvailableVouchersAction'
 import { validateVoucherAction } from '@/app/_actions/validateVoucherAction'
 import { fields } from '@/blocks/Form/fields'
 import AuthDialog from '@/collections/Globals/Header/AuthDialog'
 import { RechargeDialog } from '@/components/recharge-dialog'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
+import { addRecentlyViewed } from '@/utilities/recentlyViewed'
 import RichText from '@/components/RichText'
 import { DisplayProductStatus } from '@/components/display-product-status'
 import { Shell } from '@/components/shell'
@@ -715,9 +719,12 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
   const appliedVoucherDiscount = useProductPageContext((state) => state.appliedVoucherDiscount)
   const { user, fetchMe } = useAuth()
   const [rechargeOpen, setRechargeOpen] = React.useState(false)
+  const [shortfallOpen, setShortfallOpen] = React.useState(false)
+  const { executeAsync: executePayos, isExecuting: isPayosExecuting } =
+    useActionWarper(checkoutPayosAction)
 
   const userBalance = user?.balance ?? 0
-  // Same amount the summary shows and the server charges: price after the applied voucher
+  // Server re-prices on checkout; this only decides which dialog to show
   const totalPrice = Math.max(0, (calc?.totalPrice ?? 0) - (appliedVoucherDiscount || 0))
   const missingAmount = Math.max(0, totalPrice - userBalance)
 
@@ -730,6 +737,31 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
     },
     [fetchMe],
   )
+
+  const checkoutInput = React.useMemo(
+    () => ({
+      quantity,
+      productVariantId: currentVariant.id,
+      shippingFields: shippingInfo,
+      voucherCode: voucherCode || undefined,
+    }),
+    [quantity, currentVariant.id, shippingInfo, voucherCode],
+  )
+
+  const payWithBalance = React.useCallback(() => {
+    executeAsync(checkoutInput).then((x: any) => {
+      if (
+        x?.serverError?.message?.includes('Số dư không đủ') ||
+        x?.serverError === 'Số dư không đủ'
+      ) {
+        fetchMe()
+        setShortfallOpen(true)
+        return
+      }
+      if (!x?.data?.order) return
+      router.push(Routes.order(x.data.order.id))
+    })
+  }, [executeAsync, checkoutInput, fetchMe, router])
 
   const checkout = React.useCallback(() => {
     // Form chưa điền đủ: cuộn tới form và focus ô đầu tiên
@@ -750,39 +782,51 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
       return
     }
 
-    // Nếu số dư không đủ, mở ngay panel nạp tiền
+    // Nếu số dư không đủ: đề xuất thanh toán phần thiếu qua PayOS
     if (missingAmount > 0) {
-      setRechargeOpen(true)
+      setShortfallOpen(true)
       return
     }
 
-    executeAsync({
-      quantity,
-      productVariantId: currentVariant.id,
-      shippingFields: shippingInfo,
-      voucherCode: voucherCode || undefined,
-    }).then((x: any) => {
-      if (
-        x?.serverError?.message?.includes('Số dư không đủ') ||
-        x?.serverError === 'Số dư không đủ'
-      ) {
-        setRechargeOpen(true)
+    payWithBalance()
+  }, [inForm, isFormValid, missingAmount, payWithBalance])
+
+  const payNow = React.useCallback(() => {
+    // Open the tab inside the click handler: opening it after the server responds gets popup-blocked
+    const payTab = window.open('', '_blank')
+    if (payTab) {
+      payTab.opener = null
+      payTab.document.title = 'Đang mở trang thanh toán…'
+      payTab.document.body.textContent = 'Đang mở trang thanh toán…'
+    }
+
+    executePayos(checkoutInput).then((x: any) => {
+      const data = x?.data
+      if (!data?.checkoutUrl) payTab?.close()
+      if (!data) return
+      if (data.payWithBalance) {
+        setShortfallOpen(false)
+        fetchMe()
+        payWithBalance()
         return
       }
-      if (!x?.data?.order) return
-      router.push(Routes.order(x.data.order.id))
+      if (!data.checkoutUrl) return
+
+      if (payTab && !payTab.closed) {
+        payTab.location.href = data.checkoutUrl
+        // This tab follows the payment and moves on to the order once the webhook lands
+        router.push(Routes.payosCheckout(data.orderCode))
+      } else {
+        // Popup blocked: pay in this tab, PayOS returns to the same status page
+        window.location.href = data.checkoutUrl
+      }
     })
-  }, [
-    inForm,
-    isFormValid,
-    missingAmount,
-    executeAsync,
-    quantity,
-    currentVariant.id,
-    shippingInfo,
-    voucherCode,
-    router,
-  ])
+  }, [executePayos, checkoutInput, fetchMe, payWithBalance, router])
+
+  const openRecharge = React.useCallback(() => {
+    setShortfallOpen(false)
+    setRechargeOpen(true)
+  }, [])
 
   return (
     <>
@@ -805,6 +849,15 @@ const MemoizedCheckoutButton = React.memo(function CheckoutButtonInner({
           'Thanh toán'
         )}
       </button>
+      <InsufficientBalanceDialog
+        open={shortfallOpen}
+        onOpenChange={setShortfallOpen}
+        totalPrice={totalPrice}
+        balance={userBalance}
+        isPaying={isPayosExecuting}
+        onPayNow={payNow}
+        onRecharge={openRecharge}
+      />
       <RechargeDialog
         open={rechargeOpen}
         onOpenChange={handleRechargeOpenChange}
@@ -1639,6 +1692,17 @@ const ProductForm = React.memo(
 
 
 
+const ProductRecentlyViewed = React.memo(function ProductRecentlyViewed() {
+  const productId = useProductPageContext((state) => state.product.id)
+
+  // Record after reading so the current product is excluded from its own list
+  useEffect(() => {
+    addRecentlyViewed(productId)
+  }, [productId])
+
+  return <RecentlyViewed excludeId={productId} limit={4} className="mt-8" />
+})
+
 // Memoized Screen component
 const MemoizedScreen = React.memo(function ScreenInner() {
   return (
@@ -1664,6 +1728,7 @@ const MemoizedScreen = React.memo(function ScreenInner() {
         >
           <ProductDescription />
           <ProductRelated className="mt-8" />
+          <ProductRecentlyViewed />
         </div>
       </div>
     </main>
